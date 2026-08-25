@@ -6,6 +6,8 @@ import org.koin.core.annotation.Single
 import org.micoli.micraft.dataPath
 import org.micoli.micraft.game.item.ItemRegistryLoader
 import org.micoli.micraft.game.item.expandPlainColorItems
+import org.micoli.micraft.game.placeable.siege.SiegeProjectileRegistryLoader
+import org.micoli.micraft.game.placeable.siege.SiegeWeaponRegistryLoader
 import org.micoli.micraft.game.plaincolor.PlainColorRegistryLoader
 import org.micoli.micraft.game.vehicle.VehicleRegistryLoader
 import org.micoli.micraft.game.world.BlockRegistry
@@ -13,6 +15,8 @@ import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.block.BlockIdRegistryLoader
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
+import org.micoli.micraft.placeable.siege.SiegeProjectileRegistry
+import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.vehicle.VehicleRegistry
 
 /**
@@ -25,6 +29,8 @@ fun loadRegistries(
     itemRegistryLoader: ItemRegistryLoader,
     plainColorRegistryLoader: PlainColorRegistryLoader,
     vehicleRegistryLoader: VehicleRegistryLoader,
+    siegeWeaponRegistryLoader: SiegeWeaponRegistryLoader,
+    siegeProjectileRegistryLoader: SiegeProjectileRegistryLoader,
 ) {
     PlainColorRegistry.load(plainColorRegistryLoader.load())
     val blocks = blockRegistryLoader.load()
@@ -32,6 +38,8 @@ fun loadRegistries(
     ItemRegistry.load(
         expandPlainColorItems(itemRegistryLoader.load(), blocks, PlainColorRegistry.all()))
     VehicleRegistry.load(vehicleRegistryLoader.load())
+    SiegeWeaponRegistry.load(siegeWeaponRegistryLoader.load())
+    SiegeProjectileRegistry.load(siegeProjectileRegistryLoader.load())
 }
 
 @Module
@@ -66,18 +74,36 @@ class RegistryModule {
             Path.of("resources/config/vehicles.yaml"),
         )
 
+    @Single
+    fun siegeWeaponRegistryLoader(): SiegeWeaponRegistryLoader =
+        SiegeWeaponRegistryLoader(
+            resourcesWeaponsPath = Path.of("resources/siege/weapons"),
+            dataWeaponsPath = Path.of("$dataPath/resources/siege/weapons"),
+        )
+
+    @Single
+    fun siegeProjectileRegistryLoader(): SiegeProjectileRegistryLoader =
+        SiegeProjectileRegistryLoader(
+            resourcesProjectilesPath = Path.of("resources/siege/projectiles"),
+            dataProjectilesPath = Path.of("$dataPath/resources/siege/projectiles"),
+        )
+
     @Single(createdAtStart = true)
     fun registryBootstrap(
         blockRegistryLoader: BlockRegistryLoader,
         itemRegistryLoader: ItemRegistryLoader,
         plainColorRegistryLoader: PlainColorRegistryLoader,
         vehicleRegistryLoader: VehicleRegistryLoader,
+        siegeWeaponRegistryLoader: SiegeWeaponRegistryLoader,
+        siegeProjectileRegistryLoader: SiegeProjectileRegistryLoader,
     ): RegistryBootstrapResult {
         loadRegistries(
             blockRegistryLoader,
             itemRegistryLoader,
             plainColorRegistryLoader,
-            vehicleRegistryLoader)
+            vehicleRegistryLoader,
+            siegeWeaponRegistryLoader,
+            siegeProjectileRegistryLoader)
         return RegistryBootstrapResult()
     }
 }

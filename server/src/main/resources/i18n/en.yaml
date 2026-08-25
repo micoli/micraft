@@ -263,6 +263,13 @@ mount:
     no_target: "No vehicle targeted — target one first (X)."
     occupied: "That vehicle is already occupied."
 
+siege_weapon:
+  server:
+    usage: "Usage: /siege_weapon <rotation|pitch|power> <value>"
+    no_target: "No siege weapon targeted — target one first (Tab)."
+    invalid_value: "Invalid value: %s"
+    done: "%s set to %s."
+
 mode:
   server:
     game: "Switched to game mode."

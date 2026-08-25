@@ -1,0 +1,13 @@
+bbmodelFile: TREBUCHET
+width: 2.5
+height: 3.0
+projectileType: BOULDER
+ammoItem: FLAMING_BOULDER
+muzzleOffset: {x: 0.0, y: 2.0, z: 1.2}
+launchPower: 20.0
+launchPitchDeg: 50.0
+impactRadius: 4.0
+impactDamage: 40
+cooldownMs: 6000
+pitchStepRange: 10
+powerStepRange: 10

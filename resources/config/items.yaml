@@ -196,3 +196,21 @@ VEHICLE_CART:
   spawnsEntity: CART
   label: CRT
   bg: "#8B5A2B"
+SIEGE_CATAPULT:
+  buildable: true
+  spawnsEntity: CATAPULT
+  label: CAT
+  bg: "#6E5230"
+SIEGE_TREBUCHET:
+  buildable: true
+  spawnsEntity: TREBUCHET
+  label: TRB
+  bg: "#5A4A2A"
+BOULDER:
+  buildable: false
+  label: BLD
+  bg: "#767668"
+FLAMING_BOULDER:
+  buildable: false
+  label: FBL
+  bg: "#C24A1E"

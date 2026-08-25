@@ -14,6 +14,7 @@ import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.player.PlayerStance
@@ -68,6 +69,7 @@ class CombatProcessor(
     @Volatile private var classRegistry: Map<String, ClassDefinitionEntry>,
     private val npcManager: NpcManager,
     private val vehicleManager: VehicleManager = VehicleManager { _ -> },
+    private val placeableManager: PlaceableManager = PlaceableManager { _ -> },
     private val getSessions: () -> Collection<PlayerSession>,
     private val broadcastCombatLog: suspend (String) -> Unit,
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit,
@@ -620,7 +622,34 @@ class CombatProcessor(
         }
     }
 
-    private suspend fun broadcastHealthUpdate(
+    /**
+     * Direct-damage path for a guaranteed hit with no to-hit roll — e.g. a siege projectile's AoE
+     * blast (see [org.micoli.micraft.game.placeable.siege.SiegeProjectileManager]). Mirrors the
+     * HP-mutation/broadcast/downed-check tail of [attackPlayer], minus target resolution, range
+     * check, and [resolveAttack]'s roll.
+     */
+    suspend fun applyDirectDamage(target: PlayerSession, damage: Int, sourceLabel: String) {
+        if (target.state.godMode) return
+        val targetChar = target.characterData ?: return
+        val theirDerived =
+            target.computeDerived(
+                armorRegistry,
+                targetChar,
+                weaponRegistry = weaponRegistry,
+                toolRegistry = toolRegistry)
+
+        val newTargetChar =
+            targetChar.copy(currentHp = (targetChar.currentHp - damage).coerceAtLeast(0))
+        target.characterData = newTargetChar
+        broadcastHealthUpdate(target.id, false, newTargetChar.currentHp, theirDerived.maxHp)
+        subscribeToChannel(target, "combat")
+        broadcastCombatLog(
+            "[$sourceLabel] → [p:${targetChar.name}]: ${getHitMessage(true, false, damage)}")
+        if (newTargetChar.currentHp <= 0) handlePlayerDowned(target)
+        sendStatusUpdate(target, newTargetChar, theirDerived)
+    }
+
+    internal suspend fun broadcastHealthUpdate(
         entityId: String,
         isNpc: Boolean,
         currentHp: Int,
@@ -709,7 +738,7 @@ class CombatProcessor(
                 npcManager.getInstance(targetId)
                     ?: run {
                         val vehicle = vehicleManager.get(targetId)
-                        return if (vehicle != null) {
+                        if (vehicle != null) {
                             val dist =
                                 distance3(
                                     pos.x,
@@ -718,9 +747,23 @@ class CombatProcessor(
                                     vehicle.pos.x,
                                     vehicle.pos.y,
                                     vehicle.pos.z)
-                            ServerMessage.CombatTargetUpdate(
+                            return ServerMessage.CombatTargetUpdate(
                                 targetId, vehicle.type.id, 0, 0, distance = dist)
-                        } else ServerMessage.CombatTargetUpdate(targetId, "Unknown", 0, 0)
+                        }
+                        val placeable = placeableManager.get(targetId)
+                        if (placeable != null) {
+                            val dist =
+                                distance3(
+                                    pos.x,
+                                    pos.y,
+                                    pos.z,
+                                    placeable.pos.x,
+                                    placeable.pos.y,
+                                    placeable.pos.z)
+                            return ServerMessage.CombatTargetUpdate(
+                                targetId, placeable.type.id, 0, 0, distance = dist)
+                        }
+                        return ServerMessage.CombatTargetUpdate(targetId, "Unknown", 0, 0)
                     }
             val dist =
                 distance3(pos.x, pos.y, pos.z, npc.state.pos.x, npc.state.pos.y, npc.state.pos.z)

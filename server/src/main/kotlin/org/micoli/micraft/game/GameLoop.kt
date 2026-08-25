@@ -61,6 +61,10 @@ import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.npc.NpcSubsystemHooks
+import org.micoli.micraft.game.placeable.PlaceableManager
+import org.micoli.micraft.game.placeable.siege.SiegeProjectileManager
+import org.micoli.micraft.game.placeable.siege.SiegeProjectileTickPipeline
+import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistry
@@ -110,6 +114,8 @@ import org.micoli.micraft.game.world.weather.WeatherConfig
 import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcState
+import org.micoli.micraft.placeable.siege.SiegeProjectileRegistry
+import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.player.ChannelSubscription
 import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.Hand
@@ -128,10 +134,13 @@ import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.CommandInfo
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
+import org.micoli.micraft.protocol.PlaceableCodexInfo
 import org.micoli.micraft.protocol.PlainColorInfo
 import org.micoli.micraft.protocol.RailInfo
 import org.micoli.micraft.protocol.SceneSummaryProto
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.protocol.SiegeProjectileCodexInfo
+import org.micoli.micraft.protocol.SiegeWeaponCodexInfo
 import org.micoli.micraft.protocol.VehicleCodexInfo
 import org.micoli.micraft.ui.defaultLayout
 import org.micoli.micraft.ui.validateLayouts
@@ -273,6 +282,13 @@ class GameLoop(
     private val railNetworkRegistry: RailNetworkRegistry = RailNetworkRegistry(world),
     private val vehicleManager: VehicleManager = VehicleManager(sessionRegistry::broadcast),
     private val vehicleTickPipeline: VehicleTickPipeline = VehicleTickPipeline(vehicleManager),
+    private val placeableManager: PlaceableManager = PlaceableManager(sessionRegistry::broadcast),
+    private val siegeWeaponManager: SiegeWeaponManager =
+        SiegeWeaponManager(sessionRegistry::broadcast),
+    private val siegeProjectileManager: SiegeProjectileManager =
+        SiegeProjectileManager(sessionRegistry::broadcast),
+    private val siegeProjectileTickPipeline: SiegeProjectileTickPipeline =
+        SiegeProjectileTickPipeline(siegeProjectileManager),
     private val blockInteractor: BlockInteractor =
         BlockInteractor(
             world,
@@ -326,6 +342,7 @@ class GameLoop(
             classRegistry = classesData.classes,
             npcManager = npcManager,
             vehicleManager = vehicleManager,
+            placeableManager = placeableManager,
             getSessions = sessionRegistry::all,
             broadcastCombatLog = { msg ->
                 val chatMsg =
@@ -430,6 +447,8 @@ class GameLoop(
             attackRegistry,
             instanceRegistry = instanceRegistry,
             railNetworkRegistry = railNetworkRegistry,
+            placeableManager = placeableManager,
+            siegeWeaponManager = siegeWeaponManager,
         ),
     private val movementProcessor: MovementProcessor = MovementProcessor(world),
     private val chunkStreamer: ChunkStreamer = ChunkStreamer(world),
@@ -579,6 +598,8 @@ class GameLoop(
             worldItems = worldItems,
             npcManager = npcManager,
             vehicleManager = vehicleManager,
+            placeableManager = placeableManager,
+            siegeWeaponManager = siegeWeaponManager,
             scenes = sceneRegistry,
             getGameTime = closures.getGameTime,
             setGameTime = closures.setGameTime,
@@ -748,6 +769,10 @@ class GameLoop(
         val vehicleSavePath =
             persistence?.worldDir?.resolve("vehicles.yaml") ?: Path.of("data/config/vehicles.yaml")
         vehicleManager.save(vehicleSavePath)
+        val placeableSavePath =
+            persistence?.worldDir?.resolve("placeables.yaml")
+                ?: Path.of("data/config/placeables_save.yaml")
+        placeableManager.save(placeableSavePath)
         persistence?.let {
             GameTimePersistence.save(it.worldDir.resolve("game_time.yaml"), gameTimeService)
         }
@@ -1036,6 +1061,32 @@ class GameLoop(
                         speed = def.speed,
                     )
             }
+        // SiegeWeaponRegistry is the only placeable sub-system today — see PlaceableManager's
+        // kdoc for why placeable rendering metadata is sourced from it directly.
+        val placeables =
+            SiegeWeaponRegistry.keys().associate { type ->
+                type.id to SiegeWeaponRegistry.get(type)!!.bbmodelFile
+            }
+        val placeableDefinitions =
+            SiegeWeaponRegistry.keys().associate { type ->
+                val def = SiegeWeaponRegistry.get(type)!!
+                type.id to PlaceableCodexInfo(def.bbmodelFile, def.width, def.height)
+            }
+        val siegeProjectiles =
+            SiegeProjectileRegistry.keys().associate { type ->
+                type.id to SiegeProjectileRegistry.get(type)!!.bbmodelFile
+            }
+        val siegeProjectileDefinitions =
+            SiegeProjectileRegistry.keys().associate { type ->
+                val def = SiegeProjectileRegistry.get(type)!!
+                type.id to SiegeProjectileCodexInfo(def.bbmodelFile, def.radius)
+            }
+        val siegeWeaponDefinitions =
+            SiegeWeaponRegistry.keys().associate { type ->
+                val def = SiegeWeaponRegistry.get(type)!!
+                type.id to
+                    SiegeWeaponCodexInfo(def.muzzleOffset, def.launchPower, def.launchPitchDeg)
+            }
         return ServerMessage.RegistrySync(
             blocks,
             items,
@@ -1045,7 +1096,12 @@ class GameLoop(
             vehicles,
             vehicleDefinitions,
             plainColors,
-            WorldConstants.IMPOSTOR_SKIRT_DEPTH)
+            WorldConstants.IMPOSTOR_SKIRT_DEPTH,
+            placeables,
+            placeableDefinitions,
+            siegeProjectiles,
+            siegeProjectileDefinitions,
+            siegeWeaponDefinitions)
     }
 
     private val reloadCoordinator =
@@ -1130,6 +1186,11 @@ class GameLoop(
         val vehicleSavePath =
             persistence?.worldDir?.resolve("vehicles.yaml") ?: Path.of("data/config/vehicles.yaml")
         vehicleManager.load(vehicleSavePath)
+        val placeableSavePath =
+            persistence?.worldDir?.resolve("placeables.yaml")
+                ?: Path.of("data/config/placeables_save.yaml")
+        placeableManager.load(placeableSavePath)
+        placeableManager.getAll().forEach { siegeWeaponManager.linkFor(it) }
         persistence?.let {
             GameTimePersistence.load(it.worldDir.resolve("game_time.yaml"), gameTimeService)
         }
@@ -1295,6 +1356,10 @@ class GameLoop(
             npcTickPipeline.tick(world, sessionRegistry.all(), combatProcessor)
         }
         tickProfiler.measure("vehicles") { vehicleTickPipeline.tick(world, sessionRegistry.all()) }
+        tickProfiler.measure("siegeProjectiles") {
+            siegeProjectileTickPipeline.tick(
+                world, sessionRegistry.all(), npcManager, combatProcessor)
+        }
         // In the tick, not in a wall-clock coroutine of its own: driving the slow lane from a
         // separate 5 s loop raced the main tick and gave the same arena a different spawn rate
         // depending on whether the live server or the simulator was running it.
@@ -1603,6 +1668,9 @@ class GameLoop(
             }
         npcManager.sendAllTo(session)
         vehicleManager.sendAllTo(session)
+        placeableManager.sendAllTo(session)
+        siegeWeaponManager.sendAllTo(session)
+        siegeProjectileManager.sendAllTo(session)
         sessionRegistry[id] = session
         broadcastPlayerAdmin(
             """{"type":"playerJoined","id":"$id","name":${playerName.toPlayerAdminJson()},"x":${spawn.x},"y":${spawn.y},"z":${spawn.z},"yaw":0.0}""")
@@ -1641,6 +1709,27 @@ class GameLoop(
                                             npcManager.handleInteract(session, msg.npcId)
                                         is ClientMessage.VehicleInteract ->
                                             vehicleManager.handleInteract(msg.vehicleId)
+                                        is ClientMessage.PlaceableInteract -> {
+                                            placeableManager.handleInteract(msg.id, session)
+                                            siegeWeaponManager.despawnFor(msg.id)
+                                        }
+                                        is ClientMessage.PlaceableRotate ->
+                                            placeableManager.handleRotate(msg.id)
+                                        is ClientMessage.SiegeWeaponSetPitch ->
+                                            siegeWeaponManager.getByPlaceableId(msg.id)?.let {
+                                                siegeWeaponManager.handleSetPitch(it.id, msg.value)
+                                            }
+                                        is ClientMessage.SiegeWeaponSetPower ->
+                                            siegeWeaponManager.getByPlaceableId(msg.id)?.let {
+                                                siegeWeaponManager.handleSetPower(it.id, msg.value)
+                                            }
+                                        is ClientMessage.SiegeWeaponFire ->
+                                            siegeWeaponManager.fire(
+                                                session,
+                                                msg.weaponId,
+                                                placeableManager,
+                                                world,
+                                                siegeProjectileManager)
                                         is ClientMessage.RequestScenePreview -> {
                                             if (session.hasPermission("admin")) {
                                                 sceneRegistry.get(msg.sceneId)?.let { scene ->
