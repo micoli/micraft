@@ -49,6 +49,37 @@ export function matchesEvent(str: string, e: KeyboardEvent): boolean {
   );
 }
 
+function hasModPrefix(str: string): boolean {
+  const { mods } = parseBoundKey(str);
+  return mods.ctrl || mods.shift || mods.alt || mods.meta;
+}
+
+// Resolves which bound actions fire for this keydown, generically arbitrating bare vs
+// modifier-qualified bindings that share the same physical key — e.g. combat_attack (KeyR) and
+// siege_weapon_power (Ctrl+KeyR): matchesEvent alone would fire both on Ctrl+R since bare
+// bindings match regardless of held modifiers. Any action with a qualified match wins; actions
+// that only match bare are dropped whenever some other action matched with modifiers. This is
+// action-name-agnostic — no binding pair needs to be hardcoded here.
+function resolveEventActions(b: Record<string, string[]>, e: KeyboardEvent): Set<string> {
+  const qualifiedMatch: Record<string, boolean> = {};
+  const matchedActions: string[] = [];
+  let anyQualifiedMatch = false;
+  for (const [action, keys] of Object.entries(b)) {
+    let matched = false;
+    let qualified = false;
+    for (const k of keys) {
+      if (isSequenceBinding(k) || !matchesEvent(k, e)) continue;
+      matched = true;
+      if (hasModPrefix(k)) qualified = true;
+    }
+    if (!matched) continue;
+    matchedActions.push(action);
+    qualifiedMatch[action] = qualified;
+    if (qualified) anyQualifiedMatch = true;
+  }
+  return new Set(matchedActions.filter((action) => !anyQualifiedMatch || qualifiedMatch[action]));
+}
+
 // Checks whether a 2-key sequence binding matches: last key = current event, previous key pressed
 // within 300 ms. Only supports 2-key sequences.
 function matchesSequence(str: string, e: KeyboardEvent): boolean {
@@ -146,65 +177,63 @@ export function registerKeyboard(): Pick<
 
         window.mcState.lastKeyPress = { code: e.code, key: e.key, time: Date.now() };
 
-        if (b.view_toggle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("view_toggle");
-        if (b.console_toggle?.some((k) => matchesEvent(k, e))) window.mc?.toggleConsole?.();
-        if (b.inventory?.some((k) => matchesEvent(k, e))) window.mcState.events.push("inventory");
-        if (b.undo?.some((k) => matchesEvent(k, e))) window.mcState.events.push("undo");
-        if (b.layout_editor?.some((k) => matchesEvent(k, e))) window.mc?.showLayoutEditor?.();
-        if (b.character?.some((k) => matchesEvent(k, e))) window.mc?.openCharacter?.();
-        if (b.craft?.some((k) => matchesEvent(k, e))) window.mc?.openCraft?.();
-        if (b.dump_stats?.some((k) => matchesEvent(k, e))) window.mc?.dumpStats?.();
-        if (b.health_bar?.some((k) => matchesEvent(k, e))) window.mc?.toggleHealthBar?.();
-        if (b.statistics_toggle?.some((k) => matchesEvent(k, e))) window.mc?.toggleStatistics?.();
-        if (b.chunk_debug_toggle?.some((k) => matchesEvent(k, e))) window.mc?.toggleChunkDebug?.();
-        if (b.attack_panel_toggle?.some((k) => matchesEvent(k, e))) window.mc?.toggleAttackPanel?.();
-        if (b.preferences?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.();
-        if (b.preferences_keybindings?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.("keybindings");
-        if (b.preferences_debug?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.("debug");
-        if (b.preferences_graphics?.some((k) => matchesEvent(k, e))) window.mc?.showPreferences?.("graphics");
-        if (b.minimap_zoom_in?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomIn?.();
-        if (b.minimap_zoom_out?.some((k) => matchesEvent(k, e))) window.mc?.minimapZoomOut?.();
-        if (b.ingame_map?.some((k) => matchesEvent(k, e))) window.mc?.IngameMap?.();
-        if (b.fly_toggle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("fly_toggle");
-        if (b.auto_forward?.some((k) => matchesEvent(k, e))) window.mcState.events.push("auto_forward");
-        if (b.place_rotate?.some((k) => matchesEvent(k, e))) {
+        const matched = resolveEventActions(b, e);
+
+        if (matched.has("view_toggle")) window.mcState.events.push("view_toggle");
+        if (matched.has("console_toggle")) window.mc?.toggleConsole?.();
+        if (matched.has("inventory")) window.mcState.events.push("inventory");
+        if (matched.has("undo")) window.mcState.events.push("undo");
+        if (matched.has("layout_editor")) window.mc?.showLayoutEditor?.();
+        if (matched.has("character")) window.mc?.openCharacter?.();
+        if (matched.has("craft")) window.mc?.openCraft?.();
+        if (matched.has("dump_stats")) window.mc?.dumpStats?.();
+        if (matched.has("health_bar")) window.mc?.toggleHealthBar?.();
+        if (matched.has("statistics_toggle")) window.mc?.toggleStatistics?.();
+        if (matched.has("chunk_debug_toggle")) window.mc?.toggleChunkDebug?.();
+        if (matched.has("attack_panel_toggle")) window.mc?.toggleAttackPanel?.();
+        if (matched.has("preferences")) window.mc?.showPreferences?.();
+        if (matched.has("preferences_keybindings")) window.mc?.showPreferences?.("keybindings");
+        if (matched.has("preferences_debug")) window.mc?.showPreferences?.("debug");
+        if (matched.has("preferences_graphics")) window.mc?.showPreferences?.("graphics");
+        if (matched.has("minimap_zoom_in")) window.mc?.minimapZoomIn?.();
+        if (matched.has("minimap_zoom_out")) window.mc?.minimapZoomOut?.();
+        if (matched.has("ingame_map")) window.mc?.IngameMap?.();
+        if (matched.has("fly_toggle")) window.mcState.events.push("fly_toggle");
+        if (matched.has("auto_forward")) window.mcState.events.push("auto_forward");
+        if (matched.has("place_rotate")) {
           // While a scene ghost is active, R rotates the scene preview instead of the FPS
           // hotbar placement ghost — these two placement modes are mutually exclusive.
           if (window.mcState.sceneGhostActive) window.mc?.sceneRotate?.();
           else window.mcState.events.push("place_rotate");
         }
-        if (b.block_interact?.some((k) => matchesEvent(k, e))) window.mcState.events.push("block_interact");
-        if (b.scene_confirm?.some((k) => matchesEvent(k, e)) && window.mcState.sceneGhostActive) {
+        if (matched.has("block_interact")) window.mcState.events.push("block_interact");
+        if (matched.has("scene_confirm") && window.mcState.sceneGhostActive) {
           window.mc?.sceneConfirm?.();
         }
-        if (b.scene_cancel?.some((k) => matchesEvent(k, e)) && window.mcState.sceneGhostActive) {
+        if (matched.has("scene_cancel") && window.mcState.sceneGhostActive) {
           window.mc?.sceneCancel?.();
         }
-        if (b.combat_target_cycle?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_target_cycle");
-        if (b.combat_attack?.some((k) => matchesEvent(k, e))) window.mcState.events.push("combat_attack");
-        // vehicle_mount (Ctrl+KeyX) checked first: npc_interact's bare KeyX binding otherwise
-        // matches regardless of held modifiers (see matchesEvent), which would double-fire both.
-        const vehicleMountMatched = b.vehicle_mount?.some((k) => matchesEvent(k, e)) ?? false;
-        if (vehicleMountMatched) window.mcState.events.push("vehicle_mount");
-        if (!vehicleMountMatched && b.npc_interact?.some((k) => matchesEvent(k, e)))
-          window.mcState.events.push("npc_interact");
-        if (b.siege_weapon_rotate?.some((k) => matchesEvent(k, e))) window.mcState.events.push("siege_weapon_rotate");
-        if (b.siege_weapon_pitch?.some((k) => matchesEvent(k, e))) window.mcState.events.push("siege_weapon_pitch");
-        if (b.siege_weapon_power?.some((k) => matchesEvent(k, e))) window.mcState.events.push("siege_weapon_power");
-        if (b.siege_weapon_fire?.some((k) => matchesEvent(k, e))) window.mcState.events.push("siege_weapon_fire");
-        if (b.screenshot?.some((k) => matchesEvent(k, e))) window.mcState.events.push("screenshot");
-        if (b.quest_journal?.some((k) => matchesEvent(k, e))) window.mc?.openQuestJournal?.();
-        if (b.quest_tracking?.some((k) => matchesEvent(k, e))) window.mc?.toggleQuestTracker?.();
+        if (matched.has("combat_target_cycle")) window.mcState.events.push("combat_target_cycle");
+        if (matched.has("vehicle_mount")) window.mcState.events.push("vehicle_mount");
+        if (matched.has("npc_interact")) window.mcState.events.push("npc_interact");
+        if (matched.has("siege_weapon_pitch")) window.mcState.events.push("siege_weapon_pitch");
+        if (matched.has("siege_weapon_power")) window.mcState.events.push("siege_weapon_power");
+        if (matched.has("combat_attack")) window.mcState.events.push("combat_attack");
+        if (matched.has("siege_weapon_rotate")) window.mcState.events.push("siege_weapon_rotate");
+        if (matched.has("siege_weapon_fire")) window.mcState.events.push("siege_weapon_fire");
+        if (matched.has("screenshot")) window.mcState.events.push("screenshot");
+        if (matched.has("quest_journal")) window.mc?.openQuestJournal?.();
+        if (matched.has("quest_tracking")) window.mc?.toggleQuestTracker?.();
         const pageActionMatched = Array.from({ length: 12 }, (_, i) =>
           i < 10 ? `shortcut_page_${i + 1}` : i === 10 ? "shortcut_page_prev" : "shortcut_page_next",
-        ).some((action) => b[action]?.some((k: string) => matchesEvent(k, e)));
+        ).some((action) => matched.has(action));
         if (!pageActionMatched) {
           for (let s = 1; s <= 10; s++) {
-            const key = `slot_${s}` as string;
-            if (b[key]?.some((k: string) => matchesEvent(k, e))) window.mcState.events.push(key);
+            const key = `slot_${s}`;
+            if (matched.has(key)) window.mcState.events.push(key);
           }
         }
-        if (Object.values(b).some((keys) => keys.some((k) => matchesEvent(k, e)))) e.preventDefault();
+        if (matched.size > 0) e.preventDefault();
 
         for (const [cmdText, keys] of Object.entries(window.mcState.customCommands || {})) {
           if (keys.some((k) => (isSequenceBinding(k) ? matchesSequence(k, e) : matchesEvent(k, e)))) {
