@@ -1227,7 +1227,11 @@ class GameLoop(
                 val waitMs = nextTickAt - System.currentTimeMillis()
                 if (waitMs > 0) delay(waitMs)
                 nextTickAt = nextTickDeadline(System.currentTimeMillis(), nextTickAt, TICK_MS)
-                runCatching { tick() }.onFailure { log.error("tick error: {}", it.message, it) }
+                runCatching { tick() }
+                    .onFailure {
+                        if (it is CancellationException) throw it
+                        log.error("tick error: {}", it.message, it)
+                    }
                 saveTickCounter++
                 if (saveTickCounter >= SAVE_INTERVAL_TICKS) {
                     saveTickCounter = 0
