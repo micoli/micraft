@@ -541,6 +541,7 @@ data class ItemInfo(
     val placesBlock: String? = null,
     val plainColor: String? = null,
     val consumable: Boolean = false,
+    val spawnsEntity: String? = null,
 )
 
 @Serializable

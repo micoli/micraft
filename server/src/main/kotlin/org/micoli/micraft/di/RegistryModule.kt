@@ -15,6 +15,8 @@ import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.block.BlockIdRegistryLoader
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
+import org.micoli.micraft.placeable.PlaceableDefinition
+import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.placeable.siege.SiegeProjectileRegistry
 import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.vehicle.VehicleRegistry
@@ -40,6 +42,12 @@ fun loadRegistries(
     VehicleRegistry.load(vehicleRegistryLoader.load())
     SiegeWeaponRegistry.load(siegeWeaponRegistryLoader.load())
     SiegeProjectileRegistry.load(siegeProjectileRegistryLoader.load())
+    // Merge each kind-specific placeable registry into the generic one — currently siege weapons
+    // only, more kinds append here as they're added.
+    PlaceableRegistry.load(
+        SiegeWeaponRegistry.keys().associateWith { type ->
+            PlaceableDefinition(bbmodelFile = SiegeWeaponRegistry.get(type)!!.bbmodelFile)
+        })
 }
 
 @Module

@@ -85,6 +85,8 @@ window.mcState = {
   vehicleModelsReady: false,
   placeableBbmodels: {},
   placeableModelsReady: false,
+  placeablePreviewModel: null,
+  placeablePreviewType: null,
   siegeProjectileBbmodels: {},
   siegeProjectileModelsReady: false,
   skinConfigs: {},

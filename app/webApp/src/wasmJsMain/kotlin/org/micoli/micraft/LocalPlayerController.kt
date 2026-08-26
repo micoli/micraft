@@ -16,6 +16,7 @@ import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.physics.AabbCollider
+import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
@@ -181,6 +182,8 @@ class LocalPlayerController(
     private var lastGhostXOffset: Int = -1
     private var lastGhostZOffset: Int = -1
     private var lastMinimapPlacementRot: Int = -2
+    private var ghostPlaceablePos: BlockPos? = null
+    private var ghostPlaceableType: String? = null
 
     private var hudX = 0.0
     private var hudY = 0.0
@@ -1128,8 +1131,42 @@ class LocalPlayerController(
             if (selectedSlot > 0) shortcutBarPages[currentPage][selectedSlot] else null
         val selectedItem = (selectedSlotContent as? ShortcutSlot.Item)?.itemType
         val isPlaceMode = selectedItem != null && selectedItem.buildable
+        val placeableEntityType = selectedItem?.let { ItemRegistry.get(it).spawnsEntity }
 
-        if (isPlaceMode) {
+        if (isPlaceMode &&
+            placeableEntityType != null &&
+            PlaceableRegistry.get(placeableEntityType) != null) {
+            if (ghostAdjacentPos != null) {
+                ghostAdjacentPos = null
+                jsHideBlockPreview()
+            }
+            val adjacent = rayResult?.adjacent
+            if (adjacent != ghostPlaceablePos || placeableEntityType.id != ghostPlaceableType) {
+                ghostPlaceablePos = adjacent
+                ghostPlaceableType = placeableEntityType.id
+                if (adjacent != null) {
+                    jsShowPlaceablePreview(
+                        scene, placeableEntityType.id, adjacent.x, adjacent.y, adjacent.z)
+                } else {
+                    jsHidePlaceablePreview()
+                }
+            }
+            if (isBreaking && adjacent != null && !hasPlacedThisClick) {
+                hasPlacedThisClick = true
+                breakTarget = adjacent
+                outMessages.trySend(
+                    ClientMessage.BlockPlace(
+                        adjacent, selectedItem, placementRotation.toByte(), 0, 0))
+            } else if (!isBreaking) {
+                breakTarget = null
+                hasPlacedThisClick = false
+            }
+        } else if (isPlaceMode) {
+            if (ghostPlaceablePos != null) {
+                ghostPlaceablePos = null
+                ghostPlaceableType = null
+                jsHidePlaceablePreview()
+            }
             val rawAdjacent = rayResult?.adjacent
             val isFractionalItem =
                 selectedItem.placesBlock?.let { BlockRegistry.get(it).brickSize[1] < 2.0f } ?: false
@@ -1287,6 +1324,11 @@ class LocalPlayerController(
             if (ghostAdjacentPos != null) {
                 ghostAdjacentPos = null
                 jsHideBlockPreview()
+            }
+            if (ghostPlaceablePos != null) {
+                ghostPlaceablePos = null
+                ghostPlaceableType = null
+                jsHidePlaceablePreview()
             }
             if (isBreaking && target != null) {
                 if (target != breakTarget && (continuousBreak || breakArmed)) {

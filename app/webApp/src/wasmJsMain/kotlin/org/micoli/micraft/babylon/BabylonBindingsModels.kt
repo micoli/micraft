@@ -152,6 +152,11 @@ fun jsSetPlaceableTransform(
 
 fun jsDisposePlaceableModel(model: JsAny): Unit = js("mc.disposePlaceableModel(model)")
 
+fun jsShowPlaceablePreview(scene: JsAny, placeableType: String, x: Int, y: Int, z: Int): Unit =
+    js("mc.showPlaceablePreview(scene, placeableType, x, y, z)")
+
+fun jsHidePlaceablePreview(): Unit = js("mc.hidePlaceablePreview()")
+
 // ── Siege projectile ────────────────────────────────────────────────────────────
 
 fun jsInitSiegeProjectileModels(projectileTypesJson: String): Unit =
