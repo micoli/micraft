@@ -19,6 +19,8 @@ import org.micoli.micraft.game.world.ItemDefinition
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.placeable.PlaceableDefinition
+import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.placeable.siege.SiegeWeaponDefinition
 import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.player.EditMode
@@ -483,11 +485,15 @@ class BlockPlacerTest {
         val savedItems = ItemRegistry.keys().associateWith { ItemRegistry.get(it) }
         val savedSiegeWeapons =
             SiegeWeaponRegistry.keys().associateWith { SiegeWeaponRegistry.get(it)!! }
+        val savedPlaceables = PlaceableRegistry.keys().associateWith { PlaceableRegistry.get(it)!! }
         try {
             ItemRegistry.load(
                 savedItems + mapOf(itemType to ItemDefinition(spawnsEntity = entityType)))
             SiegeWeaponRegistry.load(
                 savedSiegeWeapons + mapOf(entityType to SiegeWeaponDefinition()))
+            PlaceableRegistry.load(
+                savedPlaceables +
+                    mapOf(entityType to PlaceableDefinition(bbmodelFile = "TEST_CATAPULT")))
 
             val world = testWorld(Triple(8, 6, 8))
             val broadcasts = mutableListOf<ServerMessage>()
@@ -506,6 +512,7 @@ class BlockPlacerTest {
         } finally {
             ItemRegistry.load(savedItems)
             SiegeWeaponRegistry.load(savedSiegeWeapons)
+            PlaceableRegistry.load(savedPlaceables)
         }
     }
 }

@@ -7,6 +7,15 @@ interface PlaceableBbmodels {
 // Trimmed fork of vehicleModel.ts's registerVehicleModel: same bbmodel-fetch-and-cache pattern,
 // serving free-standing placed objects (siege weapons in Phase A) instead of rail vehicles — see
 // PlaceableManager.kt (game/) for the Kotlin side driving these bindings.
+
+const PREVIEW_ALPHA = 0.4;
+
+function disposePlaceableModelInternal(model: McPlayerModel): void {
+  model.root.getChildMeshes(true).forEach((m) => m.dispose());
+  Object.values(model.pivotNodes).forEach((p) => p.node.dispose());
+  model.root.dispose();
+}
+
 export function registerPlaceableModel(): Pick<
   McBindings,
   | "initPlaceableModels"
@@ -14,6 +23,8 @@ export function registerPlaceableModel(): Pick<
   | "createPlaceableModel"
   | "setPlaceableTransform"
   | "disposePlaceableModel"
+  | "showPlaceablePreview"
+  | "hidePlaceablePreview"
 > {
   return {
     initPlaceableModels: (placeableTypesJson: string): void => {
@@ -74,10 +85,41 @@ export function registerPlaceableModel(): Pick<
       model.root.rotation.z = 0;
     },
 
-    disposePlaceableModel: (model: McPlayerModel): void => {
-      model.root.getChildMeshes(true).forEach((m) => m.dispose());
-      Object.values(model.pivotNodes).forEach((p) => p.node.dispose());
-      model.root.dispose();
+    disposePlaceableModel: (model: McPlayerModel): void => disposePlaceableModelInternal(model),
+
+    // Ghost preview shown while aiming placement, before the click that actually spawns the
+    // weapon (see LocalPlayerController.kt's isSiegePlacement branch). Rebuilds the mesh whenever
+    // the previewed type changes (rare — only on shortcut-slot switch), otherwise just repositions
+    // the cached one each frame.
+    showPlaceablePreview: (scene: Scene, placeableType: string, x: number, y: number, z: number): void => {
+      const state = window.mcState;
+      if (state.placeablePreviewModel && state.placeablePreviewType !== placeableType) {
+        disposePlaceableModelInternal(state.placeablePreviewModel);
+        state.placeablePreviewModel = null;
+        state.placeablePreviewType = null;
+      }
+
+      if (!state.placeablePreviewModel) {
+        const bbmodel = (state.placeableBbmodels as PlaceableBbmodels | undefined)?.[placeableType];
+        if (!bbmodel) return;
+        const model = window.mc.createPlayerModelFromBbmodel(bbmodel, scene, `placeablePreview_${placeableType}`, {});
+        if (!model) return;
+        model.root.getChildMeshes(true).forEach((m) => {
+          m.visibility = PREVIEW_ALPHA;
+          m.isPickable = false;
+        });
+        state.placeablePreviewModel = model;
+        state.placeablePreviewType = placeableType;
+      }
+
+      window.mc.setPlaceableTransform(state.placeablePreviewModel, x, y, z, 0);
+    },
+
+    hidePlaceablePreview: (): void => {
+      const state = window.mcState;
+      if (state.placeablePreviewModel) disposePlaceableModelInternal(state.placeablePreviewModel);
+      state.placeablePreviewModel = null;
+      state.placeablePreviewType = null;
     },
   };
 }

@@ -23,7 +23,7 @@ import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationManager
-import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
+import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
@@ -116,7 +116,7 @@ class BlockPlacer(
         val itemType = intent.itemType
 
         val spawnedEntityType = ItemRegistry.get(itemType).spawnsEntity
-        if (spawnedEntityType != null && SiegeWeaponRegistry.get(spawnedEntityType) != null) {
+        if (spawnedEntityType != null && PlaceableRegistry.get(spawnedEntityType) != null) {
             handleSpawnPlaceable(session, rawPos, itemType, spawnedEntityType)
             return
         }

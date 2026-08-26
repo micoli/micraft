@@ -245,6 +245,8 @@ declare global {
     vehicleModelsReady: boolean;
     placeableBbmodels: Record<string, BbModel>;
     placeableModelsReady: boolean;
+    placeablePreviewModel: McPlayerModel | null;
+    placeablePreviewType: string | null;
     siegeProjectileBbmodels: Record<string, BbModel>;
     siegeProjectileModelsReady: boolean;
     skinConfigs: Record<string, McSkinConfig | null>;
@@ -508,6 +510,8 @@ declare global {
     createPlaceableModel(scene: Scene, placeableType: string): McPlayerModel | null;
     setPlaceableTransform(model: McPlayerModel, x: number, y: number, z: number, rotationStep: number): void;
     disposePlaceableModel(model: McPlayerModel): void;
+    showPlaceablePreview(scene: Scene, placeableType: string, x: number, y: number, z: number): void;
+    hidePlaceablePreview(): void;
     // Siege projectile
     initSiegeProjectileModels(projectileTypesJson: string): void;
     isSiegeProjectileModelsReady(): boolean;

@@ -114,6 +114,7 @@ import org.micoli.micraft.game.world.weather.WeatherConfig
 import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcState
+import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.placeable.siege.SiegeProjectileRegistry
 import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.player.ChannelSubscription
@@ -1022,6 +1023,7 @@ class GameLoop(
                         placesBlock = def.placesBlock?.id,
                         plainColor = def.plainColor,
                         consumable = def.healthRestore > 0 || def.manaRestore > 0,
+                        spawnsEntity = def.spawnsEntity?.id,
                     )
             }
         val plainColors = PlainColorRegistry.all().map { PlainColorInfo(it.name, it.hex()) }
@@ -1061,11 +1063,9 @@ class GameLoop(
                         speed = def.speed,
                     )
             }
-        // SiegeWeaponRegistry is the only placeable sub-system today — see PlaceableManager's
-        // kdoc for why placeable rendering metadata is sourced from it directly.
         val placeables =
-            SiegeWeaponRegistry.keys().associate { type ->
-                type.id to SiegeWeaponRegistry.get(type)!!.bbmodelFile
+            PlaceableRegistry.keys().associate { type ->
+                type.id to PlaceableRegistry.get(type)!!.bbmodelFile
             }
         val placeableDefinitions =
             SiegeWeaponRegistry.keys().associate { type ->

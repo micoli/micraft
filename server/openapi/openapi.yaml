@@ -6002,6 +6002,11 @@ components:
           - "null"
           - string
           title: String
+        spawnsEntity:
+          type:
+          - "null"
+          - string
+          title: String
       required:
       - buildable
       - consumable

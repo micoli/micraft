@@ -20,6 +20,7 @@ import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.EntityType
 import org.micoli.micraft.game.world.ItemDefinition
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
@@ -28,6 +29,8 @@ import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.rail.RailConnectionPoint
 import org.micoli.micraft.game.world.rail.RailDefinition
+import org.micoli.micraft.placeable.PlaceableDefinition
+import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
@@ -770,6 +773,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         },
                                     plainColor = info.plainColor,
                                     consumable = info.consumable,
+                                    spawnsEntity = info.spawnsEntity?.let { EntityType(it) },
                                 )
                         }
                     ItemRegistry.load(itemDefs)
@@ -787,8 +791,13 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         jsInitVehicleModels(Json.encodeToString(msg.vehicles))
                     if (msg.vehicleDefinitions.isNotEmpty())
                         jsSetVehicleDefinitions(Json.encodeToString(msg.vehicleDefinitions))
-                    if (msg.placeables.isNotEmpty())
+                    if (msg.placeables.isNotEmpty()) {
                         jsInitPlaceableModels(Json.encodeToString(msg.placeables))
+                        PlaceableRegistry.load(
+                            msg.placeables.entries.associate { (type, bbmodelFile) ->
+                                EntityType(type) to PlaceableDefinition(bbmodelFile)
+                            })
+                    }
                     if (msg.siegeProjectiles.isNotEmpty())
                         jsInitSiegeProjectileModels(Json.encodeToString(msg.siegeProjectiles))
                     if (msg.siegeWeaponDefinitions.isNotEmpty())
