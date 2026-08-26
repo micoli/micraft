@@ -34,6 +34,8 @@ declare global {
     visibility?: boolean;
     from: [number, number, number];
     to: [number, number, number];
+    origin?: [number, number, number];
+    rotation?: [number, number, number];
     box_uv?: boolean;
     uv_offset?: [number, number];
     faces: {

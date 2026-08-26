@@ -204,6 +204,7 @@ export function placeElements(
   textureDims: Array<{ width: number; height: number }>,
 ): void {
   const SCALE = BBMODEL_SCALE;
+  const DEG = Math.PI / 180;
   const W = bbmodel.resolution.width;
   const H = bbmodel.resolution.height;
   const mat = materials[0] ?? null;
@@ -241,9 +242,18 @@ export function placeElements(
     fixBoxTopBottomFaceUV(mesh, faceUVs[4], faceUVs[5]);
     if (mat) mesh.material = mat;
     mesh.isPickable = false;
-    const cx = ((fx + tx) / 2) * SCALE,
-      cy = ((fy + ty) / 2) * SCALE,
-      cz = ((fz + tz) / 2) * SCALE;
+    // Cube from/to are already absolute bbmodel-space corners; el.rotation (the non-destructive
+    // rotate tool) tilts the box around el.origin as pivot, not around the box's own center.
+    const rawCenter: [number, number, number] = [(fx + tx) / 2, (fy + ty) / 2, (fz + tz) / 2];
+    const [ox, oy, oz] = el.origin ?? [0, 0, 0];
+    const [px, py, pz] = el.rotation
+      ? applyElementPivot([rawCenter[0] - ox, rawCenter[1] - oy, rawCenter[2] - oz], [ox, oy, oz], el.rotation)
+      : rawCenter;
+    if (el.rotation)
+      mesh.rotation = new BABYLON.Vector3(el.rotation[0] * DEG, el.rotation[1] * DEG, el.rotation[2] * DEG);
+    const cx = px * SCALE,
+      cy = py * SCALE,
+      cz = pz * SCALE;
     if (pg) {
       mesh.parent = pg.node;
       mesh.position = new BABYLON.Vector3(

@@ -3,11 +3,13 @@ width: 2.0
 height: 1.5
 projectileType: BOULDER
 ammoItem: BOULDER
-muzzleOffset: {x: 0.0, y: 1.2, z: 0.8}
-launchPower: 12.0
+muzzleOffset: {x: 0.0, y: 4.2, z: 0.8}
+launchPower: 25.0
 launchPitchDeg: 45.0
+launchPitchDegMin: 15
+launchPitchDegMax: 80
 impactRadius: 3.0
 impactDamage: 25
 cooldownMs: 4000
-pitchStepRange: 10
+pitchStepRange: 15
 powerStepRange: 10
