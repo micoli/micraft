@@ -44,6 +44,14 @@
       "type": "number",
       "exclusiveMinimum": 0
     },
+    "launchPowerMin": {
+      "type": "number",
+      "minimum": 0
+    },
+    "launchPowerMax": {
+      "type": "number",
+      "minimum": 0
+    },
     "launchPitchDeg": {
       "type": "number"
     },

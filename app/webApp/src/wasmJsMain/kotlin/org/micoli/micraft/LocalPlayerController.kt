@@ -111,7 +111,6 @@ class LocalPlayerController(
     private val isVehicleTarget: (String) -> Boolean = { false },
     private val vehiclePositionOf: (String) -> Vec3? = { null },
     private val isPlaceableTarget: (String) -> Boolean = { false },
-    private val siegeWeaponPowerStepOf: (String) -> Int? = { null },
     // Reproduces server SiegeWeaponManager.computeMuzzleAndVelocity for the not-yet-fired
     // trajectory preview (Phase D) — returns null when the placeableId isn't a linked siege
     // weapon or its definition isn't known yet.
@@ -843,10 +842,8 @@ class LocalPlayerController(
                 }
                 event == "siege_weapon_power" -> {
                     val targetId = currentCombatTargetId ?: return@repeat
-                    if (isPlaceableTarget(targetId)) {
-                        val next = (siegeWeaponPowerStepOf(targetId) ?: 0) + 1
-                        outMessages.trySend(ClientMessage.SiegeWeaponSetPower(targetId, next))
-                    }
+                    if (isPlaceableTarget(targetId))
+                        outMessages.trySend(ClientMessage.SiegeWeaponNudgePower(targetId))
                 }
                 event == "siege_weapon_fire" -> {
                     val targetId = currentCombatTargetId ?: return@repeat

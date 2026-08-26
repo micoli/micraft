@@ -23,6 +23,13 @@ class SiegeWeaponInstance(val id: String, val placeableId: String, val type: Ent
      */
     var pitchDirection: Int = 1
 
+    /**
+     * Current nudge direction (+1/-1) for [SiegeWeaponManager.handleNudgePower] — same bounce
+     * behavior as [pitchDirection], flipping at [SiegeWeaponDefinition.launchPowerMin]/
+     * [SiegeWeaponDefinition.launchPowerMax].
+     */
+    var powerDirection: Int = 1
+
     fun toState(): SiegeWeaponState =
         SiegeWeaponState(
             id = id,
