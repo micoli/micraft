@@ -111,14 +111,18 @@ class SiegeWeaponManagerTest {
         val placeable = placeableManager.spawn(catapult, BlockPos(8, 7, 8), world)!!
         val manager = SiegeWeaponManager({})
         val weapon = manager.spawnFor(placeable)!!
+        val session = testSession()
 
         val steps = mutableListOf<Int>()
         repeat(6) {
-            manager.handleNudgePitch(weapon.id)
+            manager.handleNudgePitch(session, weapon.id)
             steps.add(manager.get(weapon.id)!!.pitchStep)
         }
 
         assertEquals(listOf(1, 2, 1, 0, -1, 0), steps)
+        val notifications = session.sent.filterIsInstance<ServerMessage.Notification>()
+        assertEquals(6, notifications.size)
+        assertEquals("Pitch: 45.0", notifications.last().message)
     }
 
     @Test
