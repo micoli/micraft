@@ -168,6 +168,14 @@ export function SiegeWeaponsTab({ selectedKey, onSelectKey }: SiegeWeaponsTabPro
                     />
                     <PropRow label={t("administration.siegeWeaponAmmoItem")} value={selected.def.ammoItem ?? "-"} />
                     <PropRow label={t("administration.siegeWeaponLaunchPower")} value={selected.def.launchPower} />
+                    <PropRow
+                      label={t("administration.siegeWeaponLaunchPowerMin")}
+                      value={selected.def.launchPowerMin}
+                    />
+                    <PropRow
+                      label={t("administration.siegeWeaponLaunchPowerMax")}
+                      value={selected.def.launchPowerMax}
+                    />
                     <PropRow label={t("administration.siegeWeaponLaunchPitch")} value={selected.def.launchPitchDeg} />
                     <PropRow
                       label={t("administration.siegeWeaponLaunchPitchMin")}

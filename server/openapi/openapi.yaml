@@ -3556,6 +3556,14 @@ components:
           type: number
           format: float
           title: Float
+        launchPowerMax:
+          type: number
+          format: float
+          title: Float
+        launchPowerMin:
+          type: number
+          format: float
+          title: Float
         muzzleOffset:
           $ref: "#/components/schemas/org.micoli.micraft.player.Vec3"
         pitchStepRange:
@@ -3583,6 +3591,8 @@ components:
       - launchPitchDegMax
       - launchPitchDegMin
       - launchPower
+      - launchPowerMax
+      - launchPowerMin
       - muzzleOffset
       - pitchStepRange
       - powerStepRange

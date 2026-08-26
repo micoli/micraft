@@ -120,6 +120,8 @@ class SiegeWeaponRegistryLoader(
                         ammoItem = entry.ammoItem.takeIf { it.isNotBlank() }?.let { ItemType(it) },
                         muzzleOffset = entry.muzzleOffset,
                         launchPower = entry.launchPower,
+                        launchPowerMin = entry.launchPowerMin,
+                        launchPowerMax = entry.launchPowerMax,
                         launchPitchDeg = entry.launchPitchDeg,
                         launchPitchDegMin = entry.launchPitchDegMin,
                         launchPitchDegMax = entry.launchPitchDegMax,

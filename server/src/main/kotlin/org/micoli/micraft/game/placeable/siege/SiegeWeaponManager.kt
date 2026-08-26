@@ -103,6 +103,24 @@ class SiegeWeaponManager(private val broadcast: suspend (ServerMessage) -> Unit)
         broadcast(ServerMessage.SiegeWeaponUpdate(instance.toState()))
     }
 
+    /**
+     * Advances the power step by one in [SiegeWeaponInstance.powerDirection] — the R-key relative
+     * nudge (as opposed to [handleSetPower]'s absolute set). Flips direction first whenever the
+     * next step would push `launchPower + powerStep` past `launchPowerMin`/`launchPowerMax`, so
+     * repeated presses bounce the power back and forth between the two bounds instead of sticking.
+     * Notifies [session] with the resulting current power.
+     */
+    suspend fun handleNudgePower(session: PlayerSession, id: String) {
+        val instance = weapons[id] ?: return
+        val def = SiegeWeaponRegistry.get(instance.type) ?: return
+        val nextPower = def.launchPower + instance.powerStep + instance.powerDirection
+        if (nextPower > def.launchPowerMax) instance.powerDirection = -1
+        else if (nextPower < def.launchPowerMin) instance.powerDirection = 1
+        instance.powerStep += instance.powerDirection
+        broadcast(ServerMessage.SiegeWeaponUpdate(instance.toState()))
+        session.send(ServerMessage.Notification("Power: ${def.launchPower + instance.powerStep}"))
+    }
+
     /** Replays every currently-spawned siege weapon to a newly-connected session. */
     suspend fun sendAllTo(session: PlayerSession) {
         for (instance in weapons.values) session.send(

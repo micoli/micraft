@@ -281,6 +281,8 @@ export const fr: Record<TranslationKey, string> = {
   "administration.siegeWeaponProjectileType": "Type de projectile",
   "administration.siegeWeaponAmmoItem": "Munition",
   "administration.siegeWeaponLaunchPower": "Puissance de tir",
+  "administration.siegeWeaponLaunchPowerMin": "Puissance de tir min",
+  "administration.siegeWeaponLaunchPowerMax": "Puissance de tir max",
   "administration.siegeWeaponLaunchPitch": "Angle de tir (deg)",
   "administration.siegeWeaponLaunchPitchMin": "Angle de tir min (deg)",
   "administration.siegeWeaponLaunchPitchMax": "Angle de tir max (deg)",

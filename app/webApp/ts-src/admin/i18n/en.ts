@@ -286,6 +286,8 @@ export const en = {
   "administration.siegeWeaponProjectileType": "Projectile type",
   "administration.siegeWeaponAmmoItem": "Ammo item",
   "administration.siegeWeaponLaunchPower": "Launch power",
+  "administration.siegeWeaponLaunchPowerMin": "Launch power min",
+  "administration.siegeWeaponLaunchPowerMax": "Launch power max",
   "administration.siegeWeaponLaunchPitch": "Launch pitch (deg)",
   "administration.siegeWeaponLaunchPitchMin": "Launch pitch min (deg)",
   "administration.siegeWeaponLaunchPitchMax": "Launch pitch max (deg)",

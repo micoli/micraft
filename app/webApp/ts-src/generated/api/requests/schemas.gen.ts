@@ -878,6 +878,16 @@ export const org_micoli_micraft_placeable_siege_SiegeWeaponDefinitionSchema = {
             format: 'float',
             title: 'Float'
         },
+        launchPowerMax: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        launchPowerMin: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
         muzzleOffset: {
             $ref: '#/components/schemas/org.micoli.micraft.player.Vec3'
         },
@@ -911,6 +921,8 @@ export const org_micoli_micraft_placeable_siege_SiegeWeaponDefinitionSchema = {
         'launchPitchDegMax',
         'launchPitchDegMin',
         'launchPower',
+        'launchPowerMax',
+        'launchPowerMin',
         'muzzleOffset',
         'pitchStepRange',
         'powerStepRange',

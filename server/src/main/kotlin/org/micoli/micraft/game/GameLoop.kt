@@ -1727,6 +1727,10 @@ class GameLoop(
                                             siegeWeaponManager.getByPlaceableId(msg.id)?.let {
                                                 siegeWeaponManager.handleSetPower(it.id, msg.value)
                                             }
+                                        is ClientMessage.SiegeWeaponNudgePower ->
+                                            siegeWeaponManager.getByPlaceableId(msg.id)?.let {
+                                                siegeWeaponManager.handleNudgePower(session, it.id)
+                                            }
                                         is ClientMessage.SiegeWeaponFire ->
                                             siegeWeaponManager.fire(
                                                 session,

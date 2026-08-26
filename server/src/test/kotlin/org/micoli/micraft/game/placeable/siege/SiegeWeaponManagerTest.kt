@@ -45,7 +45,9 @@ class SiegeWeaponManagerTest {
                             launchPower = 10f,
                             launchPitchDeg = 45f,
                             launchPitchDegMin = 44f,
-                            launchPitchDegMax = 47f)))
+                            launchPitchDegMax = 47f,
+                            launchPowerMin = 9f,
+                            launchPowerMax = 12f)))
     }
 
     @AfterTest
@@ -132,6 +134,28 @@ class SiegeWeaponManagerTest {
 
         manager.handleSetPower(weapon.id, 999)
         assertEquals(8, manager.get(weapon.id)?.powerStep)
+    }
+
+    @Test
+    fun handleNudgePower_bouncesBetweenPowerBounds() = runBlocking {
+        // launchPower=10, bounds [9,12] — same bounce shape as handleNudgePitch.
+        val world = testWorld(Triple(8, 6, 8))
+        val placeableManager = PlaceableManager({})
+        val placeable = placeableManager.spawn(catapult, BlockPos(8, 7, 8), world)!!
+        val manager = SiegeWeaponManager({})
+        val weapon = manager.spawnFor(placeable)!!
+        val session = testSession()
+
+        val steps = mutableListOf<Int>()
+        repeat(6) {
+            manager.handleNudgePower(session, weapon.id)
+            steps.add(manager.get(weapon.id)!!.powerStep)
+        }
+
+        assertEquals(listOf(1, 2, 1, 0, -1, 0), steps)
+        val notifications = session.sent.filterIsInstance<ServerMessage.Notification>()
+        assertEquals(6, notifications.size)
+        assertEquals("Power: 10.0", notifications.last().message)
     }
 
     @Test
