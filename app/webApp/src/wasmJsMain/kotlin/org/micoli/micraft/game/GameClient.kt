@@ -110,7 +110,6 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             isVehicleTarget = { id -> id in vehicleManager.modelsMap() },
             vehiclePositionOf = { id -> vehicleManager.positionsMap()[id] },
             isPlaceableTarget = { id -> id in placeableManager.modelsMap() },
-            siegeWeaponPitchStepOf = { id -> siegeWeaponManager.getByPlaceableId(id)?.pitchStep },
             siegeWeaponPowerStepOf = { id -> siegeWeaponManager.getByPlaceableId(id)?.powerStep },
             siegeWeaponMuzzleAndVelocityOf = ::siegeWeaponMuzzleAndVelocity,
         )

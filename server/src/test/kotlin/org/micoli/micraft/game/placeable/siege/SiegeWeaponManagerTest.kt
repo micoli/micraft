@@ -43,7 +43,9 @@ class SiegeWeaponManagerTest {
                             cooldownMs = 3000,
                             muzzleOffset = Vec3(0f, 1f, 2f),
                             launchPower = 10f,
-                            launchPitchDeg = 45f)))
+                            launchPitchDeg = 45f,
+                            launchPitchDegMin = 44f,
+                            launchPitchDegMax = 47f)))
     }
 
     @AfterTest
@@ -96,6 +98,25 @@ class SiegeWeaponManagerTest {
 
         manager.handleSetPitch(weapon.id, -10)
         assertEquals(0, manager.get(weapon.id)?.pitchStep)
+    }
+
+    @Test
+    fun handleNudgePitch_bouncesBetweenDegreeBounds() = runBlocking {
+        // launchPitchDeg=45, bounds [44,47] — nudging by 1 each call should climb to the top bound,
+        // reverse instead of overshooting, and keep bouncing back and forth indefinitely.
+        val world = testWorld(Triple(8, 6, 8))
+        val placeableManager = PlaceableManager({})
+        val placeable = placeableManager.spawn(catapult, BlockPos(8, 7, 8), world)!!
+        val manager = SiegeWeaponManager({})
+        val weapon = manager.spawnFor(placeable)!!
+
+        val steps = mutableListOf<Int>()
+        repeat(6) {
+            manager.handleNudgePitch(weapon.id)
+            steps.add(manager.get(weapon.id)!!.pitchStep)
+        }
+
+        assertEquals(listOf(1, 2, 1, 0, -1, 0), steps)
     }
 
     @Test

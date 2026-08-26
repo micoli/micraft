@@ -121,6 +121,8 @@ class SiegeWeaponRegistryLoader(
                         muzzleOffset = entry.muzzleOffset,
                         launchPower = entry.launchPower,
                         launchPitchDeg = entry.launchPitchDeg,
+                        launchPitchDegMin = entry.launchPitchDegMin,
+                        launchPitchDegMax = entry.launchPitchDegMax,
                         impactRadius = entry.impactRadius,
                         impactDamage = entry.impactDamage,
                         cooldownMs = entry.cooldownMs,

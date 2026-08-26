@@ -26,6 +26,8 @@ data class SiegeWeaponDefinition(
     val muzzleOffset: Vec3 = Vec3(0f, 1f, 0f),
     val launchPower: Float = 10f,
     val launchPitchDeg: Float = 45f,
+    val launchPitchDegMin: Float = 0f,
+    val launchPitchDegMax: Float = 90f,
     val impactRadius: Float = 3f,
     val impactDamage: Int = 20,
     val cooldownMs: Long = 3000,

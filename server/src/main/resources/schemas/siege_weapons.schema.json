@@ -47,6 +47,16 @@
     "launchPitchDeg": {
       "type": "number"
     },
+    "launchPitchDegMin": {
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90
+    },
+    "launchPitchDegMax": {
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90
+    },
     "impactRadius": {
       "type": "number",
       "exclusiveMinimum": 0

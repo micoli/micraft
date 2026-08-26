@@ -15,6 +15,14 @@ class SiegeWeaponInstance(val id: String, val placeableId: String, val type: Ent
     var powerStep: Int = 0
     var cooldownUntilMs: Long = 0
 
+    /**
+     * Current nudge direction (+1/-1) for [SiegeWeaponManager.handleNudgePitch] — flips whenever a
+     * nudge would push `launchPitchDeg + pitchStep` past [SiegeWeaponDefinition.launchPitchDegMin]/
+     * [SiegeWeaponDefinition.launchPitchDegMax], so repeated presses of the single pitch key bounce
+     * back and forth between the two bounds instead of sticking once clamped.
+     */
+    var pitchDirection: Int = 1
+
     fun toState(): SiegeWeaponState =
         SiegeWeaponState(
             id = id,

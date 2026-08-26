@@ -210,4 +210,11 @@ sealed class ClientMessage {
      * convention as [PlaceableRotate]/[SiegeWeaponSetPitch]/[SiegeWeaponSetPower].
      */
     @ProtoId(34) @Serializable data class SiegeWeaponFire(val weaponId: String) : ClientMessage()
+
+    /**
+     * Siege-specific: nudge the targeted weapon's pitch by one step in its current direction
+     * (server-owned; bounces between `launchPitchDegMin`/`launchPitchDegMax` — see
+     * `SiegeWeaponManager.handleNudgePitch`), same convention as [PlaceableRotate].
+     */
+    @ProtoId(35) @Serializable data class SiegeWeaponNudgePitch(val id: String) : ClientMessage()
 }

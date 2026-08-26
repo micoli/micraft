@@ -863,6 +863,16 @@ export const org_micoli_micraft_placeable_siege_SiegeWeaponDefinitionSchema = {
             format: 'float',
             title: 'Float'
         },
+        launchPitchDegMax: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        launchPitchDegMin: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
         launchPower: {
             type: 'number',
             format: 'float',
@@ -898,6 +908,8 @@ export const org_micoli_micraft_placeable_siege_SiegeWeaponDefinitionSchema = {
         'impactDamage',
         'impactRadius',
         'launchPitchDeg',
+        'launchPitchDegMax',
+        'launchPitchDegMin',
         'launchPower',
         'muzzleOffset',
         'pitchStepRange',
