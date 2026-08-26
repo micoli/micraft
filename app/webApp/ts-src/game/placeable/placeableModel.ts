@@ -65,7 +65,11 @@ export function registerPlaceableModel(): Pick<
       model.root.position.x = x;
       model.root.position.y = y;
       model.root.position.z = z;
-      model.root.rotation.y = (rotationStep * Math.PI) / 6; // 12 steps -> 30° increments
+      // Negated: BabylonJS's rotation.y turns the opposite way round from the yaw convention
+      // SiegeTrajectoryMath/SiegeWeaponManager.computeMuzzleAndVelocity use for the muzzle offset
+      // and launch velocity — without this the model visibly spins one way while its trajectory
+      // preview (and the real fired shot) goes out the other side.
+      model.root.rotation.y = -(rotationStep * Math.PI) / 6; // 12 steps -> 30° increments
       model.root.rotation.x = 0;
       model.root.rotation.z = 0;
     },
