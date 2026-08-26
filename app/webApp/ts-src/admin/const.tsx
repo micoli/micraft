@@ -12,6 +12,7 @@ import { CodexPage } from "./pages/codex/CodexPage";
 import { InstancesPage } from "./pages/instance/InstancesPage";
 import { ScenesPage } from "./pages/scene/ScenesPage";
 import { WorldSimulatorPage } from "./pages/worldSimulator/WorldSimulatorPage";
+import { AuctionsPage } from "./pages/auctions/AuctionsPage";
 
 export const ROUTES = [
   { path: "/admin", page: <StatusPage /> },
@@ -32,6 +33,7 @@ export const ROUTES = [
   { path: "/admin/scenes", page: <ScenesPage /> },
   { path: "/admin/scenes/:id", page: <ScenesPage /> },
   { path: "/admin/world-simulator", page: <WorldSimulatorPage /> },
+  { path: "/admin/auctions", page: <AuctionsPage /> },
 ];
 export interface NavItem {
   path: string;
@@ -68,6 +70,12 @@ export const NAV: NavItem[] = [
     labelKey: "nav.gameAssets",
     pageLabelKey: "page.gameAssets",
     icon: ICONS.gameAssets,
+  },
+  {
+    path: "/admin/auctions",
+    labelKey: "nav.auctions",
+    pageLabelKey: "page.auctions",
+    icon: ICONS.auctions,
   },
 ];
 

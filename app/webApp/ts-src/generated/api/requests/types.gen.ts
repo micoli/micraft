@@ -617,6 +617,72 @@ export type OrgMicoliMicraftPlayerVec3 = {
 };
 
 /**
+ * AuctionListing
+ */
+export type OrgMicoliMicraftProtocolAuctionListing = {
+    /**
+     * Long
+     */
+    buyNowPrice?: null | number;
+    /**
+     * Long
+     */
+    createdAtMs: number;
+    /**
+     * Long
+     */
+    currentBid?: null | number;
+    /**
+     * String
+     */
+    currentBidderId?: null | string;
+    /**
+     * String
+     */
+    currentBidderName?: null | string;
+    duration: OrgMicoliMicraftProtocolAuctionDuration;
+    /**
+     * Long
+     */
+    expiresAtMs: number;
+    /**
+     * String
+     */
+    id: string;
+    /**
+     * ItemType
+     */
+    itemType: string;
+    /**
+     * Int
+     */
+    quantity: number;
+    /**
+     * String
+     */
+    sellerId: string;
+    /**
+     * String
+     */
+    sellerName: string;
+    /**
+     * Long
+     */
+    startingPrice: number;
+    status: OrgMicoliMicraftProtocolAuctionStatus;
+};
+
+/**
+ * AuctionDuration
+ */
+export type OrgMicoliMicraftProtocolAuctionDuration = 'H12' | 'H24' | 'H48' | 'H96';
+
+/**
+ * AuctionStatus
+ */
+export type OrgMicoliMicraftProtocolAuctionStatus = 'ACTIVE' | 'SOLD' | 'EXPIRED' | 'CANCELLED';
+
+/**
  * GameAssetsController.AssetEntry
  */
 export type OrgMicoliMicraftHttpGameAssetsControllerAssetEntry = {
@@ -2621,6 +2687,10 @@ export type OrgMicoliMicraftProtocolItemInfo = {
      * String
      */
     plainColor?: null | string;
+    /**
+     * String
+     */
+    spawnsEntity?: null | string;
 };
 
 /**
@@ -3419,6 +3489,69 @@ export type GetApiSiegeWeaponsResponses = {
 };
 
 export type GetApiSiegeWeaponsResponse = GetApiSiegeWeaponsResponses[keyof GetApiSiegeWeaponsResponses];
+
+export type GetApiAdminAuctionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/auctions';
+};
+
+export type GetApiAdminAuctionsErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminAuctionsResponses = {
+    /**
+     * List<AuctionListing>
+     */
+    200: Array<OrgMicoliMicraftProtocolAuctionListing>;
+};
+
+export type GetApiAdminAuctionsResponse = GetApiAdminAuctionsResponses[keyof GetApiAdminAuctionsResponses];
+
+export type PostApiAdminAuctionsByIdForceCancelData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Listing id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/auctions/{id}/force-cancel';
+};
+
+export type PostApiAdminAuctionsByIdForceCancelErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Listing not found or already terminal
+     */
+    404: unknown;
+};
+
+export type PostApiAdminAuctionsByIdForceCancelResponses = {
+    /**
+     * Cancelled
+     */
+    200: unknown;
+};
 
 export type GetApiGameAssetsData = {
     body?: never;

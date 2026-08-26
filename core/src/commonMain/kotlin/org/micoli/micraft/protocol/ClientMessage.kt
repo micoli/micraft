@@ -224,4 +224,24 @@ sealed class ClientMessage {
      * `SiegeWeaponManager.handleNudgePower`), same convention as [SiegeWeaponNudgePitch].
      */
     @ProtoId(36) @Serializable data class SiegeWeaponNudgePower(val id: String) : ClientMessage()
+
+    @ProtoId(37)
+    @Serializable
+    data class AuctionCreateListing(
+        val itemType: ItemType,
+        val quantity: Int,
+        val duration: AuctionDuration,
+        val startingPrice: Long,
+        val buyNowPrice: Long? = null,
+    ) : ClientMessage()
+
+    @ProtoId(38)
+    @Serializable
+    data class AuctionPlaceBid(val listingId: String, val amount: Long) : ClientMessage()
+
+    @ProtoId(39) @Serializable data class AuctionBuyNow(val listingId: String) : ClientMessage()
+
+    @ProtoId(40)
+    @Serializable
+    data class AuctionCancelListing(val listingId: String) : ClientMessage()
 }

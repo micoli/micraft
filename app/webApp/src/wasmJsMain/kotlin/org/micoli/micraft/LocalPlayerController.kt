@@ -884,6 +884,24 @@ class LocalPlayerController(
                 event.startsWith("mail_claim:") ->
                     outMessages.trySend(
                         ClientMessage.ClaimMailAttachments(event.removePrefix("mail_claim:")))
+                event.startsWith("auction_create:") ->
+                    runCatching {
+                        outMessages.trySend(
+                            Json.decodeFromString<ClientMessage.AuctionCreateListing>(
+                                event.removePrefix("auction_create:")))
+                    }
+                event.startsWith("auction_bid:") ->
+                    runCatching {
+                        outMessages.trySend(
+                            Json.decodeFromString<ClientMessage.AuctionPlaceBid>(
+                                event.removePrefix("auction_bid:")))
+                    }
+                event.startsWith("auction_buynow:") ->
+                    outMessages.trySend(
+                        ClientMessage.AuctionBuyNow(event.removePrefix("auction_buynow:")))
+                event.startsWith("auction_cancel:") ->
+                    outMessages.trySend(
+                        ClientMessage.AuctionCancelListing(event.removePrefix("auction_cancel:")))
                 event.startsWith("attack:") -> {
                     val targetId = currentCombatTargetId ?: return@repeat
                     val rest = event.removePrefix("attack:")

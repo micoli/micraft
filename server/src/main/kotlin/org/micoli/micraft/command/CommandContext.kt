@@ -6,6 +6,7 @@ import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.armor.ArmorDefinition
+import org.micoli.micraft.game.auction.AuctionManager
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.equipment.ToolCategoryDefinition
@@ -64,6 +65,7 @@ data class CommandContext(
     val weaponCategories: () -> Map<EquipmentCategory, WeaponCategoryDefinition> = { emptyMap() },
     val toolCategories: () -> Map<EquipmentCategory, ToolCategoryDefinition> = { emptyMap() },
     val tradeManager: TradeManager? = null,
+    val auctionManager: AuctionManager? = null,
     val clearAccumulators: ((String) -> Unit)? = null,
     val sendStatusUpdate: (suspend (PlayerSession) -> Unit)? = null,
     val namedPoints: () -> Map<String, Vec3> = { emptyMap() },

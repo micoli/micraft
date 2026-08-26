@@ -92,6 +92,8 @@ const initial: UiState = {
   mailboxOpen: false,
   mails: [],
   adminZone: null,
+  auctionHouseOpen: false,
+  auctionListings: [],
 };
 
 export function GameUI() {
@@ -787,6 +789,17 @@ export function GameUI() {
     };
     window.mc.openMailbox = () => {
       dispatch("mailbox_open");
+    };
+    window.mc.openAuctionHouse = () => {
+      dispatch("auction_open");
+    };
+    window.mc.auctionListingsUpdate = (json: string) => {
+      try {
+        const msg = JSON.parse(json) as { listings: import("./types").AuctionListingData[] };
+        dispatch("auction_sync", { listings: msg.listings });
+      } catch (e) {
+        console.error("[auction] auctionListingsUpdate parse error:", e, "raw:", json);
+      }
     };
     window.mc.adminZoneWireframe = (json: string) => {
       try {

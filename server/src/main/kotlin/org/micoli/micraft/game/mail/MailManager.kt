@@ -113,6 +113,43 @@ class MailManager(
             ServerMessage.Notification(i18n.t(lang, "mail:server:send_success", recipientName)))
     }
 
+    // No sender to debit — for system-driven credits (e.g. auction settlement) to a maybe-offline
+    // player.
+    suspend fun deliverSystemMail(
+        to: String,
+        subject: String,
+        body: String,
+        attachments: Map<ItemType, Int> = emptyMap(),
+        copperAmount: Long = 0L,
+    ) {
+        val mail =
+            MailMessage(
+                id = UUID.randomUUID().toString(),
+                from = "system",
+                to = to,
+                subject = subject.take(120),
+                body = body.take(4000),
+                attachments = attachments,
+                copperAmount = copperAmount,
+                sentAt = System.currentTimeMillis(),
+            )
+        persistence.addMail(to, mail)
+        val recipientSession =
+            sessionRegistry.all().firstOrNull {
+                it.state.name == to || it.state.name.sanitize() == to.sanitize()
+            }
+        if (recipientSession != null) {
+            recipientSession.send(ServerMessage.MailReceived(mail))
+            recipientSession.send(
+                ServerMessage.Notification(
+                    i18n.t(
+                        recipientSession.state.language,
+                        "mail:server:new_mail",
+                        "system",
+                        mail.subject)))
+        }
+    }
+
     suspend fun handleMarkSeen(session: PlayerSession, mailId: String) {
         val mails = persistence.loadMails(session.state.name)
         val mail = mails.firstOrNull { it.id == mailId } ?: return

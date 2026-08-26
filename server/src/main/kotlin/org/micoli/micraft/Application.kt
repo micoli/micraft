@@ -29,6 +29,7 @@ import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.di.AppModule
+import org.micoli.micraft.di.OptionalAuctionManager
 import org.micoli.micraft.di.OptionalAuthProvider
 import org.micoli.micraft.di.OptionalNoAuthAccountStore
 import org.micoli.micraft.di.OptionalTokenStore
@@ -96,6 +97,7 @@ import org.micoli.micraft.http.ArmorsController
 import org.micoli.micraft.http.AssetManifestController
 import org.micoli.micraft.http.AssetNotifyController
 import org.micoli.micraft.http.AttacksController
+import org.micoli.micraft.http.AuctionsController
 import org.micoli.micraft.http.AutocompleteController
 import org.micoli.micraft.http.BiomesController
 import org.micoli.micraft.http.CharacterController
@@ -286,6 +288,7 @@ fun Application.module() {
             spellProcessor = get<SpellProcessor>(),
             tradeConfigLoader = get<TradeConfigLoader>(),
             tradeManager = get<TradeManager>(),
+            auctionManager = get<OptionalAuctionManager>().value,
             blockBreaker = get<BlockBreaker>(),
             blockPlacer = get<BlockPlacer>(),
             movementProcessor = get<MovementProcessor>(),
@@ -381,6 +384,7 @@ fun Application.module() {
         WeaponsController(dataPath).register(this)
         ToolsController(dataPath).register(this)
         SiegeWeaponsController(dataPath).register(this)
+        AuctionsController(gameLoop, tokenStore).register(this)
         GameAssetsController().register(this)
         QuestsController(questManager).register(this)
         PlayersController(gameLoop.getMailManager()).register(this)

@@ -28,6 +28,9 @@ import org.micoli.micraft.di.ReloadCoordinator
 import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.armor.ArmorRegistryLoader
+import org.micoli.micraft.game.auction.AuctionConfigLoader
+import org.micoli.micraft.game.auction.AuctionManager
+import org.micoli.micraft.game.auction.AuctionPersistence
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.classes.ClassesConfig
@@ -428,6 +431,20 @@ class GameLoop(
             savePlayer = playerPersister::save,
             maxDistance = tradeConfigLoader.load().maxDistance,
         ),
+    private val auctionConfigLoader: AuctionConfigLoader =
+        AuctionConfigLoader(Path.of("data/config/auction.yaml")),
+    private val auctionManager: AuctionManager? =
+        persistence?.worldDir?.let { worldDir ->
+            AuctionManager(
+                getSessions = sessionRegistry::all,
+                i18n = i18n,
+                savePlayer = playerPersister::save,
+                persistence = AuctionPersistence(worldDir),
+                mailManager = null,
+                config = auctionConfigLoader.load(),
+                broadcast = sessionRegistry::broadcast,
+            )
+        },
     private val blockBreaker: BlockBreaker =
         BlockBreaker(
             world,
@@ -622,6 +639,7 @@ class GameLoop(
             weaponCategories = closures.weaponCategories,
             toolCategories = closures.toolCategories,
             tradeManager = tradeManager,
+            auctionManager = auctionManager,
             questManager = questManager,
             clearAccumulators = regenProcessor::clearAccumulators,
             applyBuff = closures.applyBuff,
@@ -744,6 +762,8 @@ class GameLoop(
     fun getNpcManager() = npcManager
 
     fun getMailManager() = mailManager
+
+    fun getAuctionManager() = auctionManager
 
     fun getWorldItemCount(): Int = worldItems.itemCount()
 
@@ -1382,6 +1402,7 @@ class GameLoop(
         tickProfiler.measure("vegetation") {
             vegetationManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
         }
+        tickProfiler.measure("auction") { auctionManager?.tick() }
         targetDistanceTickCounter++
         if (targetDistanceTickCounter >= TARGET_DISTANCE_REFRESH_TICKS) {
             targetDistanceTickCounter = 0
@@ -1764,6 +1785,21 @@ class GameLoop(
                                             mailManager?.handleDelete(session, msg.mailId)
                                         is ClientMessage.ClaimMailAttachments ->
                                             mailManager?.handleClaimAttachments(session, msg.mailId)
+                                        is ClientMessage.AuctionCreateListing ->
+                                            auctionManager?.createListing(
+                                                session,
+                                                msg.itemType,
+                                                msg.quantity,
+                                                msg.duration,
+                                                msg.startingPrice,
+                                                msg.buyNowPrice)
+                                        is ClientMessage.AuctionPlaceBid ->
+                                            auctionManager?.placeBid(
+                                                session, msg.listingId, msg.amount)
+                                        is ClientMessage.AuctionBuyNow ->
+                                            auctionManager?.buyNow(session, msg.listingId)
+                                        is ClientMessage.AuctionCancelListing ->
+                                            auctionManager?.cancel(session, msg.listingId)
                                         is ClientMessage.CreativeCameraFocus -> {
                                             if (session.state.editMode == EditMode.CREATIVE) {
                                                 session.creativeFocusPos = msg.x to msg.z

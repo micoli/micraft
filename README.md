@@ -236,6 +236,7 @@ stateDiagram-v2
 
 | Command | Usage | Description | Options / Autocomplete |
 |---------|-------|-------------|------------------------|
+| `/auction` | `/auction` | Opens the auction house. | — |
 | `/buff` | `/buff <hp\|mana\|hpregen\|manaregen>` | Apply a temporary buff to yourself. | hp, mana, hpregen, manaregen |
 | `/character` | `/character` | Show your RPG character sheet | — |
 | `/codex` | `/codex` | Opens the codex (blocks, items, bestiary). | — |
@@ -334,6 +335,8 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 
 | Method | Path | Description |
 |--------|------|-------------|
+| GET | `/api/admin/auctions` | List all auction listings, any status |
+| POST | `/api/admin/auctions/{id}/force-cancel` | Force-cancels a listing: returns the item to the seller and refunds the highest bidder, no tax |
 | GET | `/api/admin/blocks` | All registered block definitions |
 | GET | `/api/admin/chunks/discovered` | All chunk coordinates generated so far (in-memory ∪ persisted) |
 | GET | `/api/admin/classes` | RPG class definitions, keyed by class name |

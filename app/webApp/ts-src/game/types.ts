@@ -90,6 +90,23 @@ export interface MailData {
   attachmentsClaimed: boolean;
 }
 
+export interface AuctionListingData {
+  id: string;
+  sellerId: string;
+  sellerName: string;
+  itemType: string;
+  quantity: number;
+  createdAtMs: number;
+  expiresAtMs: number;
+  duration: "H12" | "H24" | "H48" | "H96";
+  startingPrice: number;
+  buyNowPrice: number | null;
+  currentBid: number | null;
+  currentBidderId: string | null;
+  currentBidderName: string | null;
+  status: "ACTIVE" | "SOLD" | "EXPIRED" | "CANCELLED";
+}
+
 export interface InstanceZoneData {
   id: string;
   name: string;

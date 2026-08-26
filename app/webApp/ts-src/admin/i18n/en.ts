@@ -30,6 +30,7 @@ export const en = {
   "nav.instances": "Instances",
   "nav.scenes": "Scenes",
   "nav.worldSimulator": "World simulator",
+  "nav.auctions": "Auctions",
 
   "page.status": "Server Status",
   "page.users": "Users",
@@ -43,6 +44,7 @@ export const en = {
   "page.instances": "Instances",
   "page.scenes": "Scene Editor",
   "page.worldSimulator": "World simulator",
+  "page.auctions": "Auction House",
 
   // ── Shared ──────────────────────────────────────────────────────────────────
   "common.loading": "Loading…",

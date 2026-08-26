@@ -959,6 +959,119 @@ export const org_micoli_micraft_player_Vec3Schema = {
     title: 'Vec3'
 } as const;
 
+export const org_micoli_micraft_protocol_AuctionListingSchema = {
+    type: 'object',
+    properties: {
+        buyNowPrice: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int64',
+            title: 'Long'
+        },
+        createdAtMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        currentBid: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int64',
+            title: 'Long'
+        },
+        currentBidderId: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        currentBidderName: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        duration: {
+            $ref: '#/components/schemas/org.micoli.micraft.protocol.AuctionDuration'
+        },
+        expiresAtMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        id: {
+            type: 'string',
+            title: 'String'
+        },
+        itemType: {
+            type: 'string',
+            title: 'ItemType'
+        },
+        quantity: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        sellerId: {
+            type: 'string',
+            title: 'String'
+        },
+        sellerName: {
+            type: 'string',
+            title: 'String'
+        },
+        startingPrice: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        status: {
+            $ref: '#/components/schemas/org.micoli.micraft.protocol.AuctionStatus'
+        }
+    },
+    required: [
+        'createdAtMs',
+        'duration',
+        'expiresAtMs',
+        'id',
+        'itemType',
+        'quantity',
+        'sellerId',
+        'sellerName',
+        'startingPrice',
+        'status'
+    ],
+    title: 'AuctionListing'
+} as const;
+
+export const org_micoli_micraft_protocol_AuctionDurationSchema = {
+    type: 'string',
+    enum: [
+        'H12',
+        'H24',
+        'H48',
+        'H96'
+    ],
+    title: 'AuctionDuration'
+} as const;
+
+export const org_micoli_micraft_protocol_AuctionStatusSchema = {
+    type: 'string',
+    enum: [
+        'ACTIVE',
+        'SOLD',
+        'EXPIRED',
+        'CANCELLED'
+    ],
+    title: 'AuctionStatus'
+} as const;
+
 export const org_micoli_micraft_http_GameAssetsController_AssetEntrySchema = {
     type: 'object',
     properties: {
@@ -4172,6 +4285,13 @@ export const org_micoli_micraft_protocol_ItemInfoSchema = {
             title: 'String'
         },
         plainColor: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        spawnsEntity: {
             type: [
                 'null',
                 'string'
