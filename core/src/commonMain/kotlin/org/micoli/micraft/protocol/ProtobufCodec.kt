@@ -219,6 +219,7 @@ object ClientMessageCodec {
             clientEntry<ClientMessage.SiegeWeaponSetPitch>(), // 32
             clientEntry<ClientMessage.SiegeWeaponSetPower>(), // 33
             clientEntry<ClientMessage.SiegeWeaponFire>(), // 34
+            clientEntry<ClientMessage.SiegeWeaponNudgePitch>(), // 35
         )
 
     fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)
