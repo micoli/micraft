@@ -291,42 +291,48 @@ export function GameScreen() {
               playerStatus={state.playerStatus ?? undefined}
             />
           )}
-          <Inventory
-            inventory={state.inventory}
-            itemMeta={state.itemMeta}
-            visible={state.hotbarVisible}
-            layoutStyle={widgetStyle(activeLayout, "INVENTORY")}
-            preferences={state.preferences}
-            onSortChange={handleInventorySortChange}
-            wallet={state.wallet}
-          />
-          <ServerLog
-            logs={state.logs}
-            visible={state.logVisible || state.consoleOpen}
-            subscribedChannels={state.subscribedChannels}
-            activeChannel={state.activeChannel}
-            unreadChannels={state.unreadChannels}
-            onChannelSelect={(ch) => {
-              dispatch("active_channel_select", { channel: ch });
-              window.mcState.activeChannel = ch;
-            }}
-            layoutStyle={widgetStyle(activeLayout, "CHAT_HISTORY")}
-          />
-          <CreativeBlockPanel
-            visible={state.editMode === "creative"}
-            selectedItem={creativeSelectedItem}
-            onSelectItem={(item) => {
-              setCreativeSelectedItemState(item);
-              setCreativeSelectedItem(item);
-              setCreativeSelectedSceneIdState(null);
-            }}
-            selectedSceneId={creativeSelectedSceneId}
-            onSelectScene={(scene) => {
-              setCreativeSelectedSceneIdState(scene ? scene.id : null);
-              setCreativeSelectedScene(scene);
-              if (scene) setCreativeSelectedItemState(null);
-            }}
-          />
+          {state.hotbarVisible && (
+            <Inventory
+              inventory={state.inventory}
+              itemMeta={state.itemMeta}
+              visible={state.hotbarVisible}
+              layoutStyle={widgetStyle(activeLayout, "INVENTORY")}
+              preferences={state.preferences}
+              onSortChange={handleInventorySortChange}
+              wallet={state.wallet}
+            />
+          )}
+          {(state.logVisible || state.consoleOpen) && (
+            <ServerLog
+              logs={state.logs}
+              visible={state.logVisible || state.consoleOpen}
+              subscribedChannels={state.subscribedChannels}
+              activeChannel={state.activeChannel}
+              unreadChannels={state.unreadChannels}
+              onChannelSelect={(ch) => {
+                dispatch("active_channel_select", { channel: ch });
+                window.mcState.activeChannel = ch;
+              }}
+              layoutStyle={widgetStyle(activeLayout, "CHAT_HISTORY")}
+            />
+          )}
+          {state.editMode === "creative" && (
+            <CreativeBlockPanel
+              visible={state.editMode === "creative"}
+              selectedItem={creativeSelectedItem}
+              onSelectItem={(item) => {
+                setCreativeSelectedItemState(item);
+                setCreativeSelectedItem(item);
+                setCreativeSelectedSceneIdState(null);
+              }}
+              selectedSceneId={creativeSelectedSceneId}
+              onSelectScene={(scene) => {
+                setCreativeSelectedSceneIdState(scene ? scene.id : null);
+                setCreativeSelectedScene(scene);
+                if (scene) setCreativeSelectedItemState(null);
+              }}
+            />
+          )}
           <Notifications notif={state.notif?.msg ? state.notif : null} />
           {state.healthBarVisible && state.playerStatus && (
             <PlayerStatusBar
@@ -346,270 +352,297 @@ export function GameScreen() {
           )}
           <XpBar layoutStyle={widgetStyle(activeLayout, "XP_BAR")} />
           {state.playerDowned && <PlayerDownedOverlay />}
-          <Console
-            open={state.consoleOpen}
-            onClose={() => dispatch("console_hide")}
-            submittedRef={consoleSubmittedRef}
-            stateRef={consoleStateRef}
-            initialValueRef={consoleInitialValueRef}
-            focusRef={consoleFocusRef}
-            layoutStyle={widgetStyle(activeLayout, "INPUT_BOX")}
-          />
-          <LayoutEditor
-            open={state.layoutEditorOpen}
-            layouts={state.layouts}
-            activeLayout={state.activeLayout}
-            onSave={handleLayoutSave}
-            onClose={() => dispatch("layout_editor_hide")}
-          />
-          {state.npcDialog?.type === "seller" ? (
-            <NpcShopDialog
-              data={state.npcDialog}
-              wallet={state.wallet}
-              itemMeta={state.itemMeta}
-              inventory={state.inventory}
-              onClose={() => dispatch("npc_dialog_close")}
-              onBuy={(npcId, orders) => {
-                for (const { itemType, qty } of orders)
-                  window.mcState.events.push(`cmd:/npcbuy ${npcId} ${itemType} ${qty}`);
-              }}
-              onSell={(npcId, orders) => {
-                for (const { itemType, qty } of orders)
-                  window.mcState.events.push(`cmd:/npcsell ${npcId} ${itemType} ${qty}`);
+          {state.consoleOpen && (
+            <Console
+              open={state.consoleOpen}
+              onClose={() => dispatch("console_hide")}
+              submittedRef={consoleSubmittedRef}
+              stateRef={consoleStateRef}
+              initialValueRef={consoleInitialValueRef}
+              focusRef={consoleFocusRef}
+              layoutStyle={widgetStyle(activeLayout, "INPUT_BOX")}
+            />
+          )}
+          {state.layoutEditorOpen && (
+            <LayoutEditor
+              open={state.layoutEditorOpen}
+              layouts={state.layouts}
+              activeLayout={state.activeLayout}
+              onSave={handleLayoutSave}
+              onClose={() => dispatch("layout_editor_hide")}
+            />
+          )}
+          {state.npcDialog &&
+            (state.npcDialog?.type === "seller" ? (
+              <NpcShopDialog
+                data={state.npcDialog}
+                wallet={state.wallet}
+                itemMeta={state.itemMeta}
+                inventory={state.inventory}
+                onClose={() => dispatch("npc_dialog_close")}
+                onBuy={(npcId, orders) => {
+                  for (const { itemType, qty } of orders)
+                    window.mcState.events.push(`cmd:/npcbuy ${npcId} ${itemType} ${qty}`);
+                }}
+                onSell={(npcId, orders) => {
+                  for (const { itemType, qty } of orders)
+                    window.mcState.events.push(`cmd:/npcsell ${npcId} ${itemType} ${qty}`);
+                }}
+              />
+            ) : (
+              <NpcDialog data={state.npcDialog} onClose={() => dispatch("npc_dialog_close")} />
+            ))}
+          {state.codexOpen && (
+            <CodexModal
+              open={state.codexOpen}
+              onClose={() => {
+                dispatch("codex_close");
+                resumePointerLock();
               }}
             />
-          ) : (
-            <NpcDialog data={state.npcDialog} onClose={() => dispatch("npc_dialog_close")} />
           )}
-          <CodexModal
-            open={state.codexOpen}
-            onClose={() => {
-              dispatch("codex_close");
-              resumePointerLock();
-            }}
-          />
-          <Craft
-            open={state.craftOpen}
-            onClose={() => {
-              dispatch("craft_close");
-              resumePointerLock();
-            }}
-            recipes={state.craftRecipes}
-            knownRecipes={state.craftKnownRecipes}
-            inventory={state.inventory}
-            itemMeta={state.itemMeta}
-            onCommand={(cmd) => {
-              consoleSubmittedRef.current = cmd;
-            }}
-          />
-          <Trade
-            open={state.trade !== null}
-            tradeId={state.trade?.tradeId ?? null}
-            otherPlayer={state.trade?.otherPlayer ?? ""}
-            myOffer={state.trade?.myOffer ?? {}}
-            theirOffer={state.trade?.theirOffer ?? {}}
-            myAccepted={state.trade?.myAccepted ?? false}
-            theirAccepted={state.trade?.theirAccepted ?? false}
-            inventory={state.inventory}
-            itemMeta={state.itemMeta}
-            onClose={(tradeId) => {
-              if (tradeId) consoleSubmittedRef.current = `/tradecancel ${tradeId}`;
-              dispatch("trade_close");
-              resumePointerLock();
-            }}
-            onAccept={(tradeId) => {
-              consoleSubmittedRef.current = `/tradeaccept ${tradeId}`;
-            }}
-            onOffer={(tradeId, offer) => {
-              consoleSubmittedRef.current = `/tradeoffer ${tradeId} ${JSON.stringify(offer)}`;
-            }}
-          />
-          <Character
-            open={state.characterOpen}
-            characterSyncData={state.characterSyncData}
-            attackMeta={filteredAttackMeta}
-            spellMeta={state.spellMeta}
-            onClose={() => {
-              dispatch("character_close");
-              resumePointerLock();
-            }}
-            onCommand={(cmd) => {
-              consoleSubmittedRef.current = cmd;
-            }}
-          />
-          <Preferences
-            open={state.preferencesOpen}
-            preferences={state.preferences}
-            initialTab={state.preferencesTab}
-            fullMeshedChunks={state.hud?.fullMeshedChunks ?? 0}
-            impostorMeshedChunks={state.hud?.impostorMeshedChunks ?? 0}
-            onLiveOverride={setPendingPrefs}
-            onSave={handlePreferencesSave}
-            onClose={() => {
-              dispatch("preferences_hide");
-              resumePointerLock();
-            }}
-          />
-          <PauseMenu
-            open={state.pauseMenuOpen}
-            onClose={() => {
-              dispatch("pause_menu_hide");
-              resumePointerLock();
-            }}
-            items={[
-              {
-                icon: "🛠",
-                label: "Craft",
-                callback: () => {
-                  dispatch("pause_menu_hide");
-                  dispatch("craft_open");
+          {state.craftOpen && (
+            <Craft
+              open={state.craftOpen}
+              onClose={() => {
+                dispatch("craft_close");
+                resumePointerLock();
+              }}
+              recipes={state.craftRecipes}
+              knownRecipes={state.craftKnownRecipes}
+              inventory={state.inventory}
+              itemMeta={state.itemMeta}
+              onCommand={(cmd) => {
+                consoleSubmittedRef.current = cmd;
+              }}
+            />
+          )}
+          {state.trade !== null && (
+            <Trade
+              open={state.trade !== null}
+              tradeId={state.trade?.tradeId ?? null}
+              otherPlayer={state.trade?.otherPlayer ?? ""}
+              myOffer={state.trade?.myOffer ?? {}}
+              theirOffer={state.trade?.theirOffer ?? {}}
+              myAccepted={state.trade?.myAccepted ?? false}
+              theirAccepted={state.trade?.theirAccepted ?? false}
+              inventory={state.inventory}
+              itemMeta={state.itemMeta}
+              onClose={(tradeId) => {
+                if (tradeId) consoleSubmittedRef.current = `/tradecancel ${tradeId}`;
+                dispatch("trade_close");
+                resumePointerLock();
+              }}
+              onAccept={(tradeId) => {
+                consoleSubmittedRef.current = `/tradeaccept ${tradeId}`;
+              }}
+              onOffer={(tradeId, offer) => {
+                consoleSubmittedRef.current = `/tradeoffer ${tradeId} ${JSON.stringify(offer)}`;
+              }}
+            />
+          )}
+          {state.characterOpen && (
+            <Character
+              open={state.characterOpen}
+              characterSyncData={state.characterSyncData}
+              attackMeta={filteredAttackMeta}
+              spellMeta={state.spellMeta}
+              onClose={() => {
+                dispatch("character_close");
+                resumePointerLock();
+              }}
+              onCommand={(cmd) => {
+                consoleSubmittedRef.current = cmd;
+              }}
+            />
+          )}
+          {state.preferencesOpen && (
+            <Preferences
+              open={state.preferencesOpen}
+              preferences={state.preferences}
+              initialTab={state.preferencesTab}
+              fullMeshedChunks={state.hud?.fullMeshedChunks ?? 0}
+              impostorMeshedChunks={state.hud?.impostorMeshedChunks ?? 0}
+              onLiveOverride={setPendingPrefs}
+              onSave={handlePreferencesSave}
+              onClose={() => {
+                dispatch("preferences_hide");
+                resumePointerLock();
+              }}
+            />
+          )}
+          {state.pauseMenuOpen && (
+            <PauseMenu
+              open={state.pauseMenuOpen}
+              onClose={() => {
+                dispatch("pause_menu_hide");
+                resumePointerLock();
+              }}
+              items={[
+                {
+                  icon: "🛠",
+                  label: "Craft",
+                  callback: () => {
+                    dispatch("pause_menu_hide");
+                    dispatch("craft_open");
+                  },
                 },
-              },
-              {
-                icon: "📚",
-                label: "Quests",
-                callback: () => {
-                  dispatch("pause_menu_hide");
-                  dispatch("quest_journal_open");
+                {
+                  icon: "📚",
+                  label: "Quests",
+                  callback: () => {
+                    dispatch("pause_menu_hide");
+                    dispatch("quest_journal_open");
+                  },
                 },
-              },
-              {
-                icon: "✉",
-                label:
-                  state.mails.filter((m) => !m.seen).length > 0
-                    ? `Mail (${state.mails.filter((m) => !m.seen).length})`
-                    : "Mail",
-                callback: () => {
-                  dispatch("pause_menu_hide");
-                  dispatch("mailbox_open");
+                {
+                  icon: "✉",
+                  label:
+                    state.mails.filter((m) => !m.seen).length > 0
+                      ? `Mail (${state.mails.filter((m) => !m.seen).length})`
+                      : "Mail",
+                  callback: () => {
+                    dispatch("pause_menu_hide");
+                    dispatch("mailbox_open");
+                  },
                 },
-              },
-              {
-                icon: "🎭",
-                label: "Character",
-                callback: () => {
-                  dispatch("pause_menu_hide");
-                  dispatch("character_open");
+                {
+                  icon: "🎭",
+                  label: "Character",
+                  callback: () => {
+                    dispatch("pause_menu_hide");
+                    dispatch("character_open");
+                  },
                 },
-              },
-              {
-                icon: "📓",
-                label: "Codex",
-                callback: () => {
-                  dispatch("pause_menu_hide");
-                  dispatch("codex_open");
+                {
+                  icon: "📓",
+                  label: "Codex",
+                  callback: () => {
+                    dispatch("pause_menu_hide");
+                    dispatch("codex_open");
+                  },
                 },
-              },
-              {
-                icon: "🗺️",
-                label: "Map",
-                callback: () => {
-                  dispatch("pause_menu_hide");
-                  dispatch("ingame_map_toggle");
+                {
+                  icon: "🗺️",
+                  label: "Map",
+                  callback: () => {
+                    dispatch("pause_menu_hide");
+                    dispatch("ingame_map_toggle");
+                  },
                 },
-              },
-              {
-                icon: "💻",
-                label: "Macros",
-                callback: () => {
-                  dispatch("pause_menu_hide");
-                  dispatch("macro_editor_open");
+                {
+                  icon: "💻",
+                  label: "Macros",
+                  callback: () => {
+                    dispatch("pause_menu_hide");
+                    dispatch("macro_editor_open");
+                  },
                 },
-              },
-              {
-                icon: "¶",
-                label: "Preferences",
-                callback: () => {
-                  dispatch("pause_menu_hide");
-                  dispatch("preferences_show", undefined);
+                {
+                  icon: "¶",
+                  label: "Preferences",
+                  callback: () => {
+                    dispatch("pause_menu_hide");
+                    dispatch("preferences_show", undefined);
+                  },
                 },
-              },
-              {
-                icon: "🔄",
-                label: "Refresh",
-                variant: "outline",
-                callback: () => {
-                  window.location.reload();
+                {
+                  icon: "🔄",
+                  label: "Refresh",
+                  variant: "outline",
+                  callback: () => {
+                    window.location.reload();
+                  },
                 },
-              },
-              {
-                icon: "🚫",
-                label: "Disconnect",
-                variant: "danger",
-                callback: () => {
-                  window.mcState.intentionalDisconnect = true;
-                  consoleSubmittedRef.current = "/disconnect";
-                  dispatch("pause_menu_hide");
+                {
+                  icon: "🚫",
+                  label: "Disconnect",
+                  variant: "danger",
+                  callback: () => {
+                    window.mcState.intentionalDisconnect = true;
+                    consoleSubmittedRef.current = "/disconnect";
+                    dispatch("pause_menu_hide");
+                  },
                 },
-              },
-            ]}
-          />
-          <MacroEditor
-            open={state.macroEditorOpen}
-            macros={state.preferences?.macros ?? {}}
-            macroIcons={state.preferences?.macroIcons ?? {}}
-            customCommands={state.preferences?.customCommands ?? {}}
-            commands={state.preferences?.commands ?? []}
-            attackKeys={Object.keys(filteredAttackMeta)}
-            onSave={handleMacrosSave}
-            onClose={() => {
-              dispatch("macro_editor_close");
-              resumePointerLock();
-            }}
-          />
-          <QuestJournal
-            open={state.questJournalOpen}
-            quests={state.quests}
-            playerLevel={state.characterSyncData?.character?.level ?? 1}
-            onClose={() => {
-              dispatch("quest_journal_close");
-              resumePointerLock();
-            }}
-            onCommand={(cmd) => {
-              consoleSubmittedRef.current = cmd;
-            }}
-          />
-          <QuestTracker
-            visible={state.questTrackerVisible}
-            quests={state.quests}
-            layoutStyle={widgetStyle(activeLayout, "QUEST_TRACKER")}
-          />
-          <MailboxOverlay
-            open={state.mailboxOpen}
-            mails={state.mails}
-            inventory={state.inventory}
-            itemMeta={state.itemMeta}
-            wallet={state.wallet}
-            onClose={() => {
-              dispatch("mailbox_close");
-              resumePointerLock();
-            }}
-          />
-          <AuctionHouse
-            open={state.auctionHouseOpen}
-            listings={state.auctionListings}
-            myPlayerId={window.mcState.playerId}
-            inventory={state.inventory}
-            itemMeta={state.itemMeta}
-            onClose={() => {
-              dispatch("auction_close");
-              resumePointerLock();
-            }}
-            onBid={(listingId, amount) => {
-              window.mcState.events.push(`auction_bid:${JSON.stringify({ listingId, amount })}`);
-            }}
-            onBuyNow={(listingId) => {
-              window.mcState.events.push(`auction_buynow:${listingId}`);
-            }}
-            onCancel={(listingId) => {
-              window.mcState.events.push(`auction_cancel:${listingId}`);
-            }}
-            onCreateListing={(itemType, quantity, duration, startingPrice, buyNowPrice) => {
-              window.mcState.events.push(
-                `auction_create:${JSON.stringify({ itemType, quantity, duration, startingPrice, buyNowPrice })}`,
-              );
-            }}
-          />
+              ]}
+            />
+          )}
+          {state.macroEditorOpen && (
+            <MacroEditor
+              open={state.macroEditorOpen}
+              macros={state.preferences?.macros ?? {}}
+              macroIcons={state.preferences?.macroIcons ?? {}}
+              customCommands={state.preferences?.customCommands ?? {}}
+              commands={state.preferences?.commands ?? []}
+              attackKeys={Object.keys(filteredAttackMeta)}
+              onSave={handleMacrosSave}
+              onClose={() => {
+                dispatch("macro_editor_close");
+                resumePointerLock();
+              }}
+            />
+          )}
+          {state.questJournalOpen && (
+            <QuestJournal
+              open={state.questJournalOpen}
+              quests={state.quests}
+              playerLevel={state.characterSyncData?.character?.level ?? 1}
+              onClose={() => {
+                dispatch("quest_journal_close");
+                resumePointerLock();
+              }}
+              onCommand={(cmd) => {
+                consoleSubmittedRef.current = cmd;
+              }}
+            />
+          )}
+          {state.questTrackerVisible && (
+            <QuestTracker
+              visible={state.questTrackerVisible}
+              quests={state.quests}
+              layoutStyle={widgetStyle(activeLayout, "QUEST_TRACKER")}
+            />
+          )}
+          {state.mailboxOpen && (
+            <MailboxOverlay
+              open={state.mailboxOpen}
+              mails={state.mails}
+              inventory={state.inventory}
+              itemMeta={state.itemMeta}
+              wallet={state.wallet}
+              onClose={() => {
+                dispatch("mailbox_close");
+                resumePointerLock();
+              }}
+            />
+          )}
+          {state.auctionHouseOpen && (
+            <AuctionHouse
+              open={state.auctionHouseOpen}
+              listings={state.auctionListings}
+              myPlayerId={window.mcState.playerId}
+              inventory={state.inventory}
+              itemMeta={state.itemMeta}
+              onClose={() => {
+                dispatch("auction_close");
+                resumePointerLock();
+              }}
+              onBid={(listingId, amount) => {
+                window.mcState.events.push(`auction_bid:${JSON.stringify({ listingId, amount })}`);
+              }}
+              onBuyNow={(listingId) => {
+                window.mcState.events.push(`auction_buynow:${listingId}`);
+              }}
+              onCancel={(listingId) => {
+                window.mcState.events.push(`auction_cancel:${listingId}`);
+              }}
+              onCreateListing={(itemType, quantity, duration, startingPrice, buyNowPrice) => {
+                window.mcState.events.push(
+                  `auction_create:${JSON.stringify({ itemType, quantity, duration, startingPrice, buyNowPrice })}`,
+                );
+              }}
+            />
+          )}
         </>
       )}
       <LoadingOverlay progress={state.chunkLoading} />
