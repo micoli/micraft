@@ -253,6 +253,12 @@ fun jsMailDeleted(mailId: String): Unit = js("mc.mailDeleted(mailId)")
 
 fun jsOpenMailbox(): Unit = js("mc.openMailbox()")
 
+// ── Auction house ─────────────────────────────────────────────────────────────
+
+fun jsOpenAuctionHouse(): Unit = js("mc.openAuctionHouse()")
+
+fun jsAuctionListingsUpdate(json: String): Unit = js("mc.auctionListingsUpdate(json)")
+
 // ── Instance zones ────────────────────────────────────────────────────────────
 
 fun jsAdminZoneWireframe(json: String): Unit = js("mc.adminZoneWireframe(json)")

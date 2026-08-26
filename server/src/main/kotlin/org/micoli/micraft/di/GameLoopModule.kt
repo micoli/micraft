@@ -10,6 +10,9 @@ import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.armor.ArmorRegistryLoader
+import org.micoli.micraft.game.auction.AuctionConfigLoader
+import org.micoli.micraft.game.auction.AuctionManager
+import org.micoli.micraft.game.auction.AuctionPersistence
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.classes.ClassesConfig
@@ -31,6 +34,8 @@ import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryRegistryLoader
 import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.equipment.WeaponRegistryLoader
+import org.micoli.micraft.game.mail.MailManager
+import org.micoli.micraft.game.mail.MailPersistence
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcManager
@@ -500,6 +505,49 @@ class GameLoopModule {
             savePlayer = playerPersister::save,
             maxDistance = tradeConfigLoader.load().maxDistance,
         )
+
+    @Single
+    fun mailManager(
+        sessionRegistry: SessionRegistry,
+        i18nConfig: I18nConfig,
+        playerPersister: PlayerPersister,
+        optionalWorldPersistence: OptionalWorldPersistence,
+    ): OptionalMailManager =
+        OptionalMailManager(
+            optionalWorldPersistence.value?.worldDir?.resolve("players")?.let { playersDir ->
+                MailManager(
+                    persistence = MailPersistence(playersDir),
+                    sessionRegistry = sessionRegistry,
+                    i18n = i18nConfig,
+                    savePlayer = playerPersister::save,
+                )
+            })
+
+    @Single
+    fun auctionConfigLoader(): AuctionConfigLoader =
+        AuctionConfigLoader(Path.of("data/config/auction.yaml"))
+
+    @Single
+    fun auctionManager(
+        sessionRegistry: SessionRegistry,
+        i18nConfig: I18nConfig,
+        playerPersister: PlayerPersister,
+        optionalWorldPersistence: OptionalWorldPersistence,
+        optionalMailManager: OptionalMailManager,
+        auctionConfigLoader: AuctionConfigLoader,
+    ): OptionalAuctionManager =
+        OptionalAuctionManager(
+            optionalWorldPersistence.value?.worldDir?.let { worldDir ->
+                AuctionManager(
+                    getSessions = sessionRegistry::all,
+                    i18n = i18nConfig,
+                    savePlayer = playerPersister::save,
+                    persistence = AuctionPersistence(worldDir),
+                    mailManager = optionalMailManager.value,
+                    config = auctionConfigLoader.load(),
+                    broadcast = sessionRegistry::broadcast,
+                )
+            })
 
     @Single
     fun railNetworkRegistry(worldState: WorldState): RailNetworkRegistry =

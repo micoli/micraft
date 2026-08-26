@@ -38,4 +38,6 @@ export const ICONS = {
   snapVoxel: "M4 4h16v16H4zM4 12h16M12 4v16",
   snapHalf: "M4 4h16v16H4zM12 4v16",
   snapQuarter: "M4 4h16v16H4zM12 4v16M4 12h8",
+  auctions:
+    "M12 8c-3.5 0-6.5 1-6.5 2.5S8.5 13 12 13s6.5-1 6.5-2.5S15.5 8 12 8zM5.5 10.5V14c0 1.5 3 2.5 6.5 2.5s6.5-1 6.5-2.5v-3.5M3 21h6M3 21l1.5-6.5M9 21L7.5 14.5M21 21h-6M21 21l-1.5-6.5M15 21l1.5-6.5",
 };

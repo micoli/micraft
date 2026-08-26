@@ -462,6 +462,12 @@ sealed class ServerMessage {
     @Serializable
     data class SiegeProjectileImpact(val x: Float, val y: Float, val z: Float, val radius: Float) :
         ServerMessage()
+
+    @ProtoId(71) @Serializable object OpenAuctionHouse : ServerMessage()
+
+    @ProtoId(72)
+    @Serializable
+    data class AuctionListingsUpdate(val listings: List<AuctionListing>) : ServerMessage()
 }
 
 @Serializable

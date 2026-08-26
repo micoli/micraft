@@ -21,6 +21,7 @@ export type {
   OrgMicoliMicraftPlayerPlayerState as PlayerState,
   OrgMicoliMicraftGameWorldPlayerFile as PlayerFile,
   OrgMicoliMicraftProtocolBlockEntityProto as BlockEntityProtoDto,
+  OrgMicoliMicraftProtocolAuctionListing as AuctionListingDto,
 } from "../generated/api/requests/types.gen";
 
 // /api/map/terrain is documented as an opaque JSON string in the OpenAPI spec (it returns a

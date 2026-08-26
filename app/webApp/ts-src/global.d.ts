@@ -650,6 +650,8 @@ declare global {
     mailUpdate(json: string): void;
     mailDeleted(mailId: string): void;
     openMailbox(): void;
+    openAuctionHouse(): void;
+    auctionListingsUpdate(json: string): void;
     adminZoneWireframe(json: string): void;
     instanceZonesSync(json: string): void;
     scenesSync(json: string): void;

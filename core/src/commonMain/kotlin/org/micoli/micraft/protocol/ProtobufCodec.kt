@@ -174,6 +174,8 @@ object ServerMessageCodec {
             serverEntry<ServerMessage.SiegeProjectileSpawned>(), // 68
             serverEntry<ServerMessage.SiegeProjectileUpdate>(), // 69
             serverEntry<ServerMessage.SiegeProjectileImpact>(), // 70
+            serverSingleton(ServerMessage.OpenAuctionHouse), // 71
+            serverEntry<ServerMessage.AuctionListingsUpdate>(), // 72
         )
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)
@@ -221,6 +223,10 @@ object ClientMessageCodec {
             clientEntry<ClientMessage.SiegeWeaponFire>(), // 34
             clientEntry<ClientMessage.SiegeWeaponNudgePitch>(), // 35
             clientEntry<ClientMessage.SiegeWeaponNudgePower>(), // 36
+            clientEntry<ClientMessage.AuctionCreateListing>(), // 37
+            clientEntry<ClientMessage.AuctionPlaceBid>(), // 38
+            clientEntry<ClientMessage.AuctionBuyNow>(), // 39
+            clientEntry<ClientMessage.AuctionCancelListing>(), // 40
         )
 
     fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)

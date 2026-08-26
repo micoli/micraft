@@ -25,6 +25,7 @@ export const fr: Record<TranslationKey, string> = {
   "nav.instances": "Instances",
   "nav.scenes": "Scènes",
   "nav.worldSimulator": "Simulateur de monde",
+  "nav.auctions": "Enchères",
 
   "page.status": "État du serveur",
   "page.users": "Utilisateurs",
@@ -38,6 +39,7 @@ export const fr: Record<TranslationKey, string> = {
   "page.instances": "Instances",
   "page.scenes": "Éditeur de scène",
   "page.worldSimulator": "Simulateur de monde",
+  "page.auctions": "Hôtel des ventes",
 
   // ── Shared ──────────────────────────────────────────────────────────────────
   "common.loading": "Chargement…",

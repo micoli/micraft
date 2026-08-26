@@ -714,6 +714,57 @@ paths:
                   $ref: "#/components/schemas/org.micoli.micraft.placeable.siege.SiegeWeaponDefinition"
                 title: "Map<String,SiegeWeaponDefinition>"
       deprecated: false
+  /api/admin/auctions:
+    get:
+      tags: []
+      description: "List all auction listings, any status"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.protocol.AuctionListing"
+                title: List<AuctionListing>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/auctions/{id}/force-cancel:
+    post:
+      tags: []
+      description: "Force-cancels a listing: returns the item to the seller and refunds\
+        \ the highest bidder, no tax"
+      parameters:
+      - name: id
+        in: path
+        description: Listing id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          description: Cancelled
+          headers: {}
+        "404":
+          description: Listing not found or already terminal
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/game-assets:
     get:
       tags: []
@@ -3619,6 +3670,91 @@ components:
       - "y"
       - z
       title: Vec3
+    org.micoli.micraft.protocol.AuctionListing:
+      type: object
+      properties:
+        buyNowPrice:
+          type:
+          - "null"
+          - integer
+          format: int64
+          title: Long
+        createdAtMs:
+          type: integer
+          format: int64
+          title: Long
+        currentBid:
+          type:
+          - "null"
+          - integer
+          format: int64
+          title: Long
+        currentBidderId:
+          type:
+          - "null"
+          - string
+          title: String
+        currentBidderName:
+          type:
+          - "null"
+          - string
+          title: String
+        duration:
+          $ref: "#/components/schemas/org.micoli.micraft.protocol.AuctionDuration"
+        expiresAtMs:
+          type: integer
+          format: int64
+          title: Long
+        id:
+          type: string
+          title: String
+        itemType:
+          type: string
+          title: ItemType
+        quantity:
+          type: integer
+          format: int32
+          title: Int
+        sellerId:
+          type: string
+          title: String
+        sellerName:
+          type: string
+          title: String
+        startingPrice:
+          type: integer
+          format: int64
+          title: Long
+        status:
+          $ref: "#/components/schemas/org.micoli.micraft.protocol.AuctionStatus"
+      required:
+      - createdAtMs
+      - duration
+      - expiresAtMs
+      - id
+      - itemType
+      - quantity
+      - sellerId
+      - sellerName
+      - startingPrice
+      - status
+      title: AuctionListing
+    org.micoli.micraft.protocol.AuctionDuration:
+      type: string
+      enum:
+      - H12
+      - H24
+      - H48
+      - H96
+      title: AuctionDuration
+    org.micoli.micraft.protocol.AuctionStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - SOLD
+      - EXPIRED
+      - CANCELLED
+      title: AuctionStatus
     org.micoli.micraft.http.GameAssetsController.AssetEntry:
       type: object
       properties:

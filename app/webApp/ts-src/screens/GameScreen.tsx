@@ -35,6 +35,7 @@ import { QuestJournal } from "../game/components/quest/QuestJournal";
 import { QuestTracker } from "../game/components/quest/QuestTracker";
 import { BuffBar } from "../game/components/buffs/BuffBar";
 import { MailboxOverlay } from "../game/overlays/MailboxOverlay";
+import { AuctionHouse } from "../game/components/auction/AuctionHouse";
 import { CreativeBlockPanel } from "../game/components/CreativeBlockPanel";
 import { setCreativeSelectedItem, setCreativeSelectedScene } from "../game/lib/creativeMode";
 
@@ -582,6 +583,31 @@ export function GameScreen() {
             onClose={() => {
               dispatch("mailbox_close");
               resumePointerLock();
+            }}
+          />
+          <AuctionHouse
+            open={state.auctionHouseOpen}
+            listings={state.auctionListings}
+            myPlayerId={window.mcState.playerId}
+            inventory={state.inventory}
+            itemMeta={state.itemMeta}
+            onClose={() => {
+              dispatch("auction_close");
+              resumePointerLock();
+            }}
+            onBid={(listingId, amount) => {
+              window.mcState.events.push(`auction_bid:${JSON.stringify({ listingId, amount })}`);
+            }}
+            onBuyNow={(listingId) => {
+              window.mcState.events.push(`auction_buynow:${listingId}`);
+            }}
+            onCancel={(listingId) => {
+              window.mcState.events.push(`auction_cancel:${listingId}`);
+            }}
+            onCreateListing={(itemType, quantity, duration, startingPrice, buyNowPrice) => {
+              window.mcState.events.push(
+                `auction_create:${JSON.stringify({ itemType, quantity, duration, startingPrice, buyNowPrice })}`,
+              );
             }}
           />
         </>

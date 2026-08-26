@@ -8,6 +8,7 @@ import org.micoli.micraft.auth.LocalAuthProvider
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.armor.ArmorDefinition
+import org.micoli.micraft.game.auction.AuctionManager
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.equipment.ToolCategoryDefinition
@@ -267,6 +268,7 @@ fun testContext(
     authProvider: AuthProvider? = null,
     groupsConfig: GroupsConfig? = null,
     tradeManager: TradeManager? = null,
+    auctionManager: AuctionManager? = null,
     chatService: ChatService? = null,
     chatChannelManager: ChatChannelManager? = null,
     weatherManager: WeatherManager? = null,
@@ -300,6 +302,7 @@ fun testContext(
         authProvider = authProvider,
         groupsConfig = groupsConfig,
         tradeManager = tradeManager,
+        auctionManager = auctionManager,
         chatService = chatService,
         chatChannelManager = chatChannelManager,
         weatherManager = weatherManager,
