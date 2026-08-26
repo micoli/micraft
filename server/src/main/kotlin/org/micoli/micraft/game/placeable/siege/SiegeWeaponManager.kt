@@ -83,9 +83,10 @@ class SiegeWeaponManager(private val broadcast: suspend (ServerMessage) -> Unit)
      * nudge (as opposed to [handleSetPitch]'s absolute set). Flips direction first whenever the
      * next step would push `launchPitchDeg + pitchStep` past
      * `launchPitchDegMin`/`launchPitchDegMax`, so repeated presses bounce the pitch back and forth
-     * between the two bounds instead of sticking.
+     * between the two bounds instead of sticking. Notifies [session] with the resulting current
+     * pitch.
      */
-    suspend fun handleNudgePitch(id: String) {
+    suspend fun handleNudgePitch(session: PlayerSession, id: String) {
         val instance = weapons[id] ?: return
         val def = SiegeWeaponRegistry.get(instance.type) ?: return
         val nextAngle = def.launchPitchDeg + instance.pitchStep + instance.pitchDirection
@@ -93,6 +94,8 @@ class SiegeWeaponManager(private val broadcast: suspend (ServerMessage) -> Unit)
         else if (nextAngle < def.launchPitchDegMin) instance.pitchDirection = 1
         instance.pitchStep += instance.pitchDirection
         broadcast(ServerMessage.SiegeWeaponUpdate(instance.toState()))
+        session.send(
+            ServerMessage.Notification("Pitch: ${def.launchPitchDeg + instance.pitchStep}"))
     }
 
     /** Sets the absolute power step, clamped to the linked definition's `powerStepRange`. */

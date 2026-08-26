@@ -1721,7 +1721,7 @@ class GameLoop(
                                             }
                                         is ClientMessage.SiegeWeaponNudgePitch ->
                                             siegeWeaponManager.getByPlaceableId(msg.id)?.let {
-                                                siegeWeaponManager.handleNudgePitch(it.id)
+                                                siegeWeaponManager.handleNudgePitch(session, it.id)
                                             }
                                         is ClientMessage.SiegeWeaponSetPower ->
                                             siegeWeaponManager.getByPlaceableId(msg.id)?.let {
