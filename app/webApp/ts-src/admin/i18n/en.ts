@@ -287,6 +287,8 @@ export const en = {
   "administration.siegeWeaponAmmoItem": "Ammo item",
   "administration.siegeWeaponLaunchPower": "Launch power",
   "administration.siegeWeaponLaunchPitch": "Launch pitch (deg)",
+  "administration.siegeWeaponLaunchPitchMin": "Launch pitch min (deg)",
+  "administration.siegeWeaponLaunchPitchMax": "Launch pitch max (deg)",
   "administration.siegeWeaponImpactRadius": "Impact radius",
   "administration.siegeWeaponImpactDamage": "Impact damage",
   "administration.siegeWeaponCooldown": "Cooldown (ms)",

@@ -3544,6 +3544,14 @@ components:
           type: number
           format: float
           title: Float
+        launchPitchDegMax:
+          type: number
+          format: float
+          title: Float
+        launchPitchDegMin:
+          type: number
+          format: float
+          title: Float
         launchPower:
           type: number
           format: float
@@ -3572,6 +3580,8 @@ components:
       - impactDamage
       - impactRadius
       - launchPitchDeg
+      - launchPitchDegMax
+      - launchPitchDegMin
       - launchPower
       - muzzleOffset
       - pitchStepRange

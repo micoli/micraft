@@ -282,6 +282,8 @@ export const fr: Record<TranslationKey, string> = {
   "administration.siegeWeaponAmmoItem": "Munition",
   "administration.siegeWeaponLaunchPower": "Puissance de tir",
   "administration.siegeWeaponLaunchPitch": "Angle de tir (deg)",
+  "administration.siegeWeaponLaunchPitchMin": "Angle de tir min (deg)",
+  "administration.siegeWeaponLaunchPitchMax": "Angle de tir max (deg)",
   "administration.siegeWeaponImpactRadius": "Rayon d'impact",
   "administration.siegeWeaponImpactDamage": "Dégâts d'impact",
   "administration.siegeWeaponCooldown": "Temps de recharge (ms)",

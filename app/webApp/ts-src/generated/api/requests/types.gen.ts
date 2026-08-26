@@ -562,6 +562,14 @@ export type OrgMicoliMicraftPlaceableSiegeSiegeWeaponDefinition = {
     /**
      * Float
      */
+    launchPitchDegMax: number;
+    /**
+     * Float
+     */
+    launchPitchDegMin: number;
+    /**
+     * Float
+     */
     launchPower: number;
     muzzleOffset: OrgMicoliMicraftPlayerVec3;
     /**
