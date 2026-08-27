@@ -1,13 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog } from "../../../primitives/Dialog";
 import { DialogContent } from "../../../primitives/DialogContent";
 import { DialogTitle } from "../../../primitives/DialogTitle";
 import { Button } from "../../../primitives/Button";
 import { Input } from "../../../primitives/Input";
-import { AuctionListingData } from "../../types";
+import { AuctionFilter, AuctionListingData } from "../../types";
 import { AuctionListingRow } from "./AuctionListingRow";
 import { AuctionDetail } from "./AuctionDetail";
 import { CreateListingForm } from "./CreateListingForm";
+
+const FILTER_DEBOUNCE_MS = 300;
 
 interface Props {
   open: boolean;
@@ -26,6 +28,7 @@ interface Props {
     startingPrice: number,
     buyNowPrice: number | null,
   ) => void;
+  onFilterChange: (filter: AuctionFilter) => void;
 }
 
 export function AuctionHouse({
@@ -39,6 +42,7 @@ export function AuctionHouse({
   onBuyNow,
   onCancel,
   onCreateListing,
+  onFilterChange,
 }: Props) {
   const [creating, setCreating] = useState(false);
   const [itemFilter, setItemFilter] = useState("");
@@ -50,29 +54,21 @@ export function AuctionHouse({
   const [myBidsOnly, setMyBidsOnly] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
-    const min = minPrice.trim() === "" ? null : Number(minPrice);
-    const max = maxPrice.trim() === "" ? null : Number(maxPrice);
-    const showAllStatuses = mineOnly || myBidsOnly;
-    return listings.filter((l) => {
-      if (mineOnly && l.sellerId !== myPlayerId) return false;
-      if (myBidsOnly && !l.bidHistory.some((b) => b.bidderId === myPlayerId)) return false;
-      if (expiredOnly && l.status === "ACTIVE") return false;
-      if (!expiredOnly && !showAllStatuses && l.status !== "ACTIVE") return false;
-      if (itemFilter) {
-        const needle = itemFilter.toLowerCase();
-        const label = itemMeta[l.itemType]?.label ?? l.itemType;
-        if (!l.itemType.toLowerCase().includes(needle) && !label.toLowerCase().includes(needle)) {
-          return false;
-        }
-      }
-      if (sellerFilter && !l.sellerName.toLowerCase().includes(sellerFilter.toLowerCase())) return false;
-      const price = l.currentBid ?? l.startingPrice;
-      if (min !== null && price < min) return false;
-      if (max !== null && price > max) return false;
-      return true;
-    });
-  }, [listings, itemFilter, sellerFilter, minPrice, maxPrice, mineOnly, expiredOnly, myBidsOnly, myPlayerId, itemMeta]);
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      onFilterChange({
+        itemType: itemFilter.trim() || null,
+        sellerName: sellerFilter.trim() || null,
+        minPrice: minPrice.trim() === "" ? null : Number(minPrice),
+        maxPrice: maxPrice.trim() === "" ? null : Number(maxPrice),
+        mineOnly,
+        expiredOnly,
+        myBidsOnly,
+      });
+    }, FILTER_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemFilter, sellerFilter, minPrice, maxPrice, mineOnly, expiredOnly, myBidsOnly]);
 
   const selectedListing = selectedListingId ? (listings.find((l) => l.id === selectedListingId) ?? null) : null;
 
@@ -172,12 +168,12 @@ export function AuctionHouse({
         )}
 
         <div style={{ maxHeight: 420, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
-          {filtered.length === 0 && (
+          {listings.length === 0 && (
             <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, textAlign: "center", padding: 20 }}>
               No listings match these filters.
             </div>
           )}
-          {filtered.map((listing) => (
+          {listings.map((listing) => (
             <AuctionListingRow
               key={listing.id}
               listing={listing}

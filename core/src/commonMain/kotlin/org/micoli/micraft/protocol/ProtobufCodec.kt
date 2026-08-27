@@ -227,6 +227,7 @@ object ClientMessageCodec {
             clientEntry<ClientMessage.AuctionPlaceBid>(), // 38
             clientEntry<ClientMessage.AuctionBuyNow>(), // 39
             clientEntry<ClientMessage.AuctionCancelListing>(), // 40
+            clientEntry<ClientMessage.AuctionSetFilter>(), // 41
         )
 
     fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)

@@ -30,6 +30,17 @@ data class AuctionBid(
     val atMs: Long,
 )
 
+@Serializable
+data class AuctionFilter(
+    val itemType: String? = null,
+    val sellerName: String? = null,
+    val minPrice: Long? = null,
+    val maxPrice: Long? = null,
+    val mineOnly: Boolean = false,
+    val expiredOnly: Boolean = false,
+    val myBidsOnly: Boolean = false,
+)
+
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class AuctionListing(

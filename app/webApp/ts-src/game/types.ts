@@ -97,6 +97,16 @@ export interface AuctionBidData {
   atMs: number;
 }
 
+export interface AuctionFilter {
+  itemType: string | null;
+  sellerName: string | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  mineOnly: boolean;
+  expiredOnly: boolean;
+  myBidsOnly: boolean;
+}
+
 export interface AuctionListingData {
   id: string;
   sellerId: string;

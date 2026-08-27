@@ -904,6 +904,13 @@ class LocalPlayerController(
                 event.startsWith("auction_cancel:") ->
                     outMessages.trySend(
                         ClientMessage.AuctionCancelListing(event.removePrefix("auction_cancel:")))
+                event.startsWith("auction_set_filter:") ->
+                    runCatching {
+                            outMessages.trySend(
+                                Json.decodeFromString<ClientMessage.AuctionSetFilter>(
+                                    event.removePrefix("auction_set_filter:")))
+                        }
+                        .onFailure { jsError("auction_set_filter decode failed: $it") }
                 event.startsWith("attack:") -> {
                     val targetId = currentCombatTargetId ?: return@repeat
                     val rest = event.removePrefix("attack:")
