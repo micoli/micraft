@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { startPreloading } from "../game/shared/blockPreviewCache";
-import { getStoredToken, getLastLang, getAccountEmail, getLastPlayer } from "../lib/authStorage";
+import { getStoredToken, getLastLang, getAccountEmail, getLastPlayer, getPlayerEntries } from "../lib/authStorage";
 import { GameLayout, ChannelSubscription } from "../game/types";
 import { NpcDialog } from "../game/npc/NpcDialog";
 import { NpcShopDialog } from "../game/npc/NpcShopDialog";
@@ -63,7 +63,7 @@ export function GameScreen() {
     chunkDebugData,
   } = useGameContext();
 
-  const { accountEmail: encodedEmail } = useParams<{ accountEmail: string; charId: string }>();
+  const { accountEmail: encodedEmail, charId } = useParams<{ accountEmail: string; charId: string }>();
   const navigate = useNavigate();
   const reconnectAttempted = useRef(false);
   const [creativeSelectedItem, setCreativeSelectedItemState] = useState<string | null>(null);
@@ -92,13 +92,17 @@ export function GameScreen() {
     const token = getStoredToken();
     const lang = getLastLang();
     const accountKey = getAccountEmail() || email;
-    const charName = getLastPlayer(accountKey) || getLastPlayer(email);
+    // The URL's charId identifies which of this account's characters this tab belongs to —
+    // getLastPlayer() is a single account-wide cache shared across tabs and would resolve every
+    // tab to whichever character was played most recently, regardless of which one this tab is for.
+    const charByUrl = charId ? getPlayerEntries(accountKey).find((e) => e.id === charId)?.name : undefined;
+    const charName = charByUrl || getLastPlayer(accountKey) || getLastPlayer(email);
     if (charName) {
       loginResultRef.current = `${email}\t${charName}\t${lang}\t${token}`;
     } else {
       navigate("/auth");
     }
-  }, [encodedEmail, loginResultRef, navigate]);
+  }, [encodedEmail, charId, loginResultRef, navigate]);
 
   const activeLayout = resolveActiveLayout(state.layouts, state.activeLayout);
 
