@@ -8,6 +8,7 @@ import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.protocol.AuctionBid
 import org.micoli.micraft.protocol.AuctionDuration
+import org.micoli.micraft.protocol.AuctionFilter
 import org.micoli.micraft.protocol.AuctionListing
 import org.micoli.micraft.protocol.AuctionStatus
 import org.micoli.micraft.protocol.ServerMessage
@@ -19,15 +20,61 @@ class AuctionManager(
     private val persistence: AuctionPersistence,
     private val mailManager: MailManager?,
     private val config: AuctionConfig,
-    private val broadcast: suspend (ServerMessage) -> Unit,
 ) {
     private val listings = ConcurrentHashMap<String, AuctionListing>()
+    private val filters = ConcurrentHashMap<String, AuctionFilter>()
 
     init {
         persistence.loadListings().forEach { listings[it.id] = it }
     }
 
     fun getAll(): Collection<AuctionListing> = listings.values
+
+    fun clearFilter(sessionId: String) {
+        filters.remove(sessionId)
+    }
+
+    suspend fun setFilter(session: PlayerSession, filter: AuctionFilter) {
+        filters[session.id] = filter
+        sendFiltered(session)
+    }
+
+    private fun matches(
+        listing: AuctionListing,
+        filter: AuctionFilter,
+        sessionId: String
+    ): Boolean {
+        if (filter.mineOnly && listing.sellerId != sessionId) return false
+        if (filter.myBidsOnly && listing.bidHistory.none { it.bidderId == sessionId }) return false
+        val showAllStatuses = filter.mineOnly || filter.myBidsOnly
+        if (filter.expiredOnly && listing.status == AuctionStatus.ACTIVE) return false
+        if (!filter.expiredOnly && !showAllStatuses && listing.status != AuctionStatus.ACTIVE) {
+            return false
+        }
+        val itemNeedle = filter.itemType?.trim()
+        if (!itemNeedle.isNullOrEmpty() &&
+            !listing.itemType.id.contains(itemNeedle, ignoreCase = true)) {
+            return false
+        }
+        val sellerNeedle = filter.sellerName?.trim()
+        if (!sellerNeedle.isNullOrEmpty() &&
+            !listing.sellerName.contains(sellerNeedle, ignoreCase = true)) {
+            return false
+        }
+        val price = listing.currentBid ?: listing.startingPrice
+        val min = filter.minPrice
+        val max = filter.maxPrice
+        if (min != null && price < min) return false
+        if (max != null && price > max) return false
+        return true
+    }
+
+    private suspend fun sendFiltered(session: PlayerSession) {
+        val filter = filters[session.id] ?: AuctionFilter()
+        session.send(
+            ServerMessage.AuctionListingsUpdate(
+                listings.values.filter { matches(it, filter, session.id) }.toList()))
+    }
 
     suspend fun createListing(
         session: PlayerSession,
@@ -179,6 +226,7 @@ class AuctionManager(
                     listing.bidHistory +
                         AuctionBid(
                             session.id, session.state.name, price, System.currentTimeMillis())))
+        broadcastListingsUpdate()
     }
 
     suspend fun cancel(session: PlayerSession, listingId: String) {
@@ -245,6 +293,7 @@ class AuctionManager(
         val updated = listing.copy(status = AuctionStatus.CANCELLED)
         listings[listingId] = updated
         persistence.updateListing(updated)
+        broadcastListingsUpdate()
         return true
     }
 
@@ -317,6 +366,6 @@ class AuctionManager(
     }
 
     private suspend fun broadcastListingsUpdate() {
-        broadcast(ServerMessage.AuctionListingsUpdate(listings.values.toList()))
+        for (session in getSessions()) sendFiltered(session)
     }
 }

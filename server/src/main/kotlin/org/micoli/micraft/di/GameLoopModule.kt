@@ -545,7 +545,6 @@ class GameLoopModule {
                     persistence = AuctionPersistence(worldDir),
                     mailManager = optionalMailManager.value,
                     config = auctionConfigLoader.load(),
-                    broadcast = sessionRegistry::broadcast,
                 )
             })
 

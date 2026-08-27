@@ -12,6 +12,7 @@ import org.micoli.micraft.game.mail.MailPersistence
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.protocol.AuctionDuration
+import org.micoli.micraft.protocol.AuctionFilter
 import org.micoli.micraft.protocol.AuctionStatus
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testI18n
@@ -32,7 +33,6 @@ class AuctionManagerTest {
             persistence = AuctionPersistence(Files.createTempDirectory("auction-manager")),
             mailManager = mailManager,
             config = config,
-            broadcast = {},
         )
 
     @Test
@@ -122,6 +122,43 @@ class AuctionManagerTest {
         assertEquals(20L, history[0].amount)
         assertEquals("carol-id", history[1].bidderId)
         assertEquals(30L, history[1].amount)
+    }
+
+    @Test
+    fun setFilter_mineOnly_serverSideExcludesOthersListings() = runBlocking {
+        val alice = testSession(id = "alice-id", name = "Alice")
+        alice.inventory[dirt] = 2
+        val bob = testSession(id = "bob-id", name = "Bob")
+        bob.inventory[dirt] = 1
+        val mgr = manager(listOf(alice, bob))
+        mgr.createListing(alice, dirt, 1, AuctionDuration.H12, 10L, null)
+        mgr.createListing(bob, dirt, 1, AuctionDuration.H12, 10L, null)
+
+        mgr.setFilter(alice, AuctionFilter(mineOnly = true))
+
+        val update = alice.sent.filterIsInstance<ServerMessage.AuctionListingsUpdate>().last()
+        assertEquals(1, update.listings.size)
+        assertEquals("alice-id", update.listings.first().sellerId)
+    }
+
+    @Test
+    fun buyNow_notifiesOtherViewersOfListingsChange() = runBlocking {
+        val alice = testSession(id = "alice-id", name = "Alice")
+        alice.inventory[dirt] = 1
+        val bob = testSession(id = "bob-id", name = "Bob")
+        bob.state = bob.state.copy(wallet = 200L)
+        val carol = testSession(id = "carol-id", name = "Carol")
+        val mgr = manager(listOf(alice, bob, carol))
+        mgr.createListing(alice, dirt, 1, AuctionDuration.H12, 10L, 100L)
+        val listingId = mgr.getAll().first().id
+        mgr.setFilter(carol, AuctionFilter(expiredOnly = true))
+        val updatesBefore = carol.sent.filterIsInstance<ServerMessage.AuctionListingsUpdate>().size
+
+        mgr.buyNow(bob, listingId)
+
+        val updatesAfter = carol.sent.filterIsInstance<ServerMessage.AuctionListingsUpdate>()
+        assertTrue(updatesAfter.size > updatesBefore)
+        assertEquals(AuctionStatus.SOLD, updatesAfter.last().listings.first().status)
     }
 
     @Test
@@ -228,7 +265,6 @@ class AuctionManagerTest {
                 persistence = AuctionPersistence(Files.createTempDirectory("auction-manager2")),
                 mailManager = mailManager,
                 config = AuctionConfig(),
-                broadcast = {},
             )
         mgr.createListing(alice, dirt, 1, AuctionDuration.H12, 10L, null)
         val listingId = mgr.getAll().first().id

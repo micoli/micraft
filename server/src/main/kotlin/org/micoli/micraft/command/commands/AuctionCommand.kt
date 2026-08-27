@@ -4,6 +4,7 @@ import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.protocol.AuctionFilter
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
@@ -25,6 +26,6 @@ class AuctionCommand : CommandHandler {
         }
         log.info("/auction: sending OpenAuctionHouse to player {}", session.state.name)
         session.send(ServerMessage.OpenAuctionHouse)
-        session.send(ServerMessage.AuctionListingsUpdate(auctionManager.getAll().toList()))
+        auctionManager.setFilter(session, AuctionFilter())
     }
 }

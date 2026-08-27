@@ -244,4 +244,8 @@ sealed class ClientMessage {
     @ProtoId(40)
     @Serializable
     data class AuctionCancelListing(val listingId: String) : ClientMessage()
+
+    @ProtoId(41)
+    @Serializable
+    data class AuctionSetFilter(val filter: AuctionFilter) : ClientMessage()
 }

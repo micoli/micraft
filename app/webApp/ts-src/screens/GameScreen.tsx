@@ -647,6 +647,9 @@ export function GameScreen() {
               `auction_create:${JSON.stringify({ itemType, quantity, duration, startingPrice, buyNowPrice })}`,
             );
           }}
+          onFilterChange={(filter) => {
+            window.mcState.events.push(`auction_set_filter:${JSON.stringify({ filter })}`);
+          }}
         />
       )}
       <LoadingOverlay progress={state.chunkLoading} />

@@ -442,7 +442,6 @@ class GameLoop(
                 persistence = AuctionPersistence(worldDir),
                 mailManager = null,
                 config = auctionConfigLoader.load(),
-                broadcast = sessionRegistry::broadcast,
             )
         },
     private val blockBreaker: BlockBreaker =
@@ -1815,6 +1814,8 @@ class GameLoop(
                                             auctionManager?.buyNow(session, msg.listingId)
                                         is ClientMessage.AuctionCancelListing ->
                                             auctionManager?.cancel(session, msg.listingId)
+                                        is ClientMessage.AuctionSetFilter ->
+                                            auctionManager?.setFilter(session, msg.filter)
                                         is ClientMessage.CreativeCameraFocus -> {
                                             if (session.state.editMode == EditMode.CREATIVE) {
                                                 session.creativeFocusPos = msg.x to msg.z
@@ -1845,6 +1846,7 @@ class GameLoop(
                 vehicleManager.clearRider(id)
                 npcTickPipeline.onPlayerDisconnected(sessionRegistry.all())
                 tradeManager.onPlayerDisconnect(id)
+                auctionManager?.clearFilter(id)
                 savePlayer(session)
                 log.info(
                     "player disconnected: {} name={} (total={})",

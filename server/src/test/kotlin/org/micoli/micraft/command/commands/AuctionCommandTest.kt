@@ -33,7 +33,6 @@ class AuctionCommandTest {
                 persistence = AuctionPersistence(Files.createTempDirectory("auction-cmd")),
                 mailManager = null,
                 config = AuctionConfig(),
-                broadcast = {},
             )
         cmd.execute(session, "", testContext(auctionManager = manager))
         assertTrue(session.sent.filterIsInstance<ServerMessage.OpenAuctionHouse>().isNotEmpty())
