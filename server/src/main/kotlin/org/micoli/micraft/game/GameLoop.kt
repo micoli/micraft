@@ -1696,6 +1696,17 @@ class GameLoop(
         placeableManager.sendAllTo(session)
         siegeWeaponManager.sendAllTo(session)
         siegeProjectileManager.sendAllTo(session)
+        // A stale session with the same id (e.g. a second client reconnecting under the same
+        // playerName before the first socket's read loop noticed it's dead) would otherwise be
+        // silently overwritten in the registry, leaving its socket alive but never ticked again.
+        sessionRegistry[id]?.let {
+            if (it !== session) {
+                runCatching {
+                    it.socket.close(
+                        CloseReason(CloseReason.Codes.VIOLATED_POLICY, "replaced by new session"))
+                }
+            }
+        }
         sessionRegistry[id] = session
         broadcastPlayerAdmin(
             """{"type":"playerJoined","id":"$id","name":${playerName.toPlayerAdminJson()},"x":${spawn.x},"y":${spawn.y},"z":${spawn.z},"yaw":0.0}""")
@@ -1824,21 +1835,30 @@ class GameLoop(
                 }
             }
         } finally {
-            broadcastPlayerAdmin("""{"type":"playerLeft","id":"$id"}""")
-            sessionRegistry.remove(id)
-            chunkStreamer.cleanupSession(id)
-            npcManager.clearPlayer(id)
-            vehicleManager.clearRider(id)
-            npcTickPipeline.onPlayerDisconnected(sessionRegistry.all())
-            tradeManager.onPlayerDisconnect(id)
-            savePlayer(session)
-            log.info(
-                "player disconnected: {} name={} (total={})",
-                id.take(8),
-                session.state.name,
-                sessionRegistry.size)
-            val left = ServerMessage.PlayerLeft(id)
-            sessionRegistry.all().forEach { it.send(left) }
+            // A session evicted by a newer reconnect under the same id (see the replace logic
+            // above) must not tear down the state of the session that replaced it.
+            if (sessionRegistry[id] === session) {
+                broadcastPlayerAdmin("""{"type":"playerLeft","id":"$id"}""")
+                sessionRegistry.remove(id)
+                chunkStreamer.cleanupSession(id)
+                npcManager.clearPlayer(id)
+                vehicleManager.clearRider(id)
+                npcTickPipeline.onPlayerDisconnected(sessionRegistry.all())
+                tradeManager.onPlayerDisconnect(id)
+                savePlayer(session)
+                log.info(
+                    "player disconnected: {} name={} (total={})",
+                    id.take(8),
+                    session.state.name,
+                    sessionRegistry.size)
+                val left = ServerMessage.PlayerLeft(id)
+                sessionRegistry.all().forEach { it.send(left) }
+            } else {
+                log.info(
+                    "stale session closed: {} name={} (replaced by newer session)",
+                    id.take(8),
+                    session.state.name)
+            }
         }
     }
 
