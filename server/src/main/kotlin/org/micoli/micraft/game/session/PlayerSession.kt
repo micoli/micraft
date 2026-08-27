@@ -4,6 +4,8 @@ import io.ktor.websocket.*
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.micoli.micraft.combat.CombatState
 import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.game.world.BlockPos
@@ -75,10 +77,17 @@ open class PlayerSession(
 
     @Volatile var chunkSocket: DefaultWebSocketSession? = null
 
+    // Ktor's WebSocketSession.send() isn't safe to call concurrently from multiple coroutines
+    // (e.g. the per-tick movement broadcast racing another player's action broadcast landing on
+    // this same session) — it can silently wedge the outgoing frame channel, leaving the socket
+    // reported as open while nothing more ever gets sent. Serialize all writes per socket.
+    private val sendMutex = Mutex()
+    private val chunkSendMutex = Mutex()
+
     open suspend fun send(msg: ServerMessage) {
         val bytes = ServerMessageCodec.encode(msg)
         networkStats.bytesOut.addAndGet(bytes.size.toLong())
-        socket.send(Frame.Binary(true, bytes))
+        sendMutex.withLock { socket.send(Frame.Binary(true, bytes)) }
     }
 
     open suspend fun sendChunk(msg: ServerMessage.ChunkData) {
@@ -87,12 +96,12 @@ open class PlayerSession(
         val cs = chunkSocket
         if (cs != null) {
             try {
-                cs.send(Frame.Binary(true, bytes))
+                chunkSendMutex.withLock { cs.send(Frame.Binary(true, bytes)) }
                 return
             } catch (_: Exception) {
                 // chunk socket closed mid-delivery; fall through to main socket
             }
         }
-        socket.send(Frame.Binary(true, bytes))
+        sendMutex.withLock { socket.send(Frame.Binary(true, bytes)) }
     }
 }
