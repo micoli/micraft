@@ -171,7 +171,11 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 if (localController.hasPrediction) {
                     localController.chunkDownloading = httpChunkFetcher?.inFlightCount ?: 0
                     localController.chunkMeshing = chunkManager.pendingRenderCount
-                    localController.tick()
+                    // An uncaught exception here would otherwise kill this while(isActive) loop
+                    // for good — no more movement, no more chunk polling, nothing — while the WS
+                    // connection stays up, since that's a separate coroutine.
+                    runCatching { localController.tick() }
+                        .onFailure { e -> jsError("localController.tick() threw: ${e.message}") }
                     // Mouse-look rotation alone never crosses a chunk boundary, so it wouldn't
                     // otherwise trigger reevaluateImpostors() — poll the live camera yaw here so
                     // turning in place still promotes/demotes chunks entering/leaving the FOV

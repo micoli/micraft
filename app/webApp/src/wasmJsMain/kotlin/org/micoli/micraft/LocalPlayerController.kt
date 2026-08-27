@@ -886,16 +886,18 @@ class LocalPlayerController(
                         ClientMessage.ClaimMailAttachments(event.removePrefix("mail_claim:")))
                 event.startsWith("auction_create:") ->
                     runCatching {
-                        outMessages.trySend(
-                            Json.decodeFromString<ClientMessage.AuctionCreateListing>(
-                                event.removePrefix("auction_create:")))
-                    }
+                            outMessages.trySend(
+                                Json.decodeFromString<ClientMessage.AuctionCreateListing>(
+                                    event.removePrefix("auction_create:")))
+                        }
+                        .onFailure { jsError("auction_create decode failed: $it") }
                 event.startsWith("auction_bid:") ->
                     runCatching {
-                        outMessages.trySend(
-                            Json.decodeFromString<ClientMessage.AuctionPlaceBid>(
-                                event.removePrefix("auction_bid:")))
-                    }
+                            outMessages.trySend(
+                                Json.decodeFromString<ClientMessage.AuctionPlaceBid>(
+                                    event.removePrefix("auction_bid:")))
+                        }
+                        .onFailure { jsError("auction_bid decode failed: $it") }
                 event.startsWith("auction_buynow:") ->
                     outMessages.trySend(
                         ClientMessage.AuctionBuyNow(event.removePrefix("auction_buynow:")))
