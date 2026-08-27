@@ -800,12 +800,23 @@ export function GameUI() {
       dispatch("mailbox_open");
     };
     window.mc.openAuctionHouse = () => {
+      console.log("[auction] openAuctionHouse received at", Date.now());
       dispatch("auction_open");
     };
     window.mc.auctionListingsUpdate = (json: string) => {
       try {
         const msg = JSON.parse(json) as { listings: import("./types").AuctionListingData[] };
-        dispatch("auction_sync", { listings: msg.listings });
+        // Nullable fields omitted from default-suppressed JSON decode to `undefined`,
+        // not `null` — normalize so `!== null` checks in the UI behave correctly.
+        const listings = msg.listings.map((l) => ({
+          ...l,
+          buyNowPrice: l.buyNowPrice ?? null,
+          currentBid: l.currentBid ?? null,
+          currentBidderId: l.currentBidderId ?? null,
+          currentBidderName: l.currentBidderName ?? null,
+          bidHistory: l.bidHistory ?? [],
+        }));
+        dispatch("auction_sync", { listings });
       } catch (e) {
         console.error("[auction] auctionListingsUpdate parse error:", e, "raw:", json);
       }

@@ -102,6 +102,29 @@ class AuctionManagerTest {
     }
 
     @Test
+    fun placeBid_recordsEachBidInHistory() = runBlocking {
+        val alice = testSession(id = "alice-id", name = "Alice")
+        alice.inventory[dirt] = 1
+        val bob = testSession(id = "bob-id", name = "Bob")
+        bob.state = bob.state.copy(wallet = 100L)
+        val carol = testSession(id = "carol-id", name = "Carol")
+        carol.state = carol.state.copy(wallet = 100L)
+        val mgr = manager(listOf(alice, bob, carol))
+        mgr.createListing(alice, dirt, 1, AuctionDuration.H12, 10L, null)
+        val listingId = mgr.getAll().first().id
+
+        mgr.placeBid(bob, listingId, 20L)
+        mgr.placeBid(carol, listingId, 30L)
+
+        val history = mgr.getAll().first().bidHistory
+        assertEquals(2, history.size)
+        assertEquals("bob-id", history[0].bidderId)
+        assertEquals(20L, history[0].amount)
+        assertEquals("carol-id", history[1].bidderId)
+        assertEquals(30L, history[1].amount)
+    }
+
+    @Test
     fun buyNow_settlesInstantlyAndAppliesTax() = runBlocking {
         val alice = testSession(id = "alice-id", name = "Alice")
         alice.inventory[dirt] = 1

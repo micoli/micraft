@@ -3673,6 +3673,11 @@ components:
     org.micoli.micraft.protocol.AuctionListing:
       type: object
       properties:
+        bidHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.protocol.AuctionBid"
+          title: List<AuctionBid>
         buyNowPrice:
           type:
           - "null"
@@ -3728,6 +3733,7 @@ components:
         status:
           $ref: "#/components/schemas/org.micoli.micraft.protocol.AuctionStatus"
       required:
+      - bidHistory
       - createdAtMs
       - duration
       - expiresAtMs
@@ -3739,6 +3745,29 @@ components:
       - startingPrice
       - status
       title: AuctionListing
+    org.micoli.micraft.protocol.AuctionBid:
+      type: object
+      properties:
+        amount:
+          type: integer
+          format: int64
+          title: Long
+        atMs:
+          type: integer
+          format: int64
+          title: Long
+        bidderId:
+          type: string
+          title: String
+        bidderName:
+          type: string
+          title: String
+      required:
+      - amount
+      - atMs
+      - bidderId
+      - bidderName
+      title: AuctionBid
     org.micoli.micraft.protocol.AuctionDuration:
       type: string
       enum:

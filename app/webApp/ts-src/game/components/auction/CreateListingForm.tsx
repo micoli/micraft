@@ -107,7 +107,7 @@ export function CreateListingForm({ inventory, itemMeta, onSubmit, onCancel }: P
           Cancel
         </Button>
         <Button variant="primary" disabled={!valid} onClick={() => onSubmit(itemType, qty, duration, start, buyNow)}>
-          Create Listing
+          Create Auction
         </Button>
       </div>
     </div>

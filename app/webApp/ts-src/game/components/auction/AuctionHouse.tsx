@@ -6,6 +6,7 @@ import { Button } from "../../../primitives/Button";
 import { Input } from "../../../primitives/Input";
 import { AuctionListingData } from "../../types";
 import { AuctionListingRow } from "./AuctionListingRow";
+import { AuctionDetail } from "./AuctionDetail";
 import { CreateListingForm } from "./CreateListingForm";
 
 interface Props {
@@ -46,22 +47,34 @@ export function AuctionHouse({
   const [maxPrice, setMaxPrice] = useState("");
   const [mineOnly, setMineOnly] = useState(false);
   const [expiredOnly, setExpiredOnly] = useState(false);
+  const [myBidsOnly, setMyBidsOnly] = useState(false);
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const min = minPrice.trim() === "" ? null : Number(minPrice);
     const max = maxPrice.trim() === "" ? null : Number(maxPrice);
+    const showAllStatuses = mineOnly || myBidsOnly;
     return listings.filter((l) => {
       if (mineOnly && l.sellerId !== myPlayerId) return false;
+      if (myBidsOnly && !l.bidHistory.some((b) => b.bidderId === myPlayerId)) return false;
       if (expiredOnly && l.status === "ACTIVE") return false;
-      if (!expiredOnly && !mineOnly && l.status !== "ACTIVE") return false;
-      if (itemFilter && !l.itemType.toLowerCase().includes(itemFilter.toLowerCase())) return false;
+      if (!expiredOnly && !showAllStatuses && l.status !== "ACTIVE") return false;
+      if (itemFilter) {
+        const needle = itemFilter.toLowerCase();
+        const label = itemMeta[l.itemType]?.label ?? l.itemType;
+        if (!l.itemType.toLowerCase().includes(needle) && !label.toLowerCase().includes(needle)) {
+          return false;
+        }
+      }
       if (sellerFilter && !l.sellerName.toLowerCase().includes(sellerFilter.toLowerCase())) return false;
       const price = l.currentBid ?? l.startingPrice;
       if (min !== null && price < min) return false;
       if (max !== null && price > max) return false;
       return true;
     });
-  }, [listings, itemFilter, sellerFilter, minPrice, maxPrice, mineOnly, expiredOnly, myPlayerId]);
+  }, [listings, itemFilter, sellerFilter, minPrice, maxPrice, mineOnly, expiredOnly, myBidsOnly, myPlayerId, itemMeta]);
+
+  const selectedListing = selectedListingId ? (listings.find((l) => l.id === selectedListingId) ?? null) : null;
 
   const handleCreate = (
     itemType: string,
@@ -117,9 +130,21 @@ export function AuctionHouse({
             onClick={() => {
               setMineOnly((v) => !v);
               setExpiredOnly(false);
+              setMyBidsOnly(false);
             }}
           >
             My Auctions
+          </Button>
+          <Button
+            variant={myBidsOnly ? "primary" : "outline"}
+            size="sm"
+            onClick={() => {
+              setMyBidsOnly((v) => !v);
+              setExpiredOnly(false);
+              setMineOnly(false);
+            }}
+          >
+            My Bids
           </Button>
           <Button
             variant={expiredOnly ? "primary" : "outline"}
@@ -127,12 +152,13 @@ export function AuctionHouse({
             onClick={() => {
               setExpiredOnly((v) => !v);
               setMineOnly(false);
+              setMyBidsOnly(false);
             }}
           >
             Expired
           </Button>
           <Button variant="secondary" size="sm" onClick={() => setCreating((v) => !v)}>
-            {creating ? "Close Form" : "Create Listing"}
+            {creating ? "Close Form" : "Create Auction"}
           </Button>
         </div>
 
@@ -156,13 +182,17 @@ export function AuctionHouse({
               key={listing.id}
               listing={listing}
               isMine={listing.sellerId === myPlayerId}
+              myPlayerId={myPlayerId}
               itemMeta={itemMeta}
               onBid={onBid}
               onBuyNow={onBuyNow}
               onCancel={onCancel}
+              onOpenDetail={setSelectedListingId}
             />
           ))}
         </div>
+
+        <AuctionDetail listing={selectedListing} itemMeta={itemMeta} onClose={() => setSelectedListingId(null)} />
       </DialogContent>
     </Dialog>
   );

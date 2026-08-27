@@ -6,6 +6,7 @@ import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.game.mail.MailManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.protocol.AuctionBid
 import org.micoli.micraft.protocol.AuctionDuration
 import org.micoli.micraft.protocol.AuctionListing
 import org.micoli.micraft.protocol.AuctionStatus
@@ -123,7 +124,11 @@ class AuctionManager(
             listing.copy(
                 currentBid = amount,
                 currentBidderId = session.id,
-                currentBidderName = session.state.name)
+                currentBidderName = session.state.name,
+                bidHistory =
+                    listing.bidHistory +
+                        AuctionBid(
+                            session.id, session.state.name, amount, System.currentTimeMillis()))
         listings[listingId] = updated
         persistence.updateListing(updated)
         session.send(ServerMessage.Notification(i18n.t(lang, "auction:server:bid_placed_success")))
@@ -169,7 +174,11 @@ class AuctionManager(
             listing.copy(
                 currentBid = price,
                 currentBidderId = session.id,
-                currentBidderName = session.state.name))
+                currentBidderName = session.state.name,
+                bidHistory =
+                    listing.bidHistory +
+                        AuctionBid(
+                            session.id, session.state.name, price, System.currentTimeMillis())))
     }
 
     suspend fun cancel(session: PlayerSession, listingId: String) {
