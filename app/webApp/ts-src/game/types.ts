@@ -90,6 +90,13 @@ export interface MailData {
   attachmentsClaimed: boolean;
 }
 
+export interface AuctionBidData {
+  bidderId: string;
+  bidderName: string;
+  amount: number;
+  atMs: number;
+}
+
 export interface AuctionListingData {
   id: string;
   sellerId: string;
@@ -105,6 +112,7 @@ export interface AuctionListingData {
   currentBidderId: string | null;
   currentBidderName: string | null;
   status: "ACTIVE" | "SOLD" | "EXPIRED" | "CANCELLED";
+  bidHistory: AuctionBidData[];
 }
 
 export interface InstanceZoneData {

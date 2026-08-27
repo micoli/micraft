@@ -25,17 +25,29 @@ function fmtTimeRemaining(expiresAtMs: number): string {
 interface Props {
   listing: AuctionListingData;
   isMine: boolean;
+  myPlayerId: string;
   itemMeta: Record<string, { label: string; bg: string }>;
   onBid: (listingId: string, amount: number) => void;
   onBuyNow: (listingId: string) => void;
   onCancel: (listingId: string) => void;
+  onOpenDetail: (listingId: string) => void;
 }
 
-export function AuctionListingRow({ listing, isMine, itemMeta, onBid, onBuyNow, onCancel }: Props) {
+export function AuctionListingRow({
+  listing,
+  isMine,
+  myPlayerId,
+  itemMeta,
+  onBid,
+  onBuyNow,
+  onCancel,
+  onOpenDetail,
+}: Props) {
   const [bidAmount, setBidAmount] = useState("");
   const meta = itemMeta[listing.itemType] ?? { label: listing.itemType, bg: "#555" };
   const floor = listing.currentBid ?? listing.startingPrice;
   const active = listing.status === "ACTIVE";
+  const isWinning = active && listing.currentBidderId === myPlayerId;
 
   const submitBid = () => {
     const amount = Number(bidAmount);
@@ -51,7 +63,7 @@ export function AuctionListingRow({ listing, isMine, itemMeta, onBid, onBuyNow, 
         alignItems: "center",
         gap: 12,
         padding: 10,
-        border: "1px solid rgba(255,255,255,0.12)",
+        border: isWinning ? "1px solid #4ade80" : "1px solid rgba(255,255,255,0.12)",
         borderRadius: 6,
       }}
     >
@@ -74,7 +86,7 @@ export function AuctionListingRow({ listing, isMine, itemMeta, onBid, onBuyNow, 
         {meta.label}
       </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => onOpenDetail(listing.id)}>
         <div style={{ fontSize: 13, color: "#fff" }}>
           {meta.label} ×{listing.quantity}
         </div>
@@ -86,6 +98,7 @@ export function AuctionListingRow({ listing, isMine, itemMeta, onBid, onBuyNow, 
             ? `Current bid: ${fmtCopper(listing.currentBid)} (${listing.currentBidderName})`
             : `Starting price: ${fmtCopper(listing.startingPrice)}`}
           {listing.buyNowPrice !== null && ` · Buy now: ${fmtCopper(listing.buyNowPrice)}`}
+          {isWinning && <span style={{ color: "#4ade80" }}> · You&apos;re winning</span>}
         </div>
       </div>
 
@@ -102,7 +115,7 @@ export function AuctionListingRow({ listing, isMine, itemMeta, onBid, onBuyNow, 
             placeholder={`> ${floor}`}
             value={bidAmount}
             onChange={(e) => setBidAmount(e.target.value)}
-            style={{ width: 90 }}
+            style={{ width: 150 }}
           />
           <Button variant="secondary" size="sm" onClick={submitBid}>
             Bid

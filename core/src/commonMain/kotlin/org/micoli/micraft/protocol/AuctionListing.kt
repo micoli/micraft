@@ -22,6 +22,14 @@ enum class AuctionStatus {
     CANCELLED,
 }
 
+@Serializable
+data class AuctionBid(
+    val bidderId: String,
+    val bidderName: String,
+    val amount: Long,
+    val atMs: Long,
+)
+
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class AuctionListing(
@@ -34,9 +42,10 @@ data class AuctionListing(
     val expiresAtMs: Long,
     val duration: AuctionDuration,
     val startingPrice: Long,
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val buyNowPrice: Long? = null,
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val currentBid: Long? = null,
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val currentBidderId: String? = null,
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val currentBidderName: String? = null,
+    val buyNowPrice: Long? = null,
+    val currentBid: Long? = null,
+    val currentBidderId: String? = null,
+    val currentBidderName: String? = null,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val status: AuctionStatus = AuctionStatus.ACTIVE,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val bidHistory: List<AuctionBid> = emptyList(),
 )
