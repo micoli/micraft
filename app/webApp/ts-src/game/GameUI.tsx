@@ -19,6 +19,7 @@ import {
   clearStoredToken,
   getAccountEmail,
   getLastPlayerEntry,
+  getPlayerEntries,
 } from "../lib/authStorage";
 import { CharacterCreationScreen } from "../screens/CharacterCreationScreen";
 import { CharacterRPGCreationScreen } from "../screens/CharacterRPGCreationScreen";
@@ -516,7 +517,15 @@ export function GameUI() {
       window.mcState.loginOverlayPending = false;
       const username = getLastUser();
       const accountKey = getAccountEmail() || username;
-      const player = getLastPlayer(accountKey);
+      // Reconnecting: resolve the character from this tab's own URL (/game/:email/:charId) first —
+      // getLastPlayer() is a single account-wide cache shared across tabs and would resolve every
+      // tab back to whichever character was played most recently, regardless of which one this
+      // tab's WebSocket session actually belonged to.
+      const pathCharId = window.location.pathname.startsWith("/game/")
+        ? window.location.pathname.split("/")[3]
+        : undefined;
+      const playerByUrl = pathCharId ? getPlayerEntries(accountKey).find((e) => e.id === pathCharId)?.name : undefined;
+      const player = playerByUrl || getLastPlayer(accountKey);
       const lang = getLastLang();
       const token = getStoredToken();
       const intentional = window.mcState.intentionalDisconnect;
