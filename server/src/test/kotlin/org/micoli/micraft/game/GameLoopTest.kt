@@ -8,7 +8,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.command.Plugin
@@ -190,6 +195,68 @@ class GameLoopTest {
         assertEquals(listOf("iron_armor"), reloaded?.ownedArmors)
         assertEquals(listOf("iron_sword"), reloaded?.ownedWeapons)
         assertEquals(listOf("iron_pickaxe"), reloaded?.ownedTools)
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun onConnect_concurrentSameName_evictsStaleSessionInsteadOfBlockingIt() = runTest {
+        val persistence = WorldPersistence(Files.createTempDirectory("gameloop-concurrent-test"))
+        val gameLoop = GameLoop(testWorld(), persistence)
+
+        // Save a player file up front so both connects resolve to the same persisted id — a
+        // fresh, never-saved name would otherwise get a random id per connect and never collide.
+        persistence.savePlayerState(
+            "Eve",
+            org.micoli.micraft.player.PlayerState(
+                id = "eve-fixed-id",
+                name = "Eve",
+                pos = org.micoli.micraft.player.Vec3(0f, 0f, 0f),
+                orientation = org.micoli.micraft.player.Orientation(0f, 0f),
+            ),
+        )
+
+        val firstSocket = FakeWebSocketSession()
+        val connect = ClientMessage.Connect(playerName = "Eve", userName = "eve@example.com")
+        firstSocket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        val firstJob = launch { gameLoop.onConnect(firstSocket) }
+        // Drive the virtual test dispatcher so firstJob actually starts running and reaches the
+        // point where it hops onto Dispatchers.IO (chunk generation) — that real dispatcher isn't
+        // controlled by the virtual scheduler, so poll for completion with a real delay after.
+        advanceUntilIdle()
+        withContext(Dispatchers.Default) {
+            var waited = 0
+            while (gameLoop.getPlayerStates().isEmpty() && waited < 5000) {
+                delay(10)
+                waited += 10
+            }
+        }
+        assertEquals(1, gameLoop.getPlayerStates().size)
+
+        val secondSocket = FakeWebSocketSession()
+        secondSocket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        val secondJob = launch { gameLoop.onConnect(secondSocket) }
+        advanceUntilIdle()
+        withContext(Dispatchers.Default) {
+            var waited = 0
+            while (firstSocket.outgoingChannel.isEmpty && waited < 5000) {
+                // wait for the eviction close frame to land on the stale (first) socket
+                delay(10)
+                waited += 10
+            }
+        }
+
+        // only the newer session is live and gets ticked
+        assertEquals(1, gameLoop.getPlayerStates().size)
+
+        // let the stale session's read loop unwind (as it would once its socket actually closes)
+        firstSocket.incomingChannel.close()
+        firstJob.join()
+
+        // its finally-block cleanup must not have torn down the session that replaced it
+        assertEquals(1, gameLoop.getPlayerStates().size)
+
+        secondSocket.incomingChannel.close()
+        secondJob.join()
     }
 
     @Test
