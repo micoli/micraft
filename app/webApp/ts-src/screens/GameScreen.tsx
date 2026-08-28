@@ -625,7 +625,7 @@ export function GameScreen() {
       {state.auctionHouseOpen && !state.disconnectMsg && (
         <AuctionHouse
           open={state.auctionHouseOpen}
-          listings={state.auctionListings}
+          auctions={state.auctions}
           myPlayerId={window.mcState.playerId}
           inventory={state.inventory}
           itemMeta={state.itemMeta}
@@ -633,14 +633,14 @@ export function GameScreen() {
             dispatch("auction_close");
             resumePointerLock();
           }}
-          onBid={(listingId, amount) => {
-            window.mcState.events.push(`auction_bid:${JSON.stringify({ listingId, amount })}`);
+          onBid={(auctionId, amount) => {
+            window.mcState.events.push(`auction_bid:${JSON.stringify({ auctionId, amount })}`);
           }}
-          onBuyNow={(listingId) => {
-            window.mcState.events.push(`auction_buynow:${listingId}`);
+          onBuyNow={(auctionId) => {
+            window.mcState.events.push(`auction_buynow:${auctionId}`);
           }}
-          onCancel={(listingId) => {
-            window.mcState.events.push(`auction_cancel:${listingId}`);
+          onCancel={(auctionId) => {
+            window.mcState.events.push(`auction_cancel:${auctionId}`);
           }}
           onCreateListing={(itemType, quantity, duration, startingPrice, buyNowPrice) => {
             window.mcState.events.push(

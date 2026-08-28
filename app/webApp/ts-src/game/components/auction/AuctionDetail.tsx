@@ -3,25 +3,15 @@ import { Dialog } from "../../../primitives/Dialog";
 import { DialogContent } from "../../../primitives/DialogContent";
 import { DialogTitle } from "../../../primitives/DialogTitle";
 import { Button } from "../../../primitives/Button";
-import { AuctionListingData } from "../../types";
-
-function fmtCopper(copper: number): string {
-  const g = Math.floor(copper / 100);
-  const s = Math.floor((copper % 100) / 10);
-  const c = copper % 10;
-  const parts: string[] = [];
-  if (g > 0) parts.push(`${g}g`);
-  if (s > 0) parts.push(`${s}s`);
-  if (c > 0 || parts.length === 0) parts.push(`${c}c`);
-  return parts.join(" ");
-}
+import { AuctionData } from "../../types";
+import { CurrencyDisplay } from "./CurrencyDisplay";
 
 function fmtDateTime(ms: number): string {
   return new Date(ms).toLocaleString();
 }
 
 interface Props {
-  listing: AuctionListingData | null;
+  listing: AuctionData | null;
   itemMeta: Record<string, { label: string; bg: string }>;
   onClose: () => void;
 }
@@ -47,11 +37,17 @@ export function AuctionDetail({ listing, itemMeta, onClose }: Props) {
         <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 8, marginBottom: 12 }}>
           <div>Seller: {listing.sellerName}</div>
           <div>Status: {listing.status}</div>
-          <div>Starting price: {fmtCopper(listing.startingPrice)}</div>
-          {listing.buyNowPrice !== null && <div>Buy now: {fmtCopper(listing.buyNowPrice)}</div>}
+          <div>
+            Starting price: <CurrencyDisplay copper={listing.startingPrice} />
+          </div>
+          {listing.buyNowPrice !== null && (
+            <div>
+              Buy now: <CurrencyDisplay copper={listing.buyNowPrice} />
+            </div>
+          )}
           {listing.currentBid !== null && (
             <div>
-              Current bid: {fmtCopper(listing.currentBid)} ({listing.currentBidderName})
+              Current bid: <CurrencyDisplay copper={listing.currentBid} /> ({listing.currentBidderName})
             </div>
           )}
           <div>Ends: {fmtDateTime(listing.expiresAtMs)}</div>
@@ -77,7 +73,7 @@ export function AuctionDetail({ listing, itemMeta, onClose }: Props) {
               }}
             >
               <span>{bid.bidderName}</span>
-              <span>{fmtCopper(bid.amount)}</span>
+              <CurrencyDisplay copper={bid.amount} />
               <span style={{ color: "rgba(255,255,255,0.5)" }}>{fmtDateTime(bid.atMs)}</span>
             </div>
           ))}

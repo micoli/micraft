@@ -4,16 +4,17 @@ import { DialogContent } from "../../../primitives/DialogContent";
 import { DialogTitle } from "../../../primitives/DialogTitle";
 import { Button } from "../../../primitives/Button";
 import { Input } from "../../../primitives/Input";
-import { AuctionFilter, AuctionListingData } from "../../types";
+import { AuctionFilter, AuctionData } from "../../types";
 import { AuctionListingRow } from "./AuctionListingRow";
 import { AuctionDetail } from "./AuctionDetail";
-import { CreateListingForm } from "./CreateListingForm";
+import { CreateAuctionForm } from "./CreateAuctionForm";
+import { CurrencyInput } from "./CurrencyInput";
 
 const FILTER_DEBOUNCE_MS = 300;
 
 interface Props {
   open: boolean;
-  listings: AuctionListingData[];
+  auctions: AuctionData[];
   myPlayerId: string;
   inventory: Record<string, number>;
   itemMeta: Record<string, { label: string; bg: string }>;
@@ -33,7 +34,7 @@ interface Props {
 
 export function AuctionHouse({
   open,
-  listings,
+  auctions,
   myPlayerId,
   inventory,
   itemMeta,
@@ -47,8 +48,8 @@ export function AuctionHouse({
   const [creating, setCreating] = useState(false);
   const [itemFilter, setItemFilter] = useState("");
   const [sellerFilter, setSellerFilter] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
+  const [minPrice, setMinPrice] = useState<number | null>(null);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [mineOnly, setMineOnly] = useState(false);
   const [expiredOnly, setExpiredOnly] = useState(false);
   const [myBidsOnly, setMyBidsOnly] = useState(false);
@@ -59,8 +60,8 @@ export function AuctionHouse({
       onFilterChange({
         itemType: itemFilter.trim() || null,
         sellerName: sellerFilter.trim() || null,
-        minPrice: minPrice.trim() === "" ? null : Number(minPrice),
-        maxPrice: maxPrice.trim() === "" ? null : Number(maxPrice),
+        minPrice,
+        maxPrice,
         mineOnly,
         expiredOnly,
         myBidsOnly,
@@ -70,7 +71,7 @@ export function AuctionHouse({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemFilter, sellerFilter, minPrice, maxPrice, mineOnly, expiredOnly, myBidsOnly]);
 
-  const selectedListing = selectedListingId ? (listings.find((l) => l.id === selectedListingId) ?? null) : null;
+  const selectedListing = selectedListingId ? (auctions.find((l) => l.id === selectedListingId) ?? null) : null;
 
   const handleCreate = (
     itemType: string,
@@ -106,20 +107,12 @@ export function AuctionHouse({
             onChange={(e) => setSellerFilter(e.target.value)}
             style={{ width: 140 }}
           />
-          <Input
-            type="number"
-            placeholder="Min price"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-            style={{ width: 100 }}
-          />
-          <Input
-            type="number"
-            placeholder="Max price"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            style={{ width: 100 }}
-          />
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, marginBottom: 12 }}>
+          <CurrencyInput onChange={setMinPrice} />
+          <CurrencyInput onChange={setMaxPrice} />
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, marginBottom: 12 }}>
           <Button
             variant={mineOnly ? "primary" : "outline"}
             size="sm"
@@ -159,7 +152,7 @@ export function AuctionHouse({
         </div>
 
         {creating && (
-          <CreateListingForm
+          <CreateAuctionForm
             inventory={inventory}
             itemMeta={itemMeta}
             onSubmit={handleCreate}
@@ -168,12 +161,12 @@ export function AuctionHouse({
         )}
 
         <div style={{ maxHeight: 420, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
-          {listings.length === 0 && (
+          {auctions.length === 0 && (
             <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, textAlign: "center", padding: 20 }}>
               No listings match these filters.
             </div>
           )}
-          {listings.map((listing) => (
+          {auctions.map((listing) => (
             <AuctionListingRow
               key={listing.id}
               listing={listing}

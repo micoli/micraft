@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "../../../primitives/Button";
-import { Input } from "../../../primitives/Input";
+import { NumberInput } from "../../../primitives/NumberInput";
+import { CurrencyInput } from "./CurrencyInput";
 
 const DURATIONS: { value: "H12" | "H24" | "H48" | "H96"; label: string; taxPercent: number }[] = [
   { value: "H12", label: "12h", taxPercent: 3 },
@@ -22,19 +23,19 @@ interface Props {
   onCancel: () => void;
 }
 
-export function CreateListingForm({ inventory, itemMeta, onSubmit, onCancel }: Props) {
+export function CreateAuctionForm({ inventory, itemMeta, onSubmit, onCancel }: Props) {
   const ownedItems = Object.entries(inventory).filter(([, count]) => count > 0);
   const [itemType, setItemType] = useState(ownedItems[0]?.[0] ?? "");
   const [quantity, setQuantity] = useState("1");
   const [duration, setDuration] = useState<"H12" | "H24" | "H48" | "H96">("H24");
-  const [startingPrice, setStartingPrice] = useState("");
-  const [buyNowPrice, setBuyNowPrice] = useState("");
+  const [startingPrice, setStartingPrice] = useState<number | null>(null);
+  const [buyNowPrice, setBuyNowPrice] = useState<number | null>(null);
 
   const maxQuantity = inventory[itemType] ?? 0;
   const qty = Number(quantity);
-  const start = Number(startingPrice);
-  const buyNow = buyNowPrice.trim() === "" ? null : Number(buyNowPrice);
-  const valid = itemType !== "" && qty > 0 && qty <= maxQuantity && start > 0 && (buyNow === null || buyNow > start);
+  const start = startingPrice ?? 0;
+  const valid =
+    itemType !== "" && qty > 0 && qty <= maxQuantity && start > 0 && (buyNowPrice === null || buyNowPrice > start);
 
   return (
     <div
@@ -65,7 +66,7 @@ export function CreateListingForm({ inventory, itemMeta, onSubmit, onCancel }: P
 
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <label style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", width: 90 }}>Quantity</label>
-        <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} max={maxQuantity} />
+        <NumberInput value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} max={maxQuantity} />
       </div>
 
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -94,19 +95,23 @@ export function CreateListingForm({ inventory, itemMeta, onSubmit, onCancel }: P
 
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <label style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", width: 90 }}>Starting price</label>
-        <Input type="number" value={startingPrice} onChange={(e) => setStartingPrice(e.target.value)} />
+        <CurrencyInput onChange={setStartingPrice} />
       </div>
 
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <label style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", width: 90 }}>Buy now (optional)</label>
-        <Input type="number" value={buyNowPrice} onChange={(e) => setBuyNowPrice(e.target.value)} />
+        <CurrencyInput onChange={setBuyNowPrice} />
       </div>
 
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 4 }}>
         <Button variant="secondary" onClick={onCancel}>
           Cancel
         </Button>
-        <Button variant="primary" disabled={!valid} onClick={() => onSubmit(itemType, qty, duration, start, buyNow)}>
+        <Button
+          variant="primary"
+          disabled={!valid}
+          onClick={() => onSubmit(itemType, qty, duration, start, buyNowPrice)}
+        >
           Create Auction
         </Button>
       </div>

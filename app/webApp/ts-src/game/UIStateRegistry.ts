@@ -1,6 +1,6 @@
 import {
   AttackMeta,
-  AuctionListingData,
+  AuctionData,
   ChannelSubscription,
   CharacterSyncData,
   ClassDefinitions,
@@ -86,7 +86,7 @@ export interface UiState {
   mails: MailData[];
   adminZone: InstanceZoneData | null;
   auctionHouseOpen: boolean;
-  auctionListings: AuctionListingData[];
+  auctions: AuctionData[];
 }
 
 const ingameMapRegistry = {
@@ -361,7 +361,7 @@ const mailRegistry = {
 const auctionRegistry = {
   auction_open: (state: UiState) => ({ ...state, auctionHouseOpen: true }),
   auction_close: (state: UiState) => ({ ...state, auctionHouseOpen: false }),
-  auction_sync: (state: UiState, payload: { listings: AuctionListingData[] }) => ({
+  auction_sync: (state: UiState, payload: { listings: AuctionData[] }) => ({
     ...state,
     auctionListings: payload.listings,
   }),

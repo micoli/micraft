@@ -1,19 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, within } from "@storybook/test";
-import { NpcShopDialog } from "../../game/npc/NpcShopDialog";
+import { NpcShopDialog } from "../../game/components/npc/NpcShopDialog";
 import type { NpcDialogData } from "../../game/types";
 
 const meta: Meta<typeof NpcShopDialog> = {
-  title: "Game/NpcShopDialog",
+  title: "Overlays/NpcShopDialog",
   component: NpcShopDialog,
   parameters: { layout: "fullscreen" },
-  decorators: [
-    (Story) => (
-      <div className="relative w-full h-screen bg-gradient-to-b from-slate-900 to-slate-800">
-        <Story />
-      </div>
-    ),
-  ],
 };
 export default meta;
 
