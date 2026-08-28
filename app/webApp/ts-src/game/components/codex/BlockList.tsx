@@ -6,6 +6,7 @@ import { Block3DPreview } from "../../shared/Block3DPreview";
 import { PLAIN_COLORABLE_PREVIEW_HEX } from "../../shared/blockPreviewCache";
 import { CodexDetailLayout } from "./CodexDetailLayout";
 import { CodexDetailRow } from "./CodexDetailRow";
+import { NumberInput } from "../../../primitives/NumberInput";
 import type { BlockEntry } from "./CodexModal";
 import { filterInputStyle, filterWrapperStyle, gridStyle } from "./codexListStyles";
 
@@ -125,8 +126,7 @@ export function BlockDetail({
         <CodexDetailRow label="Liquide" value={block.liquid ? "oui" : "non"} />
       </div>
       <div style={{ display: "flex", gap: 6, alignItems: "center", paddingTop: 4 }}>
-        <input
-          type="number"
+        <NumberInput
           min={1}
           max={128}
           value={qty}

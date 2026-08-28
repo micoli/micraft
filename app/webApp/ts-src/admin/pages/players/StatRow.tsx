@@ -1,6 +1,7 @@
 import { BaseStats } from "../../apiTypes";
 import { Dispatch, SetStateAction } from "react";
 import { cn } from "../../../primitives/cn";
+import { RawNumberInput } from "../../../primitives/RawNumberInput";
 
 export const StatRow = ({
   stats,
@@ -18,8 +19,7 @@ export const StatRow = ({
   <div className="flex items-center justify-between gap-2 py-1 border-b border-[#2E3A4E] last:border-0">
     <span className="text-xs text-[#8A99AF]">{label}</span>
     <div className="flex items-center gap-1 shrink-0">
-      <input
-        type="number"
+      <RawNumberInput
         min={1}
         max={20}
         value={stats[name]}

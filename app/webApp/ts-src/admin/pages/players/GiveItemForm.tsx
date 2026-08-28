@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useT } from "../../i18n";
+import { RawNumberInput } from "../../../primitives/RawNumberInput";
 
 export function GiveItemForm({
   names,
@@ -53,8 +54,7 @@ export function GiveItemForm({
             <option key={n} value={n} />
           ))}
         </datalist>
-        <input
-          type="number"
+        <RawNumberInput
           min={1}
           value={giveCount}
           onChange={(e) => setGiveCount(Math.max(1, Number(e.target.value) || 1))}

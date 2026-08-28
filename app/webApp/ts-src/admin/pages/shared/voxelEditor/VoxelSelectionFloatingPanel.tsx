@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CssBlockCube } from "../../../../game/shared/BlockPreview";
 import { Icon } from "../../../../primitives/Icon";
 import { ICONS } from "../../../../primitives/icons";
+import { RawNumberInput } from "../../../../primitives/RawNumberInput";
 import { type SelectionBox, type SelectionShape, type SelectionSnap } from "./selectionGizmo";
 import { RESIZE_STEPS } from "./selectionVoxels";
 import { type SelectionPanelProps } from "./VoxelEditorSidebar";
@@ -184,9 +185,8 @@ export function VoxelSelectionFloatingPanel({
             <div className="flex items-center gap-1">
               <span className="text-[9px] text-[#8A99AF] w-8">Pos</span>
               {(["minX", "minY", "minZ"] as const).map((field) => (
-                <input
+                <RawNumberInput
                   key={field}
-                  type="number"
                   step={0.25}
                   value={formatNum(selection[field])}
                   onChange={(e) => {
@@ -206,9 +206,8 @@ export function VoxelSelectionFloatingPanel({
                   ["sizeZ", selection.maxZ - selection.minZ],
                 ] as const
               ).map(([field, size]) => (
-                <input
+                <RawNumberInput
                   key={field}
-                  type="number"
                   step={0.25}
                   min={0.25}
                   value={formatNum(size)}
@@ -304,9 +303,8 @@ export function VoxelSelectionFloatingPanel({
               <div className="flex items-center gap-1">
                 <span className="text-[9px] text-[#8A99AF] w-8">Pos</span>
                 {(["x", "y", "z"] as const).map((axis) => (
-                  <input
+                  <RawNumberInput
                     key={axis}
-                    type="number"
                     step={1}
                     value={pasteOrigin[axis]}
                     onChange={(e) => {

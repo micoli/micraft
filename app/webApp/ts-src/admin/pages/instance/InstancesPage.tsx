@@ -12,6 +12,7 @@ import { InstanceEditorViewport } from "./InstanceEditorViewport";
 import { InstanceChunkPicker } from "./InstanceChunkPicker";
 import { CopyTeleportCommand } from "./CopyTeleportCommand";
 import { EmptyDetail } from "../../../primitives/EmptyDetail";
+import { RawNumberInput } from "../../../primitives/RawNumberInput";
 
 const LIST_COLLAPSED_STORAGE_KEY = "adminInstancesListCollapsed";
 
@@ -212,17 +213,15 @@ export function InstancesPage() {
                     {editingBounds ? (
                       <div className="flex items-center gap-1">
                         <span className="text-[11px] text-[#8A99AF] font-mono">y[</span>
-                        <input
+                        <RawNumberInput
                           autoFocus
-                          type="number"
                           className="w-16 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none"
                           value={yMinValue}
                           onChange={(e) => setYMinValue(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && submitBounds()}
                         />
                         <span className="text-[11px] text-[#8A99AF] font-mono">,</span>
-                        <input
-                          type="number"
+                        <RawNumberInput
                           className="w-16 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none"
                           value={yMaxValue}
                           onChange={(e) => setYMaxValue(e.target.value)}
