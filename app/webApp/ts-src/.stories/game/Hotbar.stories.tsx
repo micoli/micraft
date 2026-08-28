@@ -5,13 +5,6 @@ const meta: Meta<typeof Hotbar> = {
   title: "Game/Hotbar",
   component: Hotbar,
   parameters: { layout: "fullscreen" },
-  decorators: [
-    (Story) => (
-      <div className="relative w-full h-40 bg-gradient-to-b from-sky-900 to-green-900">
-        <Story />
-      </div>
-    ),
-  ],
 };
 export default meta;
 

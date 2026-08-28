@@ -8,13 +8,6 @@ const meta: Meta<typeof PauseMenu> = {
   title: "Overlays/PauseMenu",
   component: PauseMenu,
   parameters: { layout: "fullscreen" },
-  decorators: [
-    (Story) => (
-      <div className="relative w-full h-screen bg-gradient-to-b from-sky-900 to-green-900">
-        <Story />
-      </div>
-    ),
-  ],
 };
 export default meta;
 
