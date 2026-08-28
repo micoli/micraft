@@ -107,7 +107,7 @@ export interface AuctionFilter {
   myBidsOnly: boolean;
 }
 
-export interface AuctionListingData {
+export interface AuctionData {
   id: string;
   sellerId: string;
   sellerName: string;

@@ -1,18 +1,8 @@
 import { useState } from "react";
 import { Button } from "../../../primitives/Button";
-import { Input } from "../../../primitives/Input";
-import { AuctionListingData } from "../../types";
-
-function fmtCopper(copper: number): string {
-  const g = Math.floor(copper / 100);
-  const s = Math.floor((copper % 100) / 10);
-  const c = copper % 10;
-  const parts: string[] = [];
-  if (g > 0) parts.push(`${g}g`);
-  if (s > 0) parts.push(`${s}s`);
-  if (c > 0 || parts.length === 0) parts.push(`${c}c`);
-  return parts.join(" ");
-}
+import { AuctionData } from "../../types";
+import { CurrencyDisplay } from "./CurrencyDisplay";
+import { CurrencyInput } from "./CurrencyInput";
 
 function fmtTimeRemaining(expiresAtMs: number): string {
   const ms = expiresAtMs - Date.now();
@@ -23,7 +13,7 @@ function fmtTimeRemaining(expiresAtMs: number): string {
 }
 
 interface Props {
-  listing: AuctionListingData;
+  listing: AuctionData;
   isMine: boolean;
   myPlayerId: string;
   itemMeta: Record<string, { label: string; bg: string }>;
@@ -43,17 +33,18 @@ export function AuctionListingRow({
   onCancel,
   onOpenDetail,
 }: Props) {
-  const [bidAmount, setBidAmount] = useState("");
+  const [bidAmount, setBidAmount] = useState<number | null>(null);
+  const [bidKey, setBidKey] = useState(0);
   const meta = itemMeta[listing.itemType] ?? { label: listing.itemType, bg: "#555" };
   const floor = listing.currentBid ?? listing.startingPrice;
   const active = listing.status === "ACTIVE";
   const isWinning = active && listing.currentBidderId === myPlayerId;
 
   const submitBid = () => {
-    const amount = Number(bidAmount);
-    if (!Number.isFinite(amount) || amount <= floor) return;
-    onBid(listing.id, amount);
-    setBidAmount("");
+    if (bidAmount === null || bidAmount <= floor) return;
+    onBid(listing.id, bidAmount);
+    setBidAmount(null);
+    setBidKey((k) => k + 1);
   };
 
   return (
@@ -93,11 +84,21 @@ export function AuctionListingRow({
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>
           Seller: {listing.sellerName} · {active ? fmtTimeRemaining(listing.expiresAtMs) : listing.status}
         </div>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>
-          {listing.currentBid !== null
-            ? `Current bid: ${fmtCopper(listing.currentBid)} (${listing.currentBidderName})`
-            : `Starting price: ${fmtCopper(listing.startingPrice)}`}
-          {listing.buyNowPrice !== null && ` · Buy now: ${fmtCopper(listing.buyNowPrice)}`}
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", display: "flex", gap: 4, alignItems: "center" }}>
+          {listing.currentBid !== null ? (
+            <>
+              Current bid: <CurrencyDisplay copper={listing.currentBid} /> ({listing.currentBidderName})
+            </>
+          ) : (
+            <>
+              Starting price: <CurrencyDisplay copper={listing.startingPrice} />
+            </>
+          )}
+          {listing.buyNowPrice !== null && (
+            <>
+              · Buy now: <CurrencyDisplay copper={listing.buyNowPrice} />
+            </>
+          )}
           {isWinning && <span style={{ color: "#4ade80" }}> · You&apos;re winning</span>}
         </div>
       </div>
@@ -110,13 +111,7 @@ export function AuctionListingRow({
 
       {active && !isMine && (
         <>
-          <Input
-            type="number"
-            placeholder={`> ${floor}`}
-            value={bidAmount}
-            onChange={(e) => setBidAmount(e.target.value)}
-            style={{ width: 150 }}
-          />
+          <CurrencyInput key={bidKey} onChange={setBidAmount} />
           <Button variant="secondary" size="sm" onClick={submitBid}>
             Bid
           </Button>

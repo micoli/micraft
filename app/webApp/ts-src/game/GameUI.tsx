@@ -94,7 +94,7 @@ const initial: UiState = {
   mails: [],
   adminZone: null,
   auctionHouseOpen: false,
-  auctionListings: [],
+  auctions: [],
 };
 
 export function GameUI() {
@@ -805,7 +805,7 @@ export function GameUI() {
     };
     window.mc.auctionListingsUpdate = (json: string) => {
       try {
-        const msg = JSON.parse(json) as { listings: import("./types").AuctionListingData[] };
+        const msg = JSON.parse(json) as { listings: import("./types").AuctionData[] };
         // Nullable fields omitted from default-suppressed JSON decode to `undefined`,
         // not `null` — normalize so `!== null` checks in the UI behave correctly.
         const listings = msg.listings.map((l) => ({
