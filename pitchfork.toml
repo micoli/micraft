@@ -54,7 +54,7 @@ depends = ["server"]
 boot_start = false
 
 [daemons.storybook]
-run = "npm run storybook"
+run = "npm run storybook dev"
 dir = "app/webApp/ts-src"
 ready-port = 6006
 boot_start = false
