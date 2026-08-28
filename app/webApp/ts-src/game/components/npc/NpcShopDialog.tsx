@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Dialog } from "../../primitives/Dialog";
-import { DialogContent } from "../../primitives/DialogContent";
-import { DialogTitle } from "../../primitives/DialogTitle";
-import { Button } from "../../primitives/Button";
-import { ItemIcon } from "../shared/ItemIcon";
-import { NpcDialogData } from "../types";
+import { Dialog } from "../../../primitives/Dialog";
+import { DialogContent } from "../../../primitives/DialogContent";
+import { DialogTitle } from "../../../primitives/DialogTitle";
+import { Button } from "../../../primitives/Button";
+import { ItemIcon } from "../../shared/ItemIcon";
+import { NumberInput } from "../../../primitives/NumberInput";
+import { NpcDialogData } from "../../types";
 
 interface ItemMeta {
   label: string;
@@ -141,8 +142,7 @@ export function NpcShopDialog({ data, wallet, itemMeta, inventory, onClose, onBu
                     </div>
                     <span className="flex-1 text-xs text-white/80 truncate">{meta?.label ?? item.itemType}</span>
                     <span className="text-[9px] text-white/40 flex-shrink-0">{item.buyPrice}c</span>
-                    <input
-                      type="number"
+                    <NumberInput
                       min={0}
                       value={qty || ""}
                       placeholder="0"
@@ -205,8 +205,7 @@ export function NpcShopDialog({ data, wallet, itemMeta, inventory, onClose, onBu
                     {sellPrice !== undefined ? (
                       <>
                         <span className="text-[9px] text-white/40 flex-shrink-0">{sellPrice}c</span>
-                        <input
-                          type="number"
+                        <NumberInput
                           min={0}
                           max={owned}
                           value={qty || ""}
