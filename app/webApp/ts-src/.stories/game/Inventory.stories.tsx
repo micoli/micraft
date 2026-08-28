@@ -12,11 +12,7 @@ const meta: Meta<typeof Inventory> = {
       if (!window.mcState) {
         (window as unknown as { mcState: unknown }).mcState = { events: [], playerName: "alice" };
       }
-      return (
-        <div className="relative w-full h-screen bg-gradient-to-b from-slate-900 to-slate-800">
-          <Story />
-        </div>
-      );
+      return <Story />;
     },
   ],
 };

@@ -6,16 +6,7 @@ const meta: Meta<typeof HUD> = {
   title: "Game/HUD",
   component: HUD,
   parameters: { layout: "fullscreen" },
-  argTypes: {
-    mode: { control: "select", options: ["simple", "medium", "complete"] },
-  },
-  decorators: [
-    (Story) => (
-      <div className="relative w-full h-96 bg-gradient-to-b from-sky-700 to-green-800">
-        <Story />
-      </div>
-    ),
-  ],
+  argTypes: {},
 };
 export default meta;
 
@@ -45,24 +36,29 @@ const baseData: HudData = {
   tickJitterMaxMs: 8.1,
   chunkDownloading: 0,
   chunkMeshing: 2,
+  fpsMax: 0,
+  fpsMin: 0,
+  gpuUploadMsAvg: 0,
+  gpuUploadMsMin: 0,
+  gpuUploadMsMax: 0,
+  meshDrainMsMax: 0,
+  meshDrainMsMin: 0,
+  weather: "rain",
+  fullMeshedChunks: 100,
+  impostorMeshedChunks: 5,
+  zoneLevel: 5,
+  meshDrainMsAvg: 4,
+  wsDecodeMsAvg: 1,
 };
 
 export const Simple: Story = {
-  args: { data: baseData, mode: "simple" },
-};
-
-export const Medium: Story = {
-  args: { data: baseData, mode: "medium" },
-};
-
-export const Complete: Story = {
-  args: { data: baseData, mode: "complete" },
+  args: { data: baseData },
 };
 
 export const NoData: Story = {
-  args: { data: null, mode: "simple" },
+  args: { data: null },
 };
 
 export const Sneaking: Story = {
-  args: { data: { ...baseData, stance: "sneaking", speed: 0.3 }, mode: "medium" },
+  args: { data: { ...baseData, stance: "sneaking", speed: 0.3 } },
 };
