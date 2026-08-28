@@ -8,6 +8,7 @@ import {
   putApiAdminInstancesByIdChunks,
 } from "../../../generated/api/requests";
 import type { ChunkPosDto, ChunkTerrainInfoDto, InstanceZoneDto } from "../../apiTypes";
+import { RawNumberInput } from "../../../primitives/RawNumberInput";
 
 const CHUNK_SIZE = 16;
 const BASE_SCALE = 2; // CSS px per world block at zoom=1, before the zoom transform
@@ -425,8 +426,7 @@ export function InstanceChunkPicker({
                   {(field) => (
                     <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
                       yMin
-                      <input
-                        type="number"
+                      <RawNumberInput
                         className="bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
                         value={field.state.value}
                         onChange={(e) => field.handleChange(parseInt(e.target.value, 10) || 0)}
@@ -448,8 +448,7 @@ export function InstanceChunkPicker({
                   {(field) => (
                     <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
                       yMax
-                      <input
-                        type="number"
+                      <RawNumberInput
                         className="bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
                         value={field.state.value}
                         onChange={(e) => field.handleChange(parseInt(e.target.value, 10) || 0)}

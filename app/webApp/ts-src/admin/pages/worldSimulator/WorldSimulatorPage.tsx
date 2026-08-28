@@ -22,6 +22,7 @@ import {
 import { useSimulation } from "./useSimulation";
 import { OverridesEditor } from "./OverridesEditor";
 import { NpcDetailPanel } from "./NpcDetailPanel";
+import { RawNumberInput } from "../../../primitives/RawNumberInput";
 
 type Tab = "charts" | "log" | "npc" | "rules" | "manager";
 
@@ -275,8 +276,7 @@ export function WorldSimulatorPage() {
               />
             </Row>
             <Row label={t("sim.page.halfSize")}>
-              <input
-                type="number"
+              <RawNumberInput
                 step={10}
                 min={10}
                 value={halfSize}
@@ -286,8 +286,7 @@ export function WorldSimulatorPage() {
               />
             </Row>
             <Row label={t("sim.page.seed")}>
-              <input
-                type="number"
+              <RawNumberInput
                 value={seed}
                 onChange={(e) => setSeed(Number(e.target.value))}
                 disabled={locked}
@@ -295,8 +294,7 @@ export function WorldSimulatorPage() {
               />
             </Row>
             <Row label={t("sim.page.dayDuration")}>
-              <input
-                type="number"
+              <RawNumberInput
                 step={5}
                 min={1}
                 value={dayDuration}
@@ -306,8 +304,7 @@ export function WorldSimulatorPage() {
               />
             </Row>
             <Row label={t("sim.page.zoneLevel")}>
-              <input
-                type="number"
+              <RawNumberInput
                 min={1}
                 value={zoneLevel}
                 onChange={(e) => setZoneLevel(Number(e.target.value))}
@@ -316,8 +313,7 @@ export function WorldSimulatorPage() {
               />
             </Row>
             <Row label={t("sim.page.populationCapLabel")}>
-              <input
-                type="number"
+              <RawNumberInput
                 step={100}
                 min={0}
                 value={populationCap}
@@ -327,8 +323,7 @@ export function WorldSimulatorPage() {
               />
             </Row>
             <Row label={t("sim.page.vegetationDensity")}>
-              <input
-                type="number"
+              <RawNumberInput
                 step={0.01}
                 min={0}
                 max={1}
@@ -362,8 +357,7 @@ export function WorldSimulatorPage() {
             {spawns.map((spawn, index) => (
               <div key={`${spawn.type}-${index}`} className="mb-1.5 flex items-center gap-1.5">
                 <span className="flex-1 text-[11px] text-white">{spawn.type}</span>
-                <input
-                  type="number"
+                <RawNumberInput
                   min={1}
                   value={spawn.count}
                   onChange={(e) =>
@@ -397,8 +391,7 @@ export function WorldSimulatorPage() {
                   </option>
                 ))}
               </select>
-              <input
-                type="number"
+              <RawNumberInput
                 min={1}
                 value={spawnCount}
                 onChange={(e) => setSpawnCount(Number(e.target.value))}
@@ -431,8 +424,7 @@ export function WorldSimulatorPage() {
                   </option>
                 ))}
               </select>
-              <input
-                type="number"
+              <RawNumberInput
                 min={1}
                 value={liveSpawnCount}
                 onChange={(e) => setLiveSpawnCount(Number(e.target.value))}

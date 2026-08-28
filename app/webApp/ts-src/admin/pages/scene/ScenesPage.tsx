@@ -13,6 +13,7 @@ import {
 import type { SceneDto } from "../../apiTypes";
 import { SceneEditorViewport } from "./SceneEditorViewport";
 import { EmptyDetail } from "../../../primitives/EmptyDetail";
+import { RawNumberInput } from "../../../primitives/RawNumberInput";
 
 const LIST_COLLAPSED_STORAGE_KEY = "adminScenesListCollapsed";
 
@@ -269,9 +270,8 @@ export function ScenesPage() {
                       >
                         <resizeForm.Field name="width" validators={{ onChange: dimensionSchema }}>
                           {(field) => (
-                            <input
+                            <RawNumberInput
                               autoFocus
-                              type="number"
                               min={1}
                               className="w-14 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none"
                               value={field.state.value}
@@ -283,8 +283,7 @@ export function ScenesPage() {
                         <span className="text-[11px] text-[#8A99AF] font-mono">×</span>
                         <resizeForm.Field name="height" validators={{ onChange: dimensionSchema }}>
                           {(field) => (
-                            <input
-                              type="number"
+                            <RawNumberInput
                               min={1}
                               className="w-14 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none"
                               value={field.state.value}
@@ -296,8 +295,7 @@ export function ScenesPage() {
                         <span className="text-[11px] text-[#8A99AF] font-mono">×</span>
                         <resizeForm.Field name="depth" validators={{ onChange: dimensionSchema }}>
                           {(field) => (
-                            <input
-                              type="number"
+                            <RawNumberInput
                               min={1}
                               className="w-14 bg-[#1A222C] border border-[#2E3A4E] rounded px-1 py-0.5 text-[11px] font-mono text-white outline-none"
                               value={field.state.value}
@@ -396,8 +394,7 @@ export function ScenesPage() {
               {(field) => (
                 <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
                   Width
-                  <input
-                    type="number"
+                  <RawNumberInput
                     min={1}
                     className="bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
                     value={field.state.value}
@@ -411,8 +408,7 @@ export function ScenesPage() {
               {(field) => (
                 <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
                   Height
-                  <input
-                    type="number"
+                  <RawNumberInput
                     min={1}
                     className="bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
                     value={field.state.value}
@@ -426,8 +422,7 @@ export function ScenesPage() {
               {(field) => (
                 <label className="flex flex-col gap-1 text-xs text-[#8A99AF] flex-1">
                   Depth
-                  <input
-                    type="number"
+                  <RawNumberInput
                     min={1}
                     className="bg-[#0E1726] border border-[#2E3A4E] rounded px-2 py-1 text-sm text-white outline-none"
                     value={field.state.value}

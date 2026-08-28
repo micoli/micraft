@@ -4,6 +4,7 @@ import { NpcAdminDto } from "../../apiTypes";
 import { useT } from "../../i18n";
 import { NpcDetail } from "./NpcDetail";
 import { Badge } from "../../../primitives/Badge";
+import { RawNumberInput } from "../../../primitives/RawNumberInput";
 import { ATTACK_LINE_TTL, NpcMiniMap } from "./NpcMiniMap";
 import { NpcHPBar } from "./NpcHPBar";
 
@@ -298,8 +299,7 @@ export function NpcsPage() {
               {/* Level range */}
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] uppercase tracking-widest text-[#8A99AF]">{t("npcs.levelShort")}</span>
-                <input
-                  type="number"
+                <RawNumberInput
                   min={1}
                   placeholder={t("npcs.min")}
                   value={filterLevelMin}
@@ -307,8 +307,7 @@ export function NpcsPage() {
                   className="w-14 bg-[#1C2434] border border-[#2E3A4E] rounded px-2 py-0.5 text-xs text-white outline-none focus:border-[#3C50E0] [appearance:textfield]"
                 />
                 <span className="text-[#8A99AF] text-xs">–</span>
-                <input
-                  type="number"
+                <RawNumberInput
                   min={1}
                   placeholder={t("npcs.max")}
                   value={filterLevelMax}

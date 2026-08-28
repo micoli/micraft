@@ -5,6 +5,7 @@ import { z } from "zod";
 import { postApiAdminWorlds } from "../../../generated/api/requests";
 import { Icon } from "../../../primitives/Icon";
 import { ICONS } from "../../../primitives/icons";
+import { RawNumberInput } from "../../../primitives/RawNumberInput";
 
 export function CreateWorldForm({ onCreated }: { onCreated: () => void }) {
   const t = useT();
@@ -88,8 +89,7 @@ export function CreateWorldForm({ onCreated }: { onCreated: () => void }) {
           <div className="flex gap-2">
             <form.Field name="seed" validators={{ onChange: seedSchema }}>
               {(field) => (
-                <input
-                  type="number"
+                <RawNumberInput
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}

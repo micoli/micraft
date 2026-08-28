@@ -6,6 +6,7 @@ import { DialogContent } from "../../primitives/DialogContent";
 import { DialogTitle } from "../../primitives/DialogTitle";
 import { Button } from "../../primitives/Button";
 import { Input } from "../../primitives/Input";
+import { NumberInput } from "../../primitives/NumberInput";
 import { ItemIcon } from "../shared/ItemIcon";
 import { MailData } from "../types";
 
@@ -441,8 +442,7 @@ export function MailboxOverlay({ open, mails, inventory, itemMeta, wallet = 0, o
                       >
                         <ItemIcon itemId={slot.itemType} fallbackBg={itemMeta[slot.itemType]?.bg ?? "#555"} size={20} />
                         <span className="text-white/70">{itemMeta[slot.itemType]?.label ?? slot.itemType}</span>
-                        <input
-                          type="number"
+                        <NumberInput
                           min={1}
                           max={inventory[slot.itemType] ?? 1}
                           value={slot.count}
@@ -475,8 +475,7 @@ export function MailboxOverlay({ open, mails, inventory, itemMeta, wallet = 0, o
                 <span className="text-xs text-white/40 font-mono">💰 Copper</span>
                 <composeForm.Field name="copperAmount">
                   {(field) => (
-                    <input
-                      type="number"
+                    <NumberInput
                       min={0}
                       max={wallet}
                       value={field.state.value || ""}

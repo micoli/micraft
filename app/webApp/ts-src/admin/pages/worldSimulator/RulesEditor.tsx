@@ -1,4 +1,5 @@
 import { useT } from "../../i18n";
+import { RawNumberInput } from "../../../primitives/RawNumberInput";
 import { TUNING_FIELDS, type NpcTuning } from "./types";
 
 // ── NPC manager tunables ──────────────────────────────────────────────────────
@@ -55,8 +56,7 @@ export function TuningEditor({ value, base, onChange, onApply }: TuningProps) {
                 </span>
               )}
             </span>
-            <input
-              type="number"
+            <RawNumberInput
               step={field.step}
               value={value[field.key]}
               onChange={(e) => onChange({ ...value, [field.key]: Number(e.target.value) })}

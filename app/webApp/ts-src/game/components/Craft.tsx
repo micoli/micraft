@@ -3,6 +3,7 @@ import { Dialog } from "../../primitives/Dialog";
 import { DialogContent } from "../../primitives/DialogContent";
 import { DialogTitle } from "../../primitives/DialogTitle";
 import { Button } from "../../primitives/Button";
+import { NumberInput } from "../../primitives/NumberInput";
 import { RecipeDefinition } from "../types";
 
 interface Props {
@@ -120,8 +121,7 @@ export function Craft({ open, onClose, recipes, knownRecipes, inventory, itemMet
               <>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-white/60">Count:</span>
-                  <input
-                    type="number"
+                  <NumberInput
                     min={1}
                     max={Math.max(1, maxCount)}
                     value={safeCount}

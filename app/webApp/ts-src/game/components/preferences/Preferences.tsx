@@ -5,6 +5,7 @@ import { DialogContent } from "../../../primitives/DialogContent";
 import { DialogTitle } from "../../../primitives/DialogTitle";
 import { Button } from "../../../primitives/Button";
 import { cn } from "../../../primitives/cn";
+import { NumberInput } from "../../../primitives/NumberInput";
 import { usePreferences, SavePayload, Tab } from "../../hooks/usePreferences";
 import { KeyBadge } from "./KeyBadge";
 import { AddKeyBtn } from "./AddKeyBtn";
@@ -286,8 +287,7 @@ export function Preferences({
                       onChange={(e) => setter(e.target.checked ? fallback : null)}
                     />
                     <span className="flex-1">{label}</span>
-                    <input
-                      type="number"
+                    <NumberInput
                       min={min}
                       max={max}
                       disabled={
