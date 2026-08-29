@@ -143,6 +143,18 @@ JSON Schemas in `data/config/schemas/`. See `/update-schema` for the full mappin
 
 **Not to be confused with** `server/openapi/openapi.yaml` — the REST API spec (auth/game/admin/map HTTP routes), auto-generated from `io.github.smiley4.ktoropenapi`-annotated Ktor routes, unrelated to the `data/config/schemas/` game-data JSON Schemas above. Never hand-edit it; regenerate with `make dc CMD="./gradlew :server:exportOpenApi"` after adding/changing a route (also regenerates the README.md "API Routes" table). `make check-openapi` (part of `code-standard`) fails CI if either drifts from the annotated routes. Browsable at `/api/docs` (Redoc) when the server is running.
 
+## Documentation site
+
+MkDocs + Material in `docs/**` (`mkdocs.yml`, nav `docs/SUMMARY.md`), published to
+`micoli.github.io/micraft` via `.github/workflows/docs.yml`. Reference tables under
+`docs/reference/_generated/` are generated from bundled config + `core` constants by
+`:server:generateReferenceDocs` and verified by `:server:checkReferenceDocs` (part of
+`make check-docs` / `code-standard` / CI). `scripts/docs/gen_docs.py` builds the
+slash-commands / api-routes / releases pages at `mkdocs build` time. After any
+`data/config/*.yaml` default or `*Constants` change: `make docs`. Preview:
+`make docs-site-serve`. Full workflow: **`/update-docs`**. Positioning: "multiplayer
+RPG voxel game" — never "Minecraft".
+
 ## i18n (translations)
 
 Translation YAML files in `data/config/i18n/{locale}.yaml`. Key format: `feature:scope:key` (scope = `server` or `client`).
