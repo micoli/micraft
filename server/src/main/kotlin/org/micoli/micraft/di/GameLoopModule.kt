@@ -582,6 +582,7 @@ class GameLoopModule {
         sessionRegistry: SessionRegistry,
         i18nConfig: I18nConfig,
         playerPersister: PlayerPersister,
+        optionalWorldPersistence: OptionalWorldPersistence,
     ): ClaimManager =
         ClaimManager(
             registry = claimRegistry,
@@ -589,6 +590,7 @@ class GameLoopModule {
             getSessions = sessionRegistry::all,
             i18n = i18nConfig,
             savePlayer = playerPersister::save,
+            persistence = optionalWorldPersistence.value,
         )
 
     @Single

@@ -483,6 +483,7 @@ class GameLoop(
             getSessions = sessionRegistry::all,
             i18n = i18n,
             savePlayer = playerPersister::save,
+            persistence = persistence,
         ),
     private val movementProcessor: MovementProcessor = MovementProcessor(world),
     private val chunkStreamer: ChunkStreamer = ChunkStreamer(world),
