@@ -1,0 +1,56 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      kotlin-ktor:
+        patterns:
+          - "org.jetbrains.kotlin*"
+          - "io.ktor*"
+      koin:
+        patterns:
+          - "io.insert-koin*"
+
+  - package-ecosystem: npm
+    directory: "/app/webApp/ts-src"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    groups:
+      dev-tooling:
+        patterns:
+          - "@storybook/*"
+          - "storybook"
+          - "eslint*"
+          - "@eslint/*"
+          - "typescript-eslint"
+          - "prettier*"
+          - "vitest"
+          - "@vitest/*"
+          - "vite"
+          - "@vitejs/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: "/.docker/dev"
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: "/.docker/prod"
+    schedule:
+      interval: weekly

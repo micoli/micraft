@@ -6,9 +6,13 @@ plugins {
     alias(libs.plugins.ktor) apply false
     alias(libs.plugins.kotlinxSerialization) apply false
     alias(libs.plugins.ksp) apply false
-    id("org.jetbrains.qodana") version "2024.3.4"
-    id("com.diffplug.spotless") version "7.2.1"
+    alias(libs.plugins.qodana)
+    alias(libs.plugins.spotless)
+    alias(libs.plugins.cyclonedx)
 }
+
+// ── Supply-chain: lock every resolved dependency version ──────────────────────
+allprojects { dependencyLocking { lockAllConfigurations() } }
 
 /**
  * Shared logic for dev and devDebug tasks.
