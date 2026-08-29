@@ -2415,6 +2415,165 @@ paths:
           description: Missing admin permission
           headers: {}
       deprecated: false
+  /api/admin/claims:
+    get:
+      tags: []
+      description: All land claims
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.game.world.claim.Claim"
+                title: List<Claim>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/claims/{id}:
+    get:
+      tags: []
+      description: A single land claim
+      parameters:
+      - name: id
+        in: path
+        description: Claim id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.game.world.claim.Claim"
+        "404":
+          description: Claim not found
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+    delete:
+      tags: []
+      description: Delete a land claim
+      parameters:
+      - name: id
+        in: path
+        description: Claim id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "204":
+          headers: {}
+        "404":
+          description: Claim not found
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/claims/{id}/bounds:
+    put:
+      tags: []
+      description: Update a claim's Y bounds
+      parameters:
+      - name: id
+        in: path
+        description: Claim id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.ClaimBoundsRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.game.world.claim.Claim"
+        "400":
+          description: yMin must be less than or equal to yMax
+          headers: {}
+        "404":
+          description: Claim not found
+          headers: {}
+        "409":
+          description: Claim would overlap an existing claim
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/claims/{id}/trust:
+    put:
+      tags: []
+      description: Grant or revoke a player's trust on a claim (online or offline)
+      parameters:
+      - name: id
+        in: path
+        description: Claim id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.ClaimTrustRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.game.world.claim.Claim"
+        "404":
+          description: Claim or player not found
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/admin/instances/{id}/blocks:
     get:
       tags: []
@@ -5895,6 +6054,89 @@ components:
       - clipPlanes
       - shortcutBarPages
       title: InstanceLayoutRequest
+    org.micoli.micraft.game.world.claim.Claim:
+      type: object
+      properties:
+        chunks:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.game.world.ChunkPos"
+          title: Set<ChunkPos>
+          uniqueItems: true
+        createdAt:
+          type: integer
+          format: int64
+          title: Long
+        id:
+          type: string
+          title: String
+        ownerId:
+          type: string
+          title: String
+        ownerName:
+          type: string
+          title: String
+        trustedPlayerIds:
+          type: array
+          items:
+            type: string
+            title: String
+          title: Set<String>
+          uniqueItems: true
+        trustedPlayerNames:
+          type: array
+          items:
+            type: string
+            title: String
+          title: Set<String>
+          uniqueItems: true
+        yMax:
+          type: integer
+          format: int32
+          title: Int
+        yMin:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - chunks
+      - createdAt
+      - id
+      - ownerId
+      - ownerName
+      - trustedPlayerIds
+      - trustedPlayerNames
+      - yMax
+      - yMin
+      title: Claim
+    org.micoli.micraft.http.ClaimBoundsRequest:
+      type: object
+      properties:
+        yMax:
+          type: integer
+          format: int32
+          title: Int
+        yMin:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - yMax
+      - yMin
+      title: ClaimBoundsRequest
+    org.micoli.micraft.http.ClaimTrustRequest:
+      type: object
+      properties:
+        playerName:
+          type: string
+          title: String
+        trusted:
+          type: boolean
+          title: Boolean
+      required:
+      - playerName
+      - trusted
+      title: ClaimTrustRequest
     org.micoli.micraft.http.InstanceBlockDto:
       type: object
       properties:

@@ -725,6 +725,8 @@ class GameLoop(
 
     fun instances(): InstanceRegistry = instanceRegistry
 
+    fun claims(): ClaimRegistry = claimRegistry
+
     fun scenes(): SceneRegistry = sceneRegistry
 
     // Pushed to every connected admin whenever the zone list changes, so the minimap's unified
