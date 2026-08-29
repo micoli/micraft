@@ -103,6 +103,9 @@ import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockInteractor
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
+import org.micoli.micraft.game.world.claim.ClaimConfigLoader
+import org.micoli.micraft.game.world.claim.ClaimManager
+import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.instance.toProto
 import org.micoli.micraft.game.world.liquid.LiquidManager
@@ -277,6 +280,7 @@ class GameLoop(
     private val toolCategoryRegistryLoader: ToolCategoryRegistryLoader =
         ToolCategoryRegistryLoader(Path.of("data/config/tools.yaml")),
     private val instanceRegistry: InstanceRegistry = InstanceRegistry(persistence),
+    private val claimRegistry: ClaimRegistry = ClaimRegistry(persistence),
     private var weaponRegistry: Map<String, WeaponDefinition> = weaponRegistryLoader.load(),
     private var toolRegistry: Map<String, ToolDefinition> = toolRegistryLoader.load(),
     private var weaponCategories: Map<EquipmentCategory, WeaponCategoryDefinition> =
@@ -298,6 +302,7 @@ class GameLoop(
             world,
             sessionRegistry::broadcast,
             instanceRegistry = instanceRegistry,
+            claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
         ),
     private val sceneRegistry: SceneRegistry = SceneRegistry(persistence),
@@ -451,6 +456,7 @@ class GameLoop(
             worldItems,
             liquidManager,
             instanceRegistry = instanceRegistry,
+            claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
             weaponRegistry = { weaponRegistry },
             toolRegistry = { toolRegistry },
@@ -463,9 +469,20 @@ class GameLoop(
             vegetationManager,
             attackRegistry,
             instanceRegistry = instanceRegistry,
+            claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
             placeableManager = placeableManager,
             siegeWeaponManager = siegeWeaponManager,
+        ),
+    private val claimConfigLoader: ClaimConfigLoader =
+        ClaimConfigLoader(Path.of("data/config/claims.yaml")),
+    private val claimManager: ClaimManager =
+        ClaimManager(
+            registry = claimRegistry,
+            config = claimConfigLoader.load(),
+            getSessions = sessionRegistry::all,
+            i18n = i18n,
+            savePlayer = playerPersister::save,
         ),
     private val movementProcessor: MovementProcessor = MovementProcessor(world),
     private val chunkStreamer: ChunkStreamer = ChunkStreamer(world),
@@ -639,6 +656,8 @@ class GameLoop(
             toolCategories = closures.toolCategories,
             tradeManager = tradeManager,
             auctionManager = auctionManager,
+            claimRegistry = claimRegistry,
+            claimManager = claimManager,
             questManager = questManager,
             clearAccumulators = regenProcessor::clearAccumulators,
             applyBuff = closures.applyBuff,
@@ -1816,6 +1835,13 @@ class GameLoop(
                                             auctionManager?.cancel(session, msg.listingId)
                                         is ClientMessage.AuctionSetFilter ->
                                             auctionManager?.setFilter(session, msg.filter)
+                                        is ClientMessage.ClaimCreate ->
+                                            claimManager.createClaim(session, msg.pos1, msg.pos2)
+                                        is ClientMessage.ClaimAbandon ->
+                                            claimManager.abandonClaim(session, msg.claimId)
+                                        is ClientMessage.ClaimSetTrusted ->
+                                            claimManager.setTrusted(
+                                                session, msg.claimId, msg.playerName, msg.trusted)
                                         is ClientMessage.CreativeCameraFocus -> {
                                             if (session.state.editMode == EditMode.CREATIVE) {
                                                 session.creativeFocusPos = msg.x to msg.z

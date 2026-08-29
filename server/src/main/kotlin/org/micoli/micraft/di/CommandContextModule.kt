@@ -25,6 +25,8 @@ import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.claim.ClaimManager
+import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
@@ -76,6 +78,8 @@ class CommandContextModule {
         optionalAuctionManager: OptionalAuctionManager,
         questManager: QuestManager,
         instanceRegistry: InstanceRegistry,
+        claimRegistry: ClaimRegistry,
+        claimManager: ClaimManager,
         vehicleManager: VehicleManager,
         sceneRegistry: SceneRegistry,
     ): CommandContext {
@@ -133,6 +137,8 @@ class CommandContextModule {
             applyBuff = closures.applyBuff,
             vehicleManager = vehicleManager,
             scenes = sceneRegistry,
+            claimRegistry = claimRegistry,
+            claimManager = claimManager,
         )
     }
 }

@@ -468,7 +468,25 @@ sealed class ServerMessage {
     @ProtoId(72)
     @Serializable
     data class AuctionListingsUpdate(val listings: List<AuctionListing>) : ServerMessage()
+
+    /**
+     * Sent to a player on connect and whenever a claim they own/trust is created/abandoned/updated.
+     */
+    @ProtoId(73) @Serializable data class ClaimSync(val claims: List<ClaimInfo>) : ServerMessage()
+
+    @ProtoId(74) @Serializable data class ClaimDenied(val reason: String) : ServerMessage()
 }
+
+@Serializable
+data class ClaimInfo(
+    val id: String,
+    val chunks: List<ChunkPos>,
+    val yMin: Int,
+    val yMax: Int,
+    val ownerId: String,
+    val ownerName: String,
+    val trustedPlayerNames: List<String> = emptyList(),
+)
 
 @Serializable
 data class SceneSummaryProto(

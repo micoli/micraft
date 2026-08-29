@@ -14,6 +14,7 @@ import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
@@ -37,6 +38,7 @@ class BlockBreaker(
     private val liquidManager: LiquidManager? = null,
     private val bufferSize: Int = 1000,
     private val instanceRegistry: InstanceRegistry? = null,
+    private val claimRegistry: ClaimRegistry? = null,
     private val railNetworkRegistry: RailNetworkRegistry? = null,
     private val weaponRegistry: () -> Map<String, WeaponDefinition> = { emptyMap() },
     private val toolRegistry: () -> Map<String, ToolDefinition> = { emptyMap() },
@@ -57,6 +59,12 @@ class BlockBreaker(
         if (instanceRegistry?.zoneAt(rawBp.x, rawBp.y, rawBp.z) != null) {
             blockBreakerLog.debug(
                 "BlockBreakStart rejected: pos={} is inside a protected zone", rawBp)
+            return
+        }
+        val claim = claimRegistry?.claimAt(rawBp.x, rawBp.y, rawBp.z)
+        if (claim != null && !claim.canEdit(session)) {
+            blockBreakerLog.debug(
+                "BlockBreakStart rejected: pos={} is inside {}'s claim", rawBp, claim.ownerName)
             return
         }
         val block = world.getBlock(rawBp.x, rawBp.y, rawBp.z)

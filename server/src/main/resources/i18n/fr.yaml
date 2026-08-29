@@ -373,3 +373,18 @@ mail:
     insufficient_items: "Vous n'avez pas assez d'items dans votre inventaire."
     insufficient_copper: "Pas assez de cuivre dans votre portefeuille."
     new_mail: "Nouveau message de {0} : {1}"
+
+claim:
+  server:
+    invalid_area: "Zone de claim invalide."
+    area_too_large: "Cette zone est trop grande à revendiquer ({0} chunks, max {1})."
+    overlaps_existing: "Cette zone chevauche un claim existant ou une zone protégée."
+    max_claims_reached: "Vous avez déjà le nombre maximum de claims ({0})."
+    insufficient_funds: "Vous n'avez pas assez de cuivre pour revendiquer ce terrain ({0} requis)."
+    claim_created: "Terrain revendiqué pour {0} cuivre."
+    claim_not_found: "Claim introuvable."
+    not_your_claim: "Ce claim ne vous appartient pas."
+    claim_abandoned: "Claim abandonné."
+    player_not_found: "Joueur '{0}' introuvable."
+    trust_granted: "{0} peut désormais construire sur votre claim."
+    trust_revoked: "{0} ne peut plus construire sur votre claim."

@@ -5,6 +5,7 @@ import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.rail.RailConnection
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
@@ -26,6 +27,7 @@ class BlockInteractor(
     private val world: WorldState,
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val instanceRegistry: InstanceRegistry? = null,
+    private val claimRegistry: ClaimRegistry? = null,
     private val railNetworkRegistry: RailNetworkRegistry? = null,
 ) {
     suspend fun handleInteract(session: PlayerSession, intent: ClientMessage.BlockInteract) {
@@ -33,6 +35,11 @@ class BlockInteractor(
 
         if (instanceRegistry?.zoneAt(pos.x, pos.y, pos.z) != null) {
             log.debug("BlockInteract rejected: pos={} is inside a protected zone", pos)
+            return
+        }
+        val claim = claimRegistry?.claimAt(pos.x, pos.y, pos.z)
+        if (claim != null && !claim.canEdit(session)) {
+            log.debug("BlockInteract rejected: pos={} is inside {}'s claim", pos, claim.ownerName)
             return
         }
 

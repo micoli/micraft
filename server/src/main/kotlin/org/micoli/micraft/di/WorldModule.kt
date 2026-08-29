@@ -13,6 +13,7 @@ import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.biome.BiomeRegistry
 import org.micoli.micraft.game.world.biome.loadBiomeRegistry
+import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.house.loadHouseConfig
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
@@ -111,6 +112,10 @@ class WorldModule {
     @Single
     fun instanceRegistry(optionalWorldPersistence: OptionalWorldPersistence): InstanceRegistry =
         InstanceRegistry(optionalWorldPersistence.value)
+
+    @Single
+    fun claimRegistry(optionalWorldPersistence: OptionalWorldPersistence): ClaimRegistry =
+        ClaimRegistry(optionalWorldPersistence.value)
 
     @Single
     fun sceneRegistry(optionalWorldPersistence: OptionalWorldPersistence): SceneRegistry =

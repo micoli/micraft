@@ -176,6 +176,8 @@ object ServerMessageCodec {
             serverEntry<ServerMessage.SiegeProjectileImpact>(), // 70
             serverSingleton(ServerMessage.OpenAuctionHouse), // 71
             serverEntry<ServerMessage.AuctionListingsUpdate>(), // 72
+            serverEntry<ServerMessage.ClaimSync>(), // 73
+            serverEntry<ServerMessage.ClaimDenied>(), // 74
         )
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)
@@ -228,6 +230,9 @@ object ClientMessageCodec {
             clientEntry<ClientMessage.AuctionBuyNow>(), // 39
             clientEntry<ClientMessage.AuctionCancelListing>(), // 40
             clientEntry<ClientMessage.AuctionSetFilter>(), // 41
+            clientEntry<ClientMessage.ClaimCreate>(), // 42
+            clientEntry<ClientMessage.ClaimAbandon>(), // 43
+            clientEntry<ClientMessage.ClaimSetTrusted>(), // 44
         )
 
     fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)
