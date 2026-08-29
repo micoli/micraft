@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "../../../primitives/Button";
 import { Input } from "../../../primitives/Input";
+import { RemovableBadge } from "../../../primitives/RemovableBadge";
 import { ClaimData } from "../../types";
 
 interface Props {
@@ -122,19 +123,7 @@ export function ClaimRow({ claim, isOwner, playerNames, onAbandon, onSetTrusted 
           {claim.trustedPlayerNames.length > 0 && (
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {claim.trustedPlayerNames.map((name) => (
-                <span
-                  key={name}
-                  className="inline-flex items-center gap-1 bg-white/10 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                >
-                  {name}
-                  <button
-                    className="text-white/50 hover:text-white/90 transition-colors leading-none"
-                    onClick={() => onSetTrusted(claim.id, name, false)}
-                    aria-label={`Untrust ${name}`}
-                  >
-                    ×
-                  </button>
-                </span>
+                <RemovableBadge key={name} name={name} onRemove={() => onSetTrusted(claim.id, name, false)} />
               ))}
             </div>
           )}
