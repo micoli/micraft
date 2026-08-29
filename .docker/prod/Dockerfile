@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ── Stage 1: build ────────────────────────────────────────────────────────────
-FROM eclipse-temurin:21-jdk-jammy@sha256:ce5767b7222312d42395f5bab033cd91f09e44032a2f21bdfd7b5b912dbe1e77 AS builder
+FROM eclipse-temurin:25-jdk-jammy@sha256:89565961a318534f01c971c7b1d030e60713c66995b887c94010cef938dbc53e AS builder
 
 RUN apt-get update && \
     apt-get install -y curl git bash ca-certificates && \
@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.gradle \
     ./gradlew :server:installDist :app:webApp:wasmJsBrowserDistribution --no-daemon
 
 # ── Stage 2: server runtime ────────────────────────────────────────────────────
-FROM eclipse-temurin:21-jre-jammy@sha256:eebd356ad7358b7094758e5787a6726f332917cfd56feab6457c56dab895cdbf AS server
+FROM eclipse-temurin:25-jre-jammy@sha256:10c251954d0bfe1a59ba93505f8c628d755919412400aa98685764c9353605d6 AS server
 
 RUN apt-get update && \
     apt-get install -y blender && \
