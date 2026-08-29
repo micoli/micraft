@@ -76,6 +76,8 @@ data class PlayerState(
     val overrideImpostorFovBonusChunks: Int? = null,
     val continuousBreak: Boolean = false,
     val dominantHand: Hand = Hand.RIGHT,
+    @JsonSchemaConstraint(minimum = 0.5, maximum = 10.0) val turnSpeedHorizontal: Float = 2.5f,
+    @JsonSchemaConstraint(minimum = 0.5, maximum = 10.0) val turnSpeedVertical: Float = 1.2f,
     val rightHandItem: String? = null,
     val leftHandItem: String? = null,
     val mounted: Boolean = false,

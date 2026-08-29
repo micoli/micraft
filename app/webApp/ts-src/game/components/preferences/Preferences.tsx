@@ -22,6 +22,8 @@ interface Props {
   onLiveOverride: (partial: Partial<PreferencesData>) => void;
 }
 
+const TURN_SPEED_OPTIONS = [0.8, 1.0, 1.2, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0];
+
 const TABS: { id: Tab; label: string }[] = [
   { id: "chat", label: "Chat" },
   { id: "commands", label: "Commands" },
@@ -342,6 +344,30 @@ export function Preferences({
                 <div key={label} className="flex items-center gap-2 py-1.5 border-b border-[#2a2a2a]">
                   <input type="checkbox" checked={state} onChange={(e) => setter(e.target.checked)} />
                   <span>{label}</span>
+                </div>
+              ))}
+              {(
+                [
+                  [
+                    "Horizontal rotation speed (keyboard)",
+                    pref.localTurnSpeedHorizontal,
+                    pref.setLocalTurnSpeedHorizontal,
+                  ],
+                  ["Vertical rotation speed (keyboard)", pref.localTurnSpeedVertical, pref.setLocalTurnSpeedVertical],
+                ] as const
+              ).map(([label, value, setter]) => (
+                <div key={label} className="flex items-center gap-2 py-1.5 border-b border-[#2a2a2a]">
+                  <span className="flex-1">{label}</span>
+                  <select value={value} onChange={(e) => setter(Number(e.target.value))}>
+                    {(TURN_SPEED_OPTIONS.includes(value)
+                      ? TURN_SPEED_OPTIONS
+                      : [...TURN_SPEED_OPTIONS, value].sort((a, b) => a - b)
+                    ).map((s) => (
+                      <option key={s} value={s}>
+                        {s.toFixed(1)}×
+                      </option>
+                    ))}
+                  </select>
                 </div>
               ))}
               <div className="flex items-center gap-2 py-1.5 border-b border-[#2a2a2a]">

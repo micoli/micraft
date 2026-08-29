@@ -76,6 +76,29 @@ class ViewModePersistenceTest {
     }
 
     @Test
+    fun roundTrip_turnSpeeds_preserved() {
+        val (p, _) = persistence()
+        p.savePlayerState(
+            "alice", minimalState().copy(turnSpeedHorizontal = 3.5f, turnSpeedVertical = 0.8f))
+        val loaded = p.loadPlayerState("alice")
+        assertNotNull(loaded)
+        assertEquals(3.5f, loaded.turnSpeedHorizontal)
+        assertEquals(0.8f, loaded.turnSpeedVertical)
+    }
+
+    @Test
+    fun loadPlayer_missingTurnSpeeds_defaults() {
+        val (p, dir) = persistence()
+        val json =
+            """{"id":"x","name":"Alice","pos":{"x":0,"y":0,"z":0},"orientation":{"yaw":0,"pitch":0}}"""
+        dir.resolve("players/alice.json").toFile().writeText(json)
+        val loaded = p.loadPlayerState("alice")
+        assertNotNull(loaded)
+        assertEquals(2.5f, loaded.turnSpeedHorizontal)
+        assertEquals(1.2f, loaded.turnSpeedVertical)
+    }
+
+    @Test
     fun loadPlayer_missingViewMode_defaultsToFirstPerson() {
         val (p, dir) = persistence()
         val json =

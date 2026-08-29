@@ -879,6 +879,8 @@ class GameLoop(
             continuousBreak = session.state.continuousBreak,
             dominantHand = session.state.dominantHand,
             disabledViewModes = session.state.disabledViewModes,
+            turnSpeedHorizontal = session.state.turnSpeedHorizontal,
+            turnSpeedVertical = session.state.turnSpeedVertical,
         )
     }
 
@@ -915,6 +917,8 @@ class GameLoop(
                 continuousBreak = msg.continuousBreak,
                 dominantHand = msg.dominantHand,
                 disabledViewModes = msg.disabledViewModes,
+                turnSpeedHorizontal = msg.turnSpeedHorizontal,
+                turnSpeedVertical = msg.turnSpeedVertical,
             )
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
@@ -1600,6 +1604,8 @@ class GameLoop(
                 overrideImpostorFovBonusChunks = saved?.overrideImpostorFovBonusChunks,
                 continuousBreak = saved?.continuousBreak ?: false,
                 dominantHand = saved?.dominantHand ?: Hand.RIGHT,
+                turnSpeedHorizontal = saved?.turnSpeedHorizontal ?: 2.5f,
+                turnSpeedVertical = saved?.turnSpeedVertical ?: 1.2f,
                 rightHandItem = saved?.rightHandItem,
                 leftHandItem = saved?.leftHandItem,
             )

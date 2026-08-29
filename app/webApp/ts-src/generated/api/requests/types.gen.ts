@@ -1410,6 +1410,10 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      * Set<String>
      */
     disabledCommands: Array<string>;
+    /**
+     * Set<String>
+     */
+    disabledViewModes: Array<string>;
     dominantHand: OrgMicoliMicraftPlayerHand;
     /**
      * Boolean
@@ -1559,6 +1563,14 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      * List<ChannelSubscription>
      */
     subscribedChannels: Array<OrgMicoliMicraftPlayerChannelSubscription>;
+    /**
+     * Float
+     */
+    turnSpeedHorizontal: number;
+    /**
+     * Float
+     */
+    turnSpeedVertical: number;
     /**
      * String
      */

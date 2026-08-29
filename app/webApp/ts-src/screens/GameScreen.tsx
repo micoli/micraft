@@ -146,6 +146,8 @@ export function GameScreen() {
     continuousBreak: boolean;
     dominantHand: "LEFT" | "RIGHT";
     disabledViewModes: string[];
+    turnSpeedHorizontal: number;
+    turnSpeedVertical: number;
     keybindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
     fieldOfView?: number;
@@ -161,6 +163,8 @@ export function GameScreen() {
         autoTargetEnabled: payload.autoTargetEnabled,
         continuousBreak: payload.continuousBreak,
         dominantHand: payload.dominantHand,
+        turnSpeedHorizontal: payload.turnSpeedHorizontal,
+        turnSpeedVertical: payload.turnSpeedVertical,
       },
     });
     if (window.mcState) {

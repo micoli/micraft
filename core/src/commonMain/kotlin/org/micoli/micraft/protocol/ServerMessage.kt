@@ -225,6 +225,8 @@ sealed class ServerMessage {
         val continuousBreak: Boolean = false,
         val dominantHand: Hand = Hand.RIGHT,
         val disabledViewModes: Set<String> = emptySet(),
+        val turnSpeedHorizontal: Float = 2.5f,
+        val turnSpeedVertical: Float = 1.2f,
     ) : ServerMessage()
 
     @ProtoId(25)

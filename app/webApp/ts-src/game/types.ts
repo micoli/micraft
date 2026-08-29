@@ -241,6 +241,8 @@ export interface PreferencesData {
   continuousBreak: boolean;
   dominantHand: "LEFT" | "RIGHT";
   disabledViewModes: string[];
+  turnSpeedHorizontal: number;
+  turnSpeedVertical: number;
 }
 
 export type CombatTargetData = {
