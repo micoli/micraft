@@ -43,6 +43,15 @@ class ViewModePersistenceTest {
     }
 
     @Test
+    fun roundTrip_thirdPersonOrbitViewMode_preserved() {
+        val (p, _) = persistence()
+        p.savePlayerState("alice", minimalState("THIRD_PERSON_ORBIT"))
+        val loaded = p.loadPlayerState("alice")
+        assertNotNull(loaded)
+        assertEquals("THIRD_PERSON_ORBIT", loaded.viewMode)
+    }
+
+    @Test
     fun loadPlayer_missingViewMode_defaultsToFirstPerson() {
         val (p, dir) = persistence()
         val json =

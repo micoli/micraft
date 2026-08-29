@@ -55,9 +55,15 @@ private const val MAX_AUTO_TARGET_RANGE_SQ = 30.0 * 30.0
 private enum class ViewMode {
     FIRST_PERSON,
     THIRD_PERSON,
-    FIRST_PERSON_NO_ARMS;
+    FIRST_PERSON_NO_ARMS,
+    // Third-person camera that orbits the player with the mouse while the heading is driven
+    // "tank style" by the turn keys (Arrow L/R), independent of where the camera looks.
+    THIRD_PERSON_ORBIT;
 
     fun next(): ViewMode = entries[(ordinal + 1) % entries.size]
+
+    val isThirdPerson: Boolean
+        get() = this == THIRD_PERSON || this == THIRD_PERSON_ORBIT
 }
 
 // Stats window uses wall-clock time rather than a fixed sample count so it stays a
@@ -156,6 +162,12 @@ class LocalPlayerController(
     var lastPlayerCx = Int.MIN_VALUE
     var lastPlayerCz = Int.MIN_VALUE
     private var viewMode: ViewMode = ViewMode.FIRST_PERSON
+    // Client-authoritative heading in THIRD_PERSON_ORBIT: rotated by the turn keys, sent as
+    // MoveIntent.yaw and used to orient the body — the camera yaw is a free mouse-driven orbit.
+    private var playerYaw: Float = 0f
+    private val isOrbit: Boolean
+        get() = viewMode == ViewMode.THIRD_PERSON_ORBIT
+
     var pendingFlyToggle = false
     private var pendingBlockInteract = false
     var autoAdvance = false
@@ -326,6 +338,40 @@ class LocalPlayerController(
         viewMode = ViewMode.entries.firstOrNull { it.name == mode } ?: ViewMode.FIRST_PERSON
     }
 
+    private data class MoveBasis(
+        val fwdX: Float,
+        val fwdZ: Float,
+        val strafeLeft: Boolean,
+        val strafeRight: Boolean,
+    )
+
+    /**
+     * Movement basis for the current view mode. In THIRD_PERSON_ORBIT "forward" follows the
+     * tank-style [playerYaw] and strafing is on the turn keys (rotate_left/right = Ctrl+Arrow);
+     * every other mode keeps camera-relative motion with strafing on Arrow L/R.
+     */
+    private fun moveBasis(): MoveBasis =
+        if (isOrbit)
+            MoveBasis(
+                kotlin.math.sin(playerYaw),
+                kotlin.math.cos(playerYaw),
+                jsIsActionDown("rotate_left"),
+                jsIsActionDown("rotate_right"))
+        else
+            MoveBasis(
+                jsGetCameraForwardX(camera).toFloat(),
+                jsGetCameraForwardZ(camera).toFloat(),
+                jsIsActionDown("strafe_left"),
+                jsIsActionDown("strafe_right"))
+
+    private fun lerpAngle(from: Float, to: Float, t: Float): Float {
+        var diff = to - from
+        val twoPi = (2.0 * kotlin.math.PI).toFloat()
+        while (diff > kotlin.math.PI.toFloat()) diff -= twoPi
+        while (diff < -kotlin.math.PI.toFloat()) diff += twoPi
+        return from + diff * t
+    }
+
     fun updateFromServer(
         state: PlayerState,
         lastProcessedSeq: Long,
@@ -376,6 +422,7 @@ class LocalPlayerController(
             sentIntentHistory.clear()
             jsSetCameraRotationY(camera, state.orientation.yaw.toDouble())
             jsSetCameraRotationX(camera, state.orientation.pitch.toDouble())
+            playerYaw = state.orientation.yaw
         } else {
             totalServerUpdates++
             serverUpdateTimestamps.addTimestamp(jsNow())
@@ -404,6 +451,10 @@ class LocalPlayerController(
                     yDistances.addCapped(jsNow(), absY)
                 }
             }
+            // In orbit mode the heading is client-owned via the turn keys; bleed off drift by
+            // nudging toward the server value. Other modes have no local heading state to keep.
+            if (isOrbit) playerYaw = lerpAngle(playerYaw, state.orientation.yaw, 0.1f)
+            else playerYaw = state.orientation.yaw
         }
 
         val cx = state.pos.x.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
@@ -574,14 +625,20 @@ class LocalPlayerController(
         if (jsIsConsoleInputFocused()) return
 
         val physicsT0 = jsNow()
-        val fwdX = jsGetCameraForwardX(camera).toFloat()
-        val fwdZ = jsGetCameraForwardZ(camera).toFloat()
+        val basis = moveBasis()
+        val fwdX = basis.fwdX
+        val fwdZ = basis.fwdZ
         val rightX = fwdZ
         val rightZ = -fwdX
 
         val turnSpeed = (2.5f * actualDt).toFloat()
-        if (jsIsActionDown("rotate_left")) jsRotateCameraYaw(camera, -turnSpeed)
-        if (jsIsActionDown("rotate_right")) jsRotateCameraYaw(camera, turnSpeed)
+        if (isOrbit) {
+            if (jsIsActionDown("strafe_left")) playerYaw -= turnSpeed
+            if (jsIsActionDown("strafe_right")) playerYaw += turnSpeed
+        } else {
+            if (jsIsActionDown("rotate_left")) jsRotateCameraYaw(camera, -turnSpeed)
+            if (jsIsActionDown("rotate_right")) jsRotateCameraYaw(camera, turnSpeed)
+        }
 
         if (jsIsActionDown("backward")) autoAdvance = false
 
@@ -609,11 +666,11 @@ class LocalPlayerController(
                 dx -= fwdX
                 dz -= fwdZ
             }
-            if (jsIsActionDown("strafe_right")) {
+            if (basis.strafeRight) {
                 dx += rightX
                 dz += rightZ
             }
-            if (jsIsActionDown("strafe_left")) {
+            if (basis.strafeLeft) {
                 dx -= rightX
                 dz -= rightZ
             }
@@ -642,8 +699,8 @@ class LocalPlayerController(
                     !isMovingXZ -> "idle"
                     jsIsActionDown("backward") -> "walking_backward"
                     jsIsActionDown("forward") || autoAdvance -> "walking_forward"
-                    jsIsActionDown("strafe_left") -> "strafe_left"
-                    jsIsActionDown("strafe_right") -> "strafe_right"
+                    basis.strafeLeft -> "strafe_left"
+                    basis.strafeRight -> "strafe_right"
                     else -> "walking_forward"
                 }
 
@@ -1106,8 +1163,11 @@ class LocalPlayerController(
         val pitch = jsGetCameraRotationX(camera)
 
         val eyeOffset = cameraEyeOffset()
-        if (viewMode == ViewMode.THIRD_PERSON) {
-            val dist = 3.0
+        if (viewMode.isThirdPerson) {
+            // Camera orbits along its own yaw (mouse); the body faces playerYaw in orbit mode,
+            // otherwise the camera yaw is the heading.
+            val bodyYaw = if (isOrbit) playerYaw.toDouble() else yaw
+            val dist = if (isOrbit) jsGetOrbitZoomDist() else 3.0
             val camX = predX - kotlin.math.sin(yaw) * dist
             val camY = predY + eyeOffset + 0.3
             val camZ = predZ - kotlin.math.cos(yaw) * dist
@@ -1115,7 +1175,7 @@ class LocalPlayerController(
             jsCameraSetPosition(camera, camX, camY, camZ)
             localPlayerModel?.let {
                 jsSetPlayerTransform(
-                    it, predX, predY, predZ, yaw.toFloat(), pitch.toFloat(), animClip)
+                    it, predX, predY, predZ, bodyYaw.toFloat(), pitch.toFloat(), animClip)
                 jsSetPlayerFirstPerson(it, localSkin, false)
                 jsSetPlayerVisible(it, true)
             }
@@ -1152,7 +1212,7 @@ class LocalPlayerController(
             target?.let { outMessages.trySend(ClientMessage.BlockInteract(it)) }
         }
 
-        if (viewMode == ViewMode.THIRD_PERSON) {
+        if (viewMode.isThirdPerson) {
             localPlayerModel?.let { jsSetPlayerAlpha(it, if (target != null) 0.35 else 1.0) }
         }
 
@@ -1170,7 +1230,8 @@ class LocalPlayerController(
         val mouseDownNow = jsIsMouseDown()
         if (mouseDownNow && !wasMouseDown) breakArmed = true
         wasMouseDown = mouseDownNow
-        val isBreaking = jsIsBreaking()
+        // Plain left-click does nothing in orbit mode — only Ctrl+click (block_interact) acts.
+        val isBreaking = jsIsBreaking() && !isOrbit
         val selectedSlotContent =
             if (selectedSlot > 0) shortcutBarPages[currentPage][selectedSlot] else null
         val selectedItem = (selectedSlotContent as? ShortcutSlot.Item)?.itemType
@@ -1743,10 +1804,12 @@ class LocalPlayerController(
     }
 
     fun buildMoveIntent(): ClientMessage.MoveIntent {
-        val fwdX = jsGetCameraForwardX(camera).toFloat()
-        val fwdZ = jsGetCameraForwardZ(camera).toFloat()
+        val basis = moveBasis()
+        val fwdX = basis.fwdX
+        val fwdZ = basis.fwdZ
         val rightX = fwdZ
         val rightZ = -fwdX
+        val sentYaw = if (isOrbit) playerYaw else jsGetCameraRotationY(camera).toFloat()
 
         var dx = 0f
         var dz = 0f
@@ -1758,11 +1821,11 @@ class LocalPlayerController(
             dx -= fwdX
             dz -= fwdZ
         }
-        if (jsIsActionDown("strafe_right")) {
+        if (basis.strafeRight) {
             dx += rightX
             dz += rightZ
         }
-        if (jsIsActionDown("strafe_left")) {
+        if (basis.strafeLeft) {
             dx -= rightX
             dz -= rightZ
         }
@@ -1801,7 +1864,7 @@ class LocalPlayerController(
                 dx = dx,
                 dz = dz,
                 dy = dy,
-                yaw = jsGetCameraRotationY(camera).toFloat(),
+                yaw = sentYaw,
                 pitch = jsGetCameraRotationX(camera).toFloat(),
                 stance = PlayerStance.STANDING,
                 jump = false,
@@ -1819,7 +1882,7 @@ class LocalPlayerController(
             ClientMessage.MoveIntent(
                 dx = dx,
                 dz = dz,
-                yaw = jsGetCameraRotationY(camera).toFloat(),
+                yaw = sentYaw,
                 pitch = jsGetCameraRotationX(camera).toFloat(),
                 stance = stance,
                 jump = !isMounted && jsIsActionDown("ascend"),

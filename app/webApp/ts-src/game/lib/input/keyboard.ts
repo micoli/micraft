@@ -111,6 +111,34 @@ function isComboDown(str: string): boolean {
   );
 }
 
+// Held-state equivalent of resolveEventActions: when a modifier-qualified binding (e.g.
+// "Ctrl+ArrowLeft" on rotate_left) is currently held, bare bindings ("ArrowLeft" on strafe_left)
+// of *other* actions sharing that physical key are suppressed — otherwise Ctrl+ArrowLeft would
+// drive both turn and strafe at once. Action-name-agnostic, mirrors the keydown arbitration.
+function anyQualifiedHeldOnKey(key: string, exceptAction: string): boolean {
+  const b = window.mcState.bindings;
+  for (const [action, keys] of Object.entries(b)) {
+    if (action === exceptAction) continue;
+    for (const k of keys) {
+      if (!isSequenceBinding(k) && hasModPrefix(k) && parseBoundKey(k).key === key && isComboDown(k)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function isActionHeld(action: string): boolean {
+  const keys = window.mcState.bindings[action];
+  if (!keys) return false;
+  for (const k of keys) {
+    if (!isComboDown(k)) continue;
+    if (hasModPrefix(k)) return true;
+    if (!anyQualifiedHeldOnKey(parseBoundKey(k).key, action)) return true;
+  }
+  return false;
+}
+
 export function registerKeyboard(): Pick<
   McBindings,
   "loadBindings" | "isActionDown" | "setupKeyboard" | "consumeEvents"
@@ -132,11 +160,7 @@ export function registerKeyboard(): Pick<
         });
     },
 
-    isActionDown: (action: string): boolean => {
-      const keys = window.mcState.bindings[action];
-      if (!keys) return false;
-      return keys.some((k) => isComboDown(k));
-    },
+    isActionDown: (action: string): boolean => isActionHeld(action),
 
     setupKeyboard: (): void => {
       window.mcState.bindings = {};
