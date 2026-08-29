@@ -98,6 +98,13 @@ const initial: UiState = {
   claimPanelOpen: false,
   claims: [],
   claimDeniedMsg: null,
+  group: null,
+  guild: null,
+  faction: null,
+  groupPanelOpen: false,
+  guildPanelOpen: false,
+  factionPanelOpen: false,
+  socialInvites: [],
 };
 
 export function GameUI() {
@@ -855,6 +862,37 @@ export function GameUI() {
       dispatch("claim_denied", { reason });
       dispatch("notification", { msg: reason });
     };
+    window.mc.groupSync = (json: string) => {
+      try {
+        dispatch("group_sync", { group: JSON.parse(json).group ?? null });
+      } catch (e) {
+        console.error("[social] groupSync parse error:", e, json);
+      }
+    };
+    window.mc.guildSync = (json: string) => {
+      try {
+        dispatch("guild_sync", { guild: JSON.parse(json).guild ?? null });
+      } catch (e) {
+        console.error("[social] guildSync parse error:", e, json);
+      }
+    };
+    window.mc.factionSync = (json: string) => {
+      try {
+        dispatch("faction_sync", { faction: JSON.parse(json) });
+      } catch (e) {
+        console.error("[social] factionSync parse error:", e, json);
+      }
+    };
+    window.mc.socialDenied = (_scope: string, reason: string) => {
+      dispatch("notification", { msg: reason });
+    };
+    window.mc.socialInvite = (kind: string, id: string, name: string, from: string) => {
+      dispatch("social_invite_add", { invite: { kind: kind as "group" | "guild", id, name, from } });
+      dispatch("notification", { msg: `${from} invited you to ${kind === "guild" ? name : "a group"}` });
+    };
+    window.mc.toggleGroupPanel = () => dispatch("group_panel_toggle");
+    window.mc.toggleGuildPanel = () => dispatch("guild_panel_toggle");
+    window.mc.toggleFactionPanel = () => dispatch("faction_panel_toggle");
     window.mc.toggleClaimPanel = () => dispatch("claim_panel_toggle");
     window.mc.adminZoneWireframe = (json: string) => {
       try {

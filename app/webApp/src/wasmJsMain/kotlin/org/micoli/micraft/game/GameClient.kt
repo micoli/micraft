@@ -927,6 +927,38 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 ServerMessage.ClaimDenied::class,
                 typedHandler { msg: ServerMessage.ClaimDenied -> jsClaimDenied(msg.reason) })
             put(
+                ServerMessage.GroupSync::class,
+                typedHandler { msg: ServerMessage.GroupSync ->
+                    jsGroupSync(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.GuildSync::class,
+                typedHandler { msg: ServerMessage.GuildSync ->
+                    jsGuildSync(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.FactionSync::class,
+                typedHandler { msg: ServerMessage.FactionSync ->
+                    org.micoli.micraft.social.FactionColors.update(
+                        msg.definitions.associate { it.id to it.color })
+                    jsFactionSync(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.SocialDenied::class,
+                typedHandler { msg: ServerMessage.SocialDenied ->
+                    jsSocialDenied(msg.scope, msg.reason)
+                })
+            put(
+                ServerMessage.GroupInviteReceived::class,
+                typedHandler { msg: ServerMessage.GroupInviteReceived ->
+                    jsSocialInvite("group", msg.groupId, "", msg.fromName)
+                })
+            put(
+                ServerMessage.GuildInviteReceived::class,
+                typedHandler { msg: ServerMessage.GuildInviteReceived ->
+                    jsSocialInvite("guild", msg.guildId, msg.guildName, msg.fromName)
+                })
+            put(
                 ServerMessage.AdminZoneWireframe::class,
                 typedHandler { msg: ServerMessage.AdminZoneWireframe ->
                     jsAdminZoneWireframe(Json.encodeToString(msg))

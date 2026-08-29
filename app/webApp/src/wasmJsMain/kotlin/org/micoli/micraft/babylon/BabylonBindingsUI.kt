@@ -267,6 +267,19 @@ fun jsClaimSync(json: String): Unit = js("mc.claimSync(json)")
 
 fun jsClaimDenied(reason: String): Unit = js("mc.claimDenied(reason)")
 
+// ── Social (groups / guilds / factions) ───────────────────────────────────────
+
+fun jsGroupSync(json: String): Unit = js("mc.groupSync(json)")
+
+fun jsGuildSync(json: String): Unit = js("mc.guildSync(json)")
+
+fun jsFactionSync(json: String): Unit = js("mc.factionSync(json)")
+
+fun jsSocialDenied(scope: String, reason: String): Unit = js("mc.socialDenied(scope, reason)")
+
+fun jsSocialInvite(kind: String, id: String, name: String, from: String): Unit =
+    js("mc.socialInvite(kind, id, name, from)")
+
 // ── Instance zones ────────────────────────────────────────────────────────────
 
 fun jsAdminZoneWireframe(json: String): Unit = js("mc.adminZoneWireframe(json)")

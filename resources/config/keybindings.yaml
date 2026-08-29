@@ -53,6 +53,9 @@ ui:
   quest_tracking: [KeyT]
   chunk_debug_toggle: ["Ctrl+KeyN"]
   claim_panel: [KeyK]
+  group_panel: ["Alt+KeyG"]
+  guild_panel: [KeyU]
+  faction_panel: ["Alt+KeyF"]
 
 building:
   place_rotate: [KeyR]

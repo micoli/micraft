@@ -1043,6 +1043,72 @@ class LocalPlayerController(
                                     event.removePrefix("claim_set_trusted:")))
                         }
                         .onFailure { jsError("claim_set_trusted decode failed: $it") }
+                event == "group_create" -> outMessages.trySend(ClientMessage.GroupCreate)
+                event.startsWith("group_invite:") ->
+                    outMessages.trySend(
+                        ClientMessage.GroupInvite(event.removePrefix("group_invite:")))
+                event.startsWith("group_respond:") -> {
+                    val (gid, acc) = event.removePrefix("group_respond:").split("\t")
+                    outMessages.trySend(ClientMessage.GroupInviteRespond(gid, acc == "1"))
+                }
+                event == "group_leave" -> outMessages.trySend(ClientMessage.GroupLeave)
+                event.startsWith("group_kick:") ->
+                    outMessages.trySend(ClientMessage.GroupKick(event.removePrefix("group_kick:")))
+                event.startsWith("group_transfer:") ->
+                    outMessages.trySend(
+                        ClientMessage.GroupTransfer(event.removePrefix("group_transfer:")))
+                event == "group_disband" -> outMessages.trySend(ClientMessage.GroupDisband)
+                event.startsWith("guild_create:") -> {
+                    val (n, tg) = event.removePrefix("guild_create:").split("\t")
+                    outMessages.trySend(ClientMessage.GuildCreate(n, tg))
+                }
+                event.startsWith("guild_invite:") ->
+                    outMessages.trySend(
+                        ClientMessage.GuildInvite(event.removePrefix("guild_invite:")))
+                event.startsWith("guild_respond:") -> {
+                    val (gid, acc) = event.removePrefix("guild_respond:").split("\t")
+                    outMessages.trySend(ClientMessage.GuildInviteRespond(gid, acc == "1"))
+                }
+                event == "guild_leave" -> outMessages.trySend(ClientMessage.GuildLeave)
+                event.startsWith("guild_kick:") ->
+                    outMessages.trySend(ClientMessage.GuildKick(event.removePrefix("guild_kick:")))
+                event.startsWith("guild_motd:") ->
+                    outMessages.trySend(
+                        ClientMessage.GuildSetMotd(event.removePrefix("guild_motd:")))
+                event.startsWith("guild_setrank:") -> {
+                    val (pid, rank) = event.removePrefix("guild_setrank:").split("\t")
+                    outMessages.trySend(ClientMessage.GuildSetRank(pid, rank))
+                }
+                event.startsWith("guild_rank_upsert:") ->
+                    runCatching {
+                            outMessages.trySend(
+                                Json.decodeFromString<ClientMessage.GuildRankUpsert>(
+                                    event.removePrefix("guild_rank_upsert:")))
+                        }
+                        .onFailure { jsError("guild_rank_upsert decode failed: $it") }
+                event.startsWith("guild_rank_delete:") ->
+                    outMessages.trySend(
+                        ClientMessage.GuildRankDelete(event.removePrefix("guild_rank_delete:")))
+                event.startsWith("guild_transfer:") ->
+                    outMessages.trySend(
+                        ClientMessage.GuildTransferOwner(event.removePrefix("guild_transfer:")))
+                event == "guild_disband" -> outMessages.trySend(ClientMessage.GuildDisband)
+                event.startsWith("guild_bank_deposit:") -> {
+                    val (item, n) = event.removePrefix("guild_bank_deposit:").split("\t")
+                    outMessages.trySend(
+                        ClientMessage.GuildBankDeposit(
+                            org.micoli.micraft.game.world.ItemType(item), n.toIntOrNull() ?: 0))
+                }
+                event.startsWith("guild_bank_withdraw:") -> {
+                    val (item, n) = event.removePrefix("guild_bank_withdraw:").split("\t")
+                    outMessages.trySend(
+                        ClientMessage.GuildBankWithdraw(
+                            org.micoli.micraft.game.world.ItemType(item), n.toIntOrNull() ?: 0))
+                }
+                event.startsWith("faction_set:") ->
+                    outMessages.trySend(
+                        ClientMessage.FactionSetAffiliation(
+                            event.removePrefix("faction_set:").ifBlank { null }))
                 event.startsWith("attack:") -> {
                     val targetId = currentCombatTargetId ?: return@repeat
                     val rest = event.removePrefix("attack:")

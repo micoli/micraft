@@ -127,6 +127,7 @@ export function registerPlayerModel(): Pick<
   | "isPlayerBbmodelReady"
   | "createPlayerModelNow"
   | "createPlayerModelFromBbmodel"
+  | "setPlayerNameplate"
   | "setPlayerTransform"
   | "setPlayerVisible"
   | "setPlayerAlpha"
@@ -181,6 +182,48 @@ export function registerPlayerModel(): Pick<
       createPlayerModelFromBbmodel(window.mcState.playerBbmodels[skin]!, scene, skin),
 
     createPlayerModelFromBbmodel,
+
+    setPlayerNameplate: (model: McPlayerModel, scene: Scene, text: string, color: string): void => {
+      if (model._nameplate) {
+        model._nameplate.plane.dispose();
+        model._nameplate.texture.dispose();
+        model._nameplate = null;
+      }
+      if (!text) return;
+      const TW = 512;
+      const TH = 128;
+      const dt = new BABYLON.DynamicTexture("nameplateTex", { width: TW, height: TH }, scene, false);
+      dt.hasAlpha = true;
+      const ctx = dt.getContext() as unknown as CanvasRenderingContext2D;
+      ctx.clearRect(0, 0, TW, TH);
+      ctx.font = "bold 64px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.lineWidth = 10;
+      ctx.strokeStyle = "rgba(0,0,0,0.9)";
+      ctx.strokeText(text, TW / 2, TH / 2);
+      ctx.fillStyle = color || "#ffffff";
+      ctx.fillText(text, TW / 2, TH / 2);
+      dt.update();
+
+      const width = Math.max(1.2, Math.min(6, text.length * 0.16));
+      const plane = BABYLON.MeshBuilder.CreatePlane("nameplate", { width, height: width * (TH / TW) }, scene);
+      plane.parent = model.root;
+      plane.position.y = 2.35;
+      plane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+      plane.isPickable = false;
+      plane.renderingGroupId = 1;
+
+      const mat = new BABYLON.StandardMaterial("nameplateMat", scene);
+      mat.diffuseTexture = dt;
+      mat.opacityTexture = dt;
+      mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
+      mat.disableLighting = true;
+      mat.backFaceCulling = false;
+      plane.material = mat;
+
+      model._nameplate = { plane, texture: dt };
+    },
 
     setPlayerTransform: (
       model: McPlayerModel,
@@ -258,6 +301,8 @@ export function registerPlayerModel(): Pick<
     },
 
     disposePlayerModel: (model: McPlayerModel): void => {
+      model._nameplate?.texture.dispose();
+      model._nameplate = null;
       model.root.getChildMeshes(true).forEach((m) => m.dispose());
       Object.values(model.pivotNodes).forEach((p) => p.node.dispose());
       model.root.dispose();

@@ -234,6 +234,9 @@ export function registerKeyboard(): Pick<
         if (matched.has("claim_mark_corner")) window.mc?.claimMarkCorner?.();
         if (matched.has("claim_cancel_selection")) window.mc?.claimCancelSelection?.();
         if (matched.has("claim_panel")) window.mc?.toggleClaimPanel?.();
+        if (matched.has("group_panel")) window.mc?.toggleGroupPanel?.();
+        if (matched.has("guild_panel")) window.mc?.toggleGuildPanel?.();
+        if (matched.has("faction_panel")) window.mc?.toggleFactionPanel?.();
         if (matched.has("scene_confirm") && window.mcState.sceneGhostActive) {
           window.mc?.sceneConfirm?.();
         }

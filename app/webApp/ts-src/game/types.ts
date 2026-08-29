@@ -135,6 +135,92 @@ export interface ClaimData {
   trustedPlayerNames: string[];
 }
 
+export type GuildPermission =
+  | "INVITE"
+  | "KICK"
+  | "MANAGE_RANKS"
+  | "EDIT_MOTD"
+  | "BANK_DEPOSIT"
+  | "BANK_WITHDRAW"
+  | "DISBAND"
+  | "EDIT_INFO";
+
+export interface GuildRank {
+  name: string;
+  order: number;
+  flags: GuildPermission[];
+}
+
+export interface GuildMemberInfo {
+  playerId: string;
+  playerName: string;
+  rank: string;
+  joinedAtMs: number;
+  online: boolean;
+}
+
+export interface GuildBankEntryInfo {
+  playerName: string;
+  itemId: string;
+  delta: number;
+  atMs: number;
+}
+
+export interface GuildInfo {
+  id: string;
+  name: string;
+  tag: string;
+  motd: string;
+  createdAtMs: number;
+  ownerId: string;
+  ranks: GuildRank[];
+  members: GuildMemberInfo[];
+  bank: Record<string, number>;
+  bankLog: GuildBankEntryInfo[];
+  myRank: string;
+  myFlags: GuildPermission[];
+}
+
+export interface GroupMemberInfo {
+  playerId: string;
+  playerName: string;
+  online: boolean;
+}
+
+export interface GroupInfo {
+  id: string;
+  leaderId: string;
+  leaderName: string;
+  members: GroupMemberInfo[];
+}
+
+export interface FactionDefinition {
+  id: string;
+  name: string;
+  color: string;
+  description: string;
+}
+
+export interface FactionState {
+  id: string;
+  memberCount: number;
+}
+
+export interface FactionSyncData {
+  enabled: boolean;
+  definitions: FactionDefinition[];
+  states: FactionState[];
+  myFactionId: string | null;
+  changeCooldownRemainingMs: number;
+}
+
+export interface SocialInvite {
+  kind: "group" | "guild";
+  id: string;
+  name: string;
+  from: string;
+}
+
 export interface InstanceZoneData {
   id: string;
   name: string;

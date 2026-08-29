@@ -91,6 +91,13 @@ export interface UiState {
   claimPanelOpen: boolean;
   claims: ClaimData[];
   claimDeniedMsg: string | null;
+  group: import("./types").GroupInfo | null;
+  guild: import("./types").GuildInfo | null;
+  faction: import("./types").FactionSyncData | null;
+  groupPanelOpen: boolean;
+  guildPanelOpen: boolean;
+  factionPanelOpen: boolean;
+  socialInvites: import("./types").SocialInvite[];
 }
 
 const ingameMapRegistry = {
@@ -386,6 +393,35 @@ const claimRegistry = {
   claim_denied_clear: (state: UiState) => ({ ...state, claimDeniedMsg: null }),
 };
 
+const socialRegistry = {
+  group_sync: (state: UiState, payload: { group: import("./types").GroupInfo | null }) => ({
+    ...state,
+    group: payload.group,
+  }),
+  guild_sync: (state: UiState, payload: { guild: import("./types").GuildInfo | null }) => ({
+    ...state,
+    guild: payload.guild,
+    guildPanelOpen: payload.guild ? state.guildPanelOpen : false,
+  }),
+  faction_sync: (state: UiState, payload: { faction: import("./types").FactionSyncData }) => ({
+    ...state,
+    faction: payload.faction,
+  }),
+  group_panel_toggle: (state: UiState) => ({ ...state, groupPanelOpen: !state.groupPanelOpen }),
+  guild_panel_toggle: (state: UiState) => ({ ...state, guildPanelOpen: !state.guildPanelOpen }),
+  faction_panel_toggle: (state: UiState) => ({ ...state, factionPanelOpen: !state.factionPanelOpen }),
+  guild_panel_close: (state: UiState) => ({ ...state, guildPanelOpen: false }),
+  faction_panel_close: (state: UiState) => ({ ...state, factionPanelOpen: false }),
+  social_invite_add: (state: UiState, payload: { invite: import("./types").SocialInvite }) => ({
+    ...state,
+    socialInvites: [...state.socialInvites.filter((i) => i.kind !== payload.invite.kind), payload.invite],
+  }),
+  social_invite_clear: (state: UiState, payload: { kind: string }) => ({
+    ...state,
+    socialInvites: state.socialInvites.filter((i) => i.kind !== payload.kind),
+  }),
+};
+
 const instanceRegistry = {
   admin_zone_wireframe: (state: UiState, payload: { zone: InstanceZoneData | null }) => ({
     ...state,
@@ -402,6 +438,7 @@ export const actionRegistry = {
   ...globalRegistry,
   ...ingameMapRegistry,
   ...instanceRegistry,
+  ...socialRegistry,
   ...layoutEditorRegistry,
   ...loadingRegistry,
   ...mailRegistry,
