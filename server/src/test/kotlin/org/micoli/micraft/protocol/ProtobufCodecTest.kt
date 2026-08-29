@@ -67,6 +67,7 @@ class ProtobufCodecTest {
             ServerMessage.OpenLayoutEditor, roundtripServer(ServerMessage.OpenLayoutEditor))
         assertEquals(ServerMessage.OpenPreferences, roundtripServer(ServerMessage.OpenPreferences))
         assertEquals(ServerMessage.OpenCodex, roundtripServer(ServerMessage.OpenCodex))
+        assertEquals(ServerMessage.OpenCharacter, roundtripServer(ServerMessage.OpenCharacter))
     }
 
     @Test

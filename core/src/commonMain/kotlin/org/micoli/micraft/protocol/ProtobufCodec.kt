@@ -178,6 +178,7 @@ object ServerMessageCodec {
             serverEntry<ServerMessage.AuctionListingsUpdate>(), // 72
             serverEntry<ServerMessage.ClaimSync>(), // 73
             serverEntry<ServerMessage.ClaimDenied>(), // 74
+            serverSingleton(ServerMessage.OpenCharacter), // 75
         )
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)
