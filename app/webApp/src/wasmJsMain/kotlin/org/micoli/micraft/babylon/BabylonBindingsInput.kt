@@ -12,6 +12,8 @@ fun jsIsBreaking(): Boolean = js("mc.isBreaking()")
 
 fun jsIsMouseDown(): Boolean = js("mc.isMouseDown()")
 
+fun jsGetOrbitZoomDist(): Double = js("window.mcState.orbitZoom ?? 3")
+
 fun jsSetContinuousBreak(active: Boolean): Unit = js("window.mcState.continuousBreak = active")
 
 fun jsCreateCrosshair(): Unit = js("mc.createCrosshair()")

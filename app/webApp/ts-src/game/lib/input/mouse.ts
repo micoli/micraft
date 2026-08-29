@@ -3,9 +3,28 @@ export function registerMouse(): Pick<McBindings, "setupMouse" | "isBreaking" | 
     setupMouse: (): void => {
       window.mcState.mouseLeft = false;
       window.mcState.mouseDownAt = 0;
+      window.mcState.orbitZoom = 3;
+
+      // Mouse wheel adjusts the THIRD_PERSON_ORBIT chase-camera distance. Accumulated
+      // unconditionally — only the orbit view reads it; ignored while a modal is open.
+      window.addEventListener(
+        "wheel",
+        (e: WheelEvent) => {
+          if (window.mcState.modalOpen) return;
+          const step = Math.sign(e.deltaY) * 0.5;
+          window.mcState.orbitZoom = Math.max(1.5, Math.min(12, window.mcState.orbitZoom + step));
+        },
+        { passive: true },
+      );
 
       window.addEventListener("pointerdown", (e: PointerEvent) => {
         if (e.button === 0 && document.pointerLockElement) {
+          // Ctrl+click is block interaction (same as the block_interact key), never a break/place —
+          // in THIRD_PERSON_ORBIT it is the only pointer action.
+          if (e.ctrlKey) {
+            window.mcState.events.push("block_interact");
+            return;
+          }
           window.mcState.mouseLeft = true;
           window.mcState.mouseDownAt = Date.now();
         }

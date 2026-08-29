@@ -69,6 +69,7 @@ window.mcState = {
   lastKeyPress: null,
   mouseLeft: false,
   mouseDownAt: 0,
+  orbitZoom: 3,
   continuousBreak: false,
   bindings: {},
   customCommands: {},

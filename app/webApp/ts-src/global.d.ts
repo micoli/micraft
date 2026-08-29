@@ -231,6 +231,8 @@ declare global {
     lastKeyPress: { code: string; key: string; time: number } | null;
     mouseLeft: boolean;
     mouseDownAt: number;
+    // Chase-camera distance in THIRD_PERSON_ORBIT, driven by the mouse wheel.
+    orbitZoom: number;
     bindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
     macros: Record<string, string>;

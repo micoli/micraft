@@ -19,6 +19,14 @@ class KeyBindingsConfigTest {
     }
 
     @Test
+    fun defaults_turnKeys_includeCtrlArrows() {
+        val dir = createTempDirectory()
+        val bindings = loadKeyBindings(dir.resolve("keybindings.yaml"))
+        assertEquals(listOf("KeyQ", "Ctrl+ArrowLeft"), bindings["rotate_left"])
+        assertEquals(listOf("KeyE", "Ctrl+ArrowRight"), bindings["rotate_right"])
+    }
+
+    @Test
     fun partialFile_writesMissingKeysBack() {
         val dir = createTempDirectory()
         val path = dir.resolve("keybindings.yaml")
