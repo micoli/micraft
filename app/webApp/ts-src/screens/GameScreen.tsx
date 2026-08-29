@@ -36,6 +36,7 @@ import { QuestTracker } from "../game/components/quest/QuestTracker";
 import { BuffBar } from "../game/components/buffs/BuffBar";
 import { MailboxOverlay } from "../game/overlays/MailboxOverlay";
 import { AuctionHouse } from "../game/components/auction/AuctionHouse";
+import { ClaimPanel } from "../game/components/claim/ClaimPanel";
 import { CreativeBlockPanel } from "../game/components/CreativeBlockPanel";
 import { setCreativeSelectedItem, setCreativeSelectedScene } from "../game/lib/creativeMode";
 
@@ -649,6 +650,23 @@ export function GameScreen() {
           }}
           onFilterChange={(filter) => {
             window.mcState.events.push(`auction_set_filter:${JSON.stringify({ filter })}`);
+          }}
+        />
+      )}
+      {state.claimPanelOpen && !state.disconnectMsg && (
+        <ClaimPanel
+          open={state.claimPanelOpen}
+          claims={state.claims}
+          myPlayerId={window.mcState.playerId}
+          onClose={() => {
+            dispatch("claim_panel_close");
+            resumePointerLock();
+          }}
+          onAbandon={(claimId) => {
+            window.mcState.events.push(`claim_abandon:${claimId}`);
+          }}
+          onSetTrusted={(claimId, playerName, trusted) => {
+            window.mcState.events.push(`claim_set_trusted:${JSON.stringify({ claimId, playerName, trusted })}`);
           }}
         />
       )}

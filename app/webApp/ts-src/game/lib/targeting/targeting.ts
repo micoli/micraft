@@ -1,4 +1,5 @@
 import type { LinesMesh, Scene, Vector3 } from "@babylonjs/core";
+import { onTargetBlockChanged } from "./claimTool";
 
 // 12 edges of a unit cube centred at origin, expanded by `h` on each side.
 function cubeLines(h: number): [Vector3, Vector3][] {
@@ -114,6 +115,7 @@ export function registerTargeting(): Pick<
       ls.color = breakable ? new BABYLON.Color3(0, 0, 0) : new BABYLON.Color3(0.55, 0.55, 0.55);
       ls.isPickable = false;
       window.mcState.targetMesh = ls;
+      onTargetBlockChanged(scene, { x, y, z });
     },
 
     hideTargetOutline: (): void => {
@@ -121,6 +123,7 @@ export function registerTargeting(): Pick<
         window.mcState.targetMesh.dispose();
         window.mcState.targetMesh = null;
       }
+      onTargetBlockChanged(null, null);
     },
 
     showBreakOverlay: (

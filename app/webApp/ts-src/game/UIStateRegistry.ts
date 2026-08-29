@@ -3,6 +3,7 @@ import {
   AuctionData,
   ChannelSubscription,
   CharacterSyncData,
+  ClaimData,
   ClassDefinitions,
   CombatTargetData,
   GameLayout,
@@ -87,6 +88,9 @@ export interface UiState {
   adminZone: InstanceZoneData | null;
   auctionHouseOpen: boolean;
   auctions: AuctionData[];
+  claimPanelOpen: boolean;
+  claims: ClaimData[];
+  claimDeniedMsg: string | null;
 }
 
 const ingameMapRegistry = {
@@ -367,6 +371,21 @@ const auctionRegistry = {
   }),
 };
 
+const claimRegistry = {
+  claim_panel_open: (state: UiState) => ({ ...state, claimPanelOpen: true }),
+  claim_panel_close: (state: UiState) => ({ ...state, claimPanelOpen: false }),
+  claim_panel_toggle: (state: UiState) => ({ ...state, claimPanelOpen: !state.claimPanelOpen }),
+  claim_sync: (state: UiState, payload: { claims: ClaimData[] }) => ({
+    ...state,
+    claims: payload.claims,
+  }),
+  claim_denied: (state: UiState, payload: { reason: string }) => ({
+    ...state,
+    claimDeniedMsg: payload.reason,
+  }),
+  claim_denied_clear: (state: UiState) => ({ ...state, claimDeniedMsg: null }),
+};
+
 const instanceRegistry = {
   admin_zone_wireframe: (state: UiState, payload: { zone: InstanceZoneData | null }) => ({
     ...state,
@@ -376,6 +395,7 @@ const instanceRegistry = {
 
 export const actionRegistry = {
   ...auctionRegistry,
+  ...claimRegistry,
   ...componentVisibilityRegistry,
   ...consoleRegistry,
   ...gameRegistry,

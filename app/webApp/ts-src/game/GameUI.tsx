@@ -95,6 +95,9 @@ const initial: UiState = {
   adminZone: null,
   auctionHouseOpen: false,
   auctions: [],
+  claimPanelOpen: false,
+  claims: [],
+  claimDeniedMsg: null,
 };
 
 export function GameUI() {
@@ -821,6 +824,20 @@ export function GameUI() {
         console.error("[auction] auctionListingsUpdate parse error:", e, "raw:", json);
       }
     };
+    window.mc.claimSync = (json: string) => {
+      try {
+        const msg = JSON.parse(json) as { claims: import("./types").ClaimData[] };
+        const claims = msg.claims.map((c) => ({ ...c, trustedPlayerNames: c.trustedPlayerNames ?? [] }));
+        dispatch("claim_sync", { claims });
+      } catch (e) {
+        console.error("[claim] claimSync parse error:", e, "raw:", json);
+      }
+    };
+    window.mc.claimDenied = (reason: string) => {
+      dispatch("claim_denied", { reason });
+      dispatch("notification", { msg: reason });
+    };
+    window.mc.toggleClaimPanel = () => dispatch("claim_panel_toggle");
     window.mc.adminZoneWireframe = (json: string) => {
       try {
         const data = JSON.parse(json) as { zone: import("./types").InstanceZoneData | null };

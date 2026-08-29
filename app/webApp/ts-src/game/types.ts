@@ -125,6 +125,16 @@ export interface AuctionData {
   bidHistory: AuctionBidData[];
 }
 
+export interface ClaimData {
+  id: string;
+  chunks: { cx: number; cz: number }[];
+  yMin: number;
+  yMax: number;
+  ownerId: string;
+  ownerName: string;
+  trustedPlayerNames: string[];
+}
+
 export interface InstanceZoneData {
   id: string;
   name: string;

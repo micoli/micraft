@@ -263,6 +263,12 @@ declare global {
     sunShadowDepthMat: InstanceType<typeof BABYLON.ShaderMaterial> | null;
     targetMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     breakMesh: (InstanceType<typeof BABYLON.AbstractMesh> & { _bpos?: string }) | null;
+    // Block currently under the crosshair, refreshed by showTargetOutline/hideTargetOutline each
+    // frame — reused by the claim-selection tool so it doesn't need its own raycast.
+    currentTargetBlock: { x: number; y: number; z: number } | null;
+    claimToolActive: boolean;
+    claimCorner1: { x: number; y: number; z: number } | null;
+    claimPreviewMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     trajectoryMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     zoneMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
     ghostMesh: InstanceType<typeof BABYLON.AbstractMesh> | null;
@@ -652,6 +658,11 @@ declare global {
     openMailbox(): void;
     openAuctionHouse(): void;
     auctionListingsUpdate(json: string): void;
+    claimSync(json: string): void;
+    claimDenied(reason: string): void;
+    claimMarkCorner(): void;
+    claimCancelSelection(): void;
+    toggleClaimPanel(): void;
     adminZoneWireframe(json: string): void;
     instanceZonesSync(json: string): void;
     scenesSync(json: string): void;

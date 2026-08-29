@@ -916,6 +916,14 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     jsAuctionListingsUpdate(Json.encodeToString(msg))
                 })
             put(
+                ServerMessage.ClaimSync::class,
+                typedHandler { msg: ServerMessage.ClaimSync ->
+                    jsClaimSync(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.ClaimDenied::class,
+                typedHandler { msg: ServerMessage.ClaimDenied -> jsClaimDenied(msg.reason) })
+            put(
                 ServerMessage.AdminZoneWireframe::class,
                 typedHandler { msg: ServerMessage.AdminZoneWireframe ->
                     jsAdminZoneWireframe(Json.encodeToString(msg))
