@@ -6,8 +6,29 @@ plugins {
     alias(libs.plugins.ktor) apply false
     alias(libs.plugins.kotlinxSerialization) apply false
     alias(libs.plugins.ksp) apply false
-    id("org.jetbrains.qodana") version "2024.3.4"
-    id("com.diffplug.spotless") version "7.2.1"
+    alias(libs.plugins.qodana)
+    alias(libs.plugins.spotless)
+    alias(libs.plugins.cyclonedx)
+}
+
+// ── Supply-chain: lock every resolved dependency version ──────────────────────
+allprojects { dependencyLocking { lockAllConfigurations() } }
+
+// Force patched versions of the Kotlin/JS webpack toolchain (kotlin-js-store/yarn.lock).
+// Build-time only. Refresh with `./gradlew kotlinUpgradeYarnLock`.
+plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
+    rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().apply {
+        // Only same-major bumps — forcing majors here breaks the webpack build.
+        resolution("webpack", "5.104.1")
+        resolution("socket.io-parser", "4.2.7")
+        resolution("js-yaml", "4.3.2")
+        resolution("fast-uri", "3.1.6")
+        resolution("body-parser", "1.20.6")
+        resolution("brace-expansion", "2.1.4")
+        // Cross-major, but the public API is unchanged and both are consumed via require().
+        resolution("serialize-javascript", "7.0.7")
+        resolution("diff", "8.0.3")
+    }
 }
 
 /**

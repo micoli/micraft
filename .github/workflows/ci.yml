@@ -5,15 +5,18 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   ts-typecheck:
     name: TypeScript typecheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 26
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: app/webApp/ts-src/package-lock.json
       - run: npm ci
@@ -32,22 +35,22 @@ jobs:
     name: README commands doc up to date
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v3
-      - run: ./gradlew :server:checkCommandsDocs
+      - uses: gradle/actions/setup-gradle@da187c8e6ffbd3802e00f2477aa5a822b25f2dda # v4.4.4
+      - run: ./gradlew :server:checkCommandsDocs --no-daemon
 
   kotlin-test:
     name: Kotlin shared tests (JVM)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v3
-      - run: ./gradlew :core:jvmTest :server:test
+      - uses: gradle/actions/setup-gradle@da187c8e6ffbd3802e00f2477aa5a822b25f2dda # v4.4.4
+      - run: ./gradlew :core:jvmTest :server:test --no-daemon
