@@ -25,10 +25,13 @@ class GenerateReferenceDocsTest {
     }
 
     @Test
-    fun `committed fragments under docs are up to date with config and constants`() {
-        val stale = staleReferenceDocs()
-        assertEquals(
-            emptyList(), stale, "Run: make docs (or ./gradlew :server:generateReferenceDocs)")
+    fun `every fragment has a committed file under docs`() {
+        // Content drift is verified by :server:checkReferenceDocs (its own JVM):
+        // the mutable WorldConstants / PlayerConstants globals make an in-suite
+        // content comparison unreliable when other tests have run first.
+        val missing =
+            referenceDocPages().keys.filterNot { File("docs/reference/_generated/$it").exists() }
+        assertEquals(emptyList(), missing, "Run: make docs")
     }
 
     @Test
