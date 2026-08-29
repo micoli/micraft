@@ -1,6 +1,6 @@
 # MicCraft
 
-Minecraft client/server clone — **Kotlin Multiplatform**, multiplayer voxel, procedural gen, persistent server world.
+— **Kotlin Multiplatform**, multiplayer voxel, procedural gen, persistent server world.
 
 ## Modules
 

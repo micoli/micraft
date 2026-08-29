@@ -1,6 +1,6 @@
 # MicCraft
 
-**MicCraft** is a Minecraft-inspired multiplayer voxel game built with **Kotlin Multiplatform**. It runs a Ktor WebSocket server with authoritative physics and serves a browser client via Kotlin/Wasm + BabylonJS. Procedural terrain generation, biome system, liquid physics, NPC entities, weather zones, and a plugin-based slash command system.
+**MicCraft** is a multiplayer voxel game built with **Kotlin Multiplatform**. It runs a Ktor WebSocket server with authoritative physics and serves a browser client via Kotlin/Wasm + BabylonJS. Procedural terrain generation, biome system, liquid physics, NPC entities, weather zones, and a plugin-based slash command system.
 
 ---
 
