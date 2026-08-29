@@ -2,7 +2,7 @@
 junit = "4.13.2"
 bcrypt = "0.10.2"
 jackson = "2.18.3"
-json-schema-validator = "1.5.6"
+json-schema-validator = "3.0.7"
 kaml = "0.61.0"
 kotlin = "2.4.0"
 kotlin-wrappers = "2026.6.1"
