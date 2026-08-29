@@ -39,6 +39,8 @@ import { AuctionHouse } from "../game/components/auction/AuctionHouse";
 import { ClaimPanel } from "../game/components/claim/ClaimPanel";
 import { CreativeBlockPanel } from "../game/components/CreativeBlockPanel";
 import { setCreativeSelectedItem, setCreativeSelectedScene } from "../game/lib/creativeMode";
+import { FramedBox } from "../primitives/FramedBox";
+import { SegmentedBar } from "../primitives/SegmentedBar";
 
 const resumePointerLock = () => {
   if (window.mcState.editMode === "creative" || window.mcState.freeCursor) return;
@@ -211,13 +213,9 @@ export function GameScreen() {
 
   return (
     <>
-      <div
+      <FramedBox
         id="mc-minimap-host"
-        className={
-          state.adminZone
-            ? "border-2 border-red-500 shadow-[0_0_10px_rgba(255,0,0,0.6)] rounded-md overflow-hidden"
-            : "border-2 border-white/25 shadow-[0_2px_8px_rgba(0,0,0,0.5)] rounded-md overflow-hidden"
-        }
+        variant={state.adminZone ? "danger" : "default"}
         style={{
           ...minimapLayoutStyle,
           display: state.disconnectMsg || state.chunkLoading ? "none" : undefined,
@@ -236,7 +234,7 @@ export function GameScreen() {
           const loadingPct = (loading / total) * 100;
           const missingPct = Math.max(0, 100 - loadedPct - loadingPct);
           return (
-            <div
+            <SegmentedBar
               style={{
                 position: "fixed",
                 left: `calc(${mw.x} / 48 * 100vw)`,
@@ -245,15 +243,14 @@ export function GameScreen() {
                 height: "5px",
                 zIndex: 999,
                 pointerEvents: "none",
-                display: "flex",
-                overflow: "hidden",
                 borderRadius: "0 0 3px 3px",
               }}
-            >
-              <div style={{ width: `${loadedPct}%`, background: "#16a34a", transition: "width 150ms ease-out" }} />
-              <div style={{ width: `${loadingPct}%`, background: "#ea580c", transition: "width 150ms ease-out" }} />
-              <div style={{ width: `${missingPct}%`, background: "#7f1d1d" }} />
-            </div>
+              segments={[
+                { value: loadedPct, className: "bg-green-600" },
+                { value: loadingPct, className: "bg-orange-600" },
+                { value: missingPct, className: "bg-red-900" },
+              ]}
+            />
           );
         })()}
 
@@ -310,6 +307,7 @@ export function GameScreen() {
               preferences={state.preferences}
               onSortChange={handleInventorySortChange}
               wallet={state.wallet}
+              guild={state.guild}
             />
           )}
           {(state.logVisible || state.consoleOpen) && (
