@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { getApiPlayersNames } from "../../../generated/api/requests";
 import { Dialog } from "../../../primitives/Dialog";
 import { DialogContent } from "../../../primitives/DialogContent";
 import { DialogTitle } from "../../../primitives/DialogTitle";
@@ -14,6 +16,16 @@ interface Props {
 }
 
 export function ClaimPanel({ open, claims, myPlayerId, onClose, onAbandon, onSetTrusted }: Props) {
+  const [playerNames, setPlayerNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (open && playerNames.length === 0) {
+      getApiPlayersNames({ throwOnError: true })
+        .then((r) => setPlayerNames(r.data))
+        .catch(() => {});
+    }
+  }, [open, playerNames.length]);
+
   return (
     <Dialog
       open={open}
@@ -37,6 +49,7 @@ export function ClaimPanel({ open, claims, myPlayerId, onClose, onAbandon, onSet
               key={claim.id}
               claim={claim}
               isOwner={claim.ownerId === myPlayerId}
+              playerNames={playerNames}
               onAbandon={onAbandon}
               onSetTrusted={onSetTrusted}
             />
