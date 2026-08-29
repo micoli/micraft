@@ -32,7 +32,7 @@ jobs:
         working-directory: app/webApp/ts-src
 
   check-docs:
-    name: README commands doc up to date
+    name: Generated docs up to date
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -41,7 +41,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@da187c8e6ffbd3802e00f2477aa5a822b25f2dda # v4.4.4
-      - run: ./gradlew :server:checkCommandsDocs --no-daemon
+      - run: ./gradlew :server:checkCommandsDocs :server:checkReferenceDocs --no-daemon
 
   kotlin-test:
     name: Kotlin shared tests (JVM)
