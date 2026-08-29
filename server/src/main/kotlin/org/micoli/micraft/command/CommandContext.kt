@@ -24,6 +24,8 @@ import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.claim.ClaimManager
+import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.weather.WeatherManager
@@ -72,4 +74,6 @@ data class CommandContext(
     val questManager: QuestManager? = null,
     val applyBuff: (suspend (PlayerSession, StatusEffect, Float) -> Unit)? = null, // null in tests
     val scenes: SceneRegistry? = null,
+    val claimRegistry: ClaimRegistry? = null,
+    val claimManager: ClaimManager? = null,
 )

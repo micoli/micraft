@@ -66,6 +66,9 @@ import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockInteractor
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
+import org.micoli.micraft.game.world.claim.ClaimConfigLoader
+import org.micoli.micraft.game.world.claim.ClaimManager
+import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
@@ -569,16 +572,38 @@ class GameLoopModule {
         SiegeProjectileManager(sessionRegistry::broadcast)
 
     @Single
+    fun claimConfigLoader(): ClaimConfigLoader =
+        ClaimConfigLoader(Path.of("data/config/claims.yaml"))
+
+    @Single
+    fun claimManager(
+        claimRegistry: ClaimRegistry,
+        claimConfigLoader: ClaimConfigLoader,
+        sessionRegistry: SessionRegistry,
+        i18nConfig: I18nConfig,
+        playerPersister: PlayerPersister,
+    ): ClaimManager =
+        ClaimManager(
+            registry = claimRegistry,
+            config = claimConfigLoader.load(),
+            getSessions = sessionRegistry::all,
+            i18n = i18nConfig,
+            savePlayer = playerPersister::save,
+        )
+
+    @Single
     fun blockInteractor(
         worldState: WorldState,
         sessionRegistry: SessionRegistry,
         instanceRegistry: InstanceRegistry,
+        claimRegistry: ClaimRegistry,
         railNetworkRegistry: RailNetworkRegistry,
     ): BlockInteractor =
         BlockInteractor(
             worldState,
             sessionRegistry::broadcast,
             instanceRegistry = instanceRegistry,
+            claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
         )
 
@@ -590,6 +615,7 @@ class GameLoopModule {
         liquidManager: LiquidManager,
         gameConfig: GameConfig,
         instanceRegistry: InstanceRegistry,
+        claimRegistry: ClaimRegistry,
         railNetworkRegistry: RailNetworkRegistry,
         weaponRegistry: Map<String, WeaponDefinition>,
         toolRegistry: Map<String, ToolDefinition>,
@@ -601,6 +627,7 @@ class GameLoopModule {
             liquidManager,
             bufferSize = gameConfig.blockBreakBufferSize,
             instanceRegistry = instanceRegistry,
+            claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
             weaponRegistry = { weaponRegistry },
             toolRegistry = { toolRegistry },
@@ -614,6 +641,7 @@ class GameLoopModule {
         vegetationManager: VegetationManager,
         @Named("attacks") attacks: Map<String, AttackDefinition>,
         instanceRegistry: InstanceRegistry,
+        claimRegistry: ClaimRegistry,
         railNetworkRegistry: RailNetworkRegistry,
         placeableManager: PlaceableManager,
         siegeWeaponManager: SiegeWeaponManager,
@@ -625,6 +653,7 @@ class GameLoopModule {
             vegetationManager,
             attacks,
             instanceRegistry = instanceRegistry,
+            claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
             placeableManager = placeableManager,
             siegeWeaponManager = siegeWeaponManager,

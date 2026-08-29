@@ -260,6 +260,8 @@ fun Application.module() {
             configRegistry = get<ConfigRegistry>(),
             liquidManager = get<LiquidManager>(),
             instanceRegistry = get<org.micoli.micraft.game.world.instance.InstanceRegistry>(),
+            claimRegistry = get<org.micoli.micraft.game.world.claim.ClaimRegistry>(),
+            claimManager = get<org.micoli.micraft.game.world.claim.ClaimManager>(),
             sceneRegistry = get<org.micoli.micraft.game.world.scene.SceneRegistry>(),
             vegetationConfig = get<VegetationConfig>(),
             vegetationManager = get<VegetationManager>(),

@@ -373,3 +373,18 @@ mail:
     insufficient_items: "Not enough items in your inventory."
     insufficient_copper: "Not enough copper in your wallet."
     new_mail: "New mail from {0}: {1}"
+
+claim:
+  server:
+    invalid_area: "Invalid claim area."
+    area_too_large: "That area is too large to claim ({0} chunks, max {1})."
+    overlaps_existing: "This area overlaps an existing claim or protected zone."
+    max_claims_reached: "You already have the maximum number of claims ({0})."
+    insufficient_funds: "You don't have enough copper to claim this land ({0} required)."
+    claim_created: "Land claimed for {0} copper."
+    claim_not_found: "Claim not found."
+    not_your_claim: "This isn't your claim."
+    claim_abandoned: "Claim abandoned."
+    player_not_found: "Player '{0}' not found."
+    trust_granted: "{0} can now build on your claim."
+    trust_revoked: "{0} can no longer build on your claim."

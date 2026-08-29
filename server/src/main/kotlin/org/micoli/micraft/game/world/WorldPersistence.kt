@@ -15,6 +15,7 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
+import org.micoli.micraft.game.world.claim.Claim
 import org.micoli.micraft.game.world.instance.InstanceZone
 import org.micoli.micraft.game.world.scene.Scene
 import org.micoli.micraft.player.PlayerState
@@ -434,6 +435,27 @@ class WorldPersistence(val worldDir: Path) {
                 Yaml.default.encodeToString(ListSerializer(InstanceZone.serializer()), zones))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save instances: {}", e.message)
+        }
+    }
+
+    private val claimsFile = worldDir.resolve("claims.yaml")
+
+    fun loadClaims(): List<Claim> {
+        if (!claimsFile.exists()) return emptyList()
+        return try {
+            Yaml.default.decodeFromString(ListSerializer(Claim.serializer()), claimsFile.readText())
+        } catch (e: Exception) {
+            worldPersistenceLog.warn("Failed to load claims: {}", e.message)
+            emptyList()
+        }
+    }
+
+    fun saveClaims(claims: List<Claim>) {
+        try {
+            claimsFile.writeText(
+                Yaml.default.encodeToString(ListSerializer(Claim.serializer()), claims))
+        } catch (e: IOException) {
+            worldPersistenceLog.warn("Failed to save claims: {}", e.message)
         }
     }
 

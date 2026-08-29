@@ -20,6 +20,7 @@ import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationManager
@@ -42,6 +43,7 @@ class BlockPlacer(
     private val vegetationManager: VegetationManager? = null,
     @Volatile private var attackRegistry: Map<String, AttackDefinition> = emptyMap(),
     private val instanceRegistry: InstanceRegistry? = null,
+    private val claimRegistry: ClaimRegistry? = null,
     private val railNetworkRegistry: RailNetworkRegistry? = null,
     private val placeableManager: PlaceableManager? = null,
     private val siegeWeaponManager: SiegeWeaponManager? = null,
@@ -110,6 +112,12 @@ class BlockPlacer(
 
         if (instanceRegistry?.zoneAt(rawPos.x, rawPos.y, rawPos.z) != null) {
             blockPlacerLog.debug("BlockPlace rejected: pos={} is inside a protected zone", rawPos)
+            return
+        }
+        val claim = claimRegistry?.claimAt(rawPos.x, rawPos.y, rawPos.z)
+        if (claim != null && !claim.canEdit(session)) {
+            blockPlacerLog.debug(
+                "BlockPlace rejected: pos={} is inside {}'s claim", rawPos, claim.ownerName)
             return
         }
 

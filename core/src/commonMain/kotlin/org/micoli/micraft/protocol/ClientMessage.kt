@@ -248,4 +248,19 @@ sealed class ClientMessage {
     @ProtoId(41)
     @Serializable
     data class AuctionSetFilter(val filter: AuctionFilter) : ClientMessage()
+
+    /**
+     * Claims the chunk-column region spanning [pos1]/[pos2] (any two opposite corners), for the
+     * copper cost computed server-side.
+     */
+    @ProtoId(42)
+    @Serializable
+    data class ClaimCreate(val pos1: BlockPos, val pos2: BlockPos) : ClientMessage()
+
+    @ProtoId(43) @Serializable data class ClaimAbandon(val claimId: String) : ClientMessage()
+
+    @ProtoId(44)
+    @Serializable
+    data class ClaimSetTrusted(val claimId: String, val playerName: String, val trusted: Boolean) :
+        ClientMessage()
 }
