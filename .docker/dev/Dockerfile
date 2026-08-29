@@ -6,8 +6,15 @@ ARG PITCHFORK_VERSION=2.16.0
 RUN apt-get update && \
     apt-get install -y curl gnupg ca-certificates && \
     curl -fsSL https://deb.nodesource.com/setup_26.x | bash - && \
-    apt-get install -y nodejs chromium-browser inotify-tools blender && \
+    apt-get install -y nodejs chromium-browser inotify-tools blender \
+      python3 python3-venv python3-pip && \
     rm -rf /var/lib/apt/lists/*
+
+# MkDocs toolchain for the documentation site (isolated venv, pinned deps)
+COPY docs/requirements.txt /tmp/docs-requirements.txt
+RUN python3 -m venv /opt/mkdocs && \
+    /opt/mkdocs/bin/pip install --no-cache-dir -r /tmp/docs-requirements.txt && \
+    ln -s /opt/mkdocs/bin/mkdocs /usr/local/bin/mkdocs
 
 # pitchfork — pinned version, checksum-verified, arch-aware
 RUN set -eux; \

@@ -17,6 +17,7 @@ services:
       - "8080:8080"
       - "6006:6006"
       - "3120:3120"
+      - "8000:8000"
     working_dir: /workspace
     stdin_open: true
     tty: true
