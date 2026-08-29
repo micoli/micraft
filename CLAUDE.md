@@ -43,6 +43,11 @@ Properties (buildable, placesBlock) in `data/config/items.yaml`.
 
 `/protocol-messages`
 
+Wire id = the `@ProtoId(n)` on each `ServerMessage` / `ClientMessage` subclass. The
+`ServerMessageCodec` / `ClientMessageCodec` registries are **generated** by `:codec-processor`
+(KSP, runs on `kspCommonMainKotlinMetadata`) — never hand-edit them. New message = add the
+subclass with the next free `@ProtoId`; the build fails on a missing / duplicate / non-contiguous id.
+
 ## Data directory
 
 `/data-directory`

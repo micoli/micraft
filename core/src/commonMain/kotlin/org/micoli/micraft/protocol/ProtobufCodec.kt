@@ -52,14 +52,14 @@ internal class CodecEntry<T>(
 )
 
 @Suppress("UNCHECKED_CAST")
-private inline fun <reified T : ServerMessage> serverEntry() =
+internal inline fun <reified T : ServerMessage> serverEntry() =
     CodecEntry<ServerMessage>(
         klass = T::class,
         matches = { it is T },
         serializer = serializer<T>() as KSerializer<ServerMessage>,
     )
 
-private fun serverSingleton(instance: ServerMessage) =
+internal fun serverSingleton(instance: ServerMessage) =
     CodecEntry<ServerMessage>(
         klass = instance::class,
         matches = { it === instance },
@@ -68,14 +68,14 @@ private fun serverSingleton(instance: ServerMessage) =
     )
 
 @Suppress("UNCHECKED_CAST")
-private inline fun <reified T : ClientMessage> clientEntry() =
+internal inline fun <reified T : ClientMessage> clientEntry() =
     CodecEntry<ClientMessage>(
         klass = T::class,
         matches = { it is T },
         serializer = serializer<T>() as KSerializer<ClientMessage>,
     )
 
-private fun clientSingleton(instance: ClientMessage) =
+internal fun clientSingleton(instance: ClientMessage) =
     CodecEntry<ClientMessage>(
         klass = instance::class,
         matches = { it === instance },
@@ -101,85 +101,8 @@ private fun <T> decodeWith(registry: List<CodecEntry<T>>, data: ByteArray): T {
 }
 
 object ServerMessageCodec {
-    internal val registry: List<CodecEntry<ServerMessage>> =
-        listOf(
-            serverEntry<ServerMessage.Welcome>(), // 0
-            serverEntry<ServerMessage.ShadersUpdate>(), // 1
-            serverEntry<ServerMessage.ChunkData>(), // 2
-            serverEntry<ServerMessage.PlayerUpdate>(), // 3
-            serverEntry<ServerMessage.WorldUpdate>(), // 4
-            serverEntry<ServerMessage.PlayerLeft>(), // 5
-            serverEntry<ServerMessage.BlockBreakProgress>(), // 6
-            serverEntry<ServerMessage.Notification>(), // 7
-            serverEntry<ServerMessage.ChatMessage>(), // 8
-            serverEntry<ServerMessage.ChannelsSync>(), // 9
-            serverEntry<ServerMessage.ItemsSpawned>(), // 10
-            serverEntry<ServerMessage.ItemDespawned>(), // 11
-            serverEntry<ServerMessage.InventoryUpdate>(), // 12
-            serverEntry<ServerMessage.TimeUpdate>(), // 13
-            serverEntry<ServerMessage.ShortcutBarUpdate>(), // 14
-            serverEntry<ServerMessage.LayoutsSync>(), // 15
-            serverSingleton(ServerMessage.OpenLayoutEditor), // 16
-            serverSingleton(ServerMessage.OpenPreferences), // 17
-            serverSingleton(ServerMessage.OpenCodex), // 18
-            serverEntry<ServerMessage.RegistrySync>(), // 19
-            serverEntry<ServerMessage.NpcSpawned>(), // 20
-            serverEntry<ServerMessage.NpcDespawned>(), // 21
-            serverEntry<ServerMessage.NpcUpdate>(), // 22
-            serverEntry<ServerMessage.NpcInteractResult>(), // 23
-            serverEntry<ServerMessage.PreferencesSync>(), // 24
-            serverEntry<ServerMessage.WeatherUpdate>(), // 25
-            serverEntry<ServerMessage.GameConfigSync>(), // 26
-            serverSingleton(ServerMessage.ToggleIngameMap), // 27
-            serverSingleton(ServerMessage.OpenCraft), // 28
-            serverEntry<ServerMessage.RecipeSync>(), // 29
-            serverEntry<ServerMessage.OpenTrade>(), // 30
-            serverEntry<ServerMessage.TradeUpdate>(), // 31
-            serverEntry<ServerMessage.TradeClosed>(), // 32
-            serverSingleton(ServerMessage.CharacterCreationRequired), // 33
-            serverEntry<ServerMessage.CharacterSync>(), // 34
-            serverEntry<ServerMessage.CombatTargetUpdate>(), // 35
-            serverEntry<ServerMessage.HealthUpdate>(), // 36
-            serverEntry<ServerMessage.PlayerStatusUpdate>(), // 37
-            serverEntry<ServerMessage.StatusEffectUpdate>(), // 38
-            serverEntry<ServerMessage.PlayerDowned>(), // 39
-            serverEntry<ServerMessage.PlayerRespawned>(), // 40
-            serverEntry<ServerMessage.XpGained>(), // 41
-            serverEntry<ServerMessage.LightBoostUpdate>(), // 42
-            serverEntry<ServerMessage.QuestSync>(), // 43
-            serverEntry<ServerMessage.QuestUpdate>(), // 44
-            serverEntry<ServerMessage.OpenQuestJournal>(), // 45
-            serverEntry<ServerMessage.AoEEffect>(), // 46
-            serverEntry<ServerMessage.GodModeUpdate>(), // 47
-            serverEntry<ServerMessage.WalletUpdate>(), // 48
-            serverEntry<ServerMessage.MailSync>(), // 49
-            serverEntry<ServerMessage.MailReceived>(), // 50
-            serverEntry<ServerMessage.MailUpdate>(), // 51
-            serverEntry<ServerMessage.MailDeleted>(), // 52
-            serverSingleton(ServerMessage.OpenMailbox), // 53
-            serverEntry<ServerMessage.AdminZoneWireframe>(), // 54
-            serverEntry<ServerMessage.InstanceZonesSync>(), // 55
-            serverEntry<ServerMessage.EditModeUpdate>(), // 56
-            serverEntry<ServerMessage.VehicleSpawned>(), // 57
-            serverEntry<ServerMessage.VehicleUpdate>(), // 58
-            serverEntry<ServerMessage.VehicleDespawned>(), // 59
-            serverEntry<ServerMessage.ScenesSync>(), // 60
-            serverEntry<ServerMessage.ScenePreviewData>(), // 61
-            serverEntry<ServerMessage.MountUpdate>(), // 62
-            serverEntry<ServerMessage.PlaceableSpawned>(), // 63
-            serverEntry<ServerMessage.PlaceableUpdate>(), // 64
-            serverEntry<ServerMessage.PlaceableDespawned>(), // 65
-            serverEntry<ServerMessage.SiegeWeaponUpdate>(), // 66
-            serverEntry<ServerMessage.SiegeWeaponFired>(), // 67
-            serverEntry<ServerMessage.SiegeProjectileSpawned>(), // 68
-            serverEntry<ServerMessage.SiegeProjectileUpdate>(), // 69
-            serverEntry<ServerMessage.SiegeProjectileImpact>(), // 70
-            serverSingleton(ServerMessage.OpenAuctionHouse), // 71
-            serverEntry<ServerMessage.AuctionListingsUpdate>(), // 72
-            serverEntry<ServerMessage.ClaimSync>(), // 73
-            serverEntry<ServerMessage.ClaimDenied>(), // 74
-            serverSingleton(ServerMessage.OpenCharacter), // 75
-        )
+    // Generated by :codec-processor from the @ProtoId on each ServerMessage subclass.
+    internal val registry: List<CodecEntry<ServerMessage>> = codecServerRegistry()
 
     fun encode(msg: ServerMessage): ByteArray = encodeWith(registry, msg)
 
@@ -187,54 +110,8 @@ object ServerMessageCodec {
 }
 
 object ClientMessageCodec {
-    internal val registry: List<CodecEntry<ClientMessage>> =
-        listOf(
-            clientEntry<ClientMessage.Connect>(), // 0
-            clientEntry<ClientMessage.MoveIntent>(), // 1
-            clientEntry<ClientMessage.ChunkUnload>(), // 2
-            clientEntry<ClientMessage.BlockBreakStart>(), // 3
-            clientSingleton(ClientMessage.BlockBreakStop), // 4
-            clientEntry<ClientMessage.Command>(), // 5
-            clientEntry<ClientMessage.BlockPlace>(), // 6
-            clientEntry<ClientMessage.ShortcutBarSet>(), // 7
-            clientEntry<ClientMessage.LayoutUpdate>(), // 8
-            clientEntry<ClientMessage.Disconnect>(), // 9
-            clientEntry<ClientMessage.NpcInteract>(), // 10
-            clientEntry<ClientMessage.ChatSend>(), // 11
-            clientEntry<ClientMessage.PreferencesUpdate>(), // 12
-            clientEntry<ClientMessage.ViewModeUpdate>(), // 13
-            clientEntry<ClientMessage.DoCraft>(), // 14
-            clientEntry<ClientMessage.SetCombatTarget>(), // 15
-            clientEntry<ClientMessage.AttackTarget>(), // 16
-            clientEntry<ClientMessage.RunMacro>(), // 17
-            clientEntry<ClientMessage.RunMacroContent>(), // 18
-            clientEntry<ClientMessage.UseSpell>(), // 19
-            clientEntry<ClientMessage.CastAoeSpell>(), // 20
-            clientEntry<ClientMessage.UseItem>(), // 21
-            clientEntry<ClientMessage.SendMail>(), // 22
-            clientEntry<ClientMessage.MarkMailSeen>(), // 23
-            clientEntry<ClientMessage.DeleteMail>(), // 24
-            clientEntry<ClientMessage.ClaimMailAttachments>(), // 25
-            clientEntry<ClientMessage.CreativeCameraFocus>(), // 26
-            clientEntry<ClientMessage.BlockInteract>(), // 27
-            clientEntry<ClientMessage.VehicleInteract>(), // 28
-            clientEntry<ClientMessage.RequestScenePreview>(), // 29
-            clientEntry<ClientMessage.PlaceableInteract>(), // 30
-            clientEntry<ClientMessage.PlaceableRotate>(), // 31
-            clientEntry<ClientMessage.SiegeWeaponSetPitch>(), // 32
-            clientEntry<ClientMessage.SiegeWeaponSetPower>(), // 33
-            clientEntry<ClientMessage.SiegeWeaponFire>(), // 34
-            clientEntry<ClientMessage.SiegeWeaponNudgePitch>(), // 35
-            clientEntry<ClientMessage.SiegeWeaponNudgePower>(), // 36
-            clientEntry<ClientMessage.AuctionCreateListing>(), // 37
-            clientEntry<ClientMessage.AuctionPlaceBid>(), // 38
-            clientEntry<ClientMessage.AuctionBuyNow>(), // 39
-            clientEntry<ClientMessage.AuctionCancelListing>(), // 40
-            clientEntry<ClientMessage.AuctionSetFilter>(), // 41
-            clientEntry<ClientMessage.ClaimCreate>(), // 42
-            clientEntry<ClientMessage.ClaimAbandon>(), // 43
-            clientEntry<ClientMessage.ClaimSetTrusted>(), // 44
-        )
+    // Generated by :codec-processor from the @ProtoId on each ClientMessage subclass.
+    internal val registry: List<CodecEntry<ClientMessage>> = codecClientRegistry()
 
     fun encode(msg: ClientMessage): ByteArray = encodeWith(registry, msg)
 
