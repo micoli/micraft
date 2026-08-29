@@ -1,11 +1,11 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, within } from "@storybook/test";
-import { PauseMenu } from "../../game/overlays/PauseMenu";
-import { Button } from "../../primitives/Button";
+import { PauseMenu } from "../../../game/overlays/PauseMenu";
+import { Button } from "../../../primitives/Button";
 
 const meta: Meta<typeof PauseMenu> = {
-  title: "Overlays/PauseMenu",
+  title: "Game/Windows/PauseMenu",
   component: PauseMenu,
   parameters: { layout: "fullscreen" },
 };
