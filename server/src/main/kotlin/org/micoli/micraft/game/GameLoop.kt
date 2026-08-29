@@ -1667,6 +1667,7 @@ class GameLoop(
         session.send(ServerMessage.WalletUpdate(session.state.wallet))
         questManager?.sendQuestSync(session)
         mailManager?.let { session.send(ServerMessage.MailSync(it.loadForPlayer(playerName))) }
+        claimManager.sendSync(session)
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBarPages.toPageMap()))
         session.send(ServerMessage.TimeUpdate(gameTicks))
         val charData = session.characterData
