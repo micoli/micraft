@@ -106,7 +106,7 @@ export function Preferences({
         </div>
 
         {/* Scrollable content */}
-        <div className="overflow-y-auto flex-1 pr-1 max-h-[50vh]">
+        <div className="overflow-y-auto flex-1 min-h-0 pr-1">
           {/* Chat tab */}
           {pref.tab === "chat" &&
             preferences.knownChannels.map((ch) => {
@@ -520,7 +520,7 @@ export function Preferences({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-[#444] shrink-0">
           <Button
             variant="secondary"
             size="sm"
