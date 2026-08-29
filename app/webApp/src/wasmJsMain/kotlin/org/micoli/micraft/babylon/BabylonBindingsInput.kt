@@ -39,6 +39,26 @@ fun jsGetCameraDir3DY(camera: JsAny): Double = js("mc.getCameraDir3DY(camera)")
 
 fun jsGetCameraDir3DZ(camera: JsAny): Double = js("mc.getCameraDir3DZ(camera)")
 
+fun jsGetCursorRayX(camera: JsAny): Double = js("mc.getCursorRayX(camera)")
+
+fun jsGetCursorRayY(camera: JsAny): Double = js("mc.getCursorRayY(camera)")
+
+fun jsGetCursorRayZ(camera: JsAny): Double = js("mc.getCursorRayZ(camera)")
+
+// Toggles THIRD_PERSON_ORBIT_CURSOR presentation: OS cursor visible + FPS crosshair hidden while
+// active, restored otherwise. `window.mcState.freeCursor` is read by the pointer-lock guards and
+// the Alt-drag camera handler.
+fun jsSetFreeCursor(active: Boolean): Unit =
+    js(
+        """(function(a){
+      window.mcState.freeCursor = a;
+      var canvas = document.getElementById('renderCanvas');
+      if (canvas) canvas.style.cursor = a ? 'default' : '';
+      if (a && document.pointerLockElement) document.exitPointerLock();
+      var cross = document.getElementById('mc-crosshair');
+      if (cross) cross.style.display = a ? 'none' : '';
+    })(active)""")
+
 fun jsGetCameraForwardX(camera: JsAny): Double = js("mc.getCameraForwardX(camera)")
 
 fun jsGetCameraForwardY(camera: JsAny): Double = js("camera.getForwardRay(1).direction.y")
@@ -50,6 +70,10 @@ fun jsGetCameraRotationY(camera: JsAny): Double = js("camera.rotation.y")
 fun jsGetCameraRotationX(camera: JsAny): Double = js("camera.rotation.x")
 
 fun jsRotateCameraYaw(camera: JsAny, delta: Float): Unit = js("camera.rotation.y += delta")
+
+fun jsRotateCameraPitch(camera: JsAny, delta: Float): Unit =
+    js(
+        "camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x + delta))")
 
 fun jsSetCameraRotationY(camera: JsAny, yaw: Double): Unit = js("camera.rotation.y = yaw")
 
@@ -65,13 +89,25 @@ fun jsDisableCameraKeyboard(camera: JsAny): Unit =
       var canvas = document.getElementById('renderCanvas');
       canvas.addEventListener('click', function() {
         if (window.mcState.editMode === 'creative') return;
+        if (window.mcState.freeCursor) return;
         if (!document.pointerLockElement) canvas.requestPointerLock();
       });
       document.addEventListener('pointermove', function(e) {
-        if (document.pointerLockElement !== canvas) return;
+        var locked = document.pointerLockElement === canvas;
+        var altDrag = window.mcState.freeCursor && (e.buttons & 1) === 1 && e.altKey;
+        if (!locked && !altDrag) return;
+        if (altDrag) e.preventDefault();
         c.rotation.y += e.movementX * 0.002;
         c.rotation.x += e.movementY * 0.002;
         c.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, c.rotation.x));
+      });
+      canvas.addEventListener('pointerdown', function(e) {
+        // Alt+left-drag orbits the free-cursor camera — capture the pointer and suppress the
+        // browser's native Alt-drag (image/text drag, window move) so pointermove keeps flowing.
+        if (window.mcState.freeCursor && e.button === 0 && e.altKey) {
+          e.preventDefault();
+          if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
+        }
       });
     })(camera)""")
 

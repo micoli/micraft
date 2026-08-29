@@ -51,6 +51,8 @@ private const val CLIENT_GRAVITY = -20.0
 private const val CLIENT_JUMP_SPEED = 8.5
 private const val TICKS_PER_DAY_CLIENT = 72_000L
 private const val MAX_AUTO_TARGET_RANGE_SQ = 30.0 * 30.0
+// Gap kept between the chase camera and a blocking wall so it never clips inside the face.
+private const val CAMERA_COLLISION_MARGIN = 0.2f
 
 private enum class ViewMode {
     FIRST_PERSON,
@@ -58,12 +60,26 @@ private enum class ViewMode {
     FIRST_PERSON_NO_ARMS,
     // Third-person camera that orbits the player with the mouse while the heading is driven
     // "tank style" by the turn keys (Arrow L/R), independent of where the camera looks.
-    THIRD_PERSON_ORBIT;
+    THIRD_PERSON_ORBIT,
+    // Same chase camera as THIRD_PERSON_ORBIT but with a free pointer: no lock, the OS cursor
+    // aims block interaction (mouse pick), plain left-click breaks/places, Alt+left-drag orbits.
+    THIRD_PERSON_ORBIT_CURSOR;
 
     fun next(): ViewMode = entries[(ordinal + 1) % entries.size]
 
+    val label: String
+        get() =
+            when (this) {
+                FIRST_PERSON -> "First person"
+                THIRD_PERSON -> "Third person"
+                FIRST_PERSON_NO_ARMS -> "First person (no arms)"
+                THIRD_PERSON_ORBIT -> "Third person orbit"
+                THIRD_PERSON_ORBIT_CURSOR -> "Third person orbit (cursor)"
+            }
+
     val isThirdPerson: Boolean
-        get() = this == THIRD_PERSON || this == THIRD_PERSON_ORBIT
+        get() =
+            this == THIRD_PERSON || this == THIRD_PERSON_ORBIT || this == THIRD_PERSON_ORBIT_CURSOR
 }
 
 // Stats window uses wall-clock time rather than a fixed sample count so it stays a
@@ -166,7 +182,14 @@ class LocalPlayerController(
     // MoveIntent.yaw and used to orient the body — the camera yaw is a free mouse-driven orbit.
     private var playerYaw: Float = 0f
     private val isOrbit: Boolean
-        get() = viewMode == ViewMode.THIRD_PERSON_ORBIT
+        get() =
+            viewMode == ViewMode.THIRD_PERSON_ORBIT ||
+                viewMode == ViewMode.THIRD_PERSON_ORBIT_CURSOR
+
+    // Orbit sub-mode with a free (unlocked) pointer: block aim follows the OS cursor via a mouse
+    // pick, plain left-click breaks/places, Alt+left-drag orbits the camera.
+    private val isOrbitCursor: Boolean
+        get() = viewMode == ViewMode.THIRD_PERSON_ORBIT_CURSOR
 
     var pendingFlyToggle = false
     private var pendingBlockInteract = false
@@ -196,6 +219,10 @@ class LocalPlayerController(
     private var lastMinimapPlacementRot: Int = -2
     private var ghostPlaceablePos: BlockPos? = null
     private var ghostPlaceableType: String? = null
+
+    // View modes the player hid in preferences — skipped by the view-toggle cycle. `/view_mode`
+    // ignores this filter. FIRST_PERSON is never disableable, so the cycle always terminates.
+    var disabledViewModes: Set<String> = emptySet()
 
     private var hudX = 0.0
     private var hudY = 0.0
@@ -336,6 +363,33 @@ class LocalPlayerController(
 
     fun setViewMode(mode: String) {
         viewMode = ViewMode.entries.firstOrNull { it.name == mode } ?: ViewMode.FIRST_PERSON
+        jsSetFreeCursor(isOrbitCursor)
+    }
+
+    private fun nextEnabledViewMode(): ViewMode {
+        var m = viewMode
+        repeat(ViewMode.entries.size) {
+            m = m.next()
+            if (m.name !in disabledViewModes) return m
+        }
+        return ViewMode.FIRST_PERSON
+    }
+
+    private fun switchViewMode(target: ViewMode) {
+        viewMode = target
+        jsSetFreeCursor(isOrbitCursor)
+        jsShowNotification("View: ${target.label}")
+        outMessages.trySend(ClientMessage.ViewModeUpdate(target.name))
+    }
+
+    private fun applyViewModeCommand(arg: String) {
+        val target = ViewMode.entries.firstOrNull { it.name.equals(arg, ignoreCase = true) }
+        if (target == null) {
+            jsShowNotification(
+                "Usage: /view_mode <" + ViewMode.entries.joinToString("|") { it.name } + ">")
+            return
+        }
+        switchViewMode(target)
     }
 
     private data class MoveBasis(
@@ -607,19 +661,19 @@ class LocalPlayerController(
         lastTickMs = nowMs
         val consoleInput = jsConsumeConsoleInput()
         if (consoleInput.isNotEmpty()) {
-            when (consoleInput.trim()) {
-                "/keyreload" -> {
+            val trimmed = consoleInput.trim()
+            when {
+                trimmed == "/keyreload" -> {
                     jsLoadBindings(serverHost(), serverPort(), playerName())
                     jsShowNotification("Keybindings reloaded")
                 }
-                "/disconnect" -> disconnectRequested = true
+                trimmed == "/disconnect" -> disconnectRequested = true
+                trimmed == "/view_mode" || trimmed.startsWith("/view_mode ") ->
+                    applyViewModeCommand(trimmed.removePrefix("/view_mode").trim())
+                trimmed.startsWith("/") ->
+                    outMessages.trySend(ClientMessage.Command(enrichCommand(consoleInput)))
                 else ->
-                    if (consoleInput.startsWith("/")) {
-                        outMessages.trySend(ClientMessage.Command(enrichCommand(consoleInput)))
-                    } else {
-                        outMessages.trySend(
-                            ClientMessage.ChatSend(jsGetActiveChannel(), consoleInput))
-                    }
+                    outMessages.trySend(ClientMessage.ChatSend(jsGetActiveChannel(), consoleInput))
             }
         }
         if (jsIsConsoleInputFocused()) return
@@ -635,6 +689,8 @@ class LocalPlayerController(
         if (isOrbit) {
             if (jsIsActionDown("strafe_left")) playerYaw -= turnSpeed
             if (jsIsActionDown("strafe_right")) playerYaw += turnSpeed
+            if (jsIsActionDown("rotate_up")) jsRotateCameraPitch(camera, -turnSpeed)
+            if (jsIsActionDown("rotate_down")) jsRotateCameraPitch(camera, turnSpeed)
         } else {
             if (jsIsActionDown("rotate_left")) jsRotateCameraYaw(camera, -turnSpeed)
             if (jsIsActionDown("rotate_right")) jsRotateCameraYaw(camera, turnSpeed)
@@ -842,10 +898,7 @@ class LocalPlayerController(
         repeat(jsEventsLength(events)) { i ->
             val event = jsEventsGet(events, i)
             when {
-                event == "view_toggle" -> {
-                    viewMode = viewMode.next()
-                    outMessages.trySend(ClientMessage.ViewModeUpdate(viewMode.name))
-                }
+                event == "view_toggle" -> switchViewMode(nextEnabledViewMode())
                 event == "inventory" -> jsToggleHotbar()
                 event == "screenshot" -> jsTakeScreenshot(scene, camera, playerId())
                 event == "undo" -> outMessages.trySend(ClientMessage.Command("/undo 1"))
@@ -1167,10 +1220,25 @@ class LocalPlayerController(
             // Camera orbits along its own yaw (mouse); the body faces playerYaw in orbit mode,
             // otherwise the camera yaw is the heading.
             val bodyYaw = if (isOrbit) playerYaw.toDouble() else yaw
-            val dist = if (isOrbit) jsGetOrbitZoomDist() else 3.0
-            val camX = predX - kotlin.math.sin(yaw) * dist
-            val camY = predY + eyeOffset + 0.3
-            val camZ = predZ - kotlin.math.cos(yaw) * dist
+            val desiredDist = if (isOrbit) jsGetOrbitZoomDist() else 3.0
+            val pivotY = predY + eyeOffset + 0.3
+            // Cursor-orbit lifts the camera over the player with the pitch (Alt+drag up); the other
+            // third-person modes keep a level chase camera. Clamp so it never dives underground.
+            val orbitPitch = if (isOrbitCursor) pitch.coerceIn(-0.35, 1.45) else 0.0
+            val cp = kotlin.math.cos(orbitPitch)
+            val dirX = (-kotlin.math.sin(yaw) * cp).toFloat()
+            val dirY = kotlin.math.sin(orbitPitch).toFloat()
+            val dirZ = (-kotlin.math.cos(yaw) * cp).toFloat()
+            // Pull the camera in when a solid block sits between it and the player: the greedy
+            // chunk
+            // mesh has no inward-facing polygons, so a camera inside geometry sees through the
+            // world.
+            val dist =
+                cameraObstructionDist(predX, pivotY, predZ, dirX, dirY, dirZ, desiredDist.toFloat())
+                    .toDouble()
+            val camX = predX + dirX * dist
+            val camY = pivotY + dirY * dist
+            val camZ = predZ + dirZ * dist
             jsClearCameraInterpolation()
             jsCameraSetPosition(camera, camX, camY, camZ)
             localPlayerModel?.let {
@@ -1204,7 +1272,12 @@ class LocalPlayerController(
         prevPredZ = predZ
         prevEyeOffset = eyeOffset
 
-        val rayResult = raycastBlock(maxInteractionDistance)
+        // In cursor-orbit the ray starts at the camera, so extend the budget by the chase distance
+        // to keep the same effective reach around the player.
+        val rayReach =
+            if (isOrbitCursor) maxInteractionDistance + jsGetOrbitZoomDist().toFloat()
+            else maxInteractionDistance
+        val rayResult = raycastBlock(rayReach)
         val target = rayResult?.target
 
         if (pendingBlockInteract) {
@@ -1230,8 +1303,10 @@ class LocalPlayerController(
         val mouseDownNow = jsIsMouseDown()
         if (mouseDownNow && !wasMouseDown) breakArmed = true
         wasMouseDown = mouseDownNow
-        // Plain left-click does nothing in orbit mode — only Ctrl+click (block_interact) acts.
-        val isBreaking = jsIsBreaking() && !isOrbit
+        // Plain left-click does nothing in mouse-look orbit — only Ctrl+click (block_interact)
+        // acts.
+        // Cursor-orbit is exempt: there the click aims at the cursor, so it breaks/places normally.
+        val isBreaking = jsIsBreaking() && (!isOrbit || isOrbitCursor)
         val selectedSlotContent =
             if (selectedSlot > 0) shortcutBarPages[currentPage][selectedSlot] else null
         val selectedItem = (selectedSlotContent as? ShortcutSlot.Item)?.itemType
@@ -1940,13 +2015,83 @@ class LocalPlayerController(
         }
     }
 
+    // Voxel march from the chase-camera pivot toward the desired camera position (unit direction).
+    // Returns the distance to the first solid block (minus a small margin), else [maxDist].
+    private fun cameraObstructionDist(
+        px: Double,
+        py: Double,
+        pz: Double,
+        dx: Float,
+        dy: Float,
+        dz: Float,
+        maxDist: Float,
+    ): Float {
+        if (dx == 0f && dy == 0f && dz == 0f) return maxDist
+        var bx = kotlin.math.floor(px).toInt()
+        var by = kotlin.math.floor(py).toInt()
+        var bz = kotlin.math.floor(pz).toInt()
+        val sx = if (dx > 0) 1 else if (dx < 0) -1 else 0
+        val sy = if (dy > 0) 1 else if (dy < 0) -1 else 0
+        val sz = if (dz > 0) 1 else if (dz < 0) -1 else 0
+        val tDeltaX = if (dx != 0f) kotlin.math.abs(1f / dx) else Float.MAX_VALUE
+        val tDeltaY = if (dy != 0f) kotlin.math.abs(1f / dy) else Float.MAX_VALUE
+        val tDeltaZ = if (dz != 0f) kotlin.math.abs(1f / dz) else Float.MAX_VALUE
+        var tMaxX =
+            if (dx > 0) ((bx + 1 - px) / dx).toFloat()
+            else if (dx < 0) ((bx - px) / dx).toFloat() else Float.MAX_VALUE
+        var tMaxY =
+            if (dy > 0) ((by + 1 - py) / dy).toFloat()
+            else if (dy < 0) ((by - py) / dy).toFloat() else Float.MAX_VALUE
+        var tMaxZ =
+            if (dz > 0) ((bz + 1 - pz) / dz).toFloat()
+            else if (dz < 0) ((bz - pz) / dz).toFloat() else Float.MAX_VALUE
+        while (true) {
+            val enterT = minOf(tMaxX, tMaxY, tMaxZ)
+            if (enterT >= maxDist) return maxDist
+            when {
+                tMaxX < tMaxY && tMaxX < tMaxZ -> {
+                    bx += sx
+                    tMaxX += tDeltaX
+                }
+                tMaxY < tMaxZ -> {
+                    by += sy
+                    tMaxY += tDeltaY
+                }
+                else -> {
+                    bz += sz
+                    tMaxZ += tDeltaZ
+                }
+            }
+            if (chunkManager.getBlockAtWorld(bx, by, bz).isSolid) {
+                return (enterT - CAMERA_COLLISION_MARGIN).coerceIn(0f, maxDist)
+            }
+        }
+    }
+
     private fun raycastBlock(maxDist: Float = 5f): RaycastResult? {
-        val ox = predX
-        val oy = predY + cameraEyeOffset()
-        val oz = predZ
-        val dx = jsGetCameraDir3DX(camera).toFloat()
-        val dy = jsGetCameraDir3DY(camera).toFloat()
-        val dz = jsGetCameraDir3DZ(camera).toFloat()
+        // THIRD_PERSON_ORBIT_CURSOR aims from the camera along the ray through the mouse cursor;
+        // every other mode aims from the player's eye along the camera's forward direction.
+        val ox: Double
+        val oy: Double
+        val oz: Double
+        val dx: Float
+        val dy: Float
+        val dz: Float
+        if (isOrbitCursor) {
+            ox = jsGetCameraPositionX(camera)
+            oy = jsGetCameraPositionY(camera)
+            oz = jsGetCameraPositionZ(camera)
+            dx = jsGetCursorRayX(camera).toFloat()
+            dy = jsGetCursorRayY(camera).toFloat()
+            dz = jsGetCursorRayZ(camera).toFloat()
+        } else {
+            ox = predX
+            oy = predY + cameraEyeOffset()
+            oz = predZ
+            dx = jsGetCameraDir3DX(camera).toFloat()
+            dy = jsGetCameraDir3DY(camera).toFloat()
+            dz = jsGetCameraDir3DZ(camera).toFloat()
+        }
 
         var bx = kotlin.math.floor(ox).toInt()
         var by = kotlin.math.floor(oy).toInt()

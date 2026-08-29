@@ -41,7 +41,7 @@ import { CreativeBlockPanel } from "../game/components/CreativeBlockPanel";
 import { setCreativeSelectedItem, setCreativeSelectedScene } from "../game/lib/creativeMode";
 
 const resumePointerLock = () => {
-  if (window.mcState.editMode === "creative") return;
+  if (window.mcState.editMode === "creative" || window.mcState.freeCursor) return;
   (
     (
       document.getElementById("renderCanvas") as HTMLCanvasElement | null
@@ -145,6 +145,7 @@ export function GameScreen() {
     autoTargetEnabled: boolean;
     continuousBreak: boolean;
     dominantHand: "LEFT" | "RIGHT";
+    disabledViewModes: string[];
     keybindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
     fieldOfView?: number;

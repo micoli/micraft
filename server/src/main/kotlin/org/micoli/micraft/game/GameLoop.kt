@@ -878,6 +878,7 @@ class GameLoop(
             overrideImpostorFovBonusChunks = session.state.overrideImpostorFovBonusChunks,
             continuousBreak = session.state.continuousBreak,
             dominantHand = session.state.dominantHand,
+            disabledViewModes = session.state.disabledViewModes,
         )
     }
 
@@ -913,6 +914,7 @@ class GameLoop(
                 overrideImpostorFovBonusChunks = msg.overrideImpostorFovBonusChunks,
                 continuousBreak = msg.continuousBreak,
                 dominantHand = msg.dominantHand,
+                disabledViewModes = msg.disabledViewModes,
             )
         if (msg.keybindings.isNotEmpty()) {
             persistence?.savePlayerKeyBindings(session.state.name, msg.keybindings)
@@ -1566,6 +1568,7 @@ class GameLoop(
                             ChannelSubscription("game")),
                 disabledCommands = saved?.disabledCommands ?: emptySet(),
                 viewMode = saved?.viewMode ?: "FIRST_PERSON",
+                disabledViewModes = saved?.disabledViewModes ?: emptySet(),
                 skin = resolveSkin(saved?.skin),
                 armors = saved?.armors ?: emptyList(),
                 ownedArmors = saved?.ownedArmors ?: emptyList(),

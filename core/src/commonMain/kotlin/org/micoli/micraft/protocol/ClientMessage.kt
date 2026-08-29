@@ -110,6 +110,7 @@ sealed class ClientMessage {
         val overrideImpostorFovBonusChunks: Int? = null,
         val continuousBreak: Boolean = false,
         val dominantHand: Hand = Hand.RIGHT,
+        val disabledViewModes: Set<String> = emptySet(),
     ) : ClientMessage()
 
     @ProtoId(13) @Serializable data class ViewModeUpdate(val viewMode: String) : ClientMessage()

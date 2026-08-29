@@ -316,7 +316,7 @@ export function GameUI() {
     } else if (overlayWasOpen.current) {
       overlayWasOpen.current = false;
       const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
-      (canvas?.requestPointerLock() as unknown as Promise<void>)?.catch?.(() => {});
+      if (!window.mcState.freeCursor) (canvas?.requestPointerLock() as unknown as Promise<void>)?.catch?.(() => {});
     }
   }, [
     state.characterOpen,
@@ -922,6 +922,7 @@ export function GameUI() {
       if (chunkLoadingRef.current) return;
       if (ke.key === "Escape" && !consoleOpenRef.current) {
         const resumeGame = () => {
+          if (window.mcState.freeCursor) return;
           (
             (
               document.getElementById("renderCanvas") as HTMLCanvasElement | null
@@ -975,11 +976,12 @@ export function GameUI() {
         }
         if (pauseMenuOpenRef.current) {
           dispatch("pause_menu_hide");
-          (
+          if (!window.mcState.freeCursor)
             (
-              document.getElementById("renderCanvas") as HTMLCanvasElement | null
-            )?.requestPointerLock() as unknown as Promise<void>
-          )?.catch?.(() => {});
+              (
+                document.getElementById("renderCanvas") as HTMLCanvasElement | null
+              )?.requestPointerLock() as unknown as Promise<void>
+            )?.catch?.(() => {});
         } else {
           dispatch("pause_menu_show");
         }

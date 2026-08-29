@@ -16,13 +16,17 @@ class ViewModePersistenceTest {
         return WorldPersistence(dir) to dir
     }
 
-    private fun minimalState(viewMode: String = "FIRST_PERSON") =
+    private fun minimalState(
+        viewMode: String = "FIRST_PERSON",
+        disabledViewModes: Set<String> = emptySet(),
+    ) =
         PlayerState(
             id = "x",
             name = "Alice",
             pos = Vec3(0f, 0f, 0f),
             orientation = Orientation(0f, 0f),
             viewMode = viewMode,
+            disabledViewModes = disabledViewModes,
         )
 
     @Test
@@ -49,6 +53,26 @@ class ViewModePersistenceTest {
         val loaded = p.loadPlayerState("alice")
         assertNotNull(loaded)
         assertEquals("THIRD_PERSON_ORBIT", loaded.viewMode)
+    }
+
+    @Test
+    fun roundTrip_thirdPersonOrbitCursorViewMode_preserved() {
+        val (p, _) = persistence()
+        p.savePlayerState("alice", minimalState("THIRD_PERSON_ORBIT_CURSOR"))
+        val loaded = p.loadPlayerState("alice")
+        assertNotNull(loaded)
+        assertEquals("THIRD_PERSON_ORBIT_CURSOR", loaded.viewMode)
+    }
+
+    @Test
+    fun roundTrip_disabledViewModes_preserved() {
+        val (p, _) = persistence()
+        p.savePlayerState(
+            "alice",
+            minimalState(disabledViewModes = setOf("THIRD_PERSON", "THIRD_PERSON_ORBIT_CURSOR")))
+        val loaded = p.loadPlayerState("alice")
+        assertNotNull(loaded)
+        assertEquals(setOf("THIRD_PERSON", "THIRD_PERSON_ORBIT_CURSOR"), loaded.disabledViewModes)
     }
 
     @Test

@@ -233,6 +233,9 @@ declare global {
     mouseDownAt: number;
     // Chase-camera distance in THIRD_PERSON_ORBIT, driven by the mouse wheel.
     orbitZoom: number;
+    // THIRD_PERSON_ORBIT_CURSOR active: OS cursor visible, no pointer lock, mouse-pick block aim,
+    // Alt+left-drag orbits the camera. Set from Kotlin on every view-mode change.
+    freeCursor: boolean;
     bindings: Record<string, string[]>;
     customCommands: Record<string, string[]>;
     macros: Record<string, string>;
@@ -385,6 +388,9 @@ declare global {
     getCameraDir3DX(camera: Camera): number;
     getCameraDir3DY(camera: Camera): number;
     getCameraDir3DZ(camera: Camera): number;
+    getCursorRayX(camera: Camera): number;
+    getCursorRayY(camera: Camera): number;
+    getCursorRayZ(camera: Camera): number;
     getCameraForwardX(camera: Camera): number;
     getCameraForwardZ(camera: Camera): number;
     createCrosshair(): void;
