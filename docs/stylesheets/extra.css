@@ -1,0 +1,15 @@
+:root > * {
+  --md-primary-fg-color: #4c8c2b;
+  --md-primary-fg-color--light: #6ab04c;
+  --md-primary-fg-color--dark: #3a6b20;
+  --md-accent-fg-color: #6ab04c;
+}
+
+.md-typeset table:not([class]) {
+  font-size: 0.72rem;
+}
+
+.md-typeset .admonition.generated,
+.md-typeset details.generated {
+  border-color: #6ab04c;
+}

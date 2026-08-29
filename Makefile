@@ -27,7 +27,7 @@ endif
         code-standard check-docs check-openapi check-schemas ts-code-standard \
         check-configuration spotless-apply ts-typecheck ts-lint ts-lint-fix \
         ts-test-setup ts-test ts-test-storybook test kt-test kt-test-info kt-web-test \
-        docs gen-schemas help \
+        docs gen-schemas docs-site-build docs-site-serve docs-site-stop help \
         security security-locks security-relock security-verify security-audit \
         security-osv security-sbom
 
@@ -242,6 +242,15 @@ docs: ## Regenerate all generated docs (README commands + docs/reference/_genera
 
 gen-schemas: ## Regenerate data/config/schemas/ JSON Schemas from data classes
 	$(EXEC) "./gradlew :server:generateJsonSchemas"
+
+docs-site-build: ## Build the static documentation site into ./site
+	$(EXEC) "DISABLE_MKDOCS_2_WARNING=true bash scripts/docs/mkdocs.sh build --strict -f mkdocs.yml"
+
+docs-site-serve: ## Serve the docs site with live-reload (http://localhost:8000)
+	$(PITCHFORK) start docs
+
+docs-site-stop: ## Stop the docs daemon
+	$(PITCHFORK) stop docs
 
 ##@ Prod (port 8080 via nginx)
 
