@@ -8,6 +8,7 @@ import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.player.ChannelSubscription
 import org.micoli.micraft.player.Hand
 import org.micoli.micraft.player.PlayerStance
+import org.micoli.micraft.social.GuildRank
 import org.micoli.micraft.ui.GameLayout
 
 @Serializable
@@ -266,4 +267,62 @@ sealed class ClientMessage {
     @Serializable
     data class ClaimSetTrusted(val claimId: String, val playerName: String, val trusted: Boolean) :
         ClientMessage()
+
+    @ProtoId(45) @Serializable object GroupCreate : ClientMessage()
+
+    @ProtoId(46) @Serializable data class GroupInvite(val targetName: String) : ClientMessage()
+
+    @ProtoId(47)
+    @Serializable
+    data class GroupInviteRespond(val groupId: String, val accept: Boolean) : ClientMessage()
+
+    @ProtoId(48) @Serializable object GroupLeave : ClientMessage()
+
+    @ProtoId(49) @Serializable data class GroupKick(val targetId: String) : ClientMessage()
+
+    @ProtoId(50) @Serializable data class GroupTransfer(val targetId: String) : ClientMessage()
+
+    @ProtoId(51) @Serializable object GroupDisband : ClientMessage()
+
+    @ProtoId(52)
+    @Serializable
+    data class GuildCreate(val name: String, val tag: String) : ClientMessage()
+
+    @ProtoId(53) @Serializable data class GuildInvite(val targetName: String) : ClientMessage()
+
+    @ProtoId(54)
+    @Serializable
+    data class GuildInviteRespond(val guildId: String, val accept: Boolean) : ClientMessage()
+
+    @ProtoId(55) @Serializable object GuildLeave : ClientMessage()
+
+    @ProtoId(56) @Serializable data class GuildKick(val targetId: String) : ClientMessage()
+
+    @ProtoId(57) @Serializable data class GuildSetMotd(val text: String) : ClientMessage()
+
+    @ProtoId(58)
+    @Serializable
+    data class GuildSetRank(val targetId: String, val rankName: String) : ClientMessage()
+
+    @ProtoId(59) @Serializable data class GuildRankUpsert(val rank: GuildRank) : ClientMessage()
+
+    @ProtoId(60) @Serializable data class GuildRankDelete(val rankName: String) : ClientMessage()
+
+    @ProtoId(61)
+    @Serializable
+    data class GuildTransferOwner(val targetId: String) : ClientMessage()
+
+    @ProtoId(62) @Serializable object GuildDisband : ClientMessage()
+
+    @ProtoId(63)
+    @Serializable
+    data class GuildBankDeposit(val itemType: ItemType, val count: Int) : ClientMessage()
+
+    @ProtoId(64)
+    @Serializable
+    data class GuildBankWithdraw(val itemType: ItemType, val count: Int) : ClientMessage()
+
+    @ProtoId(65)
+    @Serializable
+    data class FactionSetAffiliation(val factionId: String? = null) : ClientMessage()
 }
