@@ -165,4 +165,71 @@ class ClaimRegistryTest {
         val result = r.forOwnerOrTrusted("o")
         assertEquals(setOf(ownedClaim.id, trustedClaim.id), result.map { it.id }.toSet())
     }
+
+    @Test
+    fun updateBounds_changesYRange_keepsChunksAndIndex() {
+        val r = registry()
+        val claim =
+            r.create(
+                chunks = setOf(ChunkPos(0, 0)),
+                yMin = 0,
+                yMax = 10,
+                ownerId = "o",
+                ownerName = "Alice")
+        val updated = r.updateBounds(claim.id, 20, 30)
+        assertEquals(20, updated?.yMin)
+        assertEquals(30, updated?.yMax)
+        assertNull(r.claimAt(5, 5, 5))
+        assertEquals(updated, r.claimAt(5, 25, 5))
+    }
+
+    @Test
+    fun updateBounds_unknownId_returnsNull() {
+        val r = registry()
+        assertNull(r.updateBounds("nope", 0, 10))
+    }
+
+    @Test
+    fun updateChunks_changesFootprint_oldChunksNoLongerMatchNewOnesDo() {
+        val r = registry()
+        val claim =
+            r.create(
+                chunks = setOf(ChunkPos(0, 0)),
+                yMin = 0,
+                yMax = 10,
+                ownerId = "o",
+                ownerName = "Alice")
+        val updated = r.updateChunks(claim.id, setOf(ChunkPos(5, 5)))
+        assertEquals(setOf(ChunkPos(5, 5)), updated?.chunks)
+        assertNull(r.claimAt(5, 5, 5))
+        assertEquals(updated, r.claimAt(5 * 16 + 3, 5, 5 * 16 + 3))
+    }
+
+    @Test
+    fun reassignOwner_changesOwnerIdAndName() {
+        val r = registry()
+        val claim =
+            r.create(
+                chunks = setOf(ChunkPos(0, 0)),
+                yMin = 0,
+                yMax = 10,
+                ownerId = "o",
+                ownerName = "Alice")
+        val updated = r.reassignOwner(claim.id, "new-id", "Bob")
+        assertEquals("new-id", updated?.ownerId)
+        assertEquals("Bob", updated?.ownerName)
+    }
+
+    @Test
+    fun overlaps_excludingOwnId_returnsFalse() {
+        val r = registry()
+        val claim =
+            r.create(
+                chunks = setOf(ChunkPos(0, 0)),
+                yMin = 0,
+                yMax = 10,
+                ownerId = "o",
+                ownerName = "Alice")
+        assertTrue(!r.overlaps(setOf(ChunkPos(0, 0)), 0, 10, excludeId = claim.id))
+    }
 }

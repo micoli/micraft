@@ -36,10 +36,16 @@ class ClaimRegistry(private val persistence: WorldPersistence?) {
         return byChunk[chunkPos]?.firstOrNull { y in it.yMin..it.yMax }
     }
 
-    /** True if [chunks]/[yMin]/[yMax] would share a chunk column and a Y range with any claim. */
-    fun overlaps(chunks: Set<ChunkPos>, yMin: Int, yMax: Int): Boolean =
+    /**
+     * True if [chunks]/[yMin]/[yMax] would share a chunk column and a Y range with any claim other
+     * than [excludeId] — pass the claim's own id when checking a resize/move so it doesn't
+     * spuriously overlap itself.
+     */
+    fun overlaps(chunks: Set<ChunkPos>, yMin: Int, yMax: Int, excludeId: String? = null): Boolean =
         chunks.any { chunk ->
-            byChunk[chunk]?.any { claim -> yMin <= claim.yMax && yMax >= claim.yMin } ?: false
+            byChunk[chunk]?.any { claim ->
+                claim.id != excludeId && yMin <= claim.yMax && yMax >= claim.yMin
+            } ?: false
         }
 
     fun create(
@@ -62,6 +68,32 @@ class ClaimRegistry(private val persistence: WorldPersistence?) {
         index(claim)
         persist()
         return claim
+    }
+
+    fun updateBounds(id: String, yMin: Int, yMax: Int): Claim? {
+        val existing = claims[id] ?: return null
+        val updated = existing.copy(yMin = yMin, yMax = yMax)
+        claims[id] = updated
+        reindex(existing, updated)
+        persist()
+        return updated
+    }
+
+    fun updateChunks(id: String, chunks: Set<ChunkPos>): Claim? {
+        val existing = claims[id] ?: return null
+        val updated = existing.copy(chunks = chunks)
+        claims[id] = updated
+        reindex(existing, updated)
+        persist()
+        return updated
+    }
+
+    fun reassignOwner(id: String, ownerId: String, ownerName: String): Claim? {
+        val existing = claims[id] ?: return null
+        val updated = existing.copy(ownerId = ownerId, ownerName = ownerName)
+        claims[id] = updated
+        persist()
+        return updated
     }
 
     fun setTrusted(id: String, playerId: String, playerName: String, trusted: Boolean): Claim? {
@@ -93,6 +125,11 @@ class ClaimRegistry(private val persistence: WorldPersistence?) {
 
     private fun unindex(claim: Claim) {
         claim.chunks.forEach { byChunk[it]?.removeAll { c -> c.id == claim.id } }
+    }
+
+    private fun reindex(old: Claim, updated: Claim) {
+        unindex(old)
+        index(updated)
     }
 
     private fun persist() {
