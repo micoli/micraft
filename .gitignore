@@ -1,4 +1,5 @@
 .env
+.venv
 !gradle/wrapper/gradle-wrapper.jar
 jar-plugins/*
 run-assets.lock
@@ -22,6 +23,7 @@ core/build
 app/desktopApp/build
 app/shared/build
 app/webApp/build
+/site
 TODO.md
 plans
 data/world/default_world/players/
