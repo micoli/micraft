@@ -76,4 +76,8 @@ data class CommandContext(
     val scenes: SceneRegistry? = null,
     val claimRegistry: ClaimRegistry? = null,
     val claimManager: ClaimManager? = null,
+    val groupManager: org.micoli.micraft.game.social.GroupManager? = null,
+    val guildManager: org.micoli.micraft.game.social.GuildManager? = null,
+    val guildRegistry: org.micoli.micraft.game.social.GuildRegistry? = null,
+    val factionManager: org.micoli.micraft.game.social.FactionManager? = null,
 )

@@ -528,6 +528,36 @@
         },
         "mounted": {
           "type": "boolean"
+        },
+        "guildId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "guildRank": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "guildTag": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "factionId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "factionChangedAtMs": {
+          "type": [
+            "integer",
+            "null"
+          ]
         }
       }
     },

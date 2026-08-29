@@ -29,6 +29,7 @@ class ReloadCoordinator(
     private val reloadBiomes: (() -> ChunkGenerator)?,
     private val reloadRegistries: (() -> Unit)?,
     private val reloadGameConfig: (() -> Unit)?,
+    private val reloadFactions: (suspend () -> Unit)? = null,
     private val sessionRegistry: SessionRegistry,
     private val buildRegistrySync: () -> ServerMessage.RegistrySync,
     private val npcConfigLoader: NpcConfigLoader,
@@ -66,6 +67,10 @@ class ReloadCoordinator(
                     RECONCILE_TOLERANCE_XZ, RECONCILE_TOLERANCE_Y, MAX_INTERACTION_DISTANCE)
             sessionRegistry.all().forEach { it.send(configSync) }
             lines += i18n.t(lang, "reload:server:game_config")
+        }
+        if (reloadFactions != null) {
+            reloadFactions.invoke()
+            lines += i18n.t(lang, "reload:server:factions")
         }
         npcConfigLoader.reload()
         npcManager.reloadDefinitions(npcRegistryLoader.reload())

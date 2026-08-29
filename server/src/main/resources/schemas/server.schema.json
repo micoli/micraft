@@ -192,6 +192,48 @@
           "type": "integer"
         }
       }
+    },
+    "factions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "friendlyFire": {
+          "type": "boolean"
+        },
+        "changeCooldownSeconds": {
+          "type": "integer"
+        },
+        "list": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          },
+          "minItems": 0,
+          "maxItems": 5
+        }
+      }
     }
   }
 }

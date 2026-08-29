@@ -308,6 +308,20 @@ class WorldPersistence(val worldDir: Path) {
             }
             ?.filter { it.email.equals(email, ignoreCase = true) } ?: emptyList()
 
+    fun allPlayerStates(): List<PlayerState> =
+        playersDir
+            .toFile()
+            .listFiles { f ->
+                f.extension == "yaml" && !f.name.contains("-") && !f.name.endsWith("_mailbox.yaml")
+            }
+            ?.mapNotNull { f ->
+                try {
+                    loadPlayerFileFromYaml(f.toPath())?.state
+                } catch (_: Exception) {
+                    null
+                }
+            } ?: emptyList()
+
     fun loadPlayerFile(name: String): PlayerFile? = loadOrCreatePlayerFile(name)
 
     fun loadPlayerState(name: String): PlayerState? {
@@ -456,6 +470,30 @@ class WorldPersistence(val worldDir: Path) {
                 Yaml.default.encodeToString(ListSerializer(Claim.serializer()), claims))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save claims: {}", e.message)
+        }
+    }
+
+    private val guildsFile = worldDir.resolve("guilds.yaml")
+
+    fun loadGuilds(): List<org.micoli.micraft.game.social.Guild> {
+        if (!guildsFile.exists()) return emptyList()
+        return try {
+            Yaml.default.decodeFromString(
+                ListSerializer(org.micoli.micraft.game.social.Guild.serializer()),
+                guildsFile.readText())
+        } catch (e: Exception) {
+            worldPersistenceLog.warn("Failed to load guilds: {}", e.message)
+            emptyList()
+        }
+    }
+
+    fun saveGuilds(guilds: List<org.micoli.micraft.game.social.Guild>) {
+        try {
+            guildsFile.writeText(
+                Yaml.default.encodeToString(
+                    ListSerializer(org.micoli.micraft.game.social.Guild.serializer()), guilds))
+        } catch (e: IOException) {
+            worldPersistenceLog.warn("Failed to save guilds: {}", e.message)
         }
     }
 

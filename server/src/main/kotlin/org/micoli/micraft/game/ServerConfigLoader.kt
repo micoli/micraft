@@ -90,6 +90,17 @@ data class NetworkSection(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
+data class FactionsSection(
+    @EncodeDefault(ALWAYS) val enabled: Boolean = false,
+    @EncodeDefault(ALWAYS) val friendlyFire: Boolean = false,
+    @EncodeDefault(ALWAYS) val changeCooldownSeconds: Long = 0,
+    @EncodeDefault(ALWAYS)
+    @org.micoli.micraft.schema.JsonSchemaConstraint(minItems = 0, maxItems = 5)
+    val list: List<org.micoli.micraft.social.FactionDefinition> = emptyList(),
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
 @JsonSchemaRoot(file = "server.schema.json")
 data class ServerConfig(
     @EncodeDefault(ALWAYS) val world: WorldSection = WorldSection(),
@@ -98,6 +109,7 @@ data class ServerConfig(
     @EncodeDefault(ALWAYS) val chunks: ChunkSection = ChunkSection(),
     @EncodeDefault(ALWAYS) val network: NetworkSection = NetworkSection(),
     @EncodeDefault(ALWAYS) val game: GameConfig = GameConfig(),
+    @EncodeDefault(ALWAYS) val factions: FactionsSection = FactionsSection(),
 )
 
 fun loadServerConfig(path: Path, resourcesPath: Path): ServerConfig {

@@ -242,6 +242,13 @@ fun Application.module() {
             reloadBiomes,
             reloadRegistries = reloadRegistries,
             reloadGameConfig = reloadGameConfigLambda,
+            factionsSection = serverConfig.factions,
+            reloadFactionsConfig = {
+                loadServerConfig(
+                        Path.of(dataPath + "/config/server.yaml"),
+                        resourcesConfigDir.resolve("server.yaml"))
+                    .factions
+            },
             i18n = get<I18nConfig>(),
             tokenStore = tokenStore,
             authProvider = authProvider,

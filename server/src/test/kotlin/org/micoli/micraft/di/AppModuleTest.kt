@@ -5,6 +5,13 @@ import org.koin.dsl.koinApplication
 import org.koin.ksp.generated.module
 import org.koin.test.check.checkModules
 import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.game.chat.ChatChannelManager
+import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.social.FactionManager
+import org.micoli.micraft.game.social.GroupManager
+import org.micoli.micraft.game.social.GuildManager
+import org.micoli.micraft.game.social.GuildRegistry
+import org.micoli.micraft.support.testI18n
 
 class AppModuleTest {
     @Suppress("DEPRECATION")
@@ -13,6 +20,10 @@ class AppModuleTest {
         koinApplication { modules(AppModule().module) }
             .checkModules {
                 withParameter<CommandContext> {
+                    val cm = ChatChannelManager()
+                    val chat = ChatService(cm, {}, { emptyList() })
+                    val i18n = testI18n()
+                    val guildReg = GuildRegistry(null)
                     CommandContextClosures(
                         broadcast = {},
                         sessions = { emptyList() },
@@ -33,6 +44,10 @@ class AppModuleTest {
                         weaponCategories = { emptyMap() },
                         toolCategories = { emptyMap() },
                         applyBuff = { _, _, _ -> },
+                        groupManager = GroupManager({ emptyList() }, chat, cm, i18n),
+                        guildManager = GuildManager(guildReg, { emptyList() }, {}, chat, cm, i18n),
+                        guildRegistry = guildReg,
+                        factionManager = FactionManager({ emptyList() }, {}, chat, cm, i18n, {}),
                     )
                 }
             }
