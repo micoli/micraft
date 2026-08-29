@@ -56,7 +56,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: app/webApp/ts-src/package-lock.json
-      - uses: gradle/actions/setup-gradle@da187c8e6ffbd3802e00f2477aa5a822b25f2dda # v4.4.4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
       - name: Gradle SBOM
         run: ./gradlew cyclonedxBom --no-daemon
       - name: npm SBOM
