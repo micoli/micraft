@@ -2170,6 +2170,15 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             title: 'Set<String>',
             uniqueItems: true
         },
+        disabledViewModes: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'Set<String>',
+            uniqueItems: true
+        },
         dominantHand: {
             $ref: '#/components/schemas/org.micoli.micraft.player.Hand'
         },
@@ -2394,6 +2403,16 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             },
             title: 'List<ChannelSubscription>'
         },
+        turnSpeedHorizontal: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        turnSpeedVertical: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
         viewMode: {
             type: 'string',
             title: 'String'
@@ -2419,6 +2438,7 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'chunkDebugVisible',
         'continuousBreak',
         'disabledCommands',
+        'disabledViewModes',
         'dominantHand',
         'dynamicFogEnabled',
         'editMode',
@@ -2452,6 +2472,8 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'stance',
         'statisticsVisible',
         'subscribedChannels',
+        'turnSpeedHorizontal',
+        'turnSpeedVertical',
         'viewMode',
         'wallet',
         'zoneLevel'

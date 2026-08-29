@@ -224,6 +224,10 @@ class LocalPlayerController(
     // ignores this filter. FIRST_PERSON is never disableable, so the cycle always terminates.
     var disabledViewModes: Set<String> = emptySet()
 
+    // Keyboard rotation speed multipliers (deg-scale * dt), configurable in preferences.
+    var turnSpeedHorizontal: Float = 2.5f
+    var turnSpeedVertical: Float = 1.2f
+
     private var hudX = 0.0
     private var hudY = 0.0
     private var hudZ = 0.0
@@ -685,15 +689,16 @@ class LocalPlayerController(
         val rightX = fwdZ
         val rightZ = -fwdX
 
-        val turnSpeed = (2.5f * actualDt).toFloat()
+        val yawStep = (turnSpeedHorizontal * actualDt).toFloat()
+        val pitchStep = (turnSpeedVertical * actualDt).toFloat()
         if (isOrbit) {
-            if (jsIsActionDown("strafe_left")) playerYaw -= turnSpeed
-            if (jsIsActionDown("strafe_right")) playerYaw += turnSpeed
-            if (jsIsActionDown("rotate_up")) jsRotateCameraPitch(camera, -turnSpeed)
-            if (jsIsActionDown("rotate_down")) jsRotateCameraPitch(camera, turnSpeed)
+            if (jsIsActionDown("strafe_left")) playerYaw -= yawStep
+            if (jsIsActionDown("strafe_right")) playerYaw += yawStep
+            if (jsIsActionDown("rotate_up")) jsRotateCameraPitch(camera, -pitchStep)
+            if (jsIsActionDown("rotate_down")) jsRotateCameraPitch(camera, pitchStep)
         } else {
-            if (jsIsActionDown("rotate_left")) jsRotateCameraYaw(camera, -turnSpeed)
-            if (jsIsActionDown("rotate_right")) jsRotateCameraYaw(camera, turnSpeed)
+            if (jsIsActionDown("rotate_left")) jsRotateCameraYaw(camera, -yawStep)
+            if (jsIsActionDown("rotate_right")) jsRotateCameraYaw(camera, yawStep)
         }
 
         if (jsIsActionDown("backward")) autoAdvance = false

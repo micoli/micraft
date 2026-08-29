@@ -4731,6 +4731,13 @@ components:
             title: String
           title: Set<String>
           uniqueItems: true
+        disabledViewModes:
+          type: array
+          items:
+            type: string
+            title: String
+          title: Set<String>
+          uniqueItems: true
         dominantHand:
           $ref: "#/components/schemas/org.micoli.micraft.player.Hand"
         dynamicFogEnabled:
@@ -4897,6 +4904,14 @@ components:
           items:
             $ref: "#/components/schemas/org.micoli.micraft.player.ChannelSubscription"
           title: List<ChannelSubscription>
+        turnSpeedHorizontal:
+          type: number
+          format: float
+          title: Float
+        turnSpeedVertical:
+          type: number
+          format: float
+          title: Float
         viewMode:
           type: string
           title: String
@@ -4918,6 +4933,7 @@ components:
       - chunkDebugVisible
       - continuousBreak
       - disabledCommands
+      - disabledViewModes
       - dominantHand
       - dynamicFogEnabled
       - editMode
@@ -4951,6 +4967,8 @@ components:
       - stance
       - statisticsVisible
       - subscribedChannels
+      - turnSpeedHorizontal
+      - turnSpeedVertical
       - viewMode
       - wallet
       - zoneLevel

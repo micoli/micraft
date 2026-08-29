@@ -504,6 +504,16 @@
             "RIGHT"
           ]
         },
+        "turnSpeedHorizontal": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 10
+        },
+        "turnSpeedVertical": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 10
+        },
         "rightHandItem": {
           "type": [
             "string",

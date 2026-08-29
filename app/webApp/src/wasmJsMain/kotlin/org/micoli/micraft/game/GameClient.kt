@@ -953,6 +953,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     localController.autoTargetEnabled = msg.autoTargetEnabled
                     localController.continuousBreak = msg.continuousBreak
                     localController.disabledViewModes = msg.disabledViewModes
+                    localController.turnSpeedHorizontal = msg.turnSpeedHorizontal
+                    localController.turnSpeedVertical = msg.turnSpeedVertical
                     jsSetContinuousBreak(msg.continuousBreak)
                     jsSetShadowAngleDeg(msg.shadowAngleDeg)
                     WorldConstants.VIEW_RADIUS = msg.overrideViewRadius ?: DEFAULT_VIEW_RADIUS

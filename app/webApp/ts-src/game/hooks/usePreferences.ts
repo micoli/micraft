@@ -29,6 +29,8 @@ export interface SavePayload {
   continuousBreak: boolean;
   dominantHand: "LEFT" | "RIGHT";
   disabledViewModes: string[];
+  turnSpeedHorizontal: number;
+  turnSpeedVertical: number;
 }
 
 export interface CustomCmdEntry {
@@ -176,6 +178,8 @@ export function usePreferences({
   const [localContinuousBreak, setLocalContinuousBreak] = useState(false);
   const [localDominantHand, setLocalDominantHand] = useState<"LEFT" | "RIGHT">("RIGHT");
   const [localDisabledViewModes, setLocalDisabledViewModes] = useState<string[]>([]);
+  const [localTurnSpeedHorizontal, setLocalTurnSpeedHorizontal] = useState(2.5);
+  const [localTurnSpeedVertical, setLocalTurnSpeedVertical] = useState(1.2);
   const [localFov, setLocalFov] = useState(70);
   const [localShadowAngleDeg, setLocalShadowAngleDeg] = useState(1);
   const [localOverrideViewRadius, setLocalOverrideViewRadius] = useState<number | null>(null);
@@ -278,6 +282,10 @@ export function usePreferences({
       setLocalContinuousBreak(preferences.continuousBreak ?? false);
       setLocalDominantHand(preferences.dominantHand ?? "RIGHT");
       setLocalDisabledViewModes(preferences.disabledViewModes ?? []);
+      // Round to 0.1: the server stores these as Float32, so a value like 1.2f comes
+      // back as 1.2000000476… and would not match the discrete <select> options.
+      setLocalTurnSpeedHorizontal(Math.round((preferences.turnSpeedHorizontal ?? 2.5) * 10) / 10);
+      setLocalTurnSpeedVertical(Math.round((preferences.turnSpeedVertical ?? 1.2) * 10) / 10);
       setLocalFov(preferences.fieldOfView ?? 70);
       setLocalShadowAngleDeg(preferences.shadowAngleDeg ?? 1);
       setLocalOverrideViewRadius(preferences.overrideViewRadius ?? null);
@@ -483,6 +491,8 @@ export function usePreferences({
       continuousBreak: localContinuousBreak,
       dominantHand: localDominantHand,
       disabledViewModes: localDisabledViewModes,
+      turnSpeedHorizontal: localTurnSpeedHorizontal,
+      turnSpeedVertical: localTurnSpeedVertical,
       keybindings: localBindings,
       customCommands,
       fieldOfView: localFov,
@@ -537,6 +547,10 @@ export function usePreferences({
     setLocalDominantHand,
     localDisabledViewModes,
     setLocalDisabledViewModes,
+    localTurnSpeedHorizontal,
+    setLocalTurnSpeedHorizontal,
+    localTurnSpeedVertical,
+    setLocalTurnSpeedVertical,
     localFov,
     setLocalFov,
     localShadowAngleDeg,
