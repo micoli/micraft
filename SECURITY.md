@@ -1,0 +1,40 @@
+# Security Policy
+
+## Reporting a vulnerability
+
+Report suspected vulnerabilities privately to **olivier@micoli.org** (or via GitHub
+"Report a vulnerability" on the Security tab). Do not open a public issue for security
+problems. Expect an acknowledgement within a few days.
+
+## Supply-chain scope
+
+This project consumes dependencies from two ecosystems:
+
+- **Gradle / Maven** — `core`, `server`, `app/webApp`, `plugin-examples` (repos: Maven
+  Central + a filtered Google repo, declared in `settings.gradle.kts`).
+- **npm** — `app/webApp/ts-src` (registry: npmjs.org). The Kotlin/JS toolchain also
+  pulls yarn packages, locked in `kotlin-js-store/`.
+
+### Controls in place
+
+- Version catalog (`gradle/libs.versions.toml`) — single source of dependency versions.
+- Gradle dependency locking (`gradle.lockfile`) + checksum verification
+  (`gradle/verification-metadata.xml`).
+- Gradle wrapper pinned with `distributionSha256Sum`.
+- npm exact-version pinning (`.npmrc` `save-exact`), committed `package-lock.json`,
+  installs via `npm ci` only.
+- Dependabot (`.github/dependabot.yml`) for gradle, npm, github-actions, docker.
+- CI security workflow (`.github/workflows/security.yml`): OSV-Scanner, CycloneDX SBOM,
+  GitHub dependency submission. (Private repo without Advanced Security — no SARIF /
+  CodeQL; findings land in workflow logs and build artifacts.)
+- GitHub Actions pinned to commit SHAs.
+
+### Adding or bumping a dependency
+
+- **Gradle**: edit `gradle/libs.versions.toml`, then in the same commit run
+  `make security-locks` (regenerates `gradle.lockfile`) and `make security-verify`
+  (regenerates `gradle/verification-metadata.xml`); review both diffs — every new line
+  is a new artifact to vet.
+- **npm**: `npm ci` first, add with `npm install --save-exact <pkg>@<version>`, review
+  the full `package-lock.json` diff. Never run bare `npm install` in CI or scripts.
+- Do not add a Maven repository or npm registry that is not already declared.

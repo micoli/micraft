@@ -2,6 +2,10 @@
   "name": "mc-bindings",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=26 <27",
+    "npm": ">=10"
+  },
   "scripts": {
     "gen-plugins": "node scripts/gen-plugins-index.mjs",
     "copy:babylon": "cp node_modules/babylonjs/babylon.js ${MC_OUT_BABYLON:-../src/wasmJsMain/resources/babylon.js}",

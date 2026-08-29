@@ -1,0 +1,16 @@
+# Supply-chain sensitive paths — review required before merge.
+# Replace @micoli with the intended GitHub team/user if different.
+
+/.github/                       @micoli
+/gradle/                        @micoli
+/gradle.lockfile                @micoli
+**/gradle.lockfile              @micoli
+/gradle/verification-metadata.xml @micoli
+**/build.gradle.kts             @micoli
+/settings.gradle.kts            @micoli
+/build.gradle.kts              @micoli
+**/package.json                 @micoli
+**/package-lock.json            @micoli
+/kotlin-js-store/               @micoli
+/.docker/                       @micoli
+/Dockerfile                     @micoli
