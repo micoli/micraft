@@ -13,6 +13,10 @@ Claim the chunk you stand in to protect it from other players' edits.
 - **`/claim abandon`** — release the claim.
 - **`/claim info`** — show the claim you are standing in.
 
+Players in the **same faction** as the claim owner can build and interact
+without being explicitly trusted (see
+[groups, guilds & factions](groups-guilds-factions.md)).
+
 ## Configuration
 
 `data/config/claims.yaml` (bundled default `resources/config/claims.yaml`, schema

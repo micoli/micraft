@@ -60,7 +60,22 @@ game:
   reconcileToleranceXz: 0.5
   reconcileToleranceY: 0.99
   blockBreakBufferSize: 1000
+factions:
+  enabled: false
+  friendlyFire: false          # allow attacking same-faction members
+  changeCooldownSeconds: 0     # delay before a player may re-affiliate
+  list: []                     # 1 to 5 faction definitions when enabled
+  # list:
+  #   - id: red
+  #     name: "Scarlet Order"
+  #     color: "#c0392b"
+  #     description: "Defenders of the North."
 ```
+
+The `factions:` block **is** hot-reloaded by `/reload` (unlike the rest of this
+file): editing the list and reloading re-applies it, and players affiliated to a
+faction that no longer exists are un-affiliated. See
+[Groups, guilds & factions](../social/groups-guilds-factions.md).
 
 See [Auth & RBAC](auth-rbac.md) for the `auth:` block, and
 [Chunk transport](../architecture/chunk-transport.md) for `chunks.transport`.

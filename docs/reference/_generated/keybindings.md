@@ -54,6 +54,9 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 | `ui` | `quest_tracking` | KeyT |
 | `ui` | `chunk_debug_toggle` | Ctrl+KeyN |
 | `ui` | `claim_panel` | KeyK |
+| `ui` | `group_panel` | Alt+KeyG |
+| `ui` | `guild_panel` | KeyU |
+| `ui` | `faction_panel` | Alt+KeyF |
 | `building` | `place_rotate` | KeyR |
 | `building` | `block_interact` | KeyC |
 | `building` | `scene_confirm` | Enter |

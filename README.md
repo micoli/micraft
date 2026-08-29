@@ -60,10 +60,13 @@ make test                     # all test suites
 | `/drink` | `/drink <itemType>` | Consomme un item consommable de l'inventaire. | — |
 | `/equip` | `/equip <armorName>` | Equip an armor piece. | dynamic |
 | `/explode` | `/explode <radius>` | Destroy all blocks in a sphere around the player. | — |
+| `/faction` | `/faction list\|join <id>\|leave\|info` | View and change your faction affiliation. | list, join, leave, info |
 | `/give` | `/give <name> [N]` | Give an item, or grant an armor/weapon/tool, to yourself. | dynamic |
 | `/give:money` | `/give:money <amount> [playerName]` | Give copper to a player (or yourself if name omitted). | — |
 | `/god:off` | `/god:off` | Disable god mode. | — |
 | `/god:on` | `/god:on` | Enable god mode (immune to damage). | — |
+| `/group` | `/group create\|invite <player>\|accept\|leave\|kick <player>\|transfer <player>\|disband\|who` | Manage your temporary party (max 5). | create, invite, accept, leave, kick, transfer, disband, who |
+| `/guild` | `/guild create <name> <tag>\|invite <player>\|accept\|leave\|kick <player>\|motd <text>\|rank <player> <rankName>\|transfer <player>\|disband\|info` | Manage your guild. | create, invite, accept, decline, leave, kick, motd, rank, transfer, disband, info |
 | `/help` | `/help [command]` | Lists available commands. | — |
 | `/join` | `/join <channelName>` | Join a chat channel. | dynamic |
 | `/lang` | `/lang [locale]` | Changes your language preference. | — |
