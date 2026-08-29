@@ -70,6 +70,7 @@ window.mcState = {
   mouseLeft: false,
   mouseDownAt: 0,
   orbitZoom: 3,
+  freeCursor: false,
   continuousBreak: false,
   bindings: {},
   customCommands: {},

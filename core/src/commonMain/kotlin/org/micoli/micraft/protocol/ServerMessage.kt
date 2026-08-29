@@ -224,6 +224,7 @@ sealed class ServerMessage {
         val overrideImpostorFovBonusChunks: Int? = null,
         val continuousBreak: Boolean = false,
         val dominantHand: Hand = Hand.RIGHT,
+        val disabledViewModes: Set<String> = emptySet(),
     ) : ServerMessage()
 
     @ProtoId(25)

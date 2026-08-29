@@ -353,6 +353,38 @@ export function Preferences({
                   <option value="LEFT">Left-handed</option>
                 </select>
               </div>
+              <div className="py-1.5 border-b border-[#2a2a2a]">
+                <div className="mb-1">Available view modes (the view key cycles through the enabled ones)</div>
+                {(
+                  [
+                    ["FIRST_PERSON", "First person"],
+                    ["THIRD_PERSON", "Third person"],
+                    ["FIRST_PERSON_NO_ARMS", "First person (no arms)"],
+                    ["THIRD_PERSON_ORBIT", "Third person orbit"],
+                    ["THIRD_PERSON_ORBIT_CURSOR", "Third person orbit (cursor)"],
+                  ] as const
+                ).map(([id, label]) => {
+                  const locked = id === "FIRST_PERSON";
+                  const enabled = locked || !pref.localDisabledViewModes.includes(id);
+                  return (
+                    <label key={id} className="flex items-center gap-2 py-0.5">
+                      <input
+                        type="checkbox"
+                        checked={enabled}
+                        disabled={locked}
+                        onChange={(e) =>
+                          pref.setLocalDisabledViewModes(
+                            e.target.checked
+                              ? pref.localDisabledViewModes.filter((m) => m !== id)
+                              : [...pref.localDisabledViewModes, id],
+                          )
+                        }
+                      />
+                      <span>{label}</span>
+                    </label>
+                  );
+                })}
+              </div>
             </>
           )}
 

@@ -51,6 +51,14 @@ export function registerUtils(): Pick<
   const itemTypes = ["cobblestone", "dirt", "sand", "gravel", "sandstone", "snowball", "flint"];
   registerCompleter("/give", (p) => itemTypes.filter((t) => t.startsWith(p.toLowerCase())));
   registerCompleter("/keyreload", () => []);
+  const viewModes = [
+    "FIRST_PERSON",
+    "FIRST_PERSON_NO_ARMS",
+    "THIRD_PERSON",
+    "THIRD_PERSON_ORBIT",
+    "THIRD_PERSON_ORBIT_CURSOR",
+  ];
+  registerCompleter("/view_mode", (p) => viewModes.filter((m) => m.toLowerCase().startsWith(p.toLowerCase())));
   registerCompleter("/kick", (p) => (window.mcState.connectedPlayers || []).filter((n) => n.startsWith(p)));
   registerCompleter("/shaders", (p) => ["on", "off"].filter((o) => o.startsWith(p)));
   registerCompleter("/time", (p) => Array.from({ length: 24 }, (_, i) => String(i)).filter((o) => o.startsWith(p)));

@@ -21,6 +21,28 @@ function getCachedDir(camera: Camera): { x: number; y: number; z: number } {
   return { x: _dirX, y: _dirY, z: _dirZ };
 }
 
+// Same per-tick caching as getCachedDir, for the ray from the camera through the current mouse
+// cursor — used by THIRD_PERSON_ORBIT_CURSOR block picking (no pointer lock, no screen-center aim).
+let _cursorCacheCamera: Camera | null = null;
+let _curX = 0,
+  _curY = 0,
+  _curZ = 0;
+
+function getCachedCursorRay(camera: Camera): { x: number; y: number; z: number } {
+  if (_cursorCacheCamera !== camera) {
+    const scene = camera.getScene();
+    const ray = scene.createPickingRay(scene.pointerX, scene.pointerY, BABYLON.Matrix.Identity(), camera);
+    _curX = ray.direction.x;
+    _curY = ray.direction.y;
+    _curZ = ray.direction.z;
+    _cursorCacheCamera = camera;
+    queueMicrotask(() => {
+      _cursorCacheCamera = null;
+    });
+  }
+  return { x: _curX, y: _curY, z: _curZ };
+}
+
 export function registerCamera(): Pick<
   McBindings,
   | "getCameraPositionX"
@@ -29,6 +51,9 @@ export function registerCamera(): Pick<
   | "getCameraDir3DX"
   | "getCameraDir3DY"
   | "getCameraDir3DZ"
+  | "getCursorRayX"
+  | "getCursorRayY"
+  | "getCursorRayZ"
   | "getCameraForwardX"
   | "getCameraForwardZ"
   | "createCrosshair"
@@ -42,6 +67,10 @@ export function registerCamera(): Pick<
     getCameraDir3DX: (camera: Camera): number => getCachedDir(camera).x,
     getCameraDir3DY: (camera: Camera): number => getCachedDir(camera).y,
     getCameraDir3DZ: (camera: Camera): number => getCachedDir(camera).z,
+
+    getCursorRayX: (camera: Camera): number => getCachedCursorRay(camera).x,
+    getCursorRayY: (camera: Camera): number => getCachedCursorRay(camera).y,
+    getCursorRayZ: (camera: Camera): number => getCachedCursorRay(camera).z,
 
     getCameraForwardX: (camera: Camera): number => {
       const d = getCachedDir(camera);

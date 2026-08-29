@@ -952,6 +952,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     jsCameraSetFov(camera, msg.fieldOfView)
                     localController.autoTargetEnabled = msg.autoTargetEnabled
                     localController.continuousBreak = msg.continuousBreak
+                    localController.disabledViewModes = msg.disabledViewModes
                     jsSetContinuousBreak(msg.continuousBreak)
                     jsSetShadowAngleDeg(msg.shadowAngleDeg)
                     WorldConstants.VIEW_RADIUS = msg.overrideViewRadius ?: DEFAULT_VIEW_RADIUS

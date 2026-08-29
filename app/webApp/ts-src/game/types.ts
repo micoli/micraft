@@ -240,6 +240,7 @@ export interface PreferencesData {
   overrideImpostorFovBonusChunks?: number | null;
   continuousBreak: boolean;
   dominantHand: "LEFT" | "RIGHT";
+  disabledViewModes: string[];
 }
 
 export type CombatTargetData = {

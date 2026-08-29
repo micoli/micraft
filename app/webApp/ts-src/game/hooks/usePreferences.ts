@@ -28,6 +28,7 @@ export interface SavePayload {
   overrideImpostorFovBonusChunks: number | null;
   continuousBreak: boolean;
   dominantHand: "LEFT" | "RIGHT";
+  disabledViewModes: string[];
 }
 
 export interface CustomCmdEntry {
@@ -45,6 +46,8 @@ const ACTION_GROUPS: Record<string, string[]> = {
     "strafe_right",
     "rotate_left",
     "rotate_right",
+    "rotate_up",
+    "rotate_down",
     "sneak",
     "crawl",
     "auto_forward",
@@ -172,6 +175,7 @@ export function usePreferences({
   const [localAutoTarget, setLocalAutoTarget] = useState(true);
   const [localContinuousBreak, setLocalContinuousBreak] = useState(false);
   const [localDominantHand, setLocalDominantHand] = useState<"LEFT" | "RIGHT">("RIGHT");
+  const [localDisabledViewModes, setLocalDisabledViewModes] = useState<string[]>([]);
   const [localFov, setLocalFov] = useState(70);
   const [localShadowAngleDeg, setLocalShadowAngleDeg] = useState(1);
   const [localOverrideViewRadius, setLocalOverrideViewRadius] = useState<number | null>(null);
@@ -273,6 +277,7 @@ export function usePreferences({
       setLocalAutoTarget(preferences.autoTargetEnabled ?? true);
       setLocalContinuousBreak(preferences.continuousBreak ?? false);
       setLocalDominantHand(preferences.dominantHand ?? "RIGHT");
+      setLocalDisabledViewModes(preferences.disabledViewModes ?? []);
       setLocalFov(preferences.fieldOfView ?? 70);
       setLocalShadowAngleDeg(preferences.shadowAngleDeg ?? 1);
       setLocalOverrideViewRadius(preferences.overrideViewRadius ?? null);
@@ -477,6 +482,7 @@ export function usePreferences({
       autoTargetEnabled: localAutoTarget,
       continuousBreak: localContinuousBreak,
       dominantHand: localDominantHand,
+      disabledViewModes: localDisabledViewModes,
       keybindings: localBindings,
       customCommands,
       fieldOfView: localFov,
@@ -529,6 +535,8 @@ export function usePreferences({
     setLocalContinuousBreak,
     localDominantHand,
     setLocalDominantHand,
+    localDisabledViewModes,
+    setLocalDisabledViewModes,
     localFov,
     setLocalFov,
     localShadowAngleDeg,

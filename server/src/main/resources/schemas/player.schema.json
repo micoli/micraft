@@ -223,6 +223,12 @@
         "viewMode": {
           "type": "string"
         },
+        "disabledViewModes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "skin": {
           "type": "string"
         },

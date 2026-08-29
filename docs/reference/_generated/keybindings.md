@@ -21,6 +21,8 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 | `movement` | `strafe_left` | KeyA, ArrowLeft |
 | `movement` | `rotate_left` | KeyQ, Ctrl+ArrowLeft |
 | `movement` | `rotate_right` | KeyE, Ctrl+ArrowRight |
+| `movement` | `rotate_up` | Alt+ArrowUp |
+| `movement` | `rotate_down` | Alt+ArrowDown |
 | `movement` | `sneak` | ShiftLeft |
 | `movement` | `crawl` | ControlLeft |
 | `movement` | `auto_forward` | KeyW+KeyW, ArrowUp+ArrowUp |

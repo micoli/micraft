@@ -16,6 +16,8 @@ movement:
   strafe_left: [KeyA, ArrowLeft]
   rotate_left: [KeyQ, "Ctrl+ArrowLeft"]
   rotate_right: [KeyE, "Ctrl+ArrowRight"]
+  rotate_up: ["Alt+ArrowUp"]
+  rotate_down: ["Alt+ArrowDown"]
   sneak: [ShiftLeft]
   crawl: [ControlLeft]
   auto_forward: ["KeyW+KeyW", "ArrowUp+ArrowUp"]

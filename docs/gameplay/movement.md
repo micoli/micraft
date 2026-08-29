@@ -26,6 +26,25 @@ Movement is the only action that is *not* a slash command: the client sends
 `MoveIntent`, the server validates against AABB physics in `core`, and replies
 `PlayerUpdate`. The client predicts XZ locally and soft-corrects.
 
+## Camera / view modes
+
+`view_toggle` (`F` by default) cycles the camera; `/view_mode <MODE>` jumps
+straight to one (ignoring the preference filter below). A notification shows the
+current mode on every change. The chase camera pulls in when a solid block sits
+between it and the player — the chunk mesh has no inward faces.
+
+| Mode | Camera |
+|------|--------|
+| `FIRST_PERSON` | eyes, full body drawn |
+| `THIRD_PERSON` | level chase camera, `rotate_left/right` turn it |
+| `FIRST_PERSON_NO_ARMS` | eyes, arms hidden |
+| `THIRD_PERSON_ORBIT` | chase camera orbits on the mouse, heading on the turn keys, wheel zooms |
+| `THIRD_PERSON_ORBIT_CURSOR` | as orbit but pointer is free: the OS cursor aims block interaction, left-click breaks/places, `Alt`+left-drag orbits, the camera lifts over the player with the pitch |
+
+In both orbit modes `rotate_up` / `rotate_down` (`Alt+Arrow Up/Down`) change the
+pitch. Preferences → Game hides individual modes from the `view_toggle` cycle
+(`FIRST_PERSON` always stays).
+
 ## Configuration
 
 Stance dimensions and speeds are centralised in `PlayerConstants` (`core`). They

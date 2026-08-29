@@ -18,16 +18,20 @@ export function registerMouse(): Pick<McBindings, "setupMouse" | "isBreaking" | 
       );
 
       window.addEventListener("pointerdown", (e: PointerEvent) => {
-        if (e.button === 0 && document.pointerLockElement) {
-          // Ctrl+click is block interaction (same as the block_interact key), never a break/place —
-          // in THIRD_PERSON_ORBIT it is the only pointer action.
-          if (e.ctrlKey) {
-            window.mcState.events.push("block_interact");
-            return;
-          }
-          window.mcState.mouseLeft = true;
-          window.mcState.mouseDownAt = Date.now();
+        if (e.button !== 0) return;
+        // THIRD_PERSON_ORBIT_CURSOR: no pointer lock, act only on clicks landing on the canvas.
+        const freeCursor = window.mcState.freeCursor && (e.target as HTMLElement | null)?.id === "renderCanvas";
+        if (!document.pointerLockElement && !freeCursor) return;
+        // Alt+left-drag orbits the free-cursor camera (handled in BabylonBindingsInput) — not a break.
+        if (freeCursor && e.altKey) return;
+        // Ctrl+click is block interaction (same as the block_interact key), never a break/place —
+        // in THIRD_PERSON_ORBIT it is the only pointer action.
+        if (e.ctrlKey) {
+          window.mcState.events.push("block_interact");
+          return;
         }
+        window.mcState.mouseLeft = true;
+        window.mcState.mouseDownAt = Date.now();
       });
       window.addEventListener("pointerup", (e: PointerEvent) => {
         if (e.button === 0) window.mcState.mouseLeft = false;
