@@ -29,6 +29,26 @@ fun Array<MutableList<ShortcutSlot?>>.toPageMap(): Map<Int, Map<Int, ShortcutSlo
 
 fun PlayerSession.hasPermission(perm: String): Boolean = "*" in permissions || perm in permissions
 
+/** Adds items to the live inventory and pushes an [ServerMessage.InventoryUpdate]. */
+suspend fun PlayerSession.addItems(items: Map<ItemType, Int>) {
+    items.forEach { (type, count) ->
+        if (count != 0) inventory.merge(type, count) { a, b -> a + b }
+    }
+    inventory.entries.removeIf { it.value <= 0 }
+    send(ServerMessage.InventoryUpdate(inventory.toMap()))
+}
+
+/**
+ * Removes items if the inventory holds enough of every entry; returns false and no-ops otherwise.
+ */
+suspend fun PlayerSession.removeItems(items: Map<ItemType, Int>): Boolean {
+    if (items.any { (type, count) -> (inventory[type] ?: 0) < count }) return false
+    items.forEach { (type, count) -> inventory.merge(type, -count) { a, b -> a + b } }
+    inventory.entries.removeIf { it.value <= 0 }
+    send(ServerMessage.InventoryUpdate(inventory.toMap()))
+    return true
+}
+
 open class PlayerSession(
     val id: String,
     val userName: String,

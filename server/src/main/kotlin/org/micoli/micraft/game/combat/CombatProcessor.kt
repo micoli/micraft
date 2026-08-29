@@ -78,6 +78,7 @@ class CombatProcessor(
     private val onPlayerDownedByNpc: suspend (session: PlayerSession, killerNpcId: String) -> Unit =
         { _, _ ->
         },
+    private val factionManager: org.micoli.micraft.game.social.FactionManager? = null,
 ) {
     // ── Target selection ──────────────────────────────────────────────────────
 
@@ -163,6 +164,14 @@ class CombatProcessor(
                     session.send(ServerMessage.Notification("Target not found"))
                     return
                 }
+        if (factionManager != null &&
+            !factionManager.friendlyFireEnabled() &&
+            factionManager.sameFaction(session, target)) {
+            session.send(
+                ServerMessage.Notification(
+                    i18n.t(session.state.language, "faction:server:friendly_fire_blocked")))
+            return
+        }
         val pos = session.state.pos
         val tPos = target.state.pos
         if (distance3(pos.x, pos.y, pos.z, tPos.x, tPos.y, tPos.z) > range) {

@@ -12,6 +12,13 @@ class ChatService(
     private val savePlayer: (PlayerSession) -> Unit,
     private val getSessions: () -> Collection<PlayerSession>,
 ) {
+    /**
+     * Resolves member player-ids for a `group:<id>` / `guild:<id>` channel. Wired
+     * post-construction.
+     */
+    var groupMembers: (String) -> Set<String> = { emptySet() }
+    var guildMembers: (String) -> Set<String> = { emptySet() }
+
     suspend fun subscribe(session: PlayerSession, channel: String): Boolean {
         if (session.state.subscribedChannels.hasChannel(channel)) return false
         session.state =
@@ -24,6 +31,13 @@ class ChatService(
 
     suspend fun unsubscribe(session: PlayerSession, channel: String): Boolean {
         if (channel in ChatChannelManager.PROTECTED) return false
+        return forceUnsubscribe(session, channel)
+    }
+
+    /**
+     * Removes a subscription regardless of PROTECTED status (used when a group/guild dissolves).
+     */
+    suspend fun forceUnsubscribe(session: PlayerSession, channel: String): Boolean {
         if (!session.state.subscribedChannels.hasChannel(channel)) return false
         session.state =
             session.state.copy(
@@ -69,6 +83,21 @@ class ChatService(
                     }
                     session.send(msg)
                 }
+            }
+            channel.startsWith("group:") -> {
+                val ids = groupMembers(channel.removePrefix("group:"))
+                if (sender.id !in ids) return
+                all.filter { it.id in ids }.forEach { it.send(msg) }
+            }
+            channel.startsWith("guild:") -> {
+                val ids = guildMembers(channel.removePrefix("guild:"))
+                if (sender.id !in ids) return
+                all.filter { it.id in ids }.forEach { it.send(msg) }
+            }
+            channel.startsWith("faction:") -> {
+                val factionId = channel.removePrefix("faction:")
+                if (sender.state.factionId != factionId) return
+                all.filter { it.state.factionId == factionId }.forEach { it.send(msg) }
             }
             else ->
                 all.filter { it.state.subscribedChannels.hasChannel(channel) }

@@ -222,6 +222,7 @@ class GameLoop(
     private val reloadBiomes: (() -> ChunkGenerator)? = null,
     private val reloadRegistries: (() -> Unit)? = null,
     private val reloadGameConfig: (() -> Unit)? = null,
+    private val reloadFactionsConfig: (() -> org.micoli.micraft.game.FactionsSection)? = null,
     val i18n: I18nConfig = I18nConfig.fromClasspath(pluginsRoot = Path.of("plugins")),
     private val tokenStore: TokenStore? = null,
     private val authProvider: AuthProvider? = null,
@@ -234,6 +235,18 @@ class GameLoop(
     private val chatChannelManager: ChatChannelManager = ChatChannelManager(),
     private val chatService: ChatService =
         ChatService(chatChannelManager, playerPersister::save, sessionRegistry::all),
+    private val factionsSection: org.micoli.micraft.game.FactionsSection =
+        org.micoli.micraft.game.FactionsSection(),
+    private val factionManager: org.micoli.micraft.game.social.FactionManager =
+        org.micoli.micraft.game.social.FactionManager(
+            getSessions = sessionRegistry::all,
+            savePlayer = playerPersister::save,
+            chatService = chatService,
+            channelManager = chatChannelManager,
+            i18n = i18n,
+            broadcast = sessionRegistry::broadcast,
+            persistence = persistence,
+        ),
     private val dropConfig: DropConfig =
         DropConfig(
             BlockRegistryLoader(Path.of("resources/blocks"), Path.of("data/resources/blocks"))),
@@ -364,6 +377,7 @@ class GameLoop(
             subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
             i18n = i18n,
             savePlayer = playerPersister::save,
+            factionManager = factionManager,
         ),
     private val statusEffectProcessor: StatusEffectProcessor =
         StatusEffectProcessor(
@@ -535,6 +549,44 @@ class GameLoop(
             )
         }
 
+    private val guildRegistry: org.micoli.micraft.game.social.GuildRegistry =
+        org.micoli.micraft.game.social.GuildRegistry(persistence)
+
+    private val guildManager: org.micoli.micraft.game.social.GuildManager =
+        org.micoli.micraft.game.social.GuildManager(
+            registry = guildRegistry,
+            getSessions = sessionRegistry::all,
+            savePlayer = playerPersister::save,
+            chatService = chatService,
+            channelManager = chatChannelManager,
+            i18n = i18n,
+            returnBankItems = { playerName, items ->
+                mailManager?.deliverSystemMail(
+                    to = playerName,
+                    subject = "Guild disbanded",
+                    body = "Your guild was disbanded. The guild bank contents are attached.",
+                    attachments = items,
+                )
+            },
+        )
+
+    private val groupManager: org.micoli.micraft.game.social.GroupManager =
+        org.micoli.micraft.game.social.GroupManager(
+            getSessions = sessionRegistry::all,
+            chatService = chatService,
+            channelManager = chatChannelManager,
+            i18n = i18n,
+        )
+
+    init {
+        chatService.groupMembers = { id -> groupManager.memberIds(id) }
+        chatService.guildMembers = { id -> guildRegistry.memberIds(id) }
+        claimRegistry.factionAlly = { actorId, ownerId ->
+            factionManager.sameFaction(actorId, ownerId)
+        }
+        factionManager.applyConfig(factionsSection)
+    }
+
     private val macroExecutor = MacroExecutor()
 
     private var saveTickCounter = 0
@@ -617,6 +669,10 @@ class GameLoop(
                 combatProcessor.applyStatusEffectTo(
                     session, effect, durationSec, System.currentTimeMillis())
             },
+            groupManager = groupManager,
+            guildManager = guildManager,
+            guildRegistry = guildRegistry,
+            factionManager = factionManager,
         )
 
     private fun buildDefaultCommandContext(closures: CommandContextClosures): CommandContext =
@@ -659,6 +715,10 @@ class GameLoop(
             auctionManager = auctionManager,
             claimRegistry = claimRegistry,
             claimManager = claimManager,
+            groupManager = groupManager,
+            guildManager = guildManager,
+            guildRegistry = guildRegistry,
+            factionManager = factionManager,
             questManager = questManager,
             clearAccumulators = regenProcessor::clearAccumulators,
             applyBuff = closures.applyBuff,
@@ -1158,6 +1218,13 @@ class GameLoop(
             reloadBiomes = reloadBiomes,
             reloadRegistries = reloadRegistries,
             reloadGameConfig = reloadGameConfig,
+            reloadFactions =
+                reloadFactionsConfig?.let { loader ->
+                    {
+                        factionManager.applyConfig(loader())
+                        factionManager.reconcile()
+                    }
+                },
             sessionRegistry = sessionRegistry,
             buildRegistrySync = ::buildRegistrySync,
             npcConfigLoader = npcConfigLoader,
@@ -1675,6 +1742,11 @@ class GameLoop(
             session.send(ServerMessage.EditModeUpdate(session.state.editMode))
         }
         chatService.onPlayerConnect(session)
+        session.state.guildId?.let { chatService.subscribe(session, "guild:$it") }
+        session.state.factionId?.let { chatService.subscribe(session, "faction:$it") }
+        groupManager.sendSync(session)
+        guildManager.sendSync(session)
+        factionManager.sendSync(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         session.send(ServerMessage.WalletUpdate(session.state.wallet))
         questManager?.sendQuestSync(session)
@@ -1855,6 +1927,50 @@ class GameLoop(
                                         is ClientMessage.ClaimSetTrusted ->
                                             claimManager.setTrusted(
                                                 session, msg.claimId, msg.playerName, msg.trusted)
+                                        is ClientMessage.GroupCreate -> groupManager.create(session)
+                                        is ClientMessage.GroupInvite ->
+                                            groupManager.invite(session, msg.targetName)
+                                        is ClientMessage.GroupInviteRespond ->
+                                            groupManager.respondInvite(
+                                                session, msg.groupId, msg.accept)
+                                        is ClientMessage.GroupLeave -> groupManager.leave(session)
+                                        is ClientMessage.GroupKick ->
+                                            groupManager.kick(session, msg.targetId)
+                                        is ClientMessage.GroupTransfer ->
+                                            groupManager.transfer(session, msg.targetId)
+                                        is ClientMessage.GroupDisband ->
+                                            groupManager.disband(session)
+                                        is ClientMessage.GuildCreate ->
+                                            guildManager.create(session, msg.name, msg.tag)
+                                        is ClientMessage.GuildInvite ->
+                                            guildManager.invite(session, msg.targetName)
+                                        is ClientMessage.GuildInviteRespond ->
+                                            guildManager.respondInvite(
+                                                session, msg.guildId, msg.accept)
+                                        is ClientMessage.GuildLeave -> guildManager.leave(session)
+                                        is ClientMessage.GuildKick ->
+                                            guildManager.kick(session, msg.targetId)
+                                        is ClientMessage.GuildSetMotd ->
+                                            guildManager.setMotd(session, msg.text)
+                                        is ClientMessage.GuildSetRank ->
+                                            guildManager.setRank(
+                                                session, msg.targetId, msg.rankName)
+                                        is ClientMessage.GuildRankUpsert ->
+                                            guildManager.upsertRank(session, msg.rank)
+                                        is ClientMessage.GuildRankDelete ->
+                                            guildManager.deleteRank(session, msg.rankName)
+                                        is ClientMessage.GuildTransferOwner ->
+                                            guildManager.transferOwner(session, msg.targetId)
+                                        is ClientMessage.GuildDisband ->
+                                            guildManager.disband(session)
+                                        is ClientMessage.GuildBankDeposit ->
+                                            guildManager.bankDeposit(
+                                                session, msg.itemType, msg.count)
+                                        is ClientMessage.GuildBankWithdraw ->
+                                            guildManager.bankWithdraw(
+                                                session, msg.itemType, msg.count)
+                                        is ClientMessage.FactionSetAffiliation ->
+                                            factionManager.setAffiliation(session, msg.factionId)
                                         is ClientMessage.CreativeCameraFocus -> {
                                             if (session.state.editMode == EditMode.CREATIVE) {
                                                 session.creativeFocusPos = msg.x to msg.z
@@ -1886,6 +2002,7 @@ class GameLoop(
                 npcTickPipeline.onPlayerDisconnected(sessionRegistry.all())
                 tradeManager.onPlayerDisconnect(id)
                 auctionManager?.clearFilter(id)
+                groupManager.onDisconnect(session)
                 savePlayer(session)
                 log.info(
                     "player disconnected: {} name={} (total={})",

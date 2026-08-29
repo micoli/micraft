@@ -4748,6 +4748,17 @@ components:
         email:
           type: string
           title: String
+        factionChangedAtMs:
+          type:
+          - "null"
+          - integer
+          format: int64
+          title: Long
+        factionId:
+          type:
+          - "null"
+          - string
+          title: String
         fieldOfView:
           type: integer
           format: int32
@@ -4758,6 +4769,21 @@ components:
         godMode:
           type: boolean
           title: Boolean
+        guildId:
+          type:
+          - "null"
+          - string
+          title: String
+        guildRank:
+          type:
+          - "null"
+          - string
+          title: String
+        guildTag:
+          type:
+          - "null"
+          - string
+          title: String
         id:
           type: string
           title: String

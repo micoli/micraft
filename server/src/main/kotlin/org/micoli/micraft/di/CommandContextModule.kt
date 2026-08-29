@@ -55,6 +55,10 @@ data class CommandContextClosures(
     val weaponCategories: () -> Map<EquipmentCategory, WeaponCategoryDefinition>,
     val toolCategories: () -> Map<EquipmentCategory, ToolCategoryDefinition>,
     val applyBuff: suspend (PlayerSession, StatusEffect, Float) -> Unit,
+    val groupManager: org.micoli.micraft.game.social.GroupManager,
+    val guildManager: org.micoli.micraft.game.social.GuildManager,
+    val guildRegistry: org.micoli.micraft.game.social.GuildRegistry,
+    val factionManager: org.micoli.micraft.game.social.FactionManager,
 )
 
 @Module
@@ -139,6 +143,10 @@ class CommandContextModule {
             scenes = sceneRegistry,
             claimRegistry = claimRegistry,
             claimManager = claimManager,
+            groupManager = closures.groupManager,
+            guildManager = closures.guildManager,
+            guildRegistry = closures.guildRegistry,
+            factionManager = closures.factionManager,
         )
     }
 }

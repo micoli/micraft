@@ -9,6 +9,13 @@ import org.micoli.micraft.game.world.WorldPersistence
 class ClaimRegistry(private val persistence: WorldPersistence?) {
     private val claims = ConcurrentHashMap<String, Claim>()
 
+    /** Wired post-construction: true when actor and claim owner share a faction. */
+    var factionAlly: (actorId: String, ownerId: String) -> Boolean = { _, _ -> false }
+
+    /** [Claim.canEdit] plus faction-ally access to a same-faction owner's land. */
+    fun canEdit(claim: Claim, session: org.micoli.micraft.game.session.PlayerSession): Boolean =
+        claim.canEdit(session) || factionAlly(session.id, claim.ownerId)
+
     // Reverse index: chunk column → claims covering it (almost always a single entry) — turns
     // claimAt() from an O(n_claims) scan into an O(1) lookup, same rationale as
     // InstanceRegistry.byChunk since this now runs once per block break/place/interact.

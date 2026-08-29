@@ -43,3 +43,18 @@ game:
   reconcileToleranceXz: 0.5
   reconcileToleranceY: 0.99
   blockBreakBufferSize: 1000
+factions:
+  enabled: false
+  friendlyFire: false
+  changeCooldownSeconds: 0
+  list: []
+  # Example (1 to 5 factions), set enabled: true to activate:
+  # list:
+  #   - id: red
+  #     name: "Ordre Écarlate"
+  #     color: "#c0392b"
+  #     description: "Les défenseurs du Nord."
+  #   - id: blue
+  #     name: "Pacte d'Azur"
+  #     color: "#2980b9"
+  #     description: "Les marchands du littoral."
