@@ -49,10 +49,16 @@ export function registerClaimTool(): Pick<McBindings, "claimMarkCorner" | "claim
     // Second press: fixes corner 2 at the current target block, sends ClaimCreate, resets.
     claimMarkCorner: (): void => {
       const target = window.mcState.currentTargetBlock;
-      if (!target) return;
+      if (!target) {
+        // Reuses the claim-denied toast path — no dedicated notification plumbing needed for a
+        // purely client-side rejection.
+        window.mc?.claimDenied?.("Look at a block within reach to mark a claim corner.");
+        return;
+      }
       if (!window.mcState.claimToolActive) {
         window.mcState.claimToolActive = true;
         window.mcState.claimCorner1 = target;
+        window.mc?.claimDenied?.("First corner marked — look at the opposite corner and mark again.");
         return;
       }
       const corner1 = window.mcState.claimCorner1;
