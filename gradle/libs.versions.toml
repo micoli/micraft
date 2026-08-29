@@ -52,6 +52,7 @@ koin-ksp-compiler = { module = "io.insert-koin:koin-ksp-compiler", version.ref =
 commons-jexl3 = { module = "org.apache.commons:commons-jexl3", version.ref = "commons-jexl3" }
 java-jwt = { module = "com.auth0:java-jwt", version.ref = "java-jwt" }
 ktor-openapi = { module = "io.github.smiley4:ktor-openapi", version.ref = "ktor-openapi" }
+ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 
 [plugins]
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

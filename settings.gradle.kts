@@ -37,6 +37,8 @@ include(":app:webApp")
 
 include(":core")
 
+include(":codec-processor")
+
 include(":server")
 
 include(":plugin-examples:hello-world")
