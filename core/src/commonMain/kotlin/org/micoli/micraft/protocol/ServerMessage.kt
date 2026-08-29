@@ -26,6 +26,10 @@ import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.player.rpg.DerivedStats
 import org.micoli.micraft.quest.QuestProgress
+import org.micoli.micraft.social.FactionDefinition
+import org.micoli.micraft.social.FactionState
+import org.micoli.micraft.social.GroupInfo
+import org.micoli.micraft.social.GuildInfoDto
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
 import org.micoli.micraft.vehicle.VehicleState
@@ -482,6 +486,40 @@ sealed class ServerMessage {
     @ProtoId(74) @Serializable data class ClaimDenied(val reason: String) : ServerMessage()
 
     @ProtoId(75) @Serializable object OpenCharacter : ServerMessage()
+
+    /** Sent on connect and on every membership/leadership change. `null` = player has no group. */
+    @ProtoId(76) @Serializable data class GroupSync(val group: GroupInfo? = null) : ServerMessage()
+
+    @ProtoId(77)
+    @Serializable
+    data class GroupInviteReceived(val groupId: String, val fromName: String) : ServerMessage()
+
+    /** Sent on connect and on every guild change to members. `null` = player has no guild. */
+    @ProtoId(78)
+    @Serializable
+    data class GuildSync(val guild: GuildInfoDto? = null) : ServerMessage()
+
+    @ProtoId(79)
+    @Serializable
+    data class GuildInviteReceived(
+        val guildId: String,
+        val guildName: String,
+        val fromName: String,
+    ) : ServerMessage()
+
+    @ProtoId(80)
+    @Serializable
+    data class FactionSync(
+        val enabled: Boolean,
+        val definitions: List<FactionDefinition>,
+        val states: List<FactionState>,
+        val myFactionId: String? = null,
+        val changeCooldownRemainingMs: Long = 0L,
+    ) : ServerMessage()
+
+    @ProtoId(81)
+    @Serializable
+    data class SocialDenied(val scope: String, val reason: String) : ServerMessage()
 }
 
 @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)

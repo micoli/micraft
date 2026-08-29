@@ -81,4 +81,9 @@ data class PlayerState(
     val rightHandItem: String? = null,
     val leftHandItem: String? = null,
     val mounted: Boolean = false,
+    val guildId: String? = null,
+    val guildRank: String? = null,
+    val guildTag: String? = null,
+    val factionId: String? = null,
+    val factionChangedAtMs: Long? = null,
 )
