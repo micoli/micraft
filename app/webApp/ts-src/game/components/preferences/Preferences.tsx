@@ -50,8 +50,8 @@ export function Preferences({
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
-        movable
-        className="min-w-[520px] max-w-[560px] max-h-[80vh] flex flex-col font-mono p-5 z-[3001]"
+        windowMode="maximized"
+        className="flex flex-col font-mono p-5 z-[3001]"
         overlayClassName="z-[3000]"
         onEscapeKeyDown={(e) => e.preventDefault()}
         onOpenAutoFocus={(e) => {

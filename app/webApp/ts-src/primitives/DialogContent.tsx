@@ -8,6 +8,7 @@ interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof Radix
   overlayClassName?: string;
   children: React.ReactNode;
   movable?: boolean;
+  windowMode?: "maximized" | "floating";
 }
 
 export function DialogContent({
@@ -15,15 +16,18 @@ export function DialogContent({
   overlayClassName,
   children,
   movable = false,
+  windowMode,
   ...props
 }: DialogContentProps) {
+  const isMaximized = windowMode === "maximized";
+  const draggable = (movable || windowMode === "floating") && !isMaximized;
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDraggingWindow, setIsDraggingWindow] = useState(false);
   const dragStart = useRef<{ mx: number; my: number; ox: number; oy: number } | null>(null);
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      if (!movable) return;
+      if (!draggable) return;
       const target = e.target as HTMLElement;
       const tag = target.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT" || tag === "A") return;
@@ -48,7 +52,7 @@ export function DialogContent({
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onUp);
     },
-    [movable, offset],
+    [draggable, offset],
   );
 
   return (
@@ -62,10 +66,11 @@ export function DialogContent({
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-          movable && isDraggingWindow && "select-none cursor-move",
+          isMaximized && "h-[80vh] max-h-[80vh] w-[80vw] max-w-[80vw]",
+          draggable && isDraggingWindow && "select-none cursor-move",
           className,
         )}
-        style={movable ? { translate: `calc(-50% + ${offset.x}px) calc(-50% + ${offset.y}px)` } : undefined}
+        style={draggable ? { translate: `calc(-50% + ${offset.x}px) calc(-50% + ${offset.y}px)` } : undefined}
         onMouseDown={onMouseDown}
         {...props}
       >

@@ -91,7 +91,7 @@ export function AuctionHouse({
         if (!v) onClose();
       }}
     >
-      <DialogContent className="w-[720px] max-w-[95vw]" movable>
+      <DialogContent className="flex flex-col" windowMode="maximized">
         <DialogTitle>Auction House</DialogTitle>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, marginBottom: 12 }}>
@@ -160,7 +160,7 @@ export function AuctionHouse({
           />
         )}
 
-        <div style={{ maxHeight: 420, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
           {auctions.length === 0 && (
             <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, textAlign: "center", padding: 20 }}>
               No listings match these filters.

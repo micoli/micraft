@@ -221,7 +221,8 @@ export function MailboxOverlay({ open, mails, inventory, itemMeta, wallet = 0, o
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
-        className="w-[900px] max-w-[96vw] max-h-[80vh] flex flex-col gap-0 p-0 z-[2001]"
+        windowMode="maximized"
+        className="flex flex-col gap-0 p-0 z-[2001]"
         overlayClassName="z-[2000]"
         onEscapeKeyDown={(e) => e.preventDefault()}
         onKeyDown={(e) => {
