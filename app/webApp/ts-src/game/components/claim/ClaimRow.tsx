@@ -70,9 +70,11 @@ export function ClaimRow({ claim, isOwner, playerNames, onAbandon, onSetTrusted 
           {claim.chunks.length} chunk{claim.chunks.length > 1 ? "s" : ""} · y {claim.yMin}-{claim.yMax}
         </span>
       </div>
-      <div style={{ fontSize: 12, opacity: 0.8 }}>
-        Trusted: {claim.trustedPlayerNames.length > 0 ? claim.trustedPlayerNames.join(", ") : "none"}
-      </div>
+      {!isOwner && (
+        <div style={{ fontSize: 12, opacity: 0.8 }}>
+          Trusted: {claim.trustedPlayerNames.length > 0 ? claim.trustedPlayerNames.join(", ") : "none"}
+        </div>
+      )}
       {isOwner && (
         <>
           <div style={{ display: "flex", gap: 6 }}>
@@ -120,9 +122,19 @@ export function ClaimRow({ claim, isOwner, playerNames, onAbandon, onSetTrusted 
           {claim.trustedPlayerNames.length > 0 && (
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {claim.trustedPlayerNames.map((name) => (
-                <Button key={name} size="sm" variant="outline" onClick={() => onSetTrusted(claim.id, name, false)}>
-                  Untrust {name}
-                </Button>
+                <span
+                  key={name}
+                  className="inline-flex items-center gap-1 bg-white/10 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                >
+                  {name}
+                  <button
+                    className="text-white/50 hover:text-white/90 transition-colors leading-none"
+                    onClick={() => onSetTrusted(claim.id, name, false)}
+                    aria-label={`Untrust ${name}`}
+                  >
+                    ×
+                  </button>
+                </span>
               ))}
             </div>
           )}
