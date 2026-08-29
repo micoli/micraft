@@ -1,5 +1,7 @@
 package org.micoli.micraft.protocol
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.ShortcutSlot
@@ -477,6 +479,7 @@ sealed class ServerMessage {
     @ProtoId(74) @Serializable data class ClaimDenied(val reason: String) : ServerMessage()
 }
 
+@OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
 @Serializable
 data class ClaimInfo(
     val id: String,
@@ -485,7 +488,10 @@ data class ClaimInfo(
     val yMax: Int,
     val ownerId: String,
     val ownerName: String,
-    val trustedPlayerNames: List<String> = emptyList(),
+    // Default Json (encodeDefaults=false) drops fields equal to their default — without this, an
+    // empty trusted list (the common case) would be omitted from the JSON GameClient hands to
+    // window.mc.claimSync, and the TS side would see `undefined` instead of `[]`.
+    @EncodeDefault(ALWAYS) val trustedPlayerNames: List<String> = emptyList(),
 )
 
 @Serializable

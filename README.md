@@ -239,6 +239,7 @@ stateDiagram-v2
 | `/auction` | `/auction` | Opens the auction house. | — |
 | `/buff` | `/buff <hp\|mana\|hpregen\|manaregen>` | Apply a temporary buff to yourself. | hp, mana, hpregen, manaregen |
 | `/character` | `/character` | Show your RPG character sheet | — |
+| `/claim` | `/claim <trust\|untrust\|abandon\|info> [playerName]` | Manage the land claim you're standing in. | dynamic |
 | `/codex` | `/codex` | Opens the codex (blocks, items, bestiary). | — |
 | `/config` | `/config <get\|set> <key> [value]` | Get or set a runtime config value. | dynamic |
 | `/config:reload` | `/config:reload` | Reloads block, NPC, or RBAC definitions from resource files. | block, npc, rbac |
@@ -339,6 +340,11 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 | POST | `/api/admin/auctions/{id}/force-cancel` | Force-cancels a listing: returns the item to the seller and refunds the highest bidder, no tax |
 | GET | `/api/admin/blocks` | All registered block definitions |
 | GET | `/api/admin/chunks/discovered` | All chunk coordinates generated so far (in-memory ∪ persisted) |
+| GET | `/api/admin/claims` | All land claims |
+| DELETE | `/api/admin/claims/{id}` | Delete a land claim |
+| GET | `/api/admin/claims/{id}` | A single land claim |
+| PUT | `/api/admin/claims/{id}/bounds` | Update a claim's Y bounds |
+| PUT | `/api/admin/claims/{id}/trust` | Grant or revoke a player's trust on a claim (online or offline) |
 | GET | `/api/admin/classes` | RPG class definitions, keyed by class name |
 | GET | `/api/admin/configs` | Names of all whitelisted editable YAML config files |
 | GET | `/api/admin/configs/{...}` | Raw YAML content of a whitelisted config file |
