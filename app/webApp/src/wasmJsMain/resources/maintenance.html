@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiCraft — reconnecting</title>
+    <link rel="icon" href="/favicon.svg">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0f;
+            color: #6b7280;
+            font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .panel {
+            width: 100%;
+            max-width: 360px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 28px;
+            height: 28px;
+            margin: 0 auto 1.75rem;
+            border: 2px solid #1f2430;
+            border-top-color: #4b5563;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        h1 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #e5e7eb;
+            letter-spacing: 0.01em;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            font-size: 13px;
+        }
+
+        .status {
+            margin-top: 1.5rem;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #3f4756;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .spinner { animation-duration: 3s; }
+        }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <div class="spinner" role="status" aria-label="Reconnecting"></div>
+        <h1>Server unavailable</h1>
+        <p>The world is offline. Trying to reconnect&hellip;</p>
+        <div class="status" id="status">next check in&nbsp;<span id="countdown">5</span>s</div>
+    </div>
+
+    <script>
+        (function () {
+            var BASE = 5, MAX = 30, delay = BASE;
+            var countdownEl = document.getElementById("countdown");
+            var statusEl = document.getElementById("status");
+            var timer;
+
+            function tick() {
+                var remaining = delay;
+                countdownEl.textContent = remaining;
+                timer = setInterval(function () {
+                    remaining -= 1;
+                    countdownEl.textContent = Math.max(remaining, 0);
+                    if (remaining <= 0) {
+                        clearInterval(timer);
+                        probe();
+                    }
+                }, 1000);
+            }
+
+            function probe() {
+                statusEl.textContent = "checking…";
+                fetch("/api/auth/config", { cache: "no-store" })
+                    .then(function (res) {
+                        if (res.ok) {
+                            statusEl.textContent = "back online — reloading";
+                            location.reload();
+                            return;
+                        }
+                        throw new Error("not ok");
+                    })
+                    .catch(function () {
+                        delay = Math.min(delay * 2, MAX);
+                        statusEl.innerHTML = "next check in&nbsp;<span id=\"countdown\">" + delay + "</span>s";
+                        countdownEl = document.getElementById("countdown");
+                        tick();
+                    });
+            }
+
+            window.addEventListener("online", probe);
+            tick();
+        })();
+    </script>
+</body>
+</html>
