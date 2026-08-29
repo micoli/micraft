@@ -27,7 +27,9 @@ endif
         code-standard check-docs check-openapi check-schemas ts-code-standard \
         check-configuration spotless-apply ts-typecheck ts-lint ts-lint-fix \
         ts-test-setup ts-test ts-test-storybook test kt-test kt-test-info kt-web-test \
-        docs gen-schemas help
+        docs gen-schemas help \
+        security security-locks security-relock security-verify security-audit \
+        security-osv security-sbom
 
 ##@ Dev — daemons (port 8080 game-server)
 
@@ -257,6 +259,30 @@ prod-restart: ## Restart prod stack
 
 prod-logs: ## Tail prod logs
 	$(DC_PROD) logs -f
+
+##@ Security — supply-chain
+
+security: security-locks security-verify security-audit security-sbom security-osv ## Run the full supply-chain check chain
+
+security-locks: ## Regenerate Gradle + npm lockfiles (gradle.lockfile, package-lock.json)
+	$(EXEC) "./gradlew dependencies --write-locks --no-configuration-cache"
+	$(EXEC) "cd app/webApp/ts-src && npm ci"
+
+security-relock: ## Bump one locked dep: make security-relock ARGS='group:module'
+	$(EXEC) "./gradlew dependencies --update-locks $(ARGS) --no-configuration-cache"
+
+security-verify: ## Refresh gradle/verification-metadata.xml (sha256 checksums) — review the diff before commit
+	$(EXEC) "./gradlew --write-verification-metadata sha256 build :server:test :app:webApp:wasmJsBrowserDistribution --dry-run --no-configuration-cache"
+
+security-audit: ## npm audit (high+) + Gradle dependency report
+	$(EXEC) "cd app/webApp/ts-src && npm audit --audit-level=high"
+
+security-osv: ## Scan all lockfiles with OSV-Scanner
+	$(EXEC) "osv-scanner scan --lockfile=app/webApp/ts-src/package-lock.json --lockfile=kotlin-js-store/yarn.lock --lockfile=gradle.lockfile || true"
+
+security-sbom: ## Generate CycloneDX SBOMs (Gradle + npm) into build/reports/
+	$(EXEC) "./gradlew cyclonedxBom"
+	$(EXEC) "cd app/webApp/ts-src && npm sbom --sbom-format=cyclonedx --sbom-type=application > ../../../build/reports/sbom-npm.json"
 
 ##@ Help
 

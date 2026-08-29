@@ -30,3 +30,11 @@ tmp/
 server/data/world/
 data/world/
 .last-build
+
+# stray npm lockfiles — the only real one is app/webApp/ts-src/package-lock.json
+/package-lock.json
+/app/webApp/package-lock.json
+/node_modules/
+
+# scratch output of `gradlew --write-verification-metadata ... --dry-run`
+/gradle/verification-metadata.dryrun.xml

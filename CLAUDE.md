@@ -148,6 +148,19 @@ Translation YAML files in `data/config/i18n/{locale}.yaml`. Key format: `feature
 
 **Adding new strings**: `/add-i18n`
 
+## Dépendances (supply-chain)
+
+Voir `SECURITY.md`. Règles :
+
+- **Gradle** : versions uniquement dans `gradle/libs.versions.toml`. Toute add/bump →
+  dans le même commit : `make security-locks` (régénère `gradle.lockfile`) +
+  `make security-verify` (régénère `gradle/verification-metadata.xml`), review des 2 diffs.
+- **npm** (`app/webApp/ts-src`) : jamais `npm install` en script/CI — toujours `npm ci`.
+  Ajout via `npm install --save-exact <pkg>@<ver>`, review complète du diff `package-lock.json`.
+- Ne jamais ajouter un repo Maven ou registre npm non déclaré dans `settings.gradle.kts` / `.npmrc`.
+- `make security` lance toute la chaîne (locks + verify + audit + osv + sbom).
+- GitHub Actions épinglées au SHA de commit ; Dependabot (`.github/dependabot.yml`) gère les bumps.
+
 ## Zone/npc tier per skill level
 Skill level → zone tier mapping for future zone-tiered entities:
 
