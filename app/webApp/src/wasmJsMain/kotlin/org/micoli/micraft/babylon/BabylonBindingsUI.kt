@@ -253,6 +253,8 @@ fun jsMailDeleted(mailId: String): Unit = js("mc.mailDeleted(mailId)")
 
 fun jsOpenMailbox(): Unit = js("mc.openMailbox()")
 
+fun jsOpenCharacter(): Unit = js("mc.openCharacter()")
+
 // ── Auction house ─────────────────────────────────────────────────────────────
 
 fun jsOpenAuctionHouse(): Unit = js("mc.openAuctionHouse()")

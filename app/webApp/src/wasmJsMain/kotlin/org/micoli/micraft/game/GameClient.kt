@@ -911,6 +911,9 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 ServerMessage.OpenAuctionHouse::class,
                 typedHandler { _: ServerMessage.OpenAuctionHouse -> jsOpenAuctionHouse() })
             put(
+                ServerMessage.OpenCharacter::class,
+                typedHandler { _: ServerMessage.OpenCharacter -> jsOpenCharacter() })
+            put(
                 ServerMessage.AuctionListingsUpdate::class,
                 typedHandler { msg: ServerMessage.AuctionListingsUpdate ->
                     jsAuctionListingsUpdate(Json.encodeToString(msg))

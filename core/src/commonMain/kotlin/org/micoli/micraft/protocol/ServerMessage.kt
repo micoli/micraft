@@ -477,6 +477,8 @@ sealed class ServerMessage {
     @ProtoId(73) @Serializable data class ClaimSync(val claims: List<ClaimInfo>) : ServerMessage()
 
     @ProtoId(74) @Serializable data class ClaimDenied(val reason: String) : ServerMessage()
+
+    @ProtoId(75) @Serializable object OpenCharacter : ServerMessage()
 }
 
 @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)

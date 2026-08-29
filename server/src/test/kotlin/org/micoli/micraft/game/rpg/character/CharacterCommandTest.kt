@@ -53,6 +53,25 @@ class CharacterCommandTest {
         }
 
     @Test
+    fun withCharacter_sendsOpenCharacter() =
+        runBlocking<Unit> {
+            val session = testSession()
+            session.characterData = makeCharacter()
+            val context = testContext(sessions = listOf(session))
+            CharacterCommand().execute(session, "", context)
+            assertTrue(session.sent.any { it is ServerMessage.OpenCharacter })
+        }
+
+    @Test
+    fun noCharacter_doesNotSendOpenCharacter() =
+        runBlocking<Unit> {
+            val session = testSession()
+            val context = testContext(sessions = listOf(session))
+            CharacterCommand().execute(session, "", context)
+            assertTrue(session.sent.none { it is ServerMessage.OpenCharacter })
+        }
+
+    @Test
     fun withCharacter_doesNotSendNotification() =
         runBlocking<Unit> {
             val session = testSession()

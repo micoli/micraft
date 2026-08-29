@@ -29,5 +29,6 @@ class CharacterCommand : CommandHandler {
                 char,
                 DerivedStatsCalculator.compute(char, bonuses),
                 DerivedStatsCalculator.effectiveBaseStats(char, bonuses)))
+        session.send(ServerMessage.OpenCharacter)
     }
 }
