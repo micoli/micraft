@@ -48,6 +48,7 @@
     - [Auction house](social/auction-house.md)
     - [Economy](social/economy.md)
     - [Land claims](social/land-claims.md)
+    - [Groups, guilds & factions](social/groups-guilds-factions.md)
 - Admin panel
     - [Overview](admin/index.md)
     - [Status](admin/status.md)
