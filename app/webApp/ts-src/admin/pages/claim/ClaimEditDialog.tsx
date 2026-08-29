@@ -79,8 +79,8 @@ export function ClaimEditDialog({ claim, onClose, onSaveBounds, onSetTrusted, on
 
           <Field label="Trusted players">
             <div className="flex flex-wrap gap-1.5 mb-2">
-              {claim.trustedPlayerNames.length === 0 && <span className="text-xs text-[#8A99AF]">none</span>}
-              {claim.trustedPlayerNames.map((name) => (
+              {(claim.trustedPlayerNames ?? []).length === 0 && <span className="text-xs text-[#8A99AF]">none</span>}
+              {(claim.trustedPlayerNames ?? []).map((name) => (
                 <RemovableBadge key={name} name={name} onRemove={() => onSetTrusted(name, false)} />
               ))}
             </div>

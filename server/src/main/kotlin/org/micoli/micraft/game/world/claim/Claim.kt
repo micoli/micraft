@@ -1,5 +1,7 @@
 package org.micoli.micraft.game.world.claim
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
@@ -15,8 +17,11 @@ data class Claim(
     val ownerId: String,
     val ownerName: String,
     val createdAt: Long,
-    val trustedPlayerIds: Set<String> = emptySet(),
-    val trustedPlayerNames: Set<String> = emptySet(),
+    // Default Json (encodeDefaults=false) drops fields equal to their default — without this,
+    // an empty trusted set (the common case) would be omitted from the admin claims JSON, and
+    // the frontend would see `undefined` instead of `[]`.
+    @EncodeDefault(ALWAYS) val trustedPlayerIds: Set<String> = emptySet(),
+    @EncodeDefault(ALWAYS) val trustedPlayerNames: Set<String> = emptySet(),
 ) {
     fun contains(x: Int, y: Int, z: Int): Boolean =
         y in yMin..yMax &&
