@@ -93,7 +93,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "gifenc": "^1.0.3",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "prettier": "^3.8.4",
     "storybook": "^8.6.12",
     "tailwindcss": "^4.3.2",
