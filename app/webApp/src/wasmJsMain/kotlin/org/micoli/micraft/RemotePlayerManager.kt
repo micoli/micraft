@@ -31,6 +31,9 @@ class RemotePlayerManager(private val scene: JsAny) {
     private val playerStances = mutableMapOf<String, PlayerStance>()
     private val playerFlying = mutableMapOf<String, Boolean>()
     private val playerMounted = mutableMapOf<String, Boolean>()
+    private val playerGuildTag = mutableMapOf<String, String?>()
+    private val playerFactionId = mutableMapOf<String, String?>()
+    private val playerNameplateApplied = mutableMapOf<String, String>()
 
     fun updateFromServer(state: PlayerState) {
         playerNames[state.id] = state.name
@@ -68,6 +71,8 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerStances[state.id] = state.stance
         playerFlying[state.id] = state.flying
         playerMounted[state.id] = state.mounted
+        playerGuildTag[state.id] = state.guildTag
+        playerFactionId[state.id] = state.factionId
     }
 
     fun remove(id: String) {
@@ -94,6 +99,9 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerStances.remove(id)
         playerFlying.remove(id)
         playerMounted.remove(id)
+        playerGuildTag.remove(id)
+        playerFactionId.remove(id)
+        playerNameplateApplied.remove(id)
     }
 
     fun tick() {
@@ -148,6 +156,16 @@ class RemotePlayerManager(private val scene: JsAny) {
                 }
             jsSetPlayerTransform(model, x, y, z, yaw, pitch, animClip)
             jsSetPlayerOnMinimap(id, x.toFloat(), z.toFloat(), yaw)
+
+            val tag = playerGuildTag[id]
+            val factionColor =
+                org.micoli.micraft.social.FactionColors.colorOf(playerFactionId[id]) ?: "#ffffff"
+            val label = (if (tag != null) "[$tag] " else "") + (playerNames[id] ?: "")
+            val nameplateKey = "$label|$factionColor"
+            if (playerNameplateApplied[id] != nameplateKey) {
+                jsSetPlayerNameplate(model, scene, label, factionColor)
+                playerNameplateApplied[id] = nameplateKey
+            }
 
             val wanted = playerArmors[id] ?: emptyList()
             val attached = playerArmorsAttached[id] ?: emptyList()
@@ -210,6 +228,9 @@ class RemotePlayerManager(private val scene: JsAny) {
         playerStances.clear()
         playerFlying.clear()
         playerMounted.clear()
+        playerGuildTag.clear()
+        playerFactionId.clear()
+        playerNameplateApplied.clear()
         jsSetConnectedPlayers("[]")
     }
 

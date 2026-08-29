@@ -11,6 +11,9 @@ fun jsIsPlayerBbmodelReady(skin: String): Boolean = js("mc.isPlayerBbmodelReady(
 fun jsCreatePlayerModelNow(scene: JsAny, skin: String): JsAny =
     js("mc.createPlayerModelNow(scene, skin)")
 
+fun jsSetPlayerNameplate(model: JsAny, scene: JsAny, text: String, color: String): Unit =
+    js("mc.setPlayerNameplate(model, scene, text, color)")
+
 fun jsSetPlayerTransform(
     model: JsAny,
     x: Double,

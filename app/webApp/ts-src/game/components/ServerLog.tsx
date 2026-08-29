@@ -46,7 +46,18 @@ const CHANNEL_COLORS: Record<string, string> = {
 
 function channelColor(ch: string): string {
   if (ch.startsWith("dm:")) return "#7dd3fc";
+  if (ch.startsWith("group:")) return "#a5b4fc";
+  if (ch.startsWith("guild:")) return "#5eead4";
+  if (ch.startsWith("faction:")) return "#fca5a5";
   return CHANNEL_COLORS[ch] ?? "#c084fc";
+}
+
+function channelLabel(ch: string): string {
+  if (ch.startsWith("group:")) return "groupe";
+  if (ch.startsWith("guild:")) return "guilde";
+  if (ch.startsWith("faction:")) return "faction";
+  if (ch.startsWith("dm:")) return ch.replace("dm:", "").replace(":", " ↔ ");
+  return ch;
 }
 
 interface Props {
@@ -94,7 +105,7 @@ export function ServerLog({
             )}
             style={{ color: channelColor(ch.name) }}
           >
-            {unreadChannels.includes(ch.name) ? `* ${ch.name}` : ch.name}
+            {(unreadChannels.includes(ch.name) ? "* " : "") + channelLabel(ch.name)}
           </button>
         ))}
       </div>

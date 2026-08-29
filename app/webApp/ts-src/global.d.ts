@@ -211,6 +211,7 @@ declare global {
     equippedWeapons: Record<"LEFT" | "RIGHT", InstanceType<typeof BABYLON.TransformNode> | null>;
     _forwardOffset?: number;
     _lightBoost?: { orb: Mesh; light: PointLight } | null;
+    _nameplate?: { plane: Mesh; texture: InstanceType<typeof BABYLON.DynamicTexture> } | null;
   }
 
   // Served by GET /api/skins/{name}/configEditor — see resources/models/<name>/<name>.yaml.
@@ -470,6 +471,7 @@ declare global {
     initPlayerModel(skin: string): void;
     isPlayerBbmodelReady(skin: string): boolean;
     createPlayerModelNow(scene: Scene, skin: string): McPlayerModel;
+    setPlayerNameplate(model: McPlayerModel, scene: Scene, text: string, color: string): void;
     createPlayerModelFromBbmodel(
       bbmodel: BbModel,
       scene: Scene,
@@ -671,6 +673,14 @@ declare global {
     claimMarkCorner(): void;
     claimCancelSelection(): void;
     toggleClaimPanel(): void;
+    groupSync(json: string): void;
+    guildSync(json: string): void;
+    factionSync(json: string): void;
+    socialDenied(scope: string, reason: string): void;
+    socialInvite(kind: string, id: string, name: string, from: string): void;
+    toggleGroupPanel(): void;
+    toggleGuildPanel(): void;
+    toggleFactionPanel(): void;
     adminZoneWireframe(json: string): void;
     instanceZonesSync(json: string): void;
     scenesSync(json: string): void;

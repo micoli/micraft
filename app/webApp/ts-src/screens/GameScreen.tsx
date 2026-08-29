@@ -37,6 +37,9 @@ import { BuffBar } from "../game/components/buffs/BuffBar";
 import { MailboxOverlay } from "../game/overlays/MailboxOverlay";
 import { AuctionHouse } from "../game/components/auction/AuctionHouse";
 import { ClaimPanel } from "../game/components/claim/ClaimPanel";
+import { GroupPanel } from "../game/components/social/GroupPanel";
+import { GuildPanel } from "../game/components/social/GuildPanel";
+import { FactionPanel } from "../game/components/social/FactionPanel";
 import { CreativeBlockPanel } from "../game/components/CreativeBlockPanel";
 import { setCreativeSelectedItem, setCreativeSelectedScene } from "../game/lib/creativeMode";
 import { FramedBox } from "../primitives/FramedBox";
@@ -678,6 +681,40 @@ export function GameScreen() {
           }}
           onSetTrusted={(claimId, playerName, trusted) => {
             window.mcState.events.push(`claim_set_trusted:${JSON.stringify({ claimId, playerName, trusted })}`);
+          }}
+        />
+      )}
+      {state.groupPanelOpen && !state.disconnectMsg && (
+        <GroupPanel
+          open={state.groupPanelOpen}
+          group={state.group}
+          invite={state.socialInvites.find((i) => i.kind === "group")}
+          myPlayerId={window.mcState.playerId}
+          onClose={() => {
+            dispatch("group_panel_toggle");
+            resumePointerLock();
+          }}
+        />
+      )}
+      {state.guildPanelOpen && !state.disconnectMsg && (
+        <GuildPanel
+          open={state.guildPanelOpen}
+          guild={state.guild}
+          invite={state.socialInvites.find((i) => i.kind === "guild")}
+          myPlayerId={window.mcState.playerId}
+          onClose={() => {
+            dispatch("guild_panel_close");
+            resumePointerLock();
+          }}
+        />
+      )}
+      {state.factionPanelOpen && !state.disconnectMsg && (
+        <FactionPanel
+          open={state.factionPanelOpen}
+          faction={state.faction}
+          onClose={() => {
+            dispatch("faction_panel_close");
+            resumePointerLock();
           }}
         />
       )}

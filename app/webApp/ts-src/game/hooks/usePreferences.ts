@@ -92,6 +92,9 @@ const ACTION_GROUPS: Record<string, string[]> = {
     "preferences_debug",
     "preferences_graphics",
     "claim_panel",
+    "group_panel",
+    "guild_panel",
+    "faction_panel",
   ],
   hotbar: [
     "slot_1",
