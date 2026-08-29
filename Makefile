@@ -185,8 +185,8 @@ dev-nuke: ## Destroy all named build volumes + full restart (nuclear option, ~2 
 
 code-standard: spotless-apply ts-code-standard check-docs check-configuration check-openapi check-schemas ## Full lint on Kotlin + TypeScript
 
-check-docs: ## Verify generated command docs are up to date
-	$(EXEC) "./gradlew :server:checkCommandsDocs"
+check-docs: ## Verify generated docs are up to date (commands + reference tables)
+	$(EXEC) "./gradlew :server:checkCommandsDocs :server:checkReferenceDocs"
 
 check-openapi: ## Fail if server/openapi/openapi.yaml drifts from annotated routes
 	$(EXEC) "./gradlew :server:checkOpenApi"
@@ -237,8 +237,8 @@ ts-test-storybook: ## Storybook test-runner (CI mode)
 
 ##@ Docs
 
-docs: ## Regenerate command reference docs
-	$(EXEC) "./gradlew :server:generateCommandsDocs"
+docs: ## Regenerate all generated docs (README commands + docs/reference/_generated tables)
+	$(EXEC) "./gradlew :server:generateCommandsDocs :server:generateReferenceDocs"
 
 gen-schemas: ## Regenerate data/config/schemas/ JSON Schemas from data classes
 	$(EXEC) "./gradlew :server:generateJsonSchemas"
