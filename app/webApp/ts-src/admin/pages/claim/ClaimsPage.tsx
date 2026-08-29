@@ -68,7 +68,9 @@ export function ClaimsPage() {
               <td className="py-2 pr-4">
                 {c.yMin}–{c.yMax}
               </td>
-              <td className="py-2 pr-4">{c.trustedPlayerNames.length > 0 ? c.trustedPlayerNames.join(", ") : "—"}</td>
+              <td className="py-2 pr-4">
+                {(c.trustedPlayerNames ?? []).length > 0 ? c.trustedPlayerNames.join(", ") : "—"}
+              </td>
               <td className="py-2 pr-4">
                 <Button variant="ghost" size="sm" onClick={() => setEditingId(c.id)}>
                   {t("common.edit")}
