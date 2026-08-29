@@ -27,7 +27,7 @@ endif
         code-standard check-docs check-openapi check-schemas ts-code-standard \
         check-configuration spotless-apply ts-typecheck ts-lint ts-lint-fix \
         ts-test-setup ts-test ts-test-storybook test kt-test kt-test-info kt-web-test \
-        docs gen-schemas help \
+        docs gen-schemas docs-site-build docs-site-serve docs-site-stop help \
         security security-locks security-relock security-verify security-audit \
         security-osv security-sbom
 
@@ -185,8 +185,8 @@ dev-nuke: ## Destroy all named build volumes + full restart (nuclear option, ~2 
 
 code-standard: spotless-apply ts-code-standard check-docs check-configuration check-openapi check-schemas ## Full lint on Kotlin + TypeScript
 
-check-docs: ## Verify generated command docs are up to date
-	$(EXEC) "./gradlew :server:checkCommandsDocs"
+check-docs: ## Verify generated docs are up to date (commands + reference tables)
+	$(EXEC) "./gradlew :server:checkCommandsDocs :server:checkReferenceDocs"
 
 check-openapi: ## Fail if server/openapi/openapi.yaml drifts from annotated routes
 	$(EXEC) "./gradlew :server:checkOpenApi"
@@ -237,11 +237,20 @@ ts-test-storybook: ## Storybook test-runner (CI mode)
 
 ##@ Docs
 
-docs: ## Regenerate command reference docs
-	$(EXEC) "./gradlew :server:generateCommandsDocs"
+docs: ## Regenerate all generated docs (README commands + docs/reference/_generated tables)
+	$(EXEC) "./gradlew :server:generateCommandsDocs :server:generateReferenceDocs"
 
 gen-schemas: ## Regenerate data/config/schemas/ JSON Schemas from data classes
 	$(EXEC) "./gradlew :server:generateJsonSchemas"
+
+docs-site-build: ## Build the static documentation site into ./site
+	$(EXEC) "DISABLE_MKDOCS_2_WARNING=true bash scripts/docs/mkdocs.sh build --strict -f mkdocs.yml"
+
+docs-site-serve: ## Serve the docs site with live-reload (http://localhost:8000)
+	$(PITCHFORK) start docs
+
+docs-site-stop: ## Stop the docs daemon
+	$(PITCHFORK) stop docs
 
 ##@ Prod (port 8080 via nginx)
 

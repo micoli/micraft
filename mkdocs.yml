@@ -1,0 +1,91 @@
+site_name: MicCraft
+site_description: >-
+  MicCraft — a multiplayer RPG voxel game built with Kotlin Multiplatform.
+  How to play, and how to configure every system.
+site_url: https://micoli.github.io/micraft/
+repo_url: https://github.com/micoli/micraft
+repo_name: micoli/micraft
+edit_uri: edit/main/docs/
+copyright: MicCraft
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - toc.follow
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: green
+      accent: green
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: green
+      accent: green
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+extra_css:
+  - stylesheets/extra.css
+
+validation:
+  nav:
+    omitted_files: ignore
+  links:
+    anchors: warn
+
+plugins:
+  - search
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - gen-files:
+      scripts:
+        - scripts/docs/gen_docs.py
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.snippets:
+      base_path:
+        - .
+        - docs
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/micoli/micraft

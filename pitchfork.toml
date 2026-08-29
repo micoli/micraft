@@ -58,3 +58,11 @@ run = "npm run storybook dev"
 dir = "app/webApp/ts-src"
 ready-port = 6006
 boot_start = false
+
+[daemons.docs]
+run = "bash scripts/docs/mkdocs.sh serve -a 0.0.0.0:8000 -f mkdocs.yml"
+dir = "."
+env = { DISABLE_MKDOCS_2_WARNING = "true" }
+ready-port = 8000
+boot_start = false
+retry = true

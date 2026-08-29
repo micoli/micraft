@@ -140,6 +140,23 @@ fun Test.configureOpenApiExport(check: Boolean) {
     workingDir = rootProject.projectDir
 }
 
+tasks.register<JavaExec>("generateReferenceDocs") {
+    group = "documentation"
+    description = "Regenerates docs/reference/_generated/*.md from bundled config + core constants."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.tools.GenerateReferenceDocsKt")
+    workingDir = rootProject.projectDir
+}
+
+tasks.register<JavaExec>("checkReferenceDocs") {
+    group = "verification"
+    description = "Fails if docs/reference/_generated/*.md is out of date with config/constants."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.tools.GenerateReferenceDocsKt")
+    workingDir = rootProject.projectDir
+    args("--check")
+}
+
 tasks.register<Test>("exportOpenApi") {
     description = "Regenerates server/openapi/openapi.yaml and the README.md API Routes section."
     group = "documentation"
