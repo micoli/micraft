@@ -111,7 +111,10 @@ export function NpcShopDialog({ data, wallet, itemMeta, inventory, onClose, onBu
 
   return (
     <Dialog open={!!data} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="w-[680px] max-w-[95vw] font-mono shadow-[0_8px_32px_rgba(0,0,0,0.7)]">
+      <DialogContent
+        windowMode="floating"
+        className="w-[680px] max-w-[95vw] font-mono shadow-[0_8px_32px_rgba(0,0,0,0.7)]"
+      >
         <div className="flex items-baseline justify-between mb-3">
           <DialogTitle className="text-base font-bold">{data.name}</DialogTitle>
           <span className="text-xs text-yellow-300">💰 {formatCopper(wallet)}</span>

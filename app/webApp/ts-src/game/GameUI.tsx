@@ -292,15 +292,25 @@ export function GameUI() {
   }, [state.ingameMapVisible]);
 
   useEffect(() => {
-    const anyOpen =
+    const anyModalOpen =
       state.characterOpen ||
       state.ingameMapVisible ||
       state.preferencesOpen ||
-      state.pauseMenuOpen ||
       state.macroEditorOpen ||
       state.questJournalOpen ||
-      state.mailboxOpen;
-    if (anyOpen) {
+      state.mailboxOpen ||
+      state.codexOpen ||
+      state.craftOpen ||
+      state.layoutEditorOpen ||
+      state.auctionHouseOpen ||
+      state.claimPanelOpen ||
+      state.trade !== null ||
+      state.npcDialog !== null;
+
+    // Any modal takes over the screen: close the pause menu and always release pointer lock.
+    if (anyModalOpen && state.pauseMenuOpen) dispatch("pause_menu_hide");
+
+    if (anyModalOpen || state.pauseMenuOpen) {
       overlayWasOpen.current = true;
       document.exitPointerLock();
     } else if (overlayWasOpen.current) {
@@ -316,6 +326,14 @@ export function GameUI() {
     state.macroEditorOpen,
     state.questJournalOpen,
     state.mailboxOpen,
+    state.codexOpen,
+    state.craftOpen,
+    state.layoutEditorOpen,
+    state.auctionHouseOpen,
+    state.claimPanelOpen,
+    state.trade,
+    state.npcDialog,
+    dispatch,
   ]);
 
   useEffect(() => {
