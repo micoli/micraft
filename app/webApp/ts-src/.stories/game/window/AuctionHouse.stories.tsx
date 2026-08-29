@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, within } from "@storybook/test";
-import { AuctionHouse } from "../../game/components/auction/AuctionHouse";
-import { AuctionData } from "../../game/types";
+import { AuctionHouse } from "../../../game/components/auction/AuctionHouse";
+import { AuctionData } from "../../../game/types";
 import { useState } from "react";
-import { Button } from "../../primitives/Button";
+import { Button } from "../../../primitives/Button";
 
 const meta: Meta<typeof AuctionHouse> = {
-  title: "Overlays/AuctionHouse",
+  title: "Game/Windows/AuctionHouse",
   component: AuctionHouse,
   parameters: { layout: "fullscreen" },
 };

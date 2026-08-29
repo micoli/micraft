@@ -230,7 +230,7 @@ export function InstanceEditorViewport({ zone }: { zone: InstanceZoneDto }) {
       // a custom voxel raycast, not scene.pick(). The editor relies on scene.pick() for place/
       // break, so re-enable picking on whatever meshes this call just (re)built. Every reload (a
       // place/break, or just streaming newly-visible chunks while panning) walks ALL scene meshes,
-      // so the ghost/outline overlays must be explicitly excluded or they'd become pickable again —
+      // so the ghost/outline window must be explicitly excluded or they'd become pickable again —
       // scene.pick() would then occasionally hit the ghost itself, feeding its own stale position
       // back into the next hover update (looks like the ghost "leaning on itself").
       for (const m of scene.meshes) {

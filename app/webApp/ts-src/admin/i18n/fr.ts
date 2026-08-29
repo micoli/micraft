@@ -480,7 +480,7 @@ export const fr: Record<TranslationKey, string> = {
   "sim.layers.names": "Noms",
   "sim.layers.players": "Joueurs",
 
-  // ── Simulator — arena overlays ──────────────────────────────────────────────
+  // ── Simulator — arena window ──────────────────────────────────────────────
   "sim.tooltip.level": "niveau {0}",
   "sim.tooltip.hp": "pv",
   "sim.tooltip.satiety": "satiété {0}%",

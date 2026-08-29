@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Notifications } from "../../game/components/Notifications";
+import { Notifications } from "../../../game/components/Notifications";
 
 const meta: Meta<typeof Notifications> = {
-  title: "Game/Notifications",
+  title: "Game/Layout/Notifications",
   component: Notifications,
   parameters: { layout: "fullscreen" },
 };
