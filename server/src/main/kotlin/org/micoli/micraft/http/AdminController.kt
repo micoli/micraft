@@ -51,6 +51,7 @@ import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockPlacer
+import org.micoli.micraft.game.world.claim.Claim
 import org.micoli.micraft.game.world.instance.InstanceClipPlanes
 import org.micoli.micraft.game.world.instance.InstanceZone
 import org.micoli.micraft.game.world.rail.RailConnection
@@ -99,6 +100,10 @@ data class NpcAdminDto(
     val motherLevel: Int?,
     val animalStats: BaseStats?,
 )
+
+@Serializable data class ClaimBoundsRequest(val yMin: Int, val yMax: Int)
+
+@Serializable data class ClaimTrustRequest(val playerName: String, val trusted: Boolean)
 
 @Serializable data class InstanceRenameRequest(val name: String)
 
@@ -1994,6 +1999,141 @@ class AdminController(
                         return@delete call.respond(HttpStatusCode.NotFound)
                     }
                     gameLoop.broadcastInstanceZonesSync()
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            get(
+                "/api/admin/claims",
+                {
+                    description = "All land claims"
+                    response { code(HttpStatusCode.OK) { body<List<Claim>>() } }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    call.respondText(
+                        Json.encodeToString(
+                            ListSerializer(Claim.serializer()), gameLoop.claims().all()),
+                        ContentType.Application.Json)
+                }
+
+            get(
+                "/api/admin/claims/{id}",
+                {
+                    description = "A single land claim"
+                    request { pathParameter<String>("id") { description = "Claim id" } }
+                    response {
+                        code(HttpStatusCode.OK) { body<Claim>() }
+                        code(HttpStatusCode.NotFound) { description = "Claim not found" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    val id =
+                        call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                    val claim =
+                        gameLoop.claims().get(id)
+                            ?: return@get call.respond(HttpStatusCode.NotFound)
+                    call.respondText(
+                        Json.encodeToString(Claim.serializer(), claim),
+                        ContentType.Application.Json)
+                }
+
+            put(
+                "/api/admin/claims/{id}/bounds",
+                {
+                    description = "Update a claim's Y bounds"
+                    request {
+                        pathParameter<String>("id") { description = "Claim id" }
+                        body<ClaimBoundsRequest>()
+                    }
+                    response {
+                        code(HttpStatusCode.OK) { body<Claim>() }
+                        code(HttpStatusCode.BadRequest) {
+                            description = "yMin must be less than or equal to yMax"
+                        }
+                        code(HttpStatusCode.NotFound) { description = "Claim not found" }
+                        code(HttpStatusCode.Conflict) {
+                            description = "Claim would overlap an existing claim"
+                        }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@put
+                    val id =
+                        call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    val body = Json.decodeFromString<ClaimBoundsRequest>(call.receiveText())
+                    if (body.yMin > body.yMax) {
+                        return@put call.respond(
+                            HttpStatusCode.BadRequest, "yMin must be less than or equal to yMax")
+                    }
+                    val existing =
+                        gameLoop.claims().get(id)
+                            ?: return@put call.respond(HttpStatusCode.NotFound)
+                    if (gameLoop
+                        .claims()
+                        .overlaps(existing.chunks, body.yMin, body.yMax, excludeId = id)) {
+                        return@put call.respond(HttpStatusCode.Conflict)
+                    }
+                    val claim =
+                        gameLoop.claims().updateBounds(id, body.yMin, body.yMax)
+                            ?: return@put call.respond(HttpStatusCode.NotFound)
+                    call.respondText(
+                        Json.encodeToString(Claim.serializer(), claim),
+                        ContentType.Application.Json)
+                }
+
+            put(
+                "/api/admin/claims/{id}/trust",
+                {
+                    description = "Grant or revoke a player's trust on a claim (online or offline)"
+                    request {
+                        pathParameter<String>("id") { description = "Claim id" }
+                        body<ClaimTrustRequest>()
+                    }
+                    response {
+                        code(HttpStatusCode.OK) { body<Claim>() }
+                        code(HttpStatusCode.NotFound) { description = "Claim or player not found" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@put
+                    val id =
+                        call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    val body = Json.decodeFromString<ClaimTrustRequest>(call.receiveText())
+                    gameLoop.claims().get(id) ?: return@put call.respond(HttpStatusCode.NotFound)
+                    val onlineTarget = gameLoop.findSession(body.playerName)
+                    val targetId =
+                        onlineTarget?.state?.id ?: persistence?.loadPlayerState(body.playerName)?.id
+                    val targetName = onlineTarget?.state?.name ?: body.playerName
+                    if (targetId == null) {
+                        return@put call.respond(HttpStatusCode.NotFound, "Player not found")
+                    }
+                    val claim =
+                        gameLoop.claims().setTrusted(id, targetId, targetName, body.trusted)
+                            ?: return@put call.respond(HttpStatusCode.NotFound)
+                    call.respondText(
+                        Json.encodeToString(Claim.serializer(), claim),
+                        ContentType.Application.Json)
+                }
+
+            delete(
+                "/api/admin/claims/{id}",
+                {
+                    description = "Delete a land claim"
+                    request { pathParameter<String>("id") { description = "Claim id" } }
+                    response {
+                        code(HttpStatusCode.NoContent) {}
+                        code(HttpStatusCode.NotFound) { description = "Claim not found" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@delete
+                    val id =
+                        call.parameters["id"]
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    if (gameLoop.claims().delete(id) == null) {
+                        return@delete call.respond(HttpStatusCode.NotFound)
+                    }
                     call.respond(HttpStatusCode.NoContent)
                 }
 
