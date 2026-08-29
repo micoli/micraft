@@ -282,7 +282,7 @@ security-osv: ## Scan all lockfiles with OSV-Scanner
 
 security-sbom: ## Generate CycloneDX SBOMs (Gradle + npm) into build/reports/
 	$(EXEC) "./gradlew cyclonedxBom"
-	$(EXEC) "cd app/webApp/ts-src && npx --yes @cyclonedx/cyclonedx-npm --ignore-npm-errors --output-file ../../../build/reports/sbom-npm.json"
+	$(EXEC) "cd app/webApp/ts-src && npm sbom --sbom-format=cyclonedx --sbom-type=application > ../../../build/reports/sbom-npm.json"
 
 ##@ Help
 
