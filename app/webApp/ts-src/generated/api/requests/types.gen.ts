@@ -621,6 +621,10 @@ export type OrgMicoliMicraftPlayerVec3 = {
  */
 export type OrgMicoliMicraftProtocolAuctionListing = {
     /**
+     * List<AuctionBid>
+     */
+    bidHistory: Array<OrgMicoliMicraftProtocolAuctionBid>;
+    /**
      * Long
      */
     buyNowPrice?: null | number;
@@ -670,6 +674,28 @@ export type OrgMicoliMicraftProtocolAuctionListing = {
      */
     startingPrice: number;
     status: OrgMicoliMicraftProtocolAuctionStatus;
+};
+
+/**
+ * AuctionBid
+ */
+export type OrgMicoliMicraftProtocolAuctionBid = {
+    /**
+     * Long
+     */
+    amount: number;
+    /**
+     * Long
+     */
+    atMs: number;
+    /**
+     * String
+     */
+    bidderId: string;
+    /**
+     * String
+     */
+    bidderName: string;
 };
 
 /**
@@ -2449,6 +2475,76 @@ export type OrgMicoliMicraftHttpInstanceLayoutRequest = {
      * List<List<String>>
      */
     shortcutBarPages: Array<Array<string>>;
+};
+
+/**
+ * Claim
+ */
+export type OrgMicoliMicraftGameWorldClaimClaim = {
+    /**
+     * Set<ChunkPos>
+     */
+    chunks: Array<OrgMicoliMicraftGameWorldChunkPos>;
+    /**
+     * Long
+     */
+    createdAt: number;
+    /**
+     * String
+     */
+    id: string;
+    /**
+     * String
+     */
+    ownerId: string;
+    /**
+     * String
+     */
+    ownerName: string;
+    /**
+     * Set<String>
+     */
+    trustedPlayerIds: Array<string>;
+    /**
+     * Set<String>
+     */
+    trustedPlayerNames: Array<string>;
+    /**
+     * Int
+     */
+    yMax: number;
+    /**
+     * Int
+     */
+    yMin: number;
+};
+
+/**
+ * ClaimBoundsRequest
+ */
+export type OrgMicoliMicraftHttpClaimBoundsRequest = {
+    /**
+     * Int
+     */
+    yMax: number;
+    /**
+     * Int
+     */
+    yMin: number;
+};
+
+/**
+ * ClaimTrustRequest
+ */
+export type OrgMicoliMicraftHttpClaimTrustRequest = {
+    /**
+     * String
+     */
+    playerName: string;
+    /**
+     * Boolean
+     */
+    trusted: boolean;
 };
 
 /**
@@ -5301,6 +5397,181 @@ export type PutApiAdminInstancesByIdLayoutResponses = {
 };
 
 export type PutApiAdminInstancesByIdLayoutResponse = PutApiAdminInstancesByIdLayoutResponses[keyof PutApiAdminInstancesByIdLayoutResponses];
+
+export type GetApiAdminClaimsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/claims';
+};
+
+export type GetApiAdminClaimsErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminClaimsResponses = {
+    /**
+     * List<Claim>
+     */
+    200: Array<OrgMicoliMicraftGameWorldClaimClaim>;
+};
+
+export type GetApiAdminClaimsResponse = GetApiAdminClaimsResponses[keyof GetApiAdminClaimsResponses];
+
+export type DeleteApiAdminClaimsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Claim id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/claims/{id}';
+};
+
+export type DeleteApiAdminClaimsByIdErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Claim not found
+     */
+    404: unknown;
+};
+
+export type DeleteApiAdminClaimsByIdResponses = {
+    204: void;
+};
+
+export type DeleteApiAdminClaimsByIdResponse = DeleteApiAdminClaimsByIdResponses[keyof DeleteApiAdminClaimsByIdResponses];
+
+export type GetApiAdminClaimsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Claim id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/claims/{id}';
+};
+
+export type GetApiAdminClaimsByIdErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Claim not found
+     */
+    404: unknown;
+};
+
+export type GetApiAdminClaimsByIdResponses = {
+    200: OrgMicoliMicraftGameWorldClaimClaim;
+};
+
+export type GetApiAdminClaimsByIdResponse = GetApiAdminClaimsByIdResponses[keyof GetApiAdminClaimsByIdResponses];
+
+export type PutApiAdminClaimsByIdBoundsData = {
+    body?: OrgMicoliMicraftHttpClaimBoundsRequest;
+    path: {
+        /**
+         * String
+         *
+         * Claim id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/claims/{id}/bounds';
+};
+
+export type PutApiAdminClaimsByIdBoundsErrors = {
+    /**
+     * yMin must be less than or equal to yMax
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Claim not found
+     */
+    404: unknown;
+    /**
+     * Claim would overlap an existing claim
+     */
+    409: unknown;
+};
+
+export type PutApiAdminClaimsByIdBoundsResponses = {
+    200: OrgMicoliMicraftGameWorldClaimClaim;
+};
+
+export type PutApiAdminClaimsByIdBoundsResponse = PutApiAdminClaimsByIdBoundsResponses[keyof PutApiAdminClaimsByIdBoundsResponses];
+
+export type PutApiAdminClaimsByIdTrustData = {
+    body?: OrgMicoliMicraftHttpClaimTrustRequest;
+    path: {
+        /**
+         * String
+         *
+         * Claim id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/claims/{id}/trust';
+};
+
+export type PutApiAdminClaimsByIdTrustErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Claim or player not found
+     */
+    404: unknown;
+};
+
+export type PutApiAdminClaimsByIdTrustResponses = {
+    200: OrgMicoliMicraftGameWorldClaimClaim;
+};
+
+export type PutApiAdminClaimsByIdTrustResponse = PutApiAdminClaimsByIdTrustResponses[keyof PutApiAdminClaimsByIdTrustResponses];
 
 export type GetApiAdminInstancesByIdBlocksData = {
     body?: never;

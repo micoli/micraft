@@ -962,6 +962,13 @@ export const org_micoli_micraft_player_Vec3Schema = {
 export const org_micoli_micraft_protocol_AuctionListingSchema = {
     type: 'object',
     properties: {
+        bidHistory: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.protocol.AuctionBid'
+            },
+            title: 'List<AuctionBid>'
+        },
         buyNowPrice: {
             type: [
                 'null',
@@ -1036,6 +1043,7 @@ export const org_micoli_micraft_protocol_AuctionListingSchema = {
         }
     },
     required: [
+        'bidHistory',
         'createdAtMs',
         'duration',
         'expiresAtMs',
@@ -1048,6 +1056,37 @@ export const org_micoli_micraft_protocol_AuctionListingSchema = {
         'status'
     ],
     title: 'AuctionListing'
+} as const;
+
+export const org_micoli_micraft_protocol_AuctionBidSchema = {
+    type: 'object',
+    properties: {
+        amount: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        atMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        bidderId: {
+            type: 'string',
+            title: 'String'
+        },
+        bidderName: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'amount',
+        'atMs',
+        'bidderId',
+        'bidderName'
+    ],
+    title: 'AuctionBid'
 } as const;
 
 export const org_micoli_micraft_protocol_AuctionDurationSchema = {
@@ -3933,6 +3972,117 @@ export const org_micoli_micraft_http_InstanceLayoutRequestSchema = {
         'shortcutBarPages'
     ],
     title: 'InstanceLayoutRequest'
+} as const;
+
+export const org_micoli_micraft_game_world_claim_ClaimSchema = {
+    type: 'object',
+    properties: {
+        chunks: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.game.world.ChunkPos'
+            },
+            title: 'Set<ChunkPos>',
+            uniqueItems: true
+        },
+        createdAt: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        id: {
+            type: 'string',
+            title: 'String'
+        },
+        ownerId: {
+            type: 'string',
+            title: 'String'
+        },
+        ownerName: {
+            type: 'string',
+            title: 'String'
+        },
+        trustedPlayerIds: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'Set<String>',
+            uniqueItems: true
+        },
+        trustedPlayerNames: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'Set<String>',
+            uniqueItems: true
+        },
+        yMax: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        yMin: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        }
+    },
+    required: [
+        'chunks',
+        'createdAt',
+        'id',
+        'ownerId',
+        'ownerName',
+        'trustedPlayerIds',
+        'trustedPlayerNames',
+        'yMax',
+        'yMin'
+    ],
+    title: 'Claim'
+} as const;
+
+export const org_micoli_micraft_http_ClaimBoundsRequestSchema = {
+    type: 'object',
+    properties: {
+        yMax: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        yMin: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        }
+    },
+    required: [
+        'yMax',
+        'yMin'
+    ],
+    title: 'ClaimBoundsRequest'
+} as const;
+
+export const org_micoli_micraft_http_ClaimTrustRequestSchema = {
+    type: 'object',
+    properties: {
+        playerName: {
+            type: 'string',
+            title: 'String'
+        },
+        trusted: {
+            type: 'boolean',
+            title: 'Boolean'
+        }
+    },
+    required: [
+        'playerName',
+        'trusted'
+    ],
+    title: 'ClaimTrustRequest'
 } as const;
 
 export const org_micoli_micraft_http_InstanceBlockDtoSchema = {
