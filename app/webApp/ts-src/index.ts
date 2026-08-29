@@ -13,6 +13,7 @@ import { registerCamera } from "./game/lib/camera";
 import { registerTargeting } from "./game/lib/targeting/targeting";
 import { registerSiegeTrajectory } from "./game/lib/siegeTrajectory";
 import { registerZoneBounds } from "./game/lib/targeting/zoneBounds";
+import { registerClaimTool } from "./game/lib/targeting/claimTool";
 import { registerCombatTargetHighlight } from "./game/lib/targeting/targetHighlight";
 import { registerGhostBlock } from "./game/lib/targeting/ghostBlock";
 import { registerChunks } from "./game/lib/chunkBuilder";
@@ -101,6 +102,10 @@ window.mcState = {
   sunShadowDepthMat: null,
   targetMesh: null,
   breakMesh: null,
+  currentTargetBlock: null,
+  claimToolActive: false,
+  claimCorner1: null,
+  claimPreviewMesh: null,
   trajectoryMesh: null,
   zoneMesh: null,
   ghostMesh: null,
@@ -175,6 +180,7 @@ window.mc = {
   ...registerTargeting(),
   ...registerSiegeTrajectory(),
   ...registerZoneBounds(),
+  ...registerClaimTool(),
   ...registerCombatTargetHighlight(),
   ...registerGhostBlock(),
   ...registerChunks(),
@@ -366,6 +372,9 @@ window.mc = {
   openMailbox: () => {},
   openAuctionHouse: () => {},
   auctionListingsUpdate: () => {},
+  claimSync: () => {},
+  claimDenied: () => {},
+  toggleClaimPanel: () => {},
   adminZoneWireframe: () => {},
   instanceZonesSync: () => {},
   scenesSync: () => {},

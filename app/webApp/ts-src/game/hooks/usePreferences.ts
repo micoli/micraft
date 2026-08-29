@@ -58,7 +58,14 @@ const ACTION_GROUPS: Record<string, string[]> = {
     "siege_weapon_power",
     "siege_weapon_fire",
   ],
-  building: ["place_rotate", "block_interact", "scene_confirm", "scene_cancel"],
+  building: [
+    "place_rotate",
+    "block_interact",
+    "scene_confirm",
+    "scene_cancel",
+    "claim_mark_corner",
+    "claim_cancel_selection",
+  ],
   flight: ["fly_toggle", "ascend", "descend", "speed_up", "speed_down"],
   ui: [
     "view_toggle",
@@ -79,6 +86,7 @@ const ACTION_GROUPS: Record<string, string[]> = {
     "preferences_keybindings",
     "preferences_debug",
     "preferences_graphics",
+    "claim_panel",
   ],
   hotbar: [
     "slot_1",

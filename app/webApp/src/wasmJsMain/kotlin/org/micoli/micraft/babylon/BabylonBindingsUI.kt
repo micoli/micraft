@@ -259,6 +259,12 @@ fun jsOpenAuctionHouse(): Unit = js("mc.openAuctionHouse()")
 
 fun jsAuctionListingsUpdate(json: String): Unit = js("mc.auctionListingsUpdate(json)")
 
+// ── Land claims ────────────────────────────────────────────────────────────────
+
+fun jsClaimSync(json: String): Unit = js("mc.claimSync(json)")
+
+fun jsClaimDenied(reason: String): Unit = js("mc.claimDenied(reason)")
+
 // ── Instance zones ────────────────────────────────────────────────────────────
 
 fun jsAdminZoneWireframe(json: String): Unit = js("mc.adminZoneWireframe(json)")

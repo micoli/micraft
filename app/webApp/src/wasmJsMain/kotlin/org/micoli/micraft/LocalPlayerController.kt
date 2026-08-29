@@ -911,6 +911,23 @@ class LocalPlayerController(
                                     event.removePrefix("auction_set_filter:")))
                         }
                         .onFailure { jsError("auction_set_filter decode failed: $it") }
+                event.startsWith("claim_create:") ->
+                    runCatching {
+                            outMessages.trySend(
+                                Json.decodeFromString<ClientMessage.ClaimCreate>(
+                                    event.removePrefix("claim_create:")))
+                        }
+                        .onFailure { jsError("claim_create decode failed: $it") }
+                event.startsWith("claim_abandon:") ->
+                    outMessages.trySend(
+                        ClientMessage.ClaimAbandon(event.removePrefix("claim_abandon:")))
+                event.startsWith("claim_set_trusted:") ->
+                    runCatching {
+                            outMessages.trySend(
+                                Json.decodeFromString<ClientMessage.ClaimSetTrusted>(
+                                    event.removePrefix("claim_set_trusted:")))
+                        }
+                        .onFailure { jsError("claim_set_trusted decode failed: $it") }
                 event.startsWith("attack:") -> {
                     val targetId = currentCombatTargetId ?: return@repeat
                     val rest = event.removePrefix("attack:")

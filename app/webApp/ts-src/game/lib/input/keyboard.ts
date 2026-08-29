@@ -207,6 +207,9 @@ export function registerKeyboard(): Pick<
           else window.mcState.events.push("place_rotate");
         }
         if (matched.has("block_interact")) window.mcState.events.push("block_interact");
+        if (matched.has("claim_mark_corner")) window.mc?.claimMarkCorner?.();
+        if (matched.has("claim_cancel_selection")) window.mc?.claimCancelSelection?.();
+        if (matched.has("claim_panel")) window.mc?.toggleClaimPanel?.();
         if (matched.has("scene_confirm") && window.mcState.sceneGhostActive) {
           window.mc?.sceneConfirm?.();
         }
