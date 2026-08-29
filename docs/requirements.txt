@@ -4,6 +4,6 @@
 # toolchain stays on upstream `mkdocs` only.
 mkdocs==1.6.1
 mkdocs-material==9.7.7
-mkdocs-gen-files==0.6.0
+mkdocs-gen-files==0.6.1
 mkdocs-literate-nav==0.6.2
 pymdown-extensions==11.0.2
