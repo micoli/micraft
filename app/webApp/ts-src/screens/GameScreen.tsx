@@ -549,6 +549,14 @@ export function GameScreen() {
                   },
                 },
                 {
+                  icon: "🏛",
+                  label: "Auction House",
+                  callback: () => {
+                    dispatch("pause_menu_hide");
+                    dispatch("auction_open");
+                  },
+                },
+                {
                   icon: "¶",
                   label: "Preferences",
                   callback: () => {
