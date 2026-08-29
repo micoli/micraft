@@ -484,7 +484,7 @@ export const en = {
   "sim.layers.names": "Names",
   "sim.layers.players": "Players",
 
-  // ── Simulator — arena overlays ──────────────────────────────────────────────
+  // ── Simulator — arena window ──────────────────────────────────────────────
   "sim.tooltip.level": "level {0}",
   "sim.tooltip.hp": "hp",
   "sim.tooltip.satiety": "satiety {0}%",

@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "@storybook/test";
-import { Inventory } from "../../game/components/Inventory";
+import { Inventory } from "../../../game/components/Inventory";
 
 const meta: Meta<typeof Inventory> = {
-  title: "Game/Inventory",
+  title: "Game/Layout/Inventory",
   component: Inventory,
   parameters: { layout: "fullscreen" },
   decorators: [

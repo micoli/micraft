@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, within } from "@storybook/test";
-import { NpcShopDialog } from "../../game/components/npc/NpcShopDialog";
-import type { NpcDialogData } from "../../game/types";
+import { NpcShopDialog } from "../../../game/components/npc/NpcShopDialog";
+import type { NpcDialogData } from "../../../game/types";
 
 const meta: Meta<typeof NpcShopDialog> = {
-  title: "Overlays/NpcShopDialog",
+  title: "Game/Windows/NpcShopDialog",
   component: NpcShopDialog,
   parameters: { layout: "fullscreen" },
 };

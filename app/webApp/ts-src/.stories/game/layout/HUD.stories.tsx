@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { HUD } from "../../game/components/hud/HUD";
-import type { HudData } from "../../game/types";
+import { HUD } from "../../../game/components/hud/HUD";
+import type { HudData } from "../../../game/types";
 
 const meta: Meta<typeof HUD> = {
-  title: "Game/HUD",
+  title: "Game/Layout/HUD",
   component: HUD,
   parameters: { layout: "fullscreen" },
   argTypes: {},

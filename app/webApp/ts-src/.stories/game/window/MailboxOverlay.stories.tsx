@@ -1,12 +1,12 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, within } from "@storybook/test";
-import { MailboxOverlay } from "../../game/overlays/MailboxOverlay";
-import { MailData } from "../../game/types";
-import { Button } from "../../primitives/Button";
+import { MailboxOverlay } from "../../../game/overlays/MailboxOverlay";
+import { MailData } from "../../../game/types";
+import { Button } from "../../../primitives/Button";
 
 const meta: Meta<typeof MailboxOverlay> = {
-  title: "Overlays/MailboxOverlay",
+  title: "Game/Windows/MailboxOverlay",
   component: MailboxOverlay,
   parameters: { layout: "fullscreen" },
   decorators: [

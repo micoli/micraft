@@ -500,7 +500,7 @@ export function registerMinimap(): Pick<
         ctx.globalAlpha = 1.0;
       }
 
-      // Weather zone overlays
+      // Weather zone window
       for (const zone of weatherZones) {
         const bx = zone.cx - playerX + halfBlocks;
         const bz = playerZ - zone.cz + halfBlocks; // Z flipped
