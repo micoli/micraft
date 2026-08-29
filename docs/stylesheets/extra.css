@@ -1,8 +1,8 @@
 :root > * {
-  --md-primary-fg-color: #4c8c2b;
-  --md-primary-fg-color--light: #6ab04c;
-  --md-primary-fg-color--dark: #3a6b20;
-  --md-accent-fg-color: #6ab04c;
+  --md-primary-fg-color: #1565c0;
+  --md-primary-fg-color--light: #42a5f5;
+  --md-primary-fg-color--dark: #0d47a1;
+  --md-accent-fg-color: #2196f3;
 }
 
 .md-typeset table:not([class]) {
@@ -11,5 +11,5 @@
 
 .md-typeset .admonition.generated,
 .md-typeset details.generated {
-  border-color: #6ab04c;
+  border-color: #42a5f5;
 }
