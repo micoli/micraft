@@ -11,6 +11,11 @@ make dev-up                              # server + asset watchers auto-start
 Open <http://localhost:8080/>. The web client reconnects automatically after a
 server restart; a browser hard-refresh is always enough after a rebuild.
 
+If the server is fully unreachable, a running client keeps its state and shows a
+reconnect overlay. Reloading the page during an outage serves a small offline
+maintenance page (`sw.js` navigation fallback) that polls the server and reloads
+once it is back.
+
 ## Debug texture mode
 
 A single `GRASS` block at `(8, 2, 8)`, player spawned in fly mode at `(8, 1, 14)`.

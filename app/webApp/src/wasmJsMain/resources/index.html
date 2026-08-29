@@ -23,6 +23,13 @@
 <body>
     <canvas id="renderCanvas" width="1280" height="720"></canvas>
     <div id="mc-ui"></div>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", function () {
+                navigator.serviceWorker.register("/sw.js").catch(function () {});
+            });
+        }
+    </script>
     <script src="babylon.js"></script>
     <script src="babylonjs.loaders.js"></script>
     <script src="mc_bindings.js"></script>
