@@ -5,6 +5,7 @@ import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
+import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.protocol.ServerMessage
 
 /**
@@ -21,6 +22,7 @@ class ClaimManager(
     private val getSessions: () -> Collection<PlayerSession>,
     private val i18n: I18nConfig,
     private val savePlayer: (PlayerSession) -> Unit,
+    private val persistence: WorldPersistence? = null,
 ) {
     private fun chunksBetween(pos1: BlockPos, pos2: BlockPos): Set<ChunkPos> {
         val cx1 = Math.floorDiv(pos1.x, WorldConstants.CHUNK_SIZE)
@@ -122,18 +124,24 @@ class ClaimManager(
             session.send(ServerMessage.ClaimDenied(i18n.t(lang, "claim:server:not_your_claim")))
             return
         }
-        val target =
+        val onlineTarget =
             getSessions().find { it.state.name.equals(playerName, ignoreCase = true) }
-                ?: run {
-                    session.send(
-                        ServerMessage.ClaimDenied(
-                            i18n.t(lang, "claim:server:player_not_found", playerName)))
-                    return
-                }
-        registry.setTrusted(claimId, target.id, target.state.name, trusted)
+        // Trusting shouldn't require the other player to be online — fall back to their
+        // persisted state (same id/name a session would carry once they reconnect) so an
+        // offline friend can be granted access ahead of time, same idea as mailing offline
+        // players.
+        val targetId = onlineTarget?.id ?: persistence?.loadPlayerState(playerName)?.id
+        val targetName = onlineTarget?.state?.name ?: playerName
+        if (targetId == null) {
+            session.send(
+                ServerMessage.ClaimDenied(
+                    i18n.t(lang, "claim:server:player_not_found", playerName)))
+            return
+        }
+        registry.setTrusted(claimId, targetId, targetName, trusted)
         val key = if (trusted) "claim:server:trust_granted" else "claim:server:trust_revoked"
-        session.send(ServerMessage.Notification(i18n.t(lang, key, target.state.name)))
+        session.send(ServerMessage.Notification(i18n.t(lang, key, targetName)))
         sendSync(session)
-        sendSync(target)
+        onlineTarget?.let { sendSync(it) }
     }
 }
