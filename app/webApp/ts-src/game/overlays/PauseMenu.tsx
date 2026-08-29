@@ -2,7 +2,8 @@ import { useRef, useEffect } from "react";
 import { Dialog } from "../../primitives/Dialog";
 import { DialogContent } from "../../primitives/DialogContent";
 import { DialogTitle } from "../../primitives/DialogTitle";
-import { Button, ButtonProps } from "../../primitives/Button";
+import { ButtonProps } from "../../primitives/Button";
+import { MenuGrid } from "../../primitives/MenuGrid";
 
 interface PauseMenuItem {
   label: string;
@@ -37,20 +38,15 @@ export function PauseMenu({ open, onClose, items }: PauseMenuProps) {
         }}
       >
         <DialogTitle className="text-center font-mono text-xl tracking-[0.25em] mb-2">PAUSE</DialogTitle>
-        <div className="grid grid-cols-2 gap-3">
-          {items.map((item, k) => (
-            <Button
-              key={item.label}
-              ref={k === 0 ? firstButton : null}
-              variant={item.variant ?? "secondary"}
-              onClick={item.callback}
-              className="font-mono"
-            >
-              {item.icon ? `${item.icon} ` : ""}
-              {item.label}
-            </Button>
-          ))}
-        </div>
+        <MenuGrid
+          firstButtonRef={firstButton}
+          items={items.map((item) => ({
+            label: item.label,
+            icon: item.icon,
+            variant: item.variant,
+            onClick: item.callback,
+          }))}
+        />
       </DialogContent>
     </Dialog>
   );
