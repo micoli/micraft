@@ -1,232 +1,41 @@
 # MicCraft
 
-**MicCraft** is a multiplayer voxel game built with **Kotlin Multiplatform**. It runs a Ktor WebSocket server with authoritative physics and serves a browser client via Kotlin/Wasm + BabylonJS. Procedural terrain generation, biome system, liquid physics, NPC entities, weather zones, and a plugin-based slash command system.
+**MicCraft** is a multiplayer RPG voxel game built with **Kotlin Multiplatform**.
+It runs a Ktor WebSocket server with authoritative physics and serves a browser
+client via Kotlin/Wasm + BabylonJS. Procedural terrain generation, a biome
+system, liquid physics, NPC entities, weather zones, an RPG layer, and a
+plugin-based slash command system.
 
----
+## 📖 Documentation
 
-## Table of Contents
+Full documentation — how to play and how to configure every system —
+**<https://micoli.github.io/micraft>**.
 
-- [Features](#features)
-- [Architecture](#architecture)
-- [Slash Commands](#slash-commands)
-- [API Routes](#api-routes)
-- [Development](#development)
-- [Running the Apps](#running-the-apps)
-- [Running Tests](#running-tests)
-- [Contributing](#contributing)
+Locally: `make docs-site-serve` → <http://localhost:8000>.
 
----
+## URLs (running server)
 
-## Features
+- [Main game **/**](http://127.0.0.1:8080/)
+- [Map **/map**](http://127.0.0.1:8080/map)
+- [Administration **/admin/**](http://127.0.0.1:8080/admin/)
+- [API doc **/api/docs**](http://127.0.0.1:8080/api/docs)
 
-### URLs
- - [Main game **/**](http://127.0.0.1:8080/)
- - [Map **/map**](http://127.0.0.1:8080/map)
- - [Administration **/admin/**](http://127.0.0.1:8080/admin/)
- - [API doc **/api/docs**](http://127.0.0.1:8080/api/docs)
+## Development
 
-### World & Terrain
+All build/run/test/lint commands execute **inside the dev container**.
 
-- **Procedural generation** — Perlin noise terrain, Voronoi roads, vegetation, houses (rectangular and circular temple)
-- **Biomes** — 5 biome types (desert, plains, forest, mountains, tundra) via Voronoi cells with moisture/altitude gradients and blend zones
-- **Blocks** — 20 types: stone, dirt, grass, sand, sandstone, gravel, snow, oak/pine logs and leaves, flower, weed, water, seed, sprout, sapling
-- **Liquid physics** — water source blocks flow with configurable viscosity; biome lakes generated at world creation
-- **Vegetation growth** — seed → sprout → sapling → tree; configurable per-stage tick durations in `vegetation.yaml`
-
-### Gameplay
-
-- **Block breaking & placement** — hardness-based break time, YAML-driven drop tables with weighted randomness
-- **Item inventory** — 7 collectable materials, 10-slot hotbar, drag-and-drop inventory UI
-- **Player stances** — standing (speed 4.5, h 1.8) / sneaking (1.3, 1.5) / crawling (1.0, 0.6)
-- **Undo** — `/undo [N]` reverts last N block breaks including item collection
-- **Flying & speed** — toggleable fly mode and speed boost
-- **Crafting** — recipe panel (`/craft`), recipe unlocking (`/learnrecipe`), `RecipeRegistry` loaded from YAML; craft directly via `/docraft <recipeId> [count]`
-- **Lighting override** — `/light:on` boosts ambient light underground; `/light:off` restores natural darkness
-- **Explosion** — `/explode <radius>` destroys all blocks in a sphere (admin)
-
-### Multiplayer & Server
-
-- **Server-authoritative** — client sends `MoveIntent`, server validates and replies `PlayerUpdate`
-- **Client-side prediction** — `GameClient` predicts XZ locally at ~60 fps and soft-corrects toward server
-- **Dynamic chunk streaming** — view radius 3 chunks, forward bias 7 chunks
-- **Chat system** — multi-channel with `/createchat`, `/join`, `/leave`, `/talk` (private), proximity-based `around` channel (radius 64 blocks), combat log channel
-- **Weather zones** — rain, storm, snow, fog spawned dynamically with drift and radius; `/weather-forecast` shows active zones and distance
-- **NPC entities** — multiple types (SELLER, BLACK_SMITH, GOAT, DUCK, WOLF, CAT, BEAR, POLAR_BEAR, …) with static, interactable, random-wander, and hostile-aggro behaviors; Blockbench bbmodel animations with configurable walk-bone aliases
-- **Animal lifecycle** — age in game-days, hunger meter, gestation timer, reproduction cooldown, mother level; all fields tracked and visible in admin NPC panel
-
-### Combat & RPG
-
-- **RPG classes** — character classes with STR/DEX/INT/WIS/CON/CHA base stats, class resource (mana/rage/tokens), per-level attack and spell access, HP/mana/rage formulas configurable in `classes.yaml`; derived stats computed from base + class bonus + equipped armor bonuses
-- **Attack system** — attacks and spells with cooldown tracking, resource checks, and draggable action bar (`AttackPanel`); spell processor (`SpellProcessor`) runs alongside attack processor
-- **Status effects** — `StatusEffectProcessor` applies timed buffs/debuffs; HP/mana regeneration via `RegenProcessor`
-- **Combat target frame** — HP bar + target info overlay for the focused entity (`CombatTargetFrame`)
-- **Aggro indicators** — angular proximity indicators showing nearby hostile NPCs (`AggroIndicators`)
-- **XP / level** — experience bar and level display (`XpBar`); `ExperienceProcessor` handles XP gains and level-up
-- **Player status** — HP, mana, stamina bars with downed/respawn overlay (`PlayerStatusBar`, `PlayerDownedOverlay`); `/resurect [playerName]` to revive
-- **God mode** — `/god:on` / `/god:off` makes the player immune to damage (admin)
-- **Rest** — `/rest` instantly restores rage and tokens to maximum
-- **Quest system** — quest journal (key `J`) and persistent on-screen quest tracker widget (`QuestJournal`, `QuestTracker`); KILL and FETCH quest types; `/quest [list|accept|abandon|status] [id]`
-- **Player-to-player trade** — `/trade <playerName>` initiates a trade session, `/tradeoffer <tradeId> <json>` updates the offer, `/tradeaccept` / `/tradecancel` to finalise or cancel
-- **Skin customisation** — `/skin <skinName>` to switch player skin; skins defined as bbmodel presets
-- **Statistics** — toggleable performance and game-stats overlay
-
-### Character
-
-- **Character screen** — armor equip/unequip per slot with 3-D player model preview (key `Y`, or Pause → Character)
-- **Character creation** — name + skin selection at first login (`CharacterCreationScreen`, `CharacterRPGCreationScreen`); `/createcharacter` in-game; `/skiprpg` to opt out of the RPG system entirely
-- **Character selection** — choose or create a character on login (`CharacterSelectionScreen`)
-- **Character sheet** — `/character` shows current class, level, XP, base stats, HP/mana/rage, and equipped armor bonuses
-
-### Pages
-
-| URL | Purpose |
-|-----|---------|
-| `/` | Game client (Kotlin/Wasm + BabylonJS) |
-| `/map` | Live top-down SVG world map — toggleable layers (biome borders, zone names, contours, vegetation, houses, roads, chunks, weather, staircases, players, NPCs), player/NPC follow mode, zoom, fit-all |
-| `/admin` | Admin panel — 7 pages: **Status** (TPS, connected players, loaded chunks, game time control, network, heap, CPU; server restart button), **Users** (create/update/delete local auth accounts, group assignment), **Players** (list, keybindings, preferences, RPG stats, rename), **NPCs** (live WebSocket feed with filter by type/zone/level/gender/aggro; detail panel with animal state: age, hunger, gestation, reproduction), **Classes** (RPG class definitions and per-level attack/spell access), **Worlds** (browser with seed/chunk count/creation date; create new world), **Config** (live YAML editor with JSON Schema validation) |
-
-### Infrastructure
-
-- **Auth** — three modes: `none`, `local` (bcrypt), `oauth` (Google Authorization Code)
-- **RBAC** — group-based permissions; groups assigned via `/rbac:setgroup` / `/rbac:removegroup`; command-level `permission` field gated by session groups; disabled-commands per player stored in player state
-- **i18n** — English + French, hot-reloadable via `/reload`
-- **Plugin system** — `PluginCommand` interface; plugins discovered at runtime via ClassGraph; plugins can register tick handlers and commands; UUID collision detection at startup
-- **Macro system** — `MacroExecutor` evaluates scripted macro sequences; macros accessible via `MacrosController` HTTP routes
-- **Screenshot** — `ScreenshotController` exposes a screenshot endpoint
-- **UI layout editor** — move/resize widgets on a 48×48 grid, persisted per player
-- **Shaders** — ambient occlusion, directional shading, fog toggle via `/shaders`
-- **Metrics** — `MetricsController` exposes server performance metrics (heap, non-heap, tick counters, liquid/vegetation estimates)
-- **World persistence** — chunks saved as gzip binary, players as JSON; NPCs and vegetation state flushed every 600 ticks
-
----
-
-## Architecture
-
-### World Generation Pipeline
-
-Chunks are generated on demand: `ChunkStreamer` requests a chunk → `WorldState.getOrGenerate()` checks the in-memory cache, then disk, then runs the generator.
-
-```mermaid
-flowchart LR
-    REQ["ChunkStreamer\n(player moves)"]
-    REQ --> WS
-
-    subgraph WS ["WorldState.getOrGenerate()"]
-        direction TB
-        CACHE{"in cache?"}
-        DISK["WorldPersistence\n.mcc.gz"]
-    end
-
-    CACHE -->|yes| OUT
-    CACHE -->|no - disk?| DISK
-    DISK -->|yes| OUT
-    DISK -->|no| GEN
-
-    subgraph GEN ["ProceduralChunkGenerator"]
-        direction TB
-        BIO["VoronoiBiomeSelector\ndesert · plains · forest\nmountains · tundra\n(moisture × altitude grid)"]
-        TRN["Terrain\nPerlin noise elevation\n+ mountain boost"]
-        VEG["VegetationGenerator\noak tree · pine tree\nflower · weed\n(density hash per column)"]
-        HSE["HouseGenerator\nrectangular · circular temple\n(Voronoi cell centres)"]
-        RD["RoadVoronoi\nroads between cells"]
-        BIO --> TRN
-        TRN --> VEG
-        TRN --> HSE
-        TRN --> RD
-    end
-
-    GEN --> OUT["Chunk\n(ByteArray wire-encoded)"]
-    OUT -->|ChunkData msg| CLIENT["Client"]
-    OUT -->|mark dirty| SAVE["flushDirty → disk\n(every 600 ticks)"]
+```bash
+make dev-up                   # build image + start container (daemons auto-start)
+make shell                    # bash inside the container
+make dc CMD="<any command>"   # run one command inside the container
+make dev-restart-server       # rebuild + restart Ktor after a server-side change
+make build-wasm               # one-shot WASM recompile after a Kotlin/Wasm change
+make code-standard            # full lint (run before a PR)
+make test                     # all test suites
 ```
 
-### Game Loop — Tick Sequence
-
-The server runs at **20 tps (50 ms/tick)**. Each tick drives player input, physics, automatic world managers, and periodic housekeeping.
-
-```mermaid
-flowchart TD
-    GL(["GameLoop.tick()\n50 ms · 20 tps"])
-
-    GL --> SESS
-
-    subgraph SESS ["Per connected player"]
-        direction LR
-        IC["IntentCollector\nMoveIntent · BlockBreak\nBlockPlace · Command"]
-        BRK["BlockBreaker\nbreak progress + drops"]
-        MOV["MovementProcessor\nAABB physics · gravity\nclient-side prediction"]
-        STR["ChunkStreamer\ndeliver ready chunks"]
-        IC --> BRK --> MOV --> STR
-    end
-
-    SESS --> WIT["WorldItemManager\nitem proximity pickup"]
-    WIT --> NPC["NpcManager\nwander · pathfind · interact"]
-    NPC --> WEA["WeatherManager\nzone drift · expiry"]
-
-    WEA --> LIQ
-    LIQ --> VEG_M
-
-    subgraph AUTO ["Automatic world managers — broadcast WorldUpdate on change"]
-        direction TB
-        LIQ["💧 LiquidManager\n─────────────────────────\nevery tick\n① check activeLiquids set\n② flow ↓ (gravity)\n③ spread → horizontal (max 7)\n─────────────────────────\nactivated: WATER placed\nor adjacent block removed"]
-
-        VEG_M["🌱 VegetationManager\n─────────────────────────\nevery 40 ticks\n① verify block still present\n   (player break → deactivate)\n② accumulate ticks\n③ SEED → SPROUT → SAPLING\n④ final stage → place tree\n─────────────────────────\nactivated: SEED item placed\non vegetationHost block"]
-    end
-
-    GL -->|"every 20 ticks"| T1["⏱ TimeUpdate broadcast"]
-    GL -->|"every 200 ticks"| T2["🐾 NpcSpawner.trySpawn"]
-    GL -->|"every 600 ticks"| T3["💾 flushDirty chunks\nplayer · NPC · vegetation state"]
-```
-
-### Chunk Transport Modes
-
-The server selects the transport via `Welcome.chunkTransport`; the client switches mode on connect.
-
-| Mode | Delivery | Download priority | Mesh priority |
-|------|----------|-------------------|---------------|
-| `websocket` | Server pushes `ChunkData` frames over `/chunks` WS | Server-controlled (no client ordering) | ✅ sorted by proximity + FoV at drain time |
-| `http` | `HttpChunkFetcher` pulls chunks on demand (max 4 concurrent) | ✅ priority queue, gated by FoV readiness | ✅ sorted by proximity + FoV at drain time |
-
-**Priority tiers (score bands)**
-
-| Tier | Condition | Score | Gated until… |
-|------|-----------|-------|---------------|
-| 1 | Under player (dx=0, dz=0) | 0 | — |
-| 2 | Radius ≤ 1 (incl. diagonals) | 1000+ | — |
-| 3 | FoV ≤ 60° | 2000+ | — |
-| 4 | dist > halfR (any direction) | 3000+ | near-FoV chunks meshed |
-| 5 | dist ≤ halfR, outside 60° FoV | 4000+ | near-FoV chunks meshed |
-
-In `websocket` mode the download tier ordering is server-side only; the **mesh queue is re-sorted** on every drain tick so the client always meshes closest/FoV chunks first regardless of arrival order.
-
-### Automatic Manager State Machine
-
-Both `LiquidManager` and `VegetationManager` follow the same pattern: an in-memory set of active positions is mutated by world events, consumed by the tick, and produces `WorldUpdate` broadcasts to all clients.
-
-```mermaid
-stateDiagram-v2
-    direction LR
-
-    state "💧 LiquidManager" as LIQ {
-        [*] --> active : WATER placed / adjacent block removed\n(activate)
-        active --> flowing : tick — can flow
-        flowing --> active : spread continues
-        flowing --> settled : no AIR neighbor\n(remove from set)
-        settled --> [*]
-    }
-
-    state "🌱 VegetationManager" as VEG {
-        [*] --> tracking : SEED placed on vegetationHost\n(tryActivate → random chain)
-        tracking --> tracking : ticks < ticksRequired\n(accumulate every 40 ticks)
-        tracking --> next_stage : ticks ≥ ticksRequired\napplyChange(SEED→SPROUT→SAPLING)
-        next_stage --> tracking : stageIndex++\nnew random ticksRequired
-        next_stage --> spawning : last stage reached
-        spawning --> [*] : oakTreeBlocks / pineTreeBlocks\napplyChange batch → WorldUpdate
-        tracking --> [*] : block missing\n(player broke it)
-    }
-```
-
----
+`make help` lists every target. See the
+[Getting started](https://micoli.github.io/micraft/getting-started/) guide.
 
 ## Slash Commands
 
@@ -318,19 +127,14 @@ stateDiagram-v2
 
 <!-- END_COMMANDS -->
 
-Commands are discovered at runtime — add a class implementing `CommandHandler` (or `PluginCommand` for plugins) and it appears automatically.
-
-To regenerate this section from source:
-```bash
-make docs
-# or: make dc CMD="./gradlew :server:generateCommandsDocs"
-```
-
----
+Regenerate: `make docs`.
 
 ## API Routes
 
-Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/openapi.yaml), browsable at `/api/docs` (Redoc) when the server is running. This table and the YAML spec are both generated from the same `@ktoropenapi`-annotated Ktor routes — never hand-edit either.
+Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/openapi.yaml),
+browsable at `/api/docs` (Redoc) when the server is running. This table and the
+YAML spec are both generated from the same `@ktoropenapi`-annotated Ktor routes —
+never hand-edit either.
 
 <!-- BEGIN_API_ROUTES -->
 
@@ -452,118 +256,18 @@ Full machine-readable spec: [`server/openapi/openapi.yaml`](server/openapi/opena
 
 <!-- END_API_ROUTES -->
 
-To regenerate from source:
-```bash
-make dc CMD="./gradlew :server:exportOpenApi"
-```
-
----
-
-## Development
-
-### Prerequisites
-
-- **Docker** + **Docker Compose** — all build/run/test commands execute inside the dev container
-- **Make** — task runner
-- **Node.js** (host) — for `scripts/generate_commands_docs.mjs` and `rtk`
-
-### Dev container
-
-```bash
-make dev-up                   # build image and start container (detached)
-make shell                    # open bash inside container
-make dc CMD="<any command>"   # run any command inside container
-```
-
-## Commands
-
-```bash
-make dev-up                    # build image + start container (pitchfork auto-starts all daemons)
-make dev-restart-server        # rebuild + restart Ktor only
-make build-wasm                # one-shot WASM recompile (Kotlin/WASM change)
-make dev-reset-wasm            # nuke WASM caches + full recompile (proto errors after core changes)
-make dev-reset                 # stop all daemons + clear caches + restart (~2 min, no volume teardown)
-make dev-nuke                  # destroy all named build volumes + full restart (nuclear)
-make dc CMD="./gradlew :server:test"                 # server tests
-make dc CMD="./gradlew :server:addUser -Pargs='email pass [name]'"
-```
-
-### Code formatting
-
-```bash
-make dc CMD="./gradlew :spotlessApply"   # Kotlin (ktlint via Spotless)
-make dc CMD="npm run format"             # TypeScript (Prettier)
-# or both at once:
-make code-standard
-```
-
-### Debug texture mode
-
-Single GRASS block at (8, 2, 8); player spawns in fly mode at (8, 1, 14). Keys 1–6 position camera on each face.
-
-```bash
-make dc CMD="./gradlew devDebug"
-# then open: http://localhost:8081/?debug&bx=8&by=2&bz=8
-```
-
-### Adding a command
-
-1. Create `server/src/main/kotlin/.../command/MyCommand.kt` implementing `CommandHandler`
-2. Set `command`, `description`, `usage`, `options` properties
-3. Implement `execute()` — the command is auto-discovered at runtime, no registration needed
-4. Regenerate docs: `node scripts/generate_commands_docs.mjs`
-
-### Adding a plugin command
-
-Same as above but implement `PluginCommand` and place the file under `plugins/<name>/server/`.
-
-### Server hot-reload
-
-After any server-side change:
-
-```bash
-make dev-restart-server   # pitchfork rebuilds + restarts Ktor; web client reconnects automatically
-```
-
-### Generate README commands section
-
-```bash
-make docs
-```
-
----
-
-## Running the Apps
-
-```bash
-make dev-up                              # start dev container (server + asset watchers auto-start)
-make dc CMD="./gradlew devDebug"         # debug texture mode (single block, fly mode)
-```
-
----
-
-## Running Tests
-
-```bash
-make dc CMD="./gradlew :server:test"           # server (Kotlin/JVM)
-make dc CMD="./gradlew :app:shared:jvmTest"    # shared module (JVM)
-make dc CMD="./gradlew :app:shared:wasmJsTest" # shared module (Wasm)
-make dc CMD="./gradlew test"                   # all targets
-```
-
----
+Regenerate: `make dc CMD="./gradlew :server:exportOpenApi"`.
 
 ## Contributing
 
-1. Fork the repository and create a feature branch
-2. Follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, etc.) — subject ≤ 72 chars, body ≤ 10 lines
-3. Run `make code-standard` before opening a PR
-4. Server-side changes (`server/src/main/`) require a new or updated test in `server/src/test/`
-5. New user-visible strings must be added to **both** `data/i18n/en.yaml` and `data/i18n/fr.yaml`
-6. Update the relevant JSON Schema in `server/src/main/resources/schemas/` when modifying YAML-backed data classes — classes annotated `@JsonSchemaRoot` regenerate automatically via `make gen-schemas` (checked by `make check-schemas`, part of `make code-standard`); the 3 schemas with no dedicated DTO (`i18n`, `keybindings`, `plain_colors`) stay hand-written
-
----
+See [Contributing](https://micoli.github.io/micraft/contributing/). In short:
+Conventional Commits, `make code-standard` before a PR, a test for every
+`server/src/main/` change, i18n strings in both `en.yaml` and `fr.yaml`, JSON
+Schema updated in the same commit as the data class.
 
 ## Credits
 
-- **Fantasy name generation** — NPC names are generated using syllable data and logic from [FyefoxxM/fantasy-name-generator](https://github.com/FyefoxxM/fantasy-name-generator), inspired by [Day 7: Fantasy Name Generator](https://jdookeran.medium.com/day-7-fantasy-name-generator-c2b4458b13f7) by J. Dookeran.
+- **Fantasy name generation** — NPC names are generated using syllable data and
+  logic from [FyefoxxM/fantasy-name-generator](https://github.com/FyefoxxM/fantasy-name-generator),
+  inspired by [Day 7: Fantasy Name Generator](https://jdookeran.medium.com/day-7-fantasy-name-generator-c2b4458b13f7)
+  by J. Dookeran.
