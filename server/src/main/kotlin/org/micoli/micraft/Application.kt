@@ -134,8 +134,22 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger("Application")
 
 fun main() {
-    embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
+    val port = System.getenv("MICRAFT_PORT")?.toIntOrNull() ?: 8080
+    embeddedServer(Netty, port = port, host = "0.0.0.0", module = Application::module)
         .start(wait = true)
+}
+
+/**
+ * Shrinks and flattens the world when `MICRAFT_E2E` is set so browser E2E runs are deterministic
+ * and cheap. Called after [applyServerConfig] so it wins over `server.yaml`.
+ */
+private fun applyE2eOverridesIfEnabled() {
+    if (System.getenv("MICRAFT_E2E").isNullOrBlank()) return
+    org.micoli.micraft.game.world.WorldConstants.VIEW_RADIUS = 3
+    org.micoli.micraft.game.world.WorldConstants.FORWARD_VIEW_RADIUS = 3
+    org.micoli.micraft.game.world.WorldConstants.WORLD_MIN_Y = 0
+    org.micoli.micraft.game.world.WorldConstants.WORLD_MAX_Y = 128
+    org.micoli.micraft.game.world.WorldConstants.WATER_LEVEL = 0
 }
 
 @kotlinx.serialization.Serializable data class PlayerByEmailEntry(val name: String, val id: String)
@@ -163,6 +177,7 @@ fun Application.module() {
     }
 
     val serverConfig = get<ServerConfig>()
+    applyE2eOverridesIfEnabled()
     val gameConfig = get<GameConfig>()
 
     val persistence = get<OptionalWorldPersistence>().value
@@ -305,6 +320,7 @@ fun Application.module() {
             petCoordinator = get<org.micoli.micraft.game.pet.PetCoordinator>(),
             questManager = get<QuestManager>(),
             questRegistryLoader = get<QuestRegistryLoader>(),
+            shared = get<org.micoli.micraft.game.SharedGameServices>(),
         )
     gameLoop.start(this)
     installAuthRoutes(

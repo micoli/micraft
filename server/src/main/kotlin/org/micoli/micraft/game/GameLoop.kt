@@ -90,6 +90,7 @@ import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.GameWorld
+import org.micoli.micraft.game.world.GameWorldRegistry
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.PlainColorRegistry
@@ -101,6 +102,7 @@ import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockInteractor
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
+import org.micoli.micraft.game.world.buildE2eGameWorld
 import org.micoli.micraft.game.world.claim.ClaimConfigLoader
 import org.micoli.micraft.game.world.claim.ClaimManager
 import org.micoli.micraft.game.world.claim.ClaimRegistry
@@ -108,6 +110,7 @@ import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.instance.toProto
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.EndToEndBoundedChunkGenerator
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.sanitizePlayerName
 import org.micoli.micraft.game.world.scene.ScenePlacer
@@ -516,6 +519,7 @@ class GameLoop(
         ),
     private val questManager: QuestManager? = null,
     private val questRegistryLoader: QuestRegistryLoader? = null,
+    private val shared: SharedGameServices = SharedGameServices.default(),
 ) {
     val classRegistry: Map<String, org.micoli.micraft.game.classes.ClassDefinitionEntry>
         get() = classesData.classes
@@ -670,6 +674,22 @@ class GameLoop(
             pluginTickHandlersProvider = { pluginTickHandlers },
             broadcastPlayerAdmin = ::broadcastPlayerAdmin,
             appScope = { appScope },
+        )
+
+    private val e2eBounds: String? = System.getenv("MICRAFT_E2E_BOUNDS")?.takeIf { it.isNotBlank() }
+
+    private fun newE2eGenerator(): ChunkGenerator {
+        val (w, h) = (e2eBounds ?: "8x8").lowercase().split("x").map { it.trim().toInt() }
+        val groundY = System.getenv("MICRAFT_E2E_GROUND_Y")?.toIntOrNull() ?: 64
+        return EndToEndBoundedChunkGenerator(
+            halfChunksX = w / 2, halfChunksZ = h / 2, groundY = groundY)
+    }
+
+    private val gameWorldRegistry =
+        GameWorldRegistry(
+            defaultWorld = gameWorld,
+            e2eEnabled = System.getenv("MICRAFT_E2E")?.isNotBlank() == true,
+            factory = { id -> buildE2eGameWorld(id, newE2eGenerator(), shared) },
         )
 
     fun getTickProfile() = gameWorld.getTickProfile()
@@ -1311,11 +1331,14 @@ class GameLoop(
                 val waitMs = nextTickAt - System.currentTimeMillis()
                 if (waitMs > 0) delay(waitMs)
                 nextTickAt = nextTickDeadline(System.currentTimeMillis(), nextTickAt, TICK_MS)
-                runCatching { gameWorld.tick() }
-                    .onFailure {
-                        if (it is CancellationException) throw it
-                        log.error("tick error: {}", it.message, it)
-                    }
+                for (w in gameWorldRegistry.all()) {
+                    runCatching { w.tick() }
+                        .onFailure {
+                            if (it is CancellationException) throw it
+                            log.error("tick error in world {}: {}", w.id, it.message, it)
+                        }
+                }
+                gameWorldRegistry.reapEmpty(System.currentTimeMillis())
                 saveTickCounter++
                 if (saveTickCounter >= SAVE_INTERVAL_TICKS) {
                     saveTickCounter = 0
@@ -1452,11 +1475,11 @@ class GameLoop(
     }
 
     /**
-     * [gameSessionId] comes from `/game?gameSession=`. Today every client lands in the single
-     * default world; A9.5 makes an unknown id spawn a dedicated [GameWorld] for parallel E2E runs.
+     * The world a `/game?gameSession=` connect belongs to. Without an id, or outside E2E mode, that
+     * is the single default world; an unknown id spawns a dedicated memory-only [GameWorld].
      */
-    private fun worldFor(@Suppress("UNUSED_PARAMETER") gameSessionId: String?): GameWorld =
-        gameWorld
+    private fun worldFor(gameSessionId: String?): GameWorld =
+        gameWorldRegistry.resolve(gameSessionId)
 
     suspend fun onConnect(socket: DefaultWebSocketSession, gameSessionId: String? = null) {
         val gw = worldFor(gameSessionId)
@@ -1865,7 +1888,8 @@ class GameLoop(
     }
 
     suspend fun onChunkConnect(socket: DefaultWebSocketSession, gameSessionId: String? = null) {
-        val gw = worldFor(gameSessionId)
+        // The /game socket connects first and creates the world; the chunk socket only attaches.
+        val gw = gameWorldRegistry.get(gameSessionId) ?: return
         val firstFrame =
             runCatching {
                     val frame = socket.incoming.receive()
