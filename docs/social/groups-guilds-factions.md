@@ -30,6 +30,8 @@ Temporary parties. Open the panel with **`Alt+G`** or use commands:
 The group is destroyed automatically as soon as its last online member
 disconnects — there is nothing to persist and nothing to rejoin.
 
+{{ story "story/game-windows-social-grouppanel--as-leader" caption="Group panel — members and leader controls" }}
+
 ## Guilds
 
 Persistent organisations. Panel: **`U`**. The guild bank appears as a second tab
@@ -56,6 +58,8 @@ regardless of rank. Default ranks at creation: **Master** (all flags), **Officer
 Rank editing (create/delete ranks, toggle flags, promote/demote) is done from the
 **Grades** tab of the guild panel.
 
+{{ story "story/game-windows-social-guildpanel--as-owner" caption="Guild panel — members tab as the owner" }}
+
 ### Guild bank
 
 Members with `BANK_DEPOSIT` add items; members with `BANK_WITHDRAW` take them out.
@@ -71,6 +75,8 @@ defined by `id`, `name`, `color`, `description`. Disabled by default.
 - **`/faction join <id>`** — affiliate (subject to `changeCooldownSeconds`).
 - **`/faction leave`**
 - Panel: **`Alt+F`**.
+
+{{ story "story/game-windows-social-factionpanel--member" caption="Faction panel — pick a side, member counts per faction" }}
 
 Effects when enabled:
 

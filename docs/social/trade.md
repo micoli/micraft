@@ -13,6 +13,8 @@ title: Player-to-player trade
 
 Both players must accept the same offer state for the swap to commit.
 
+{{ story "story/game-windows-trade--they-offered" caption="Trade window — both offers, awaiting mutual accept" }}
+
 ## Configuration
 
 `data/config/trade.yaml` (bundled default `resources/config/trade.yaml`, schema

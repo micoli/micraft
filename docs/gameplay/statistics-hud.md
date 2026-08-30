@@ -16,6 +16,10 @@ title: HUD, stats & visuals
 RPG HUD elements (HP/mana/stamina bars, XP bar, action bar, target frame, aggro
 indicators, quest tracker) are described under [RPG](../rpg/index.md).
 
+{{ story "story/game-layout-hud--simple" caption="Statistics overlay — position, timing and streaming counters" }}
+
+{{ story "story/game-layout-notifications--item-pickup" caption="Transient HUD notification" }}
+
 ## Configuration
 
 Shader and overlay states are per-player preferences (Preferences dialog, key

@@ -13,6 +13,8 @@ title: Equipment
   `mainHandOnly`.
 - Armor bonuses feed into [derived stats](stats.md).
 
+{{ story "story/game-windows-character--with-stats" caption="Character screen — equipment, hands and derived stats" }}
+
 ## Configuration
 
 **Armor** — `resources/armors/<name>/<name>.yaml`, loaded by

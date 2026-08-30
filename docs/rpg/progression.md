@@ -10,6 +10,8 @@ title: Progression & XP
 threshold raises the level (`XpBar` shows progress). Max level is
 `RPG_LEVEL_MAX`. A party splits XP with a per-member bonus.
 
+{{ story "story/game-layout-xpbar--almost-level-up" caption="XpBar — progress toward the next level" }}
+
 ## Configuration
 
 `data/config/experience.yaml` (bundled default `resources/config/experience.yaml`,

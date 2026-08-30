@@ -19,6 +19,8 @@ title: Breaking & placing blocks
 
 A `WorldUpdate` re-meshes only the affected chunk.
 
+{{ story "story/game-windows-creativeblockpanel--blocks" caption="Creative mode — floating palette of every buildable block and scene" }}
+
 ## Configuration
 
 Block properties live in `resources/blocks/<name>/<name>.yaml`, overridable
