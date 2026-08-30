@@ -509,6 +509,35 @@ export function GameUI() {
       if (window.__mcE2E) window.mcState.inventorySnapshot = data;
       dispatch("inventory", { data });
     };
+    if (window.__mcE2E) {
+      const held: Record<string, number> = ((
+        window as unknown as { __mcE2EHeld?: Record<string, number> }
+      ).__mcE2EHeld ??= {});
+      const hold = (action: string, ms: number) => {
+        held[action] = Date.now() + ms;
+      };
+      window.mcE2E = {
+        ...(window.mcE2E ?? ({} as NonNullable<Window["mcE2E"]>)),
+        actions: {
+          moveForward: (ms: number) => hold("forward", ms),
+          moveBack: (ms: number) => hold("backward", ms),
+          moveLeft: (ms: number) => hold("strafe_left", ms),
+          moveRight: (ms: number) => hold("strafe_right", ms),
+          setLook: (yaw: number, pitch: number) => {
+            (window as unknown as { __mcE2ELook?: unknown }).__mcE2ELook = { yaw, pitch };
+          },
+          breakTargeted: () => {
+            const t = window.mcE2E?.targetBlock;
+            if (t) window.mcState.events.push(`creative_break:${t.x},${t.y},${t.z}`);
+          },
+          placeTargeted: () => {
+            const t = window.mcE2E?.targetBlock;
+            if (t) window.mcState.events.push(`creative_place:${t.x},${t.y + 1},${t.z},cobblestone,0`);
+          },
+          selectHotbar: (i: number) => window.mcState.events.push(`slot_${i + 1}`),
+        },
+      } as NonNullable<Window["mcE2E"]>;
+    }
     window.mc.updateE2E = (json: string) => {
       try {
         const snapshot = JSON.parse(json);

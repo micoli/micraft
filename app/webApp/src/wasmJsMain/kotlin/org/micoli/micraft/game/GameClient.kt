@@ -133,6 +133,18 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private var lastWorldUpdateJson: String = "null"
 
     @OptIn(ExperimentalWasmJsInterop::class)
+    private fun applyE2eLook() {
+        val look = jsE2eConsumeLook()
+        if (look.isEmpty()) return
+        val parts = look.split(",")
+        val yaw = parts.getOrNull(0)?.toDoubleOrNull() ?: return
+        val pitch = parts.getOrNull(1)?.toDoubleOrNull() ?: return
+        jsSetCameraRotationY(camera, yaw)
+        jsSetCameraRotationX(camera, pitch)
+        currentYaw = yaw.toFloat()
+    }
+
+    @OptIn(ExperimentalWasmJsInterop::class)
     private fun emitE2eSnapshot() {
         val lc = localController
         val ready = playerIdReady.isCompleted && chunkManager.loadedChunks.isNotEmpty()
@@ -234,7 +246,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 siegeProjectileManager.tick()
                 remotePlayerManager.tick()
                 localController.otherTickMs = jsNow() - otherT0
-                if (e2eSession.isNotEmpty()) runCatching { emitE2eSnapshot() }
+                if (e2eSession.isNotEmpty()) {
+                    runCatching { applyE2eLook() }
+                    runCatching { emitE2eSnapshot() }
+                }
             }
         }
 
