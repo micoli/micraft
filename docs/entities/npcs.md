@@ -21,6 +21,8 @@ animations with configurable walk-bone aliases.
 `NpcSpawner.trySpawn` runs every 200 ticks, capped per biome by the biome's
 `maxNpcs`.
 
+{{ story "story/game-windows-npcshopdialog--basic" caption="SELLER NPC shop — buy and sell prices" }}
+
 ## Configuration
 
 **Global NPC behaviour** — `data/config/npc.yaml` (schema `npc.schema.json`):

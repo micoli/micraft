@@ -13,6 +13,10 @@ title: Inventory & items
 - **`/give <name> [N]`** *(admin)* — give an item, or grant an armor/weapon/tool.
 - **`/drink <itemType>`** — consume a consumable (restores health/mana).
 
+{{ story "story/game-layout-hotbar--with-items" caption="Hotbar — 10 slots, number keys select the active one" }}
+
+{{ story "story/game-layout-inventory--with-wallet" caption="Inventory UI with the currency wallet" }}
+
 ## Configuration
 
 Items are defined in `data/config/items.yaml` (bundled default in

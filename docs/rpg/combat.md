@@ -26,6 +26,8 @@ title: Combat
 Processors: `SpellProcessor` (alongside the attack processor),
 `StatusEffectProcessor` (timed buffs/debuffs), `RegenProcessor` (HP/mana regen).
 
+{{ story "story/game-layout-buffbar--many" caption="BuffBar — active timed buffs and debuffs" }}
+
 ## Configuration
 
 **Global combat** — `data/config/combat.yaml`:
