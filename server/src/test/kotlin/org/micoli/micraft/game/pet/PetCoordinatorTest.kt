@@ -124,6 +124,24 @@ class PetCoordinatorTest {
     }
 
     @Test
+    fun `pet flies with a flying owner and falls when the owner lands`() = runBlocking {
+        val f = Fx()
+        val o = f.owner()
+        o.state = o.state.copy(pos = Vec3(0f, 40f, 0f), flying = true)
+        val pet = f.pet(o)
+        pet.state = pet.state.copy(pos = Vec3(0f, 5f, 0f))
+
+        repeat(60) { f.coordinator.tick(f.sessions, combat(f.npcManager)) }
+
+        assertTrue(pet.weightless)
+        assertEquals(40f, pet.state.pos.y, 0.2f)
+
+        o.state = o.state.copy(flying = false)
+        f.coordinator.tick(f.sessions, combat(f.npcManager))
+        assertTrue(!pet.weightless)
+    }
+
+    @Test
     fun `stranded pet teleports to its station`() = runBlocking {
         val f = Fx()
         val o = f.owner()

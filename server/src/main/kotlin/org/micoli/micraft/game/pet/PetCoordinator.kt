@@ -28,13 +28,26 @@ class PetCoordinator(
         val bySessionId = sessions.associateBy { it.id }
         for (pet in npcManager.ownedPets()) {
             val owner = bySessionId[pet.ownerId] ?: continue
+            pet.weightless = owner.state.flying
             val target = pickTarget(pet, owner)
             if (target != null) {
                 driveCombat(pet, owner, target, combatProcessor)
             } else {
                 driveIdle(pet, owner)
             }
+            if (pet.weightless) matchAltitude(pet, target?.state?.pos?.y ?: owner.state.pos.y)
         }
+    }
+
+    /** Keep a flying pet at [desiredY]; the behaviour's gravity is off, so drive Y here. */
+    private suspend fun matchAltitude(pet: NpcInstance, desiredY: Float) {
+        val y = pet.state.pos.y
+        if (kotlin.math.abs(y - desiredY) < 0.05f) return
+        val stepped = y + (desiredY - y).coerceIn(-FLY_STEP, FLY_STEP)
+        pet.vy = 0f
+        pet.state =
+            pet.state.copy(pos = pet.state.pos.copy(y = stepped), vel = pet.state.vel.copy(y = 0f))
+        npcManager.refreshNpcState(pet.state.id)
     }
 
     /** Stand in front of [target] (on the side facing the owner) and attack when in range. */
@@ -125,5 +138,7 @@ class PetCoordinator(
         // behaviour's spawn-relative clamp must never fire.
         private const val FOLLOW_LEASH = 1_000_000f
         private const val TELEPORT_LEASH = 40f
+        /** Max vertical move per tick while a pet mirrors its flying owner. */
+        private const val FLY_STEP = 1.0f
     }
 }
