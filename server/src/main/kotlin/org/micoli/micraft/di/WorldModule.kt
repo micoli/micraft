@@ -18,6 +18,7 @@ import org.micoli.micraft.game.world.house.loadHouseConfig
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.EndToEndBoundedChunkGenerator
 import org.micoli.micraft.game.world.road.loadRoadConfig
 import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.resourcesConfigDir
@@ -72,6 +73,20 @@ class WorldModule {
         optionalRoadConfig: OptionalRoadConfig,
         optionalHouseConfig: OptionalHouseConfig,
     ): ChunkGenerator {
+        System.getenv("MICRAFT_E2E_BOUNDS")
+            ?.takeIf { it.isNotBlank() }
+            ?.let { spec ->
+                val (w, h) = spec.lowercase().split("x").map { it.trim().toInt() }
+                val groundY = System.getenv("MICRAFT_E2E_GROUND_Y")?.toIntOrNull() ?: 64
+                log.info(
+                    "World: {} | generator=E2E bounded {}x{} groundY={}",
+                    worldName(),
+                    w,
+                    h,
+                    groundY)
+                return EndToEndBoundedChunkGenerator(
+                    halfChunksX = w / 2, halfChunksZ = h / 2, groundY = groundY)
+            }
         val generator =
             ProceduralChunkGenerator(
                 seed = gameConfig.worldSeed,
