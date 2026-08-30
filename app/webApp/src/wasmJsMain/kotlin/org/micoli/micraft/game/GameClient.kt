@@ -129,6 +129,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private var serverHost = ""
     private var serverPort = 0
     private var token = ""
+    private val e2eSession: String = if (jsE2eEnabled()) jsE2eSessionId() else ""
     private var chunkTransportMode = "websocket"
     private var httpChunkFetcher: HttpChunkFetcher? = null
     private var currentPlayerCx = 0
@@ -235,30 +236,37 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     val pid = playerIdReady.await()
                     if (chunkTransportMode != "websocket") break
                     val chunkClient = HttpClient(Js) { install(WebSockets) }
-                    chunkClient.webSocket(host = host, port = port, path = "/chunks") {
-                        send(Frame.Text(token.ifEmpty { pid }))
-                        for (frame in incoming) {
-                            if (frame !is Frame.Binary) continue
-                            val data = frame.readBytes()
-                            networkStats.bytesIn += data.size
-                            val decodeT0 = jsPerfNow()
-                            val msg =
-                                runCatching { ServerMessageCodec.decode(data) }.getOrNull()
-                                    ?: continue
-                            networkStats.chunkDecodeMsAccum += jsPerfNow() - decodeT0
-                            networkStats.chunkDecodeCount++
-                            if (msg is ServerMessage.ChunkData) {
-                                chunkManager.enqueueChunk(
-                                    Chunk.decodeWire(
-                                        msg.pos,
-                                        msg.topY,
-                                        msg.wireBlocks,
-                                        msg.wireStates.takeIf { it.isNotEmpty() },
-                                        msg.wireExtraStates.takeIf { it.isNotEmpty() }),
-                                    msg.topY)
+                    chunkClient.webSocket(
+                        host = host,
+                        port = port,
+                        path = "/chunks",
+                        request = {
+                            if (e2eSession.isNotEmpty())
+                                url.parameters.append("gameSession", e2eSession)
+                        }) {
+                            send(Frame.Text(token.ifEmpty { pid }))
+                            for (frame in incoming) {
+                                if (frame !is Frame.Binary) continue
+                                val data = frame.readBytes()
+                                networkStats.bytesIn += data.size
+                                val decodeT0 = jsPerfNow()
+                                val msg =
+                                    runCatching { ServerMessageCodec.decode(data) }.getOrNull()
+                                        ?: continue
+                                networkStats.chunkDecodeMsAccum += jsPerfNow() - decodeT0
+                                networkStats.chunkDecodeCount++
+                                if (msg is ServerMessage.ChunkData) {
+                                    chunkManager.enqueueChunk(
+                                        Chunk.decodeWire(
+                                            msg.pos,
+                                            msg.topY,
+                                            msg.wireBlocks,
+                                            msg.wireStates.takeIf { it.isNotEmpty() },
+                                            msg.wireExtraStates.takeIf { it.isNotEmpty() }),
+                                        msg.topY)
+                                }
                             }
                         }
-                    }
                     chunkRetryDelay = 1000L
                 } catch (_: Throwable) {}
                 if (!isActive) break
@@ -280,100 +288,107 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     uiState.disconnectMessage = null
                     jsLog("WS connecting to ws://$serverHost:$serverPort/game")
                     val client = HttpClient(Js) { install(WebSockets) }
-                    client.webSocket(host = serverHost, port = serverPort, path = "/game") {
-                        jsLog(
-                            "WS connected, sending Connect(playerName=$currentPlayerNameLocal, userName=$currentUsername)")
-                        send(
-                            Frame.Binary(
-                                true,
-                                ClientMessageCodec.encode(
-                                    ClientMessage.Connect(
-                                        playerName = currentPlayerNameLocal,
-                                        userName = currentUsername,
-                                        preferredLanguage = currentLang,
-                                        token = currentToken))))
+                    client.webSocket(
+                        host = serverHost,
+                        port = serverPort,
+                        path = "/game",
+                        request = {
+                            if (e2eSession.isNotEmpty())
+                                url.parameters.append("gameSession", e2eSession)
+                        }) {
+                            jsLog(
+                                "WS connected, sending Connect(playerName=$currentPlayerNameLocal, userName=$currentUsername)")
+                            send(
+                                Frame.Binary(
+                                    true,
+                                    ClientMessageCodec.encode(
+                                        ClientMessage.Connect(
+                                            playerName = currentPlayerNameLocal,
+                                            userName = currentUsername,
+                                            preferredLanguage = currentLang,
+                                            token = currentToken))))
 
-                        val inputJob = launch {
-                            while (isActive) {
-                                delay(50)
-                                if (localController.disconnectRequested) {
-                                    localController.disconnectRequested = false
-                                    close(CloseReason(CloseReason.Codes.NORMAL, "disconnect"))
-                                    break
-                                }
-                                val intent = localController.buildMoveIntent()
-                                val idle =
-                                    intent.dx == 0f &&
-                                        intent.dz == 0f &&
-                                        intent.dy == 0f &&
-                                        !intent.jump &&
-                                        !intent.flyToggle &&
-                                        !intent.speedUp &&
-                                        !intent.speedDown
-                                if (!idle || intent != localController.lastSentIntent) {
-                                    localController.lastSentIntent = intent
-                                    val seq = ++nextIntentSeq
-                                    val sentIntent = intent.copy(seq = seq)
-                                    localController.recordSentIntent(seq)
-                                    val intentBytes = ClientMessageCodec.encode(sentIntent)
-                                    send(Frame.Binary(true, intentBytes))
-                                    networkStats.bytesOut += intentBytes.size
-                                }
-                                val unloads = chunkManager.collectAndClearUnloads()
-                                if (unloads.isNotEmpty()) {
-                                    val unloadBytes =
-                                        ClientMessageCodec.encode(
-                                            ClientMessage.ChunkUnload(unloads))
-                                    send(Frame.Binary(true, unloadBytes))
-                                    networkStats.bytesOut += unloadBytes.size
+                            val inputJob = launch {
+                                while (isActive) {
+                                    delay(50)
+                                    if (localController.disconnectRequested) {
+                                        localController.disconnectRequested = false
+                                        close(CloseReason(CloseReason.Codes.NORMAL, "disconnect"))
+                                        break
+                                    }
+                                    val intent = localController.buildMoveIntent()
+                                    val idle =
+                                        intent.dx == 0f &&
+                                            intent.dz == 0f &&
+                                            intent.dy == 0f &&
+                                            !intent.jump &&
+                                            !intent.flyToggle &&
+                                            !intent.speedUp &&
+                                            !intent.speedDown
+                                    if (!idle || intent != localController.lastSentIntent) {
+                                        localController.lastSentIntent = intent
+                                        val seq = ++nextIntentSeq
+                                        val sentIntent = intent.copy(seq = seq)
+                                        localController.recordSentIntent(seq)
+                                        val intentBytes = ClientMessageCodec.encode(sentIntent)
+                                        send(Frame.Binary(true, intentBytes))
+                                        networkStats.bytesOut += intentBytes.size
+                                    }
+                                    val unloads = chunkManager.collectAndClearUnloads()
+                                    if (unloads.isNotEmpty()) {
+                                        val unloadBytes =
+                                            ClientMessageCodec.encode(
+                                                ClientMessage.ChunkUnload(unloads))
+                                        send(Frame.Binary(true, unloadBytes))
+                                        networkStats.bytesOut += unloadBytes.size
+                                    }
                                 }
                             }
-                        }
 
-                        val breakJob = launch {
-                            for (msg in outMessages) {
-                                runCatching {
-                                        val bytes = ClientMessageCodec.encode(msg)
-                                        send(Frame.Binary(true, bytes))
-                                        networkStats.bytesOut += bytes.size
-                                    }
-                                    .onFailure { e ->
-                                        jsError(
-                                            "breakJob send error [${msg::class.simpleName}]: ${e::class.simpleName}: ${e.message}")
-                                    }
-                            }
-                        }
-
-                        var frameCount = 0
-                        for (frame in incoming) {
-                            if (frame is Frame.Binary) {
-                                val data = frame.readBytes()
-                                networkStats.bytesIn += data.size
-                                frameCount++
-                                val msg =
-                                    runCatching { ServerMessageCodec.decode(data) }
+                            val breakJob = launch {
+                                for (msg in outMessages) {
+                                    runCatching {
+                                            val bytes = ClientMessageCodec.encode(msg)
+                                            send(Frame.Binary(true, bytes))
+                                            networkStats.bytesOut += bytes.size
+                                        }
                                         .onFailure { e ->
                                             jsError(
-                                                "Protobuf decode error on frame #$frameCount: ${e.message}")
+                                                "breakJob send error [${msg::class.simpleName}]: ${e::class.simpleName}: ${e.message}")
                                         }
-                                        .getOrNull() ?: continue
-                                if (msg is ServerMessage.Welcome) sessionWelcomed = true
-                                runCatching { handleMessage(msg) }
-                                    .onFailure { e ->
-                                        jsError(
-                                            "handleMessage error on ${msg::class.simpleName}: ${e.message}")
-                                    }
-                            } else {
-                                jsLog("WS non-binary frame: ${frame::class.simpleName}")
+                                }
                             }
+
+                            var frameCount = 0
+                            for (frame in incoming) {
+                                if (frame is Frame.Binary) {
+                                    val data = frame.readBytes()
+                                    networkStats.bytesIn += data.size
+                                    frameCount++
+                                    val msg =
+                                        runCatching { ServerMessageCodec.decode(data) }
+                                            .onFailure { e ->
+                                                jsError(
+                                                    "Protobuf decode error on frame #$frameCount: ${e.message}")
+                                            }
+                                            .getOrNull() ?: continue
+                                    if (msg is ServerMessage.Welcome) sessionWelcomed = true
+                                    runCatching { handleMessage(msg) }
+                                        .onFailure { e ->
+                                            jsError(
+                                                "handleMessage error on ${msg::class.simpleName}: ${e.message}")
+                                        }
+                                } else {
+                                    jsLog("WS non-binary frame: ${frame::class.simpleName}")
+                                }
+                            }
+                            val reason = closeReason.await()
+                            lastCloseCode = reason?.code
+                            jsLog(
+                                "WS incoming loop ended after $frameCount frames (closeReason=$reason)")
+                            inputJob.cancel()
+                            breakJob.cancel()
                         }
-                        val reason = closeReason.await()
-                        lastCloseCode = reason?.code
-                        jsLog(
-                            "WS incoming loop ended after $frameCount frames (closeReason=$reason)")
-                        inputJob.cancel()
-                        breakJob.cancel()
-                    }
                     jsLog("WS session closed normally")
                 } catch (e: Throwable) {
                     jsError("WS error: ${e::class.simpleName}: ${e.message}")
