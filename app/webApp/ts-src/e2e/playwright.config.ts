@@ -3,8 +3,9 @@ import { fileURLToPath } from "node:url";
 import { resolve, dirname } from "node:path";
 
 const PORT = process.env.E2E_PORT ?? "8091";
+// this file: <repo>/app/webApp/ts-src/e2e/playwright.config.ts  → up 4
 const HERE = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(HERE, "../../..");
+const REPO_ROOT = resolve(HERE, "../../../..");
 
 /**
  * One Ktor server (booted with MICRAFT_E2E=1) hosts every test's world: each spec gets an
