@@ -42,6 +42,7 @@
     - [Equipment](rpg/equipment.md)
 - Entities
     - [NPCs](entities/npcs.md)
+    - [Pets](entities/pets.md)
     - [Animal lifecycle](entities/animal-lifecycle.md)
     - [Vehicles & siege weapons](entities/vehicles.md)
 - Social
