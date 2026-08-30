@@ -34,6 +34,8 @@ data class NpcDefinition(
     val hibernation: HibernationConfig? = null,
     val shopItems: List<ShopItemEntry> = emptyList(),
     val loot: List<DropEntry> = emptyList(),
+    val tameable: Boolean = false,
+    val tameBaseChance: Float = 0.5f,
 ) {
     fun computeMaxHp(level: Int): Int =
         (hp + (level - minLevel).coerceAtLeast(0) * hp / 10).coerceAtLeast(1)

@@ -16,6 +16,8 @@ spawn:
   maxTotal: 120
   minTotal: 90
 hp: 5
+tameable: true
+tameBaseChance: 0.6
 aggroMode: PASSIVE
 aggroRange: 5
 deaggroTimeSec: 2

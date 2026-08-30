@@ -37,4 +37,6 @@ data class NpcYamlOverride(
     val hibernation: HibernationConfig? = null,
     val shopItems: List<ShopItemEntry>? = null,
     val loot: List<DropEntry>? = null,
+    val tameable: Boolean? = null,
+    val tameBaseChance: Float? = null,
 )

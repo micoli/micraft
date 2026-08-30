@@ -6,6 +6,8 @@ width: 0.3
 height: 0.5
 wanderSpeed: 1.2
 wanderRadius: 10.0
+tameable: true
+tameBaseChance: 0.6
 spawn:
   autoSpawn: true
   maxPerChunk: 2
