@@ -1,6 +1,6 @@
 ---
 name: update-docs
-description: Update the MkDocs documentation site and regenerate the parts that are auto-derived from the code (reference tables, slash commands, API routes, releases). Use after changing a data/config/*.yaml default, a *Constants value, a slash command, a Ktor route, or when adding/editing a system page.
+description: Update the MkDocs documentation site and regenerate the parts that are auto-derived from the code (reference tables, slash commands, API routes, releases, embedded Storybook component screenshots). Use after changing a data/config/*.yaml default, a *Constants value, a slash command, a Ktor route, a UI component shown via a {{ story }} tag, or when adding/editing a system page.
 ---
 
 # Updating the documentation
@@ -79,6 +79,46 @@ Edit `server/src/main/kotlin/org/micoli/micraft/tools/GenerateReferenceDocs.kt`:
 The generator reads the **bundled defaults** (`resources/config/`, `resources/blocks/`),
 not `data/config/` — so it is deterministic and side-effect free.
 
+## Component screenshots — `{{ story }}` tags
+
+Any page can embed a live snapshot of a webapp UI component by dropping a tag on
+its own line:
+
+```
+{{ story "story/game-layout-playerstatusbar--caster" }}
+{{ story "game-windows-character--with-stats" caption="Character screen" }}
+```
+
+- The argument is the **story id** from Storybook's URL (`?path=/story/<id>`); a
+  leading `story/` is optional. Second optional `caption="…"`.
+- `scripts/docs/hooks.py` (MkDocs `hooks:`) rewrites the tag to a `<figure>`
+  pointing at a committed transparent PNG under `docs/assets/stories/`.
+- PNGs + `app/webApp/ts-src/.storybook/stories-manifest.json` are produced by
+  `app/webApp/ts-src/scripts/screenshot-stories.mjs` (headless Chromium) and
+  **committed** — the docs CI has no browser.
+
+### Adding or changing an embedded component
+
+1. **Need a new story or a better variant?** Add/edit it under
+   `app/webApp/ts-src/.stories/game/**` (one `*.stories.tsx` per component,
+   `title: "Game/Layout/…"` or `"Game/Windows/…"`). Keep args static; if a story
+   uses an interactive `play()`, pass `{ pointerEventsCheck: 0 }` to
+   `userEvent.click` so it also renders headless. Then
+   `make ts-lint` + `make ts-test-storybook`.
+2. Put the `{{ story "…" }}` tag on the relevant hand-written page (id = the
+   Storybook URL id; check it in `stories-manifest.json` after step 3).
+3. `make docs-screenshots` — renders every tagged story, (re)writes the PNGs and
+   the manifest, prunes orphans. Eyeball the new PNG in `docs/assets/stories/`.
+4. `make check-docs-screenshots` — re-renders all tagged stories (aborts on a
+   render/play error), checks the manifest is fresh and no PNG is missing/orphan.
+   Also runs in CI (`ci.yml` TypeScript job).
+5. Commit the `.md`, the new/changed `docs/assets/stories/*.png` and
+   `stories-manifest.json` together.
+
+A tag pointing at an unknown id or a missing PNG fails `make docs-site-build`
+(`--strict`). Pixels are **not** diffed (not reproducible across machines) — the
+person editing the story/tag owns regenerating them.
+
 ## 4. Preview
 
 ```bash
@@ -100,5 +140,8 @@ In `RUN_MODE=HOST`, create the venv once:
 - [ ] `make dc CMD="./gradlew :server:exportOpenApi"` — only if a route changed
 - [ ] updated the hand-written page(s) for the changed system
 - [ ] added new pages to `docs/SUMMARY.md`
+- [ ] added/edited a Storybook story + ran `make docs-screenshots` — only if an
+      embedded `{{ story }}` component changed
 - [ ] `make docs-site-build` → exit 0
 - [ ] `make check-docs` → green
+- [ ] `make check-docs-screenshots` → green — only if `{{ story }}` tags changed
