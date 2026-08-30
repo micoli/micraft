@@ -237,9 +237,6 @@ export function registerKeyboard(): Pick<
         if (matched.has("group_panel")) window.mc?.toggleGroupPanel?.();
         if (matched.has("guild_panel")) window.mc?.toggleGuildPanel?.();
         if (matched.has("faction_panel")) window.mc?.toggleFactionPanel?.();
-        if (matched.has("scene_confirm") && window.mcState.sceneGhostActive) {
-          window.mc?.sceneConfirm?.();
-        }
         if (matched.has("scene_cancel") && window.mcState.sceneGhostActive) {
           window.mc?.sceneCancel?.();
         }

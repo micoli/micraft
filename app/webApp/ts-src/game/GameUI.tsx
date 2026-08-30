@@ -29,8 +29,9 @@ import {
   exitCreativeMode,
   setScenePreviewCells,
   sceneRotate,
-  sceneConfirm,
   sceneCancel,
+  confirmScenePlacement,
+  cancelScenePlacement,
 } from "./lib/creativeMode";
 
 const initial: UiState = {
@@ -89,6 +90,7 @@ const initial: UiState = {
   activeEffects: [],
   godMode: false,
   editMode: "game",
+  scenePlaceConfirmOpen: false,
   wallet: 0,
   mailboxOpen: false,
   mails: [],
@@ -362,7 +364,8 @@ export function GameUI() {
         state.craftOpen ||
         state.characterOpen ||
         state.macroEditorOpen ||
-        state.pauseMenuOpen;
+        state.pauseMenuOpen ||
+        state.scenePlaceConfirmOpen;
   }, [
     state.chunkLoading,
     state.preferencesOpen,
@@ -371,6 +374,7 @@ export function GameUI() {
     state.characterOpen,
     state.macroEditorOpen,
     state.pauseMenuOpen,
+    state.scenePlaceConfirmOpen,
   ]);
 
   useEffect(() => {
@@ -948,8 +952,16 @@ export function GameUI() {
       }
     };
     window.mc.sceneRotate = () => sceneRotate();
-    window.mc.sceneConfirm = () => sceneConfirm();
     window.mc.sceneCancel = () => sceneCancel();
+    window.mc.showScenePlaceConfirm = () => dispatch("scene_place_confirm_show");
+    window.mc.confirmScenePlacement = () => {
+      confirmScenePlacement();
+      dispatch("scene_place_confirm_hide");
+    };
+    window.mc.cancelScenePlacement = () => {
+      cancelScenePlacement();
+      dispatch("scene_place_confirm_hide");
+    };
     window.mc.reloadAttackMeta = () => {
       loadAttackMetaRef.current();
       loadClassDefinitionsRef.current();

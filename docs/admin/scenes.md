@@ -8,7 +8,11 @@ A **scene** is a bounded, off-world block-structure buffer — an editing canvas
 prefabs you later stamp into the live world.
 
 - **`/scene:place <sceneId> <rotation:0-3> <x> <y> <z>`** — stamp a scene into the
-  world at a position.
+  world at a position. Not typed by hand in practice: in **creative mode**
+  (`/mode creative`) pick a scene in the floating palette, a translucent ghost
+  follows the cursor, `R` rotates it, then **click** the target cell — a yes/no
+  popup confirms before the stamp is sent (`Yes` places, `No`/`Esc` cancels).
+  Placement re-streams the affected chunks to every player.
 
 | Route | Purpose |
 |-------|---------|
@@ -20,6 +24,8 @@ prefabs you later stamp into the live world.
 | `GET /api/admin/scenes/{id}/entities` | fractional block entities (lego/plate/arch) |
 | `PUT /api/admin/scenes/{id}/layout` | shortcut bar layout |
 | `GET /api/admin/ws/scenes/{id}` | live feed |
+
+{{ story "game-windows-sceneeplaceconfirmdialog--open" caption="Creative mode — confirm popup shown after clicking a target cell" }}
 
 ## Configuration
 
