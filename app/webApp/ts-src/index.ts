@@ -298,6 +298,7 @@ window.mc = {
   addChatMessage: () => {},
   channelsSync: () => {},
   updateHotbar: () => {},
+  updateE2E: () => {},
   toggleHotbar: () => {},
   toggleHealthBar: () => {},
   toggleStatistics: () => {},

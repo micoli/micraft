@@ -161,6 +161,17 @@ class LocalPlayerController(
 
     private val sentIntentHistory = ArrayDeque<SentIntentSnapshot>()
     var hasPrediction = false
+
+    /** Block the crosshair is on this frame — read by the e2e snapshot only. */
+    var e2eTarget: BlockPos? = null
+
+    /** Distance the local prediction still has to travel to reach the server position. */
+    val e2eReconcileXz: Double
+        get() = kotlin.math.hypot(predX - serverX, predZ - serverZ)
+
+    val e2eReconcileY: Double
+        get() = kotlin.math.abs(predY - serverY)
+
     private var prevPredX = 0.0
     private var prevPredY = 0.0
     private var prevPredZ = 0.0
@@ -1352,6 +1363,7 @@ class LocalPlayerController(
             else maxInteractionDistance
         val rayResult = raycastBlock(rayReach)
         val target = rayResult?.target
+        e2eTarget = target
 
         if (pendingBlockInteract) {
             pendingBlockInteract = false
