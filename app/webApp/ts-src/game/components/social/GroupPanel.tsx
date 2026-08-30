@@ -1,3 +1,4 @@
+import { Button } from "../../../primitives/Button";
 import { Dialog } from "../../../primitives/Dialog";
 import { DialogContent } from "../../../primitives/DialogContent";
 import { DialogTitle } from "../../../primitives/DialogTitle";
@@ -33,11 +34,19 @@ export function GroupPanel({ open, group, invite, myPlayerId, onClose }: Props) 
             {invite && (
               <div style={{ marginBottom: 8 }}>
                 <p style={{ fontSize: 12 }}>{invite.from} vous a invité.</p>
-                <button onClick={() => emit(`group_respond:${invite.id}\t1`)}>Accepter</button>
-                <button onClick={() => emit(`group_respond:${invite.id}\t0`)}>Refuser</button>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <Button size="sm" onClick={() => emit(`group_respond:${invite.id}\t1`)}>
+                    Accepter
+                  </Button>
+                  <Button size="sm" variant="danger" onClick={() => emit(`group_respond:${invite.id}\t0`)}>
+                    Refuser
+                  </Button>
+                </div>
               </div>
             )}
-            <button onClick={() => emit("group_create")}>Créer un groupe</button>
+            <Button size="sm" onClick={() => emit("group_create")}>
+              Créer un groupe
+            </Button>
           </div>
         ) : (
           <div style={{ marginTop: 12 }}>
@@ -50,8 +59,12 @@ export function GroupPanel({ open, group, invite, myPlayerId, onClose }: Props) 
                   </span>
                   {isLeader && m.playerId !== myPlayerId && (
                     <>
-                      <button onClick={() => emit(`group_kick:${m.playerId}`)}>Exclure</button>
-                      <button onClick={() => emit(`group_transfer:${m.playerId}`)}>Responsable</button>
+                      <Button size="sm" variant="danger" onClick={() => emit(`group_kick:${m.playerId}`)}>
+                        Exclure
+                      </Button>
+                      <Button size="sm" variant="secondary" onClick={() => emit(`group_transfer:${m.playerId}`)}>
+                        Responsable
+                      </Button>
                     </>
                   )}
                 </li>
@@ -59,17 +72,24 @@ export function GroupPanel({ open, group, invite, myPlayerId, onClose }: Props) 
             </ul>
             <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
               {isLeader && (
-                <button
+                <Button
+                  size="sm"
                   onClick={() => {
                     const n = prompt("Inviter quel joueur ?");
                     if (n) emit(`group_invite:${n}`);
                   }}
                 >
                   Inviter
-                </button>
+                </Button>
               )}
-              <button onClick={() => emit("group_leave")}>Quitter</button>
-              {isLeader && <button onClick={() => emit("group_disband")}>Dissoudre</button>}
+              <Button size="sm" variant="secondary" onClick={() => emit("group_leave")}>
+                Quitter
+              </Button>
+              {isLeader && (
+                <Button size="sm" variant="danger" onClick={() => emit("group_disband")}>
+                  Dissoudre
+                </Button>
+              )}
             </div>
           </div>
         )}

@@ -1,3 +1,4 @@
+import { Button } from "../../../primitives/Button";
 import { Dialog } from "../../../primitives/Dialog";
 import { DialogContent } from "../../../primitives/DialogContent";
 import { DialogTitle } from "../../../primitives/DialogTitle";
@@ -45,14 +46,17 @@ export function FactionPanel({ open, faction, onClose }: Props) {
                       {d.name} <span style={{ opacity: 0.5 }}>({count})</span>
                     </span>
                     {mine ? (
-                      <button onClick={() => emit("faction_set:")}>Quitter</button>
+                      <Button size="sm" variant="danger" onClick={() => emit("faction_set:")}>
+                        Quitter
+                      </Button>
                     ) : (
-                      <button
+                      <Button
+                        size="sm"
                         disabled={faction.changeCooldownRemainingMs > 0}
                         onClick={() => emit(`faction_set:${d.id}`)}
                       >
                         Rejoindre
-                      </button>
+                      </Button>
                     )}
                   </li>
                 );

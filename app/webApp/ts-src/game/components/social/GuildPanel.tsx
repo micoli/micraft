@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "../../../primitives/Button";
 import { Dialog } from "../../../primitives/Dialog";
 import { DialogContent } from "../../../primitives/DialogContent";
 import { DialogTitle } from "../../../primitives/DialogTitle";
@@ -50,11 +51,18 @@ export function GuildPanel({ open, guild, invite, myPlayerId, onClose }: Props) 
                 <p style={{ fontSize: 12 }}>
                   {invite.from} vous a invité dans {invite.name}.
                 </p>
-                <button onClick={() => emit(`guild_respond:${invite.id}\t1`)}>Accepter</button>
-                <button onClick={() => emit(`guild_respond:${invite.id}\t0`)}>Refuser</button>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <Button size="sm" onClick={() => emit(`guild_respond:${invite.id}\t1`)}>
+                    Accepter
+                  </Button>
+                  <Button size="sm" variant="danger" onClick={() => emit(`guild_respond:${invite.id}\t0`)}>
+                    Refuser
+                  </Button>
+                </div>
               </div>
             )}
-            <button
+            <Button
+              size="sm"
               onClick={() => {
                 const n = prompt("Nom de la guilde ?");
                 if (!n) return;
@@ -63,7 +71,7 @@ export function GuildPanel({ open, guild, invite, myPlayerId, onClose }: Props) 
               }}
             >
               Fonder une guilde
-            </button>
+            </Button>
           </div>
         ) : (
           <Tabs defaultValue="members" style={{ marginTop: 8 }}>
@@ -76,17 +84,24 @@ export function GuildPanel({ open, guild, invite, myPlayerId, onClose }: Props) 
             <TabsContent value="members">
               <div style={{ display: "flex", gap: 6, margin: "8px 0", flexWrap: "wrap" }}>
                 {has("INVITE") && (
-                  <button
+                  <Button
+                    size="sm"
                     onClick={() => {
                       const n = prompt("Inviter quel joueur ?");
                       if (n) emit(`guild_invite:${n}`);
                     }}
                   >
                     Inviter
-                  </button>
+                  </Button>
                 )}
-                <button onClick={() => emit("guild_leave")}>Quitter</button>
-                {has("DISBAND") && <button onClick={() => emit("guild_disband")}>Dissoudre</button>}
+                <Button size="sm" variant="secondary" onClick={() => emit("guild_leave")}>
+                  Quitter
+                </Button>
+                {has("DISBAND") && (
+                  <Button size="sm" variant="danger" onClick={() => emit("guild_disband")}>
+                    Dissoudre
+                  </Button>
+                )}
               </div>
               <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
                 <tbody>
@@ -111,10 +126,14 @@ export function GuildPanel({ open, guild, invite, myPlayerId, onClose }: Props) 
                       </td>
                       <td style={{ textAlign: "right" }}>
                         {has("KICK") && m.playerId !== guild.ownerId && m.playerId !== myPlayerId && (
-                          <button onClick={() => emit(`guild_kick:${m.playerId}`)}>Exclure</button>
+                          <Button size="sm" variant="danger" onClick={() => emit(`guild_kick:${m.playerId}`)}>
+                            Exclure
+                          </Button>
                         )}
                         {isOwner && m.playerId !== myPlayerId && (
-                          <button onClick={() => emit(`guild_transfer:${m.playerId}`)}>Céder</button>
+                          <Button size="sm" variant="secondary" onClick={() => emit(`guild_transfer:${m.playerId}`)}>
+                            Céder
+                          </Button>
                         )}
                       </td>
                     </tr>
@@ -146,13 +165,16 @@ export function GuildPanel({ open, guild, invite, myPlayerId, onClose }: Props) 
                     ))}
                   </div>
                   {has("MANAGE_RANKS") && !guild.members.some((m) => m.rank === r.name) && (
-                    <button onClick={() => emit(`guild_rank_delete:${r.name}`)}>Supprimer</button>
+                    <Button size="sm" variant="danger" onClick={() => emit(`guild_rank_delete:${r.name}`)}>
+                      Supprimer
+                    </Button>
                   )}
                 </div>
               ))}
               {has("MANAGE_RANKS") && (
-                <button
-                  style={{ marginTop: 8 }}
+                <Button
+                  size="sm"
+                  className="mt-2"
                   onClick={() => {
                     const n = prompt("Nom du grade ?");
                     if (!n) return;
@@ -161,7 +183,7 @@ export function GuildPanel({ open, guild, invite, myPlayerId, onClose }: Props) 
                   }}
                 >
                   Nouveau grade
-                </button>
+                </Button>
               )}
             </TabsContent>
 
@@ -178,7 +200,9 @@ export function GuildPanel({ open, guild, invite, myPlayerId, onClose }: Props) 
                     onChange={(e) => setMotd(e.target.value)}
                     onKeyDown={(e) => e.stopPropagation()}
                   />
-                  <button onClick={() => emit(`guild_motd:${motd}`)}>Enregistrer</button>
+                  <Button size="sm" className="mt-1" onClick={() => emit(`guild_motd:${motd}`)}>
+                    Enregistrer
+                  </Button>
                 </div>
               )}
             </TabsContent>
