@@ -20,4 +20,5 @@ enum class WidgetType {
     STATISTICS,
     QUEST_TRACKER,
     BUFF_BAR,
+    PET_HUD,
 }

@@ -10,6 +10,8 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 | `combat` | `combat_attack` | KeyR |
 | `combat` | `npc_interact` | KeyX |
 | `combat` | `vehicle_mount` | Ctrl+KeyX |
+| `combat` | `tame` | Alt+KeyT |
+| `combat` | `pet_dismiss` | Alt+KeyP |
 | `combat` | `console_toggle` | KeyH |
 | `combat` | `siege_weapon_rotate` | KeyR |
 | `combat` | `siege_weapon_pitch` | Alt+KeyR |

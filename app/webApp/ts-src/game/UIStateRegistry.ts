@@ -98,6 +98,7 @@ export interface UiState {
   guildPanelOpen: boolean;
   factionPanelOpen: boolean;
   socialInvites: import("./types").SocialInvite[];
+  petRoster: import("./types").PetRosterData;
 }
 
 const ingameMapRegistry = {
@@ -406,6 +407,10 @@ const socialRegistry = {
   faction_sync: (state: UiState, payload: { faction: import("./types").FactionSyncData }) => ({
     ...state,
     faction: payload.faction,
+  }),
+  pet_roster_update: (state: UiState, payload: { data: import("./types").PetRosterData }) => ({
+    ...state,
+    petRoster: payload.data,
   }),
   group_panel_toggle: (state: UiState) => ({ ...state, groupPanelOpen: !state.groupPanelOpen }),
   guild_panel_toggle: (state: UiState) => ({ ...state, guildPanelOpen: !state.guildPanelOpen }),

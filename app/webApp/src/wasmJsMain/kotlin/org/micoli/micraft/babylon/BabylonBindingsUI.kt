@@ -277,6 +277,8 @@ fun jsFactionSync(json: String): Unit = js("mc.factionSync(json)")
 
 fun jsSocialDenied(scope: String, reason: String): Unit = js("mc.socialDenied(scope, reason)")
 
+fun jsPetRosterUpdate(json: String): Unit = js("mc.petRosterUpdate(json)")
+
 fun jsSocialInvite(kind: String, id: String, name: String, from: String): Unit =
     js("mc.socialInvite(kind, id, name, from)")
 

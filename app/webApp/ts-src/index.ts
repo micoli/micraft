@@ -382,6 +382,7 @@ window.mc = {
   factionSync: () => {},
   socialDenied: () => {},
   socialInvite: () => {},
+  petRosterUpdate: () => {},
   toggleGroupPanel: () => {},
   toggleGuildPanel: () => {},
   toggleFactionPanel: () => {},

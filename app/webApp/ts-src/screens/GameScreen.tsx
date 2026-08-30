@@ -33,6 +33,7 @@ import { AggroIndicators } from "../game/components/character/AggroIndicators";
 import { Statistics } from "../game/components/statistics/Statistics";
 import { QuestJournal } from "../game/components/quest/QuestJournal";
 import { QuestTracker } from "../game/components/quest/QuestTracker";
+import { PetHud } from "../game/components/pet/PetHud";
 import { BuffBar } from "../game/components/buffs/BuffBar";
 import { MailboxOverlay } from "../game/overlays/MailboxOverlay";
 import { AuctionHouse } from "../game/components/auction/AuctionHouse";
@@ -622,6 +623,13 @@ export function GameScreen() {
               layoutStyle={widgetStyle(activeLayout, "QUEST_TRACKER")}
             />
           )}
+          <PetHud
+            roster={state.petRoster}
+            layoutStyle={widgetStyle(activeLayout, "PET_HUD")}
+            onCommand={(cmd) => {
+              consoleSubmittedRef.current = cmd;
+            }}
+          />
           {state.mailboxOpen && (
             <MailboxOverlay
               open={state.mailboxOpen}
