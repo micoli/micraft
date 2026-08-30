@@ -51,6 +51,8 @@ private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
         hibernation = o.hibernation ?: hibernation,
         shopItems = o.shopItems ?: shopItems,
         loot = o.loot ?: loot,
+        tameable = o.tameable ?: tameable,
+        tameBaseChance = o.tameBaseChance ?: tameBaseChance,
     )
 
 /**
@@ -93,6 +95,8 @@ fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition =
         hibernation = o.hibernation ?: hibernation,
         shopItems = o.shopItems ?: shopItems,
         loot = o.loot ?: loot,
+        tameable = o.tameable ?: tameable,
+        tameBaseChance = o.tameBaseChance ?: tameBaseChance,
     )
 
 class NpcRegistryLoader(
@@ -186,6 +190,8 @@ class NpcRegistryLoader(
                                     hibernation = entry.hibernation,
                                     shopItems = entry.shopItems,
                                     loot = entry.loot,
+                                    tameable = entry.tameable,
+                                    tameBaseChance = entry.tameBaseChance,
                                 )
                         }
                         .onFailure { e -> npcLog.warn("Skipping entity '{}': {}", key, e.message) }
