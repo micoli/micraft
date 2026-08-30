@@ -1,4 +1,4 @@
-# MicCraft
+# MiCraft
 
 — **Kotlin Multiplatform**, multiplayer voxel, procedural gen, persistent server world.
 

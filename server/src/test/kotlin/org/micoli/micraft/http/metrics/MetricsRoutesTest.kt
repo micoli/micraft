@@ -41,7 +41,7 @@ class MetricsRoutesTest {
         assertEquals(HttpStatusCode.OK, r.status)
         assertTrue(r.contentType()!!.match(ContentType.Text.Html))
         val body = r.bodyAsText()
-        assertTrue(body.contains("MicCraft Server Status"))
+        assertTrue(body.contains("MiCraft Server Status"))
         assertTrue(body.contains("none"))
     }
 

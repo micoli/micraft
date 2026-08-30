@@ -6,7 +6,7 @@ title: MiCraft
 
 # MiCraft
 
-**MicCraft** is a multiplayer RPG voxel game built with **Kotlin Multiplatform**.
+**MiCraft** is a multiplayer RPG voxel game built with **Kotlin Multiplatform**.
 A Ktor WebSocket server runs authoritative physics and serves a browser client
 (Kotlin/Wasm + BabylonJS). It ships procedural terrain, a biome system, liquid
 physics, NPC entities, weather zones, a full RPG layer, and a plugin-based

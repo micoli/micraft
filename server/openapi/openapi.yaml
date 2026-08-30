@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: MicCraft API
+  title: MiCraft API
   description: "Server HTTP API — auth, game entities, admin, map/chunks."
   version: 1.0.0
 externalDocs:

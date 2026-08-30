@@ -149,7 +149,7 @@ fun Application.module() {
     install(Koin) { modules(AppModule().module) }
     install(OpenApi) {
         info {
-            title = "MicCraft API"
+            title = "MiCraft API"
             version = "1.0.0"
             description = "Server HTTP API — auth, game entities, admin, map/chunks."
         }

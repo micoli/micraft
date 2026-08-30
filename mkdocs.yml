@@ -1,12 +1,12 @@
-site_name: MicCraft
+site_name: MiCraft
 site_description: >-
-  MicCraft — a multiplayer RPG voxel game built with Kotlin Multiplatform.
+  MiCraft — a multiplayer RPG voxel game built with Kotlin Multiplatform.
   How to play, and how to configure every system.
 site_url: https://micoli.github.io/micraft/
 repo_url: https://github.com/micoli/micraft
 repo_name: micoli/micraft
 edit_uri: edit/main/docs/
-copyright: MicCraft
+copyright: MiCraft
 
 docs_dir: docs
 site_dir: site

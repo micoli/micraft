@@ -25,7 +25,7 @@ export function SidebarComponent({ collapsed, onToggle }: { collapsed: boolean; 
           </div>
           {!collapsed && (
             <>
-              <span className="text-white font-semibold text-[15px] tracking-wide">MicCraft</span>
+              <span className="text-white font-semibold text-[15px] tracking-wide">MiCraft</span>
               <span className="text-[#8A99AF] text-xs font-normal mt-0.5">Admin</span>
             </>
           )}
