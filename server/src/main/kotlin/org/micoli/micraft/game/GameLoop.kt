@@ -112,7 +112,6 @@ import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.sanitizePlayerName
 import org.micoli.micraft.game.world.scene.ScenePlacer
 import org.micoli.micraft.game.world.scene.SceneRegistry
-import org.micoli.micraft.game.world.toPlayerAdminJson
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherConfig
@@ -650,6 +649,11 @@ class GameLoop(
             npcTickPipeline = npcTickPipeline,
             vehicleTickPipeline = vehicleTickPipeline,
             siegeProjectileTickPipeline = siegeProjectileTickPipeline,
+            siegeProjectileManager = siegeProjectileManager,
+            petManager = petManager,
+            tradeManager = tradeManager,
+            groupManager = groupManager,
+            playerPersister = playerPersister,
             intentCollectorProvider = { intentCollector },
             blockBreaker = blockBreaker,
             movementProcessor = movementProcessor,
@@ -1669,33 +1673,7 @@ class GameLoop(
         chunkStreamer.requestAround(session, spawnCp.cx, spawnCp.cz)
         log.info("chunk requests queued for {}", id.take(8))
 
-        sessionRegistry
-            .all()
-            .filter { it.id != id }
-            .forEach { other ->
-                session.send(ServerMessage.PlayerUpdate(other.state))
-                other.send(ServerMessage.PlayerUpdate(state))
-            }
-        npcManager.sendAllTo(session)
-        petManager.rosterSyncFor(session)
-        vehicleManager.sendAllTo(session)
-        placeableManager.sendAllTo(session)
-        siegeWeaponManager.sendAllTo(session)
-        siegeProjectileManager.sendAllTo(session)
-        // A stale session with the same id (e.g. a second client reconnecting under the same
-        // playerName before the first socket's read loop noticed it's dead) would otherwise be
-        // silently overwritten in the registry, leaving its socket alive but never ticked again.
-        sessionRegistry[id]?.let {
-            if (it !== session) {
-                runCatching {
-                    it.socket.close(
-                        CloseReason(CloseReason.Codes.VIOLATED_POLICY, "replaced by new session"))
-                }
-            }
-        }
-        sessionRegistry[id] = session
-        broadcastPlayerAdmin(
-            """{"type":"playerJoined","id":"$id","name":${playerName.toPlayerAdminJson()},"x":${spawn.x},"y":${spawn.y},"z":${spawn.z},"yaw":0.0}""")
+        gameWorld.onPlayerJoin(session)
 
         try {
             socket.incoming.consumeEach { frame ->
@@ -1874,33 +1852,7 @@ class GameLoop(
                 }
             }
         } finally {
-            // A session evicted by a newer reconnect under the same id (see the replace logic
-            // above) must not tear down the state of the session that replaced it.
-            if (sessionRegistry[id] === session) {
-                broadcastPlayerAdmin("""{"type":"playerLeft","id":"$id"}""")
-                sessionRegistry.remove(id)
-                chunkStreamer.cleanupSession(id)
-                petManager.onPlayerDisconnected(session)
-                npcManager.clearPlayer(id)
-                vehicleManager.clearRider(id)
-                npcTickPipeline.onPlayerDisconnected(sessionRegistry.all())
-                tradeManager.onPlayerDisconnect(id)
-                auctionManager?.clearFilter(id)
-                groupManager.onDisconnect(session)
-                savePlayer(session)
-                log.info(
-                    "player disconnected: {} name={} (total={})",
-                    id.take(8),
-                    session.state.name,
-                    sessionRegistry.size)
-                val left = ServerMessage.PlayerLeft(id)
-                sessionRegistry.all().forEach { it.send(left) }
-            } else {
-                log.info(
-                    "stale session closed: {} name={} (replaced by newer session)",
-                    id.take(8),
-                    session.state.name)
-            }
+            gameWorld.onPlayerLeave(session)
         }
     }
 
