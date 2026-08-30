@@ -15,6 +15,9 @@ app/webApp/ts-src/buildConfig.ts
 app/webApp/src/wasmJsMain/resources/models/
 app/webApp/ts-src/node_modules/
 app/webApp/ts-src/storybook-static/
+app/webApp/ts-src/playwright-report/
+app/webApp/ts-src/test-results/
+data/world/e2e_default/
 .kotlin
 .gradle
 build
