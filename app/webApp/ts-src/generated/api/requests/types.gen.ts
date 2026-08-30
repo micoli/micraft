@@ -84,7 +84,7 @@ export type OrgMicoliMicraftUiWidgetRegistryEntry = {
 /**
  * WidgetType
  */
-export type OrgMicoliMicraftUiWidgetType = 'MINIMAP' | 'HUD' | 'SHORTCUT_BAR' | 'CHAT_HISTORY' | 'INPUT_BOX' | 'INVENTORY' | 'CHUNK_DEBUG' | 'INGAME_MAP' | 'ATTACK_PANEL' | 'PLAYER_STATUS' | 'COMBAT_TARGET' | 'XP_BAR' | 'AGGRO_INDICATORS' | 'STATISTICS' | 'QUEST_TRACKER' | 'BUFF_BAR';
+export type OrgMicoliMicraftUiWidgetType = 'MINIMAP' | 'HUD' | 'SHORTCUT_BAR' | 'CHAT_HISTORY' | 'INPUT_BOX' | 'INVENTORY' | 'CHUNK_DEBUG' | 'INGAME_MAP' | 'ATTACK_PANEL' | 'PLAYER_STATUS' | 'COMBAT_TARGET' | 'XP_BAR' | 'AGGRO_INDICATORS' | 'STATISTICS' | 'QUEST_TRACKER' | 'BUFF_BAR' | 'PET_HUD';
 
 /**
  * ServerInfo
@@ -1378,6 +1378,10 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      */
     activeLayout: string;
     /**
+     * String
+     */
+    activePetId?: null | string;
+    /**
      * Boolean
      */
     animatedFavicon: boolean;
@@ -1425,6 +1429,14 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      */
     email: string;
     /**
+     * Long
+     */
+    factionChangedAtMs?: null | number;
+    /**
+     * String
+     */
+    factionId?: null | string;
+    /**
      * Int
      */
     fieldOfView: number;
@@ -1436,6 +1448,18 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      * Boolean
      */
     godMode: boolean;
+    /**
+     * String
+     */
+    guildId?: null | string;
+    /**
+     * String
+     */
+    guildRank?: null | string;
+    /**
+     * String
+     */
+    guildTag?: null | string;
     /**
      * String
      */
@@ -1515,6 +1539,10 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      * List<String>
      */
     ownedWeapons: Array<string>;
+    /**
+     * List<PetRecord>
+     */
+    pets: Array<OrgMicoliMicraftPlayerPetPetRecord>;
     pos: OrgMicoliMicraftPlayerVec3;
     /**
      * Map<String,QuestProgress>
@@ -1751,6 +1779,48 @@ export type OrgMicoliMicraftPlayerOrientation = {
      * Float
      */
     yaw: number;
+};
+
+/**
+ * PetRecord
+ */
+export type OrgMicoliMicraftPlayerPetPetRecord = {
+    /**
+     * Int
+     */
+    currentHp: number;
+    /**
+     * Boolean
+     */
+    dead: boolean;
+    /**
+     * String
+     */
+    id: string;
+    /**
+     * Int
+     */
+    level: number;
+    /**
+     * String
+     */
+    name: string;
+    /**
+     * String
+     */
+    npcType: string;
+    /**
+     * Long
+     */
+    resurrectReadyAtMs: number;
+    /**
+     * Int
+     */
+    tamedAtLevel: number;
+    /**
+     * Int
+     */
+    xp: number;
 };
 
 /**
