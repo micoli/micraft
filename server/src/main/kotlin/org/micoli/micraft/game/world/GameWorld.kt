@@ -1,10 +1,13 @@
 package org.micoli.micraft.game.world
 
 import io.ktor.server.application.Application
+import io.ktor.websocket.CloseReason
+import io.ktor.websocket.close
 import java.nio.file.Path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.game.GameTimePersistence
 import org.micoli.micraft.game.GameTimeService
@@ -17,14 +20,19 @@ import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.npc.NpcTickPipeline
+import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.placeable.PlaceableManager
+import org.micoli.micraft.game.placeable.siege.SiegeProjectileManager
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileTickPipeline
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
+import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.hasPermission
+import org.micoli.micraft.game.social.GroupManager
 import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.IntentCollector
 import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.tick.TickProfiler
+import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.vehicle.VehicleTickPipeline
 import org.micoli.micraft.game.world.block.BlockBreaker
@@ -70,6 +78,11 @@ class GameWorld(
     private val npcTickPipeline: NpcTickPipeline,
     private val vehicleTickPipeline: VehicleTickPipeline,
     private val siegeProjectileTickPipeline: SiegeProjectileTickPipeline,
+    private val siegeProjectileManager: SiegeProjectileManager,
+    private val petManager: PetManager,
+    private val tradeManager: TradeManager,
+    private val groupManager: GroupManager,
+    private val playerPersister: PlayerPersister,
     private val intentCollectorProvider: () -> IntentCollector,
     private val blockBreaker: BlockBreaker,
     private val movementProcessor: MovementProcessor,
@@ -131,6 +144,76 @@ class GameWorld(
                 cacheDir = it.worldDir.resolve("terrain_cache"),
             )
         }
+    }
+
+    /**
+     * Register [session] in this world and send it the state of everyone/everything already here,
+     * plus cross-send its arrival. Called once the connect handshake has succeeded.
+     */
+    suspend fun onPlayerJoin(session: PlayerSession) {
+        val id = session.id
+        sessions
+            .all()
+            .filter { it.id != id }
+            .forEach { other ->
+                session.send(ServerMessage.PlayerUpdate(other.state))
+                other.send(ServerMessage.PlayerUpdate(session.state))
+            }
+        npcManager.sendAllTo(session)
+        petManager.rosterSyncFor(session)
+        vehicleManager.sendAllTo(session)
+        placeableManager.sendAllTo(session)
+        siegeWeaponManager.sendAllTo(session)
+        siegeProjectileManager.sendAllTo(session)
+        // A stale session with the same id (e.g. a second client reconnecting under the same
+        // playerName before the first socket's read loop noticed it's dead) would otherwise be
+        // silently overwritten in the registry, leaving its socket alive but never ticked again.
+        sessions[id]?.let { existing ->
+            if (existing !== session) {
+                runCatching {
+                    existing.socket.close(
+                        CloseReason(CloseReason.Codes.VIOLATED_POLICY, "replaced by new session"))
+                }
+            }
+        }
+        sessions[id] = session
+        val pos = session.state.pos
+        broadcastPlayerAdmin(
+            """{"type":"playerJoined","id":"$id","name":${session.state.name.toPlayerAdminJson()},"x":${pos.x},"y":${pos.y},"z":${pos.z},"yaw":0.0}""")
+    }
+
+    /**
+     * Tear down [session]'s footprint in this world — unless a newer reconnect already replaced it.
+     */
+    suspend fun onPlayerLeave(session: PlayerSession) {
+        val id = session.id
+        // A session evicted by a newer reconnect under the same id (see onPlayerJoin) must not tear
+        // down the state of the session that replaced it.
+        if (sessions[id] !== session) {
+            log.info(
+                "stale session closed: {} name={} (replaced by newer session)",
+                id.take(8),
+                session.state.name)
+            return
+        }
+        broadcastPlayerAdmin("""{"type":"playerLeft","id":"$id"}""")
+        sessions.remove(id)
+        chunkStreamer.cleanupSession(id)
+        petManager.onPlayerDisconnected(session)
+        npcManager.clearPlayer(id)
+        vehicleManager.clearRider(id)
+        npcTickPipeline.onPlayerDisconnected(sessions.all())
+        tradeManager.onPlayerDisconnect(id)
+        auctionManager?.clearFilter(id)
+        groupManager.onDisconnect(session)
+        playerPersister.save(session)
+        log.info(
+            "player disconnected: {} name={} (total={})",
+            id.take(8),
+            session.state.name,
+            sessions.size)
+        val left = ServerMessage.PlayerLeft(id)
+        sessions.all().forEach { it.send(left) }
     }
 
     suspend fun tick(): Unit = tickProfiler.measure("total") { tickBody() }
