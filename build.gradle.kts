@@ -31,13 +31,8 @@ plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
     }
 }
 
-/**
- * Shared logic for dev and devDebug tasks.
- *
- * @param debugWorld true → MICRAFT_DEBUG_WORLD=1 is passed to the server process, which activates
- *   DebugChunkGenerator + fly spawn near the test block.
- */
-fun startDevMode(rootDir: java.io.File, debugWorld: Boolean, watch: Boolean) {
+/** Shared logic for the dev and prod tasks. */
+fun startDevMode(rootDir: java.io.File, watch: Boolean) {
     val gradle = "${rootDir}/gradlew"
     val serverBin = rootDir.resolve("server/build/install/server/bin/server")
     // Single served dir that webpack never cleans. dev → build/web (assembled by
@@ -93,11 +88,9 @@ fun startDevMode(rootDir: java.io.File, debugWorld: Boolean, watch: Boolean) {
     }
 
     fun startServer(): Process {
-        val tag = if (debugWorld) " [DEBUG WORLD]" else ""
         println(
-            "[dev] starting server$tag (${java.time.LocalTime.now().let { "%02d:%02d:%02d".format(it.hour, it.minute, it.second) }})")
+            "[dev] starting server (${java.time.LocalTime.now().let { "%02d:%02d:%02d".format(it.hour, it.minute, it.second) }})")
         val pb = ProcessBuilder(serverBin.absolutePath).directory(rootDir)
-        if (debugWorld) pb.environment()["MICRAFT_DEBUG_WORLD"] = "1"
         pb.environment()["MICRAFT_WEB_DIST"] = webDist.absolutePath
         val p = pb.start()
         p.pipeOutput("[server] ")
@@ -226,7 +219,7 @@ tasks.register("dev") {
     description = "Build and start the game server with live client watchers (:8080)"
     notCompatibleWithConfigurationCache("Launches external processes via script-level function")
     val rootDir = rootProject.projectDir
-    doLast { startDevMode(rootDir, debugWorld = false, watch = true) }
+    doLast { startDevMode(rootDir, watch = true) }
 }
 
 /**
@@ -240,25 +233,7 @@ tasks.register("prod") {
     description = "Build optimized bundles and start the game server (:8080, no watchers)"
     notCompatibleWithConfigurationCache("Launches external processes via script-level function")
     val rootDir = rootProject.projectDir
-    doLast { startDevMode(rootDir, debugWorld = false, watch = false) }
-}
-
-/**
- * ./gradlew devDebug
- *
- * Same as dev but the server runs with MICRAFT_DEBUG_WORLD=1:
- * - DebugChunkGenerator: single GRASS block at world (8, 2, 8)
- * - Player spawns at (8, 1, 14) in fly mode, facing the block
- *
- * Then open: http://localhost:8080/?debug&bx=8&by=2&bz=8 Keys 1-6 orbit the camera around each face
- * of the block. Escape releases the camera lock.
- */
-tasks.register("devDebug") {
-    group = "micraft"
-    description = "Same as dev but with a single-block debug world for texture inspection"
-    notCompatibleWithConfigurationCache("Launches external processes via script-level function")
-    val rootDir = rootProject.projectDir
-    doLast { startDevMode(rootDir, debugWorld = true, watch = true) }
+    doLast { startDevMode(rootDir, watch = false) }
 }
 
 spotless {

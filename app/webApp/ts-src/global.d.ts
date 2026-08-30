@@ -1,14 +1,12 @@
 import type {
   Scene,
   Camera,
-  TargetCamera,
   Engine,
   Mesh,
   HemisphericLight,
   PointLight,
   StandardMaterial,
   ShaderMaterial,
-  Observer,
   Vector4,
 } from "@babylonjs/core";
 
@@ -285,7 +283,6 @@ declare global {
     blockMaterials: Record<string, ShaderMaterial | StandardMaterial> | undefined;
     renderPipeline: unknown;
     camState: { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; t: number } | null;
-    debugCamObserver: Observer<Scene> | null;
     editMode?: "game" | "creative";
     dynamicFogEnabled?: boolean;
     continuousBreak: boolean;
@@ -395,7 +392,6 @@ declare global {
     getCameraForwardX(camera: Camera): number;
     getCameraForwardZ(camera: Camera): number;
     createCrosshair(): void;
-    setupDebugCameraKeys(camera: TargetCamera, scene: Scene, bx: number, by: number, bz: number): void;
     // Targeting
     showTargetOutline(
       scene: Scene,
@@ -550,7 +546,6 @@ declare global {
     setMinimapZones(json: string): void;
     drawMinimap(playerX: number, playerZ: number, playerYaw: number): void;
     // Utils
-    getUrlParam(name: string): string;
     reload(): void;
     setConnectedPlayers(namesJson: string): void;
     setNpcNames(namesJson: string): void;

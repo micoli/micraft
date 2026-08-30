@@ -118,7 +118,6 @@ window.mcState = {
   blockMaterials: undefined,
   renderPipeline: null,
   camState: null,
-  debugCamObserver: null,
   // Codex
   codexBlocks: [],
   codexItems: {},

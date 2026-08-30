@@ -1,6 +1,5 @@
 package org.micoli.micraft.config
 
-import org.micoli.micraft.game.DEBUG_WORLD
 import org.micoli.micraft.game.FLY_VERTICAL_SPEED
 import org.micoli.micraft.game.GRAVITY
 import org.micoli.micraft.game.JUMP_SPEED
@@ -126,7 +125,6 @@ class ConfigRegistry {
                                 true
                             } ?: false
                     }
-                register("game:debugWorld", get = { DEBUG_WORLD.toString() })
                 register("weather:enabled", get = { weatherConfig.data.enabled.toString() }) { v ->
                     parseBool(v)?.let { enabled ->
                         weatherConfig.update { cfg -> cfg.copy(enabled = enabled) }

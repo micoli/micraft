@@ -56,7 +56,6 @@ game:
   ticksPerDay: 72000
   timeBroadcastTicks: 20
   maxInteractionDistance: 14.0
-  debugWorld: false
   reconcileToleranceXz: 0.5
   reconcileToleranceY: 0.99
   blockBreakBufferSize: 1000

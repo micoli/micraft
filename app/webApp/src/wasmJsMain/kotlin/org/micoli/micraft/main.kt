@@ -71,15 +71,6 @@ fun main() {
     jsCreateConsole()
     jsCreateServerLog()
 
-    // Debug mode: ?debug[&bx=8&by=2&bz=8] — keys 1-6 orbit camera around a block face
-    if (jsHasUrlParam("debug")) {
-        val bx = jsGetUrlParam("bx").toDoubleOrNull() ?: 8.0
-        val by = jsGetUrlParam("by").toDoubleOrNull() ?: 2.0
-        val bz = jsGetUrlParam("bz").toDoubleOrNull() ?: 8.0
-        jsSetupDebugCameraKeys(camera, scene, bx, by, bz)
-        jsLog("debug mode: 1-6 keys orbit block ($bx,$by,$bz), Escape unlocks")
-    }
-
     val scope = CoroutineScope(Dispatchers.Default)
     WebUiBridge(uiState, scope).start()
 

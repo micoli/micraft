@@ -1647,7 +1647,7 @@ class GameLoop(
                 pos = spawn,
                 orientation = saved?.orientation ?: Orientation(0f, 0f),
                 stance = saved?.stance ?: PlayerStance.STANDING,
-                flying = saved?.flying ?: DEBUG_WORLD,
+                flying = saved?.flying ?: false,
                 speedMultiplier = saved?.speedMultiplier ?: 1f,
                 language = language,
                 shadersEnabled = shadersEnabled,

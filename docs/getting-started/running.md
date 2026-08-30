@@ -16,16 +16,6 @@ reconnect overlay. Reloading the page during an outage serves a small offline
 maintenance page (`sw.js` navigation fallback) that polls the server and reloads
 once it is back.
 
-## Debug texture mode
-
-A single `GRASS` block at `(8, 2, 8)`, player spawned in fly mode at `(8, 1, 14)`.
-Keys `1`–`6` snap the camera onto each face.
-
-```bash
-make dc CMD="./gradlew devDebug"
-# open: http://localhost:8081/?debug&bx=8&by=2&bz=8
-```
-
 ## Cache recovery (escalating)
 
 | Command | When |

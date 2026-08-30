@@ -18,7 +18,6 @@ import org.micoli.micraft.game.world.house.loadHouseConfig
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
-import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.DebugChunkGenerator
 import org.micoli.micraft.game.world.road.loadRoadConfig
 import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.resourcesConfigDir
@@ -33,7 +32,6 @@ fun worldName(): String =
 class WorldModule {
     @Single
     fun optionalWorldPersistence(gameConfig: GameConfig): OptionalWorldPersistence {
-        if (gameConfig.debugWorld) return OptionalWorldPersistence(null)
         val dir = Path.of("$dataPath/world/${worldName()}")
         val persistence =
             WorldPersistence(dir).also { p ->
@@ -49,34 +47,23 @@ class WorldModule {
     }
 
     @Single
-    fun biomeRegistry(gameConfig: GameConfig): BiomeRegistry {
-        if (gameConfig.debugWorld) {
-            log.info("Debug world mode — biomes disabled")
-            return BiomeRegistry.default()
-        }
-        return loadBiomeRegistry(
+    fun biomeRegistry(): BiomeRegistry =
+        loadBiomeRegistry(
             Path.of("$dataPath/config/biomes.yaml"), resourcesConfigDir.resolve("biomes.yaml"))
-    }
 
     @Single
-    fun optionalRoadConfig(gameConfig: GameConfig): OptionalRoadConfig {
+    fun optionalRoadConfig(): OptionalRoadConfig {
         validateYamlConfig(configDir.resolve("roads.yaml"), "roads.schema.json")
         return OptionalRoadConfig(
-            if (gameConfig.debugWorld) null
-            else
-                loadRoadConfig(
-                    Path.of("$dataPath/config/roads.yaml"),
-                    resourcesConfigDir.resolve("roads.yaml")))
+            loadRoadConfig(
+                Path.of("$dataPath/config/roads.yaml"), resourcesConfigDir.resolve("roads.yaml")))
     }
 
     @Single
-    fun optionalHouseConfig(gameConfig: GameConfig): OptionalHouseConfig =
+    fun optionalHouseConfig(): OptionalHouseConfig =
         OptionalHouseConfig(
-            if (gameConfig.debugWorld) null
-            else
-                loadHouseConfig(
-                    Path.of("$dataPath/config/houses.yaml"),
-                    resourcesConfigDir.resolve("houses.yaml")))
+            loadHouseConfig(
+                Path.of("$dataPath/config/houses.yaml"), resourcesConfigDir.resolve("houses.yaml")))
 
     @Single
     fun chunkGenerator(
@@ -86,14 +73,12 @@ class WorldModule {
         optionalHouseConfig: OptionalHouseConfig,
     ): ChunkGenerator {
         val generator =
-            if (gameConfig.debugWorld) DebugChunkGenerator()
-            else
-                ProceduralChunkGenerator(
-                    seed = gameConfig.worldSeed,
-                    biomeRegistry = biomeRegistry,
-                    roadConfig = optionalRoadConfig.value,
-                    houseConfig = optionalHouseConfig.value,
-                )
+            ProceduralChunkGenerator(
+                seed = gameConfig.worldSeed,
+                biomeRegistry = biomeRegistry,
+                roadConfig = optionalRoadConfig.value,
+                houseConfig = optionalHouseConfig.value,
+            )
         log.info(
             "World: {} | generator={} | seed={}",
             worldName(),
