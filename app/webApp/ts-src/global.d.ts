@@ -678,6 +678,7 @@ declare global {
     factionSync(json: string): void;
     socialDenied(scope: string, reason: string): void;
     socialInvite(kind: string, id: string, name: string, from: string): void;
+    petRosterUpdate(json: string): void;
     toggleGroupPanel(): void;
     toggleGuildPanel(): void;
     toggleFactionPanel(): void;

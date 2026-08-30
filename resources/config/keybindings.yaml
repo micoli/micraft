@@ -3,6 +3,8 @@ combat:
   combat_attack: [KeyR]
   npc_interact: [KeyX]
   vehicle_mount: ["Ctrl+KeyX"]
+  tame: ["Alt+KeyT"]
+  pet_dismiss: ["Alt+KeyP"]
   console_toggle: [KeyH]
   siege_weapon_rotate: [KeyR]
   siege_weapon_pitch: ["Alt+KeyR"]

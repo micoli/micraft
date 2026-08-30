@@ -174,6 +174,16 @@ val WIDGET_REGISTRY: List<WidgetRegistryEntry> =
             editorLabel = "Buff Bar",
             editorColor = "rgba(180,60,180,0.75)",
             flow = true),
+        WidgetRegistryEntry(
+            WidgetType.PET_HUD,
+            x = 18,
+            y = 6,
+            w = 8,
+            h = 4,
+            minW = 5,
+            minH = 4,
+            editorLabel = "Pet HUD",
+            editorColor = "rgba(46,164,120,0.75)"),
     )
 
 val DEFAULT_WIDGETS: List<LayoutWidget> =

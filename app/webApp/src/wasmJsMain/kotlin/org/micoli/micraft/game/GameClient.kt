@@ -1006,5 +1006,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     uiState.setPreferencesSync(
                         Json.encodeToString<ServerMessage.PreferencesSync>(msg))
                 })
+            put(
+                ServerMessage.PetRosterSync::class,
+                typedHandler { msg: ServerMessage.PetRosterSync ->
+                    jsPetRosterUpdate(Json.encodeToString(msg))
+                })
         }
 }

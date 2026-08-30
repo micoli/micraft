@@ -105,6 +105,7 @@ const initial: UiState = {
   guildPanelOpen: false,
   factionPanelOpen: false,
   socialInvites: [],
+  petRoster: { pets: [], activePetId: null },
 };
 
 export function GameUI() {
@@ -885,6 +886,13 @@ export function GameUI() {
     };
     window.mc.socialDenied = (_scope: string, reason: string) => {
       dispatch("notification", { msg: reason });
+    };
+    window.mc.petRosterUpdate = (json: string) => {
+      try {
+        dispatch("pet_roster_update", { data: JSON.parse(json) });
+      } catch (e) {
+        console.error("[pet] petRosterUpdate parse error:", e, json);
+      }
     };
     window.mc.socialInvite = (kind: string, id: string, name: string, from: string) => {
       dispatch("social_invite_add", { invite: { kind: kind as "group" | "guild", id, name, from } });

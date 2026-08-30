@@ -245,6 +245,8 @@ export function registerKeyboard(): Pick<
         }
         if (matched.has("combat_target_cycle")) window.mcState.events.push("combat_target_cycle");
         if (matched.has("vehicle_mount")) window.mcState.events.push("vehicle_mount");
+        if (matched.has("tame")) window.mcState.events.push("tame");
+        if (matched.has("pet_dismiss")) window.mcState.events.push("pet_dismiss");
         if (matched.has("npc_interact")) window.mcState.events.push("npc_interact");
         if (matched.has("siege_weapon_pitch")) window.mcState.events.push("siege_weapon_pitch");
         if (matched.has("siege_weapon_power")) window.mcState.events.push("siege_weapon_power");
