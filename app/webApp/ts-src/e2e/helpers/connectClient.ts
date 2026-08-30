@@ -17,6 +17,10 @@ export interface E2eAccount {
  * e2e world has no persistence so every connect is a fresh spawn.
  */
 export async function connectClient(page: Page, acct: E2eAccount, lang = "en"): Promise<void> {
+  const logs: string[] = [];
+  page.on("console", (m) => logs.push(`[${m.type()}] ${m.text()}`));
+  page.on("pageerror", (e) => logs.push(`[pageerror] ${e.message}`));
+
   await page.addInitScript(
     ([a, l]) => {
       const w = window as unknown as { __mcE2E?: boolean; __mcE2ESession?: string };
@@ -34,9 +38,27 @@ export async function connectClient(page: Page, acct: E2eAccount, lang = "en"): 
 
   await page.goto(`/game/${encodeURIComponent(acct.email)}/${acct.charId}`);
 
-  await page.waitForFunction(() => (window as { mcE2E?: { ready?: boolean } }).mcE2E?.ready === true, {
-    timeout: 45_000,
-  });
+  try {
+    await page.waitForFunction(() => (window as { mcE2E?: { ready?: boolean } }).mcE2E?.ready === true, {
+      timeout: 45_000,
+    });
+  } catch (err) {
+    const diag = await page.evaluate(() => {
+      const w = window as unknown as Record<string, unknown>;
+      return {
+        __mcE2E: w.__mcE2E,
+        __mcE2ESession: w.__mcE2ESession,
+        hasMc: typeof w.mc,
+        hasUpdateE2E: typeof (w.mc as Record<string, unknown> | undefined)?.updateE2E,
+        mcE2E: w.mcE2E ?? null,
+        loginResult: (w.mc as { consumeLoginResult?: () => string } | undefined)?.consumeLoginResult?.(),
+        mcStatePlayerId: (w.mcState as Record<string, unknown> | undefined)?.playerId,
+      };
+    });
+    process.stderr.write(`connectClient timeout — diagnostics:\n${JSON.stringify(diag, null, 2)}\n`);
+    process.stderr.write(`browser console:\n${logs.slice(-60).join("\n")}\n`);
+    throw err;
+  }
 
   // Let gravity settle before any position assertion.
   await page.waitForFunction(
