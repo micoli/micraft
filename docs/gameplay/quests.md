@@ -14,6 +14,8 @@ title: Quests
 Quest types: **KILL** (defeat N of an NPC type) and **FETCH** (collect N of an
 item). `QuestRegistryLoader` loads definitions at startup.
 
+{{ story "story/game-layout-questtracker--tracking" caption="QuestTracker — active objectives with progress" }}
+
 ## Configuration
 
 Quest definitions are loaded from YAML by `QuestRegistryLoader`. Objectives

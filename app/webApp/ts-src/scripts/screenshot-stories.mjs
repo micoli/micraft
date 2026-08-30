@@ -162,6 +162,19 @@ async function shoot(targets, outDir) {
         await page.addStyleTag({
           content: "html,body,.sb-show-main,#storybook-root{background:transparent !important}",
         });
+        // Give width to full-bleed HUD bars (flex-1 / w-full) that otherwise
+        // collapse in the intrinsic-width `layout: centered` wrapper.
+        /* eslint-disable no-undef -- runs in the page, not in Node */
+        await page.evaluate(() => {
+          const r = document.querySelector("#storybook-root");
+          if (!r) return;
+          const starved = [...r.querySelectorAll("*")].some((e) => {
+            const s = getComputedStyle(e);
+            return parseFloat(s.flexGrow) > 0 && e.getBoundingClientRect().width < 120;
+          });
+          if (starved) r.style.width = "440px";
+        });
+        /* eslint-enable no-undef */
         await page.waitForTimeout(200);
         const file = path.join(outDir, `${id}.png`);
 
@@ -204,6 +217,7 @@ async function contentClip(page) {
       return bg || bordered || media || text;
     };
 
+    const vArea = vw * vh;
     let x0 = Infinity;
     let y0 = Infinity;
     let x1 = -Infinity;
@@ -212,8 +226,10 @@ async function contentClip(page) {
       for (const el of [root, ...root.querySelectorAll("*")]) {
         const r = el.getBoundingClientRect();
         if (r.width < 1 || r.height < 1) continue;
-        // skip elements that span (nearly) the whole viewport — overlay / layout wrappers
+        // ignore layout/overlay containers: near-viewport size, or a large mostly
+        // empty box that would only pad the frame with transparent margin.
         if (r.width >= vw - 2 && r.height >= vh - 2) continue;
+        if (r.width * r.height > vArea * 0.4) continue;
         if (!paints(el)) continue;
         x0 = Math.min(x0, r.left);
         y0 = Math.min(y0, r.top);
