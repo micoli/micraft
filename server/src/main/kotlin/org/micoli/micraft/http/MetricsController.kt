@@ -329,7 +329,7 @@ private fun buildStatusHtml(s: StatusSnapshot): String {
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="refresh" content="5">
-<title>MicCraft Status</title>
+<title>MiCraft Status</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#111;color:#ddd;font-family:monospace;padding:24px;font-size:14px}
@@ -352,7 +352,7 @@ private fun buildStatusHtml(s: StatusSnapshot): String {
 </style>
 </head>
 <body>
-<h1>MicCraft Server Status</h1>
+<h1>MiCraft Server Status</h1>
 <div class="grid">
 
   <div class="card">
