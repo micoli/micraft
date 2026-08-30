@@ -489,6 +489,29 @@ class NpcRegistryLoaderTest {
         assertEquals(5, assertNotNull(merged.packConfig).minSizeToEngage)
         assertEquals(listOf("polar_bear"), merged.packConfig.hostileTypes)
     }
+
+    @Test
+    fun tameableFields_parseAndOverride() {
+        val (loader) =
+            loaderWithNpcs(
+                mapOf(
+                    "fox" to
+                        """
+                        behavior: random_movable
+                        width: 0.4
+                        height: 0.6
+                        wanderSpeed: 2.0
+                        wanderRadius: 20.0
+                        tameable: true
+                        tameBaseChance: 0.4
+                        """
+                            .trimIndent()),
+                overrides = mapOf("fox" to "tameBaseChance: 0.9"))
+
+        val fox = assertNotNull(loader.load()["fox"])
+        assertTrue(fox.tameable)
+        assertEquals(0.9f, fox.tameBaseChance)
+    }
 }
 
 private fun assertFalse(value: Boolean) = assertFalse(value)

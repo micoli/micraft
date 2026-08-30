@@ -33,4 +33,6 @@ data class NpcYamlEntry(
     val hibernation: HibernationConfig? = null,
     val shopItems: List<ShopItemEntry> = emptyList(),
     val loot: List<DropEntry> = emptyList(),
+    val tameable: Boolean = false,
+    val tameBaseChance: Float = 0.5f,
 )
