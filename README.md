@@ -82,6 +82,7 @@ make test                     # all test suites
 | `/mount` | `/mount` | Mount or dismount the vehicle you're targeting. | — |
 | `/npcbuy` | `/npcbuy <npcId> <itemType> [quantity]` | Buy an item from a seller NPC. | — |
 | `/npcsell` | `/npcsell <npcId> <itemType> [quantity]` | Sell an item to a seller NPC. | — |
+| `/pet` | `/pet <list\|spawn\|dismiss\|resurrect\|rename> [name] [newName]` | Manage your tamed pets (list, spawn, dismiss, resurrect, rename). | dynamic |
 | `/preferences` | `/preferences` | Opens the preferences panel. | — |
 | `/pump` | `/pump` | Remove all connected liquid blocks in sight. | — |
 | `/quest` | `/quest [list\|accept\|abandon\|status] [id]` | Manage your quests. | dynamic |
@@ -98,6 +99,7 @@ make test                     # all test suites
 | `/skiprpg` | `/skiprpg` | Opt out of RPG system | — |
 | `/spawn` | `/spawn <npc_model> [x y z]` | Spawn an NPC of the given model on the solid block you are looking at. (admin) | dynamic |
 | `/talk` | `/talk <playerName>` | Open a private chat with a player. | dynamic |
+| `/tame` | `/tame` | Attempt to tame the wild creature you are targeting. | — |
 | `/time` | `/time [0-23]` | Shows or sets the in-game time. | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 |
 | `/trade` | `/trade <playerName>` | Initiates a trade with another player. | dynamic |
 | `/tradeaccept` | `/tradeaccept <tradeId>` | Accepts the current trade offer. | — |

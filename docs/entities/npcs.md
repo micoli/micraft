@@ -16,6 +16,7 @@ animations with configurable walk-bone aliases.
 - **`/goto <playerName|npcName>`** — teleport to an NPC.
 - **`/npcbuy` / `/npcsell`** — trade with `SELLER` NPCs. See
   [Economy](../social/economy.md).
+- Some creatures can be tamed into [pets](pets.md) with **`/tame`**.
 
 `NpcManager` handles wander, pathfinding and interaction each tick;
 `NpcSpawner.trySpawn` runs every 200 ticks, capped per biome by the biome's
@@ -40,7 +41,8 @@ gameDayDurationSeconds: 1200.0
 
 **Per-type definitions** — loaded by `NpcRegistryLoader`; codex info served at
 `GET /api/admin/npc-types`. Live instances with full state:
-`GET /api/admin/npcs`, `GET /api/admin/ws/npcs`.
+`GET /api/admin/npcs`, `GET /api/admin/ws/npcs`. A definition may also set
+`tameable: true` / `tameBaseChance` to allow taming — see [Pets](pets.md).
 
 **Models** — `resources/models/<name>/<name>.bbmodel` with an optional
 `<name>.yaml` skin config.
