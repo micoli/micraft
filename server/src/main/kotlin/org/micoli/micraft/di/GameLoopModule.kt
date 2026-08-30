@@ -8,6 +8,7 @@ import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.GameConfig
+import org.micoli.micraft.game.SharedGameServices
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.auction.AuctionConfigLoader
@@ -695,4 +696,66 @@ class GameLoopModule {
     @Single fun terrainCache(): TerrainCache = TerrainCache()
 
     @Single fun networkStats(): NetworkStats = NetworkStats()
+
+    /**
+     * JVM-global services every `GameWorld` shares (A9.1 of the E2E-GameWorld extraction). Bundled
+     * so the future per-world constructor stays readable. Not consumed yet.
+     */
+    @Single
+    fun sharedGameServices(
+        gameConfig: GameConfig,
+        i18nConfig: I18nConfig,
+        configRegistry: ConfigRegistry,
+        chatChannelManager: ChatChannelManager,
+        dropConfig: DropConfig,
+        networkStats: NetworkStats,
+        recipeRegistryLoader: RecipeRegistryLoader,
+        armorRegistryLoader: ArmorRegistryLoader,
+        weaponRegistryLoader: WeaponRegistryLoader,
+        toolRegistryLoader: ToolRegistryLoader,
+        npcConfigLoader: NpcConfigLoader,
+        npcRegistryLoader: NpcRegistryLoader,
+        questRegistryLoader: QuestRegistryLoader,
+        tradeConfigLoader: TradeConfigLoader,
+        auctionConfigLoader: AuctionConfigLoader,
+        claimConfigLoader: ClaimConfigLoader,
+        armorRegistry: Map<String, ArmorDefinition>,
+        weaponRegistry: Map<String, WeaponDefinition>,
+        toolRegistry: Map<String, ToolDefinition>,
+        weaponCategories: Map<EquipmentCategory, WeaponCategoryDefinition>,
+        toolCategories: Map<EquipmentCategory, ToolCategoryDefinition>,
+        @Named("attacks") attacks: Map<String, AttackDefinition>,
+        @Named("spells") spells: Map<String, SpellDefinition>,
+        combatConfigData: CombatConfigData,
+        classesConfigData: ClassesConfigData,
+        experienceConfigData: ExperienceConfigData,
+    ): SharedGameServices =
+        SharedGameServices(
+            gameConfig = gameConfig,
+            i18n = i18nConfig,
+            configRegistry = configRegistry,
+            chatChannelManager = chatChannelManager,
+            dropConfig = dropConfig,
+            networkStats = networkStats,
+            recipeRegistryLoader = recipeRegistryLoader,
+            armorRegistryLoader = armorRegistryLoader,
+            weaponRegistryLoader = weaponRegistryLoader,
+            toolRegistryLoader = toolRegistryLoader,
+            npcConfigLoader = npcConfigLoader,
+            npcRegistryLoader = npcRegistryLoader,
+            questRegistryLoader = questRegistryLoader,
+            tradeConfigLoader = tradeConfigLoader,
+            auctionConfigLoader = auctionConfigLoader,
+            claimConfigLoader = claimConfigLoader,
+            armorRegistry = armorRegistry,
+            weaponRegistry = weaponRegistry,
+            toolRegistry = toolRegistry,
+            weaponCategories = weaponCategories,
+            toolCategories = toolCategories,
+            attackRegistry = attacks,
+            spellRegistry = spells,
+            combatConfigData = combatConfigData,
+            classesConfigData = classesConfigData,
+            experienceConfigData = experienceConfigData,
+        )
 }
