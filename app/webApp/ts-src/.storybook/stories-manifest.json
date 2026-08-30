@@ -149,6 +149,36 @@
     "name": "Server Message",
     "source": ".stories/game/layout/Notifications.stories.tsx"
   },
+  "game-layout-pethud--active-pet": {
+    "title": "Game/Layout/PetHud",
+    "name": "Active Pet",
+    "source": ".stories/game/layout/PetHud.stories.tsx"
+  },
+  "game-layout-pethud--active-pet-low-hp": {
+    "title": "Game/Layout/PetHud",
+    "name": "Active Pet Low Hp",
+    "source": ".stories/game/layout/PetHud.stories.tsx"
+  },
+  "game-layout-pethud--dead-on-cooldown": {
+    "title": "Game/Layout/PetHud",
+    "name": "Dead On Cooldown",
+    "source": ".stories/game/layout/PetHud.stories.tsx"
+  },
+  "game-layout-pethud--dead-ready-to-revive": {
+    "title": "Game/Layout/PetHud",
+    "name": "Dead Ready To Revive",
+    "source": ".stories/game/layout/PetHud.stories.tsx"
+  },
+  "game-layout-pethud--no-pets": {
+    "title": "Game/Layout/PetHud",
+    "name": "No Pets",
+    "source": ".stories/game/layout/PetHud.stories.tsx"
+  },
+  "game-layout-pethud--roster-active-and-dead": {
+    "title": "Game/Layout/PetHud",
+    "name": "Roster Active And Dead",
+    "source": ".stories/game/layout/PetHud.stories.tsx"
+  },
   "game-layout-playerstatusbar--caster": {
     "title": "Game/Layout/PlayerStatusBar",
     "name": "Caster",

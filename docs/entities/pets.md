@@ -8,6 +8,8 @@ A pet is a tamed [NPC](npcs.md) that belongs to a player: it follows its owner,
 fights alongside them and can be re-summoned after it dies. A player keeps an
 unlimited roster (capped at 12) but only **one pet is active at a time**.
 
+{{ story "story/game-layout-pethud--roster-active-and-dead" caption="Pet HUD — active pet plus a fallen pet on its revive cooldown" }}
+
 ## How to play
 
 - **`/tame`** (or the `combat.tame` key, default `Alt+T`) — target a wild
