@@ -196,7 +196,9 @@ export const CreatingAuction: Story = {
   },
   play: async () => {
     const body = within(document.body);
-    await userEvent.click(body.getByText("Create Auction"));
+    // Radix keeps pointer-events off the dialog until its open animation ends;
+    // skip the check so the story also renders headless (screenshots).
+    await userEvent.click(body.getByText("Create Auction"), { pointerEventsCheck: 0 });
     await expect(body.getByText("Starting price")).toBeVisible();
     await expect(body.getByText("Buy now (optional)")).toBeVisible();
   },

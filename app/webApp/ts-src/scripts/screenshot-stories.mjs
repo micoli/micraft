@@ -157,7 +157,7 @@ async function shoot(targets, outDir) {
         );
         await page.waitForLoadState("networkidle").catch(() => {});
         await page.evaluate(() => document.fonts?.ready).catch(() => {});
-        await page.waitForTimeout(500); // let an async play() run and possibly throw
+        await page.waitForTimeout(1200); // let an async play() run (interactions, and it may throw)
         const errText = await page.evaluate(() => {
           if (document.querySelector(".sb-show-errordisplay")) return "render error";
           const t = (document.querySelector("#storybook-root")?.innerText || "") + (document.body.innerText || "");
