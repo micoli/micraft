@@ -82,7 +82,6 @@ import org.micoli.micraft.game.session.toPageMap
 import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.IntentCollector
 import org.micoli.micraft.game.tick.MovementProcessor
-import org.micoli.micraft.game.tick.TickProfiler
 import org.micoli.micraft.game.trade.TradeConfigLoader
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
@@ -113,6 +112,7 @@ import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.sanitizePlayerName
 import org.micoli.micraft.game.world.scene.ScenePlacer
 import org.micoli.micraft.game.world.scene.SceneRegistry
+import org.micoli.micraft.game.world.toPlayerAdminJson
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherConfig
@@ -131,7 +131,6 @@ import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.plugin.PluginLoader
-import org.micoli.micraft.plugin.TickContext
 import org.micoli.micraft.plugin.TickHandler
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.BlockInfo
@@ -212,8 +211,6 @@ fun validatePluginSystemIds(commands: Map<String, CommandHandler>, plugins: List
         error("Duplicate plugin UUIDs detected: $detail")
     }
 }
-
-private const val TARGET_DISTANCE_REFRESH_TICKS = 5
 
 class GameLoop(
     private val world: WorldState,
@@ -610,7 +607,6 @@ class GameLoop(
     private val macroExecutor = MacroExecutor()
 
     private var saveTickCounter = 0
-    private var timeBroadcastCounter = 0
 
     /**
      * The NPC subsystem, wired by the shared factory rather than here.
@@ -632,7 +628,13 @@ class GameLoop(
 
     @Volatile private var appScope: Application? = null
 
-    private val gameWorld =
+    private val commands: MutableMap<String, CommandHandler> =
+        discoverCommandHandlers().toMutableMap()
+    private val pluginTickHandlers: MutableList<TickHandler> = mutableListOf()
+
+    private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
+
+    private val gameWorld: GameWorld =
         GameWorld(
             id = GameWorld.DEFAULT_ID,
             world = world,
@@ -645,20 +647,28 @@ class GameLoop(
             siegeWeaponManager = siegeWeaponManager,
             vegetationManager = vegetationManager,
             gameTimeService = gameTimeService,
+            npcTickPipeline = npcTickPipeline,
+            vehicleTickPipeline = vehicleTickPipeline,
+            siegeProjectileTickPipeline = siegeProjectileTickPipeline,
+            intentCollectorProvider = { intentCollector },
+            blockBreaker = blockBreaker,
+            movementProcessor = movementProcessor,
+            chunkStreamer = chunkStreamer,
+            instanceRegistry = instanceRegistry,
+            worldItems = worldItems,
+            combatProcessor = combatProcessor,
+            statusEffectProcessor = statusEffectProcessor,
+            regenProcessor = regenProcessor,
+            weatherManager = weatherManager,
+            liquidManager = liquidManager,
+            auctionManager = auctionManager,
+            commandContextProvider = { commandContext },
+            pluginTickHandlersProvider = { pluginTickHandlers },
+            broadcastPlayerAdmin = ::broadcastPlayerAdmin,
             appScope = { appScope },
         )
 
-    private val commands: MutableMap<String, CommandHandler> =
-        discoverCommandHandlers().toMutableMap()
-    private val pluginTickHandlers: MutableList<TickHandler> = mutableListOf()
-
-    private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
-    private var targetDistanceTickCounter = 0
-    private var npcLifecycleTickCounter = 0
-
-    private val tickProfiler = TickProfiler()
-
-    fun getTickProfile() = tickProfiler.snapshot()
+    fun getTickProfile() = gameWorld.getTickProfile()
 
     private val commandContextClosures =
         CommandContextClosures(
@@ -859,8 +869,6 @@ class GameLoop(
     private suspend fun broadcastPlayerAdmin(json: String) {
         for (l in playerAdminListeners) runCatching { l(json) }
     }
-
-    private fun String.toPlayerAdminJson() = "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
     fun getNpcStates(): List<NpcState> = npcManager.getAll().map { it.state }
 
@@ -1299,7 +1307,7 @@ class GameLoop(
                 val waitMs = nextTickAt - System.currentTimeMillis()
                 if (waitMs > 0) delay(waitMs)
                 nextTickAt = nextTickDeadline(System.currentTimeMillis(), nextTickAt, TICK_MS)
-                runCatching { tick() }
+                runCatching { gameWorld.tick() }
                     .onFailure {
                         if (it is CancellationException) throw it
                         log.error("tick error: {}", it.message, it)
@@ -1399,112 +1407,6 @@ class GameLoop(
         }
         session.state = session.state.copy(layouts = msg.layouts, activeLayout = msg.activeLayout)
         savePlayer(session)
-    }
-
-    private suspend fun tick(): Unit = tickProfiler.measure("total") { tickBody() }
-
-    private suspend fun tickBody() {
-        gameWorld.gameTicks++
-        timeBroadcastCounter++
-        if (timeBroadcastCounter >= TIME_BROADCAST_TICKS) {
-            timeBroadcastCounter = 0
-            val timeMsg = ServerMessage.TimeUpdate(gameWorld.gameTicks)
-            sessionRegistry.all().forEach { it.send(timeMsg) }
-        }
-
-        tickProfiler.measure("players") {
-            sessionRegistry.all().forEach { session ->
-                val input = intentCollector.collect(session)
-                blockBreaker.tick(session)
-                val newState = movementProcessor.process(session, input)
-                if (newState != session.state) {
-                    session.state = newState
-                    val update = ServerMessage.PlayerUpdate(newState, session.lastProcessedSeq)
-                    sessionRegistry.all().forEach { it.send(update) }
-                    broadcastPlayerAdmin(
-                        """{"type":"playerMoved","id":"${session.id}","name":${newState.name.toPlayerAdminJson()},"x":${newState.pos.x},"y":${newState.pos.y},"z":${newState.pos.z},"yaw":${newState.orientation.yaw}}""")
-                }
-                if (session.chunkMode == "websocket") {
-                    chunkStreamer.checkAndRequest(session)
-                    chunkStreamer.deliverReady(session)
-                }
-                val (newZoneX, newZoneZ) =
-                    npcTickPipeline.zoneOf(session.state.pos.x, session.state.pos.z)
-                val lastZone = session.lastZonePos
-                if (lastZone == null || lastZone.first != newZoneX || lastZone.second != newZoneZ) {
-                    session.lastZonePos = Pair(newZoneX, newZoneZ)
-                    npcTickPipeline.onZoneCrossed(world, newZoneX, newZoneZ)
-                }
-                if (session.hasPermission("admin")) {
-                    val pos = session.state.pos
-                    val instanceZone =
-                        instanceRegistry.zoneAt(pos.x.toInt(), pos.y.toInt(), pos.z.toInt())
-                    if (instanceZone?.id != session.lastInstanceZoneId) {
-                        session.lastInstanceZoneId = instanceZone?.id
-                        session.send(ServerMessage.AdminZoneWireframe(instanceZone?.toProto()))
-                    }
-                }
-            }
-        }
-        tickProfiler.measure("worldItems") { worldItems.tickCollection(sessionRegistry.all()) }
-        gameTimeService.tick(TICK_SECONDS.toDouble())
-        tickProfiler.measure("npc") {
-            npcTickPipeline.tick(world, sessionRegistry.all(), combatProcessor)
-        }
-        tickProfiler.measure("vehicles") { vehicleTickPipeline.tick(world, sessionRegistry.all()) }
-        tickProfiler.measure("siegeProjectiles") {
-            siegeProjectileTickPipeline.tick(
-                world, sessionRegistry.all(), npcManager, combatProcessor)
-        }
-        // In the tick, not in a wall-clock coroutine of its own: driving the slow lane from a
-        // separate 5 s loop raced the main tick and gave the same arena a different spawn rate
-        // depending on whether the live server or the simulator was running it.
-        npcLifecycleTickCounter++
-        if (npcLifecycleTickCounter >= NpcSubsystemFactory.LIFECYCLE_INTERVAL_TICKS) {
-            npcLifecycleTickCounter = 0
-            tickProfiler.measure("npcLifecycle") {
-                runCatching { npcTickPipeline.lifecycle(world, sessionRegistry.all()) }
-                    .onFailure { log.error("npc lifecycle error: {}", it.message, it) }
-            }
-        }
-        tickProfiler.measure("statusEffects") { statusEffectProcessor.tick(sessionRegistry.all()) }
-        tickProfiler.measure("regen") { regenProcessor.tick(sessionRegistry.all()) }
-        tickProfiler.measure("weather") {
-            weatherManager.tick(world) { msg -> sessionRegistry.all().forEach { it.send(msg) } }
-        }
-        tickProfiler.measure("liquid") {
-            liquidManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
-        }
-        tickProfiler.measure("vegetation") {
-            vegetationManager.tick { msg -> sessionRegistry.all().forEach { it.send(msg) } }
-        }
-        tickProfiler.measure("auction") { auctionManager?.tick() }
-        targetDistanceTickCounter++
-        if (targetDistanceTickCounter >= TARGET_DISTANCE_REFRESH_TICKS) {
-            targetDistanceTickCounter = 0
-            sessionRegistry.all().forEach { session ->
-                if (session.combatState.targetId != null) {
-                    session.send(combatProcessor.buildTargetUpdate(session))
-                }
-            }
-        }
-        if (pluginTickHandlers.isNotEmpty()) {
-            val ctx =
-                TickContext(
-                    gameTicks = gameWorld.gameTicks,
-                    sessionRegistry = sessionRegistry,
-                    world = world,
-                    commandContext = commandContext,
-                )
-            tickProfiler.measure("plugins") {
-                pluginTickHandlers.forEach { handler ->
-                    runCatching { handler.tick(ctx) }
-                        .onFailure {
-                            log.error("TickHandler {} error: {}", handler.name, it.message, it)
-                        }
-                }
-            }
-        }
     }
 
     private suspend fun handleCommand(session: PlayerSession, text: String) {
