@@ -19,7 +19,8 @@
 
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { chromium } from "playwright";
@@ -154,10 +155,19 @@ async function shoot(targets, outDir) {
           },
           { timeout: 60_000 },
         );
-        const err = await page.$(".sb-show-errordisplay");
-        if (err) die(`story ${id} failed to render (Storybook error display)`);
         await page.waitForLoadState("networkidle").catch(() => {});
         await page.evaluate(() => document.fonts?.ready).catch(() => {});
+        await page.waitForTimeout(500); // let an async play() run and possibly throw
+        const errText = await page.evaluate(() => {
+          if (document.querySelector(".sb-show-errordisplay")) return "render error";
+          const t = (document.querySelector("#storybook-root")?.innerText || "") + (document.body.innerText || "");
+          return /Unable to perform pointer interaction|component failed to render properly|Story is missing|storybook-root not found/i.test(
+            t,
+          )
+            ? t.replace(/\s+/g, " ").slice(0, 160)
+            : "";
+        });
+        if (errText) die(`story ${id} errored during render/play — fix the story: ${errText}`);
         /* eslint-enable no-undef */
         await page.addStyleTag({
           content: "html,body,.sb-show-main,#storybook-root{background:transparent !important}",
@@ -274,28 +284,33 @@ async function main() {
       : resolveTargets(tags, manifest);
 
     if (CHECK) {
-      // Pixel output is not reproducible across OS / font stacks, so `--check`
-      // only guards what IS deterministic: the manifest, and that every tagged
-      // story resolves to a committed, non-empty PNG. `make docs-screenshots`
-      // (run by whoever edits stories/tags) is the source of truth for the pixels.
+      // Re-render every tagged story (shoot() aborts on a render/play error) but
+      // don't pixel-compare — PNG output isn't reproducible across OS / font
+      // stacks. Guards: manifest fresh, no orphan, every tag resolves & renders,
+      // committed PNG present.
       const problems = [];
       if ((await readIfExists(MANIFEST_PATH))?.toString() !== manifestJson) {
-        problems.push(`${path.relative(REPO_ROOT, MANIFEST_PATH)} is stale — run \`make docs-screenshots\``);
+        problems.push(`${path.relative(REPO_ROOT, MANIFEST_PATH)} is stale`);
       }
       const committed = new Set(
         (existsSync(ASSETS_DIR) ? await readdir(ASSETS_DIR) : []).filter((f) => f.endsWith(".png")),
       );
+      const tmp = await mkdtemp(path.join(tmpdir(), "sb-shots-"));
+      try {
+        await shoot(targets, tmp);
+      } finally {
+        await rm(tmp, { recursive: true, force: true });
+      }
       for (const [id, label] of targets) {
         const png = await readIfExists(path.join(ASSETS_DIR, `${id}.png`));
-        if (!png || png.length < 256) {
-          problems.push(`missing/empty docs/assets/stories/${id}.png for ${label} — run \`make docs-screenshots\``);
-        }
+        if (!png || png.length < 256) problems.push(`missing/empty docs/assets/stories/${id}.png for ${label}`);
         committed.delete(`${id}.png`);
       }
       for (const orphan of committed) {
-        problems.push(`orphan docs/assets/stories/${orphan} — no tag references it, run \`make docs-screenshots\``);
+        problems.push(`orphan docs/assets/stories/${orphan} — no tag references it`);
       }
-      if (problems.length) die(`story screenshots out of date:\n  - ${problems.join("\n  - ")}`);
+      if (problems.length)
+        die(`story screenshots out of date (run \`make docs-screenshots\`):\n  - ${problems.join("\n  - ")}`);
       log(`story assets OK (${targets.size} tagged, manifest current)`);
       return;
     }
