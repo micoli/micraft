@@ -335,6 +335,32 @@ class GameLoopModule {
             },
         )
 
+    @Single
+    fun petManager(
+        npcManager: NpcManager,
+        experienceProcessor: ExperienceProcessor,
+        sessionRegistry: SessionRegistry,
+        playerPersister: PlayerPersister,
+        i18nConfig: I18nConfig,
+    ): org.micoli.micraft.game.pet.PetManager =
+        org.micoli.micraft.game.pet.PetManager(
+            npcManager = npcManager,
+            experienceProcessor = experienceProcessor,
+            getSessions = sessionRegistry::all,
+            savePlayer = playerPersister::save,
+            i18n = i18nConfig,
+        )
+
+    @Single
+    fun petCoordinator(
+        npcManager: NpcManager,
+        combatConfigData: CombatConfigData,
+    ): org.micoli.micraft.game.pet.PetCoordinator =
+        org.micoli.micraft.game.pet.PetCoordinator(
+            npcManager = npcManager,
+            combatConfig = combatConfigData,
+        )
+
     @Single fun skillsConfig(): SkillsConfig = SkillsConfig()
 
     @Single

@@ -506,6 +506,19 @@ class GameLoop(
     private val commandContextFactory: ((CommandContextClosures) -> CommandContext)? = null,
     private val experienceProcessor: ExperienceProcessor =
         ExperienceProcessor(ExperienceConfig().data, sessionRegistry::all, playerPersister::save),
+    private val petManager: org.micoli.micraft.game.pet.PetManager =
+        org.micoli.micraft.game.pet.PetManager(
+            npcManager = npcManager,
+            experienceProcessor = experienceProcessor,
+            getSessions = sessionRegistry::all,
+            savePlayer = playerPersister::save,
+            i18n = i18n,
+        ),
+    private val petCoordinator: org.micoli.micraft.game.pet.PetCoordinator =
+        org.micoli.micraft.game.pet.PetCoordinator(
+            npcManager = npcManager,
+            combatConfig = combatConfig,
+        ),
     private val questManager: QuestManager? = null,
     private val questRegistryLoader: QuestRegistryLoader? = null,
 ) {
@@ -579,6 +592,14 @@ class GameLoop(
         )
 
     init {
+        npcManager.onPetDied = { pet -> petManager.onPetDied(pet) }
+        npcManager.onNpcKilledForPets = { killed -> petManager.grantSharedXpForKill(killed) }
+        experienceProcessor.onNpcLevelUp = { npc, level ->
+            if (npc.ownerId != null) petManager.onPetLevelUp(npc, level)
+        }
+    }
+
+    init {
         chatService.groupMembers = { id -> groupManager.memberIds(id) }
         chatService.guildMembers = { id -> guildRegistry.memberIds(id) }
         claimRegistry.factionAlly = { actorId, ownerId ->
@@ -599,7 +620,7 @@ class GameLoop(
      * simulated run describe this game. Wiring it a second time here is how the simulator ended up
      * without kill XP, without the population veto and with its own tick cadence.
      */
-    private val npcSubsystem = npcSubsystemFactory.build(combatProcessor)
+    private val npcSubsystem = npcSubsystemFactory.build(combatProcessor, petCoordinator)
 
     val gameTimeService: GameTimeService = npcSubsystem.gameTimeService
 
@@ -688,6 +709,7 @@ class GameLoop(
             savePlayer = closures.savePlayer,
             worldItems = worldItems,
             npcManager = npcManager,
+            petManager = petManager,
             vehicleManager = vehicleManager,
             placeableManager = placeableManager,
             siegeWeaponManager = siegeWeaponManager,
@@ -1675,6 +1697,8 @@ class GameLoop(
                 turnSpeedVertical = saved?.turnSpeedVertical ?: 1.2f,
                 rightHandItem = saved?.rightHandItem,
                 leftHandItem = saved?.leftHandItem,
+                pets = saved?.pets ?: emptyList(),
+                activePetId = null,
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =
@@ -1795,6 +1819,7 @@ class GameLoop(
                 other.send(ServerMessage.PlayerUpdate(state))
             }
         npcManager.sendAllTo(session)
+        petManager.rosterSyncFor(session)
         vehicleManager.sendAllTo(session)
         placeableManager.sendAllTo(session)
         siegeWeaponManager.sendAllTo(session)
@@ -1997,6 +2022,7 @@ class GameLoop(
                 broadcastPlayerAdmin("""{"type":"playerLeft","id":"$id"}""")
                 sessionRegistry.remove(id)
                 chunkStreamer.cleanupSession(id)
+                petManager.onPlayerDisconnected(session)
                 npcManager.clearPlayer(id)
                 vehicleManager.clearRider(id)
                 npcTickPipeline.onPlayerDisconnected(sessionRegistry.all())

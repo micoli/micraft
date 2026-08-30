@@ -280,6 +280,7 @@ fun testContext(
     namedPoints: () -> Map<String, Vec3> = { emptyMap() },
     scenes: SceneRegistry? = null,
     vehicleManager: VehicleManager? = null,
+    petManager: org.micoli.micraft.game.pet.PetManager? = null,
 ) =
     CommandContext(
         world = world,
@@ -292,6 +293,7 @@ fun testContext(
         savePlayer = savePlayer,
         worldItems = worldItems,
         npcManager = npcManager,
+        petManager = petManager,
         getGameTime = getGameTime,
         setGameTime = setGameTime,
         refetchChunks = refetchChunks,

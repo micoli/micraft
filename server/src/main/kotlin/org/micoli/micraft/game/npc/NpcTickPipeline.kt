@@ -3,6 +3,7 @@ package org.micoli.micraft.game.npc
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.npc.pack.PackCoordinator
+import org.micoli.micraft.game.pet.PetCoordinator
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
@@ -13,8 +14,8 @@ import org.micoli.micraft.game.world.WorldState
  *
  * Both the live [org.micoli.micraft.game.GameLoop] and the admin world simulator drive NPCs through
  * this class, so a rule change is observed identically in both. Do not call `npcManager.tick`,
- * `tickAggro`, `tickVisibility`, `animals.tick` or `npcSpawner.trySpawn` from anywhere else —
- * `NpcTickOwnershipTest` fails if you do.
+ * `tickAggro`, `tickVisibility`, `animals.tick`, `pets.tick` or `npcSpawner.trySpawn` from anywhere
+ * else — `NpcTickOwnershipTest` fails if you do.
  */
 class NpcTickPipeline(
     private val npcManager: NpcManager,
@@ -22,6 +23,7 @@ class NpcTickPipeline(
     private val animals: AnimalInteractionProcessor,
     private val packs: PackCoordinator? = null,
     private val hibernation: HibernationProcessor? = null,
+    private val pets: PetCoordinator? = null,
     private val ctxOf: () -> NpcTickContext = { NpcTickContext.live },
     /** Veto on auto-spawning; the admin simulator refuses past its population ceiling. */
     private val canSpawn: () -> Boolean = { true },
@@ -39,6 +41,8 @@ class NpcTickPipeline(
     ) {
         // First: a sleeping NPC must be flagged before the behavior and aggro passes read it.
         hibernation?.tick()
+        // Pets pick their target and swing before npcManager.tick reads chaseTargetPos.
+        pets?.tick(sessions, combatProcessor)
         npcManager.tick(world)
         // Before tickAggro so a target picked this tick is acted on in the same tick.
         packs?.tick()

@@ -54,6 +54,12 @@ class NpcInstance(
     @Volatile var pendingDotDamage: Float = 0f,
     @Volatile var isDead: Boolean = false,
     @Volatile var deathTimeMs: Long = 0L,
+    /** Owning player's session id when this NPC is a summoned pet; null for every wild NPC. */
+    @Volatile var ownerId: String? = null,
+    /**
+     * Id of the owner's [org.micoli.micraft.player.pet.PetRecord] this instance was summoned from.
+     */
+    @Volatile var petRecordId: String? = null,
     @Volatile var animalData: AnimalInstanceData? = null,
     /** Asleep for the current hibernation window: no movement, no aggro. */
     @Volatile var hibernating: Boolean = false,

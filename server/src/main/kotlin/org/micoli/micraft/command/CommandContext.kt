@@ -44,6 +44,7 @@ data class CommandContext(
     val savePlayer: (PlayerSession) -> Unit = {},
     val worldItems: WorldItemManager? = null,
     val npcManager: NpcManager? = null,
+    val petManager: org.micoli.micraft.game.pet.PetManager? = null,
     val vehicleManager: VehicleManager? = null,
     val placeableManager: PlaceableManager? = null,
     val siegeWeaponManager: SiegeWeaponManager? = null,

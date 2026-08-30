@@ -26,6 +26,8 @@ private val GUARDED_CALLS =
         "animalInteractionProcessor.tick(",
         "packs?.tick(",
         "packCoordinator.tick(",
+        "pets?.tick(",
+        "petCoordinator.tick(",
     )
 
 private const val OWNER = "NpcTickPipeline.kt"

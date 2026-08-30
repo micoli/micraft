@@ -6,6 +6,7 @@ import org.micoli.micraft.game.npc.animal.AnimalEvent
 import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.npc.pack.PackCoordinator
 import org.micoli.micraft.game.npc.pack.PackEvent
+import org.micoli.micraft.game.pet.PetCoordinator
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.vegetation.VegetationManager
@@ -95,7 +96,10 @@ class NpcSubsystemFactory(
 
     val gameTimeService: GameTimeService = GameTimeService(gameDayDurationSecondsOf)
 
-    fun build(combatProcessor: CombatProcessor): NpcSubsystem {
+    fun build(
+        combatProcessor: CombatProcessor,
+        petCoordinator: PetCoordinator? = null,
+    ): NpcSubsystem {
         val animals =
             AnimalInteractionProcessor(
                 npcManager = npcManager,
@@ -137,6 +141,7 @@ class NpcSubsystemFactory(
                     animals = animals,
                     packs = packs,
                     hibernation = hibernation,
+                    pets = petCoordinator,
                     ctxOf = hooks.ctxOf,
                     canSpawn = hooks.canSpawn,
                 ),

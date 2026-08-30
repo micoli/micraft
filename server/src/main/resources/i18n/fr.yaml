@@ -436,3 +436,39 @@ faction:
     cooldown: "Vous devez attendre {0}s avant de changer de faction."
     removed: "Votre faction n'existe plus ; vous êtes désormais sans affiliation."
     friendly_fire_blocked: "Vous ne pouvez pas attaquer un membre de votre faction."
+
+tame:
+  server:
+    no_target: "Aucune créature ciblée — ciblez d'abord une créature sauvage."
+    not_tameable: "{0} ne peut pas être apprivoisé."
+    too_high_level: "Cette créature est de niveau {0} ; vous n'êtes que niveau {1}."
+    already_tamed: "Cette créature appartient déjà à quelqu'un."
+    out_of_range: "Rapprochez-vous pour l'apprivoiser."
+    roster_full: "Votre liste de familiers est pleine."
+    failed: "{0} s'est échappé !"
+    failed_hostile: "{0} se retourne contre vous !"
+    success: "Vous avez apprivoisé {0} !"
+
+pet:
+  server:
+    usage: "Usage : /pet <list|spawn|dismiss|resurrect|rename> [nom] [nouveauNom]"
+    none_owned: "Vous n'avez aucun familier apprivoisé."
+    none_active: "Vous n'avez aucun familier actif."
+    not_found: "Aucun familier nommé {0}."
+    list_header: "Vos familiers :"
+    list_line: "{0} — niv{1} {2} ({3})"
+    spawned: "{0} apparaît à vos côtés."
+    dismissed: "{0} retourne se reposer."
+    is_dead: "{0} est mort — ressuscitez-le d'abord."
+    died: "{0} est tombé ! Ressuscitez-le avec /pet resurrect."
+    leveled: "{0} est passé au niveau {1} !"
+    resurrect_not_dead: "{0} n'est pas mort."
+    resurrect_on_cooldown: "Vous devez attendre {0}s avant de ressusciter."
+    resurrected: "{0} a été ressuscité. Invoquez-le avec /pet spawn."
+    renamed: "{0} s'appelle désormais {1}."
+    rename_taken: "Vous avez déjà un familier nommé {0}."
+    rename_invalid: "Ce nom n'est pas autorisé."
+  client:
+    level: "Niv"
+    resurrect: "Ressusciter"
+    cooldown: "Réanimation dans"

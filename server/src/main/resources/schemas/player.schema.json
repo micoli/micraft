@@ -172,7 +172,8 @@
                         "AGGRO_INDICATORS",
                         "STATISTICS",
                         "QUEST_TRACKER",
-                        "BUFF_BAR"
+                        "BUFF_BAR",
+                        "PET_HUD"
                       ]
                     },
                     "x": {
@@ -556,6 +557,53 @@
         "factionChangedAtMs": {
           "type": [
             "integer",
+            "null"
+          ]
+        },
+        "pets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "npcType",
+              "name"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "npcType": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "level": {
+                "type": "integer"
+              },
+              "xp": {
+                "type": "integer"
+              },
+              "currentHp": {
+                "type": "integer"
+              },
+              "tamedAtLevel": {
+                "type": "integer"
+              },
+              "dead": {
+                "type": "boolean"
+              },
+              "resurrectReadyAtMs": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "activePetId": {
+          "type": [
+            "string",
             "null"
           ]
         }
