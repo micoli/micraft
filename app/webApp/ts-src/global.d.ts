@@ -687,8 +687,10 @@ declare global {
     scenesSync(json: string): void;
     scenePreviewData(json: string): void;
     sceneRotate?(): void;
-    sceneConfirm?(): void;
     sceneCancel?(): void;
+    showScenePlaceConfirm?(): void;
+    confirmScenePlacement?(): void;
+    cancelScenePlacement?(): void;
     reloadAttackMeta(): void;
     IngameMap(): void;
     dumpStats(): void;

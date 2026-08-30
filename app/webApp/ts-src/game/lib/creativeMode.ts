@@ -26,6 +26,9 @@ let selectedScene: CreativeSceneSummary | null = null;
 let sceneRotation = 0;
 let scenePreviewCells: SceneGhostCell[] = [];
 let lastGhostBase: { x: number; y: number; z: number } | null = null;
+// Set on click while a scene ghost is active: freezes the ghost at the clicked cell and opens the
+// React yes/no confirm popup. Cleared on confirm/cancel.
+let scenePlacePending = false;
 
 export function setCreativeSelectedItem(item: string | null): void {
   selectedItem = item;
@@ -41,6 +44,7 @@ function clearSceneSelection(): void {
   sceneRotation = 0;
   scenePreviewCells = [];
   lastGhostBase = null;
+  scenePlacePending = false;
   window.mcState.sceneGhostActive = false;
   hideScenePreview();
 }
@@ -92,7 +96,7 @@ function updateGhostAt(bx: number, by: number, bz: number): void {
 // after a rotation or a scene_preview_request round trip, since the ghost geometry/orientation
 // changed but the mouse may not have moved.
 function rebuildGhostAtCursor(): void {
-  if (!selectedScene) return;
+  if (!selectedScene || scenePlacePending) return;
   const scene = window.mcState.engine?.scenes?.[0];
   if (!scene) return;
   const pick = scene.pick(scene.pointerX, scene.pointerY);
@@ -105,16 +109,34 @@ function rebuildGhostAtCursor(): void {
 }
 
 export function sceneRotate(): void {
-  if (!selectedScene) return;
+  if (!selectedScene || scenePlacePending) return;
   sceneRotation = (sceneRotation + 1) % 4;
   rebuildGhostAtCursor();
 }
 
-export function sceneConfirm(): void {
-  if (!selectedScene || !lastGhostBase) return;
+// Called from the orbit pointer controller's onClick while a scene ghost is active: freezes the
+// ghost at the clicked cell and opens the React yes/no confirm popup.
+function requestScenePlacement(bx: number, by: number, bz: number): void {
+  if (!selectedScene) return;
+  updateGhostAt(bx, by, bz);
+  scenePlacePending = true;
+  window.mc.showScenePlaceConfirm?.();
+}
+
+export function confirmScenePlacement(): void {
+  scenePlacePending = false;
+  if (!selectedScene || !lastGhostBase) {
+    setCreativeSelectedScene(null);
+    return;
+  }
   const { id } = selectedScene;
   const { x, y, z } = lastGhostBase;
   window.mcState.events.push(`cmd:/scene:place ${id} ${sceneRotation} ${x} ${y} ${z}`);
+  setCreativeSelectedScene(null);
+}
+
+export function cancelScenePlacement(): void {
+  scenePlacePending = false;
   setCreativeSelectedScene(null);
 }
 
@@ -177,6 +199,7 @@ export function enterCreativeMode(): void {
     canvas,
     getMode: () => (selectedScene ? "select" : selectedItem ? "place" : "break"),
     onHoverMove: () => {
+      if (scenePlacePending) return; // ghost frozen while the confirm popup is open
       const pick = scene.pick(scene.pointerX, scene.pointerY);
       if (!pick?.hit || !pick.pickedPoint) {
         window.mc.hideTargetOutline();
@@ -204,10 +227,17 @@ export function enterCreativeMode(): void {
     },
     continuousBreak: window.mcState.continuousBreak,
     onClick: ({ pick, normal, mode }) => {
-      if (mode === "select") return; // scene placement confirms via Enter, not click
       const hit = pick.pickedPoint;
       if (!hit) return;
       const n = normal ?? new BABYLON.Vector3(0, 0, 0);
+      if (mode === "select") {
+        if (scenePlacePending) return;
+        const px = Math.floor(hit.x + n.x * 0.5);
+        const py = Math.floor(hit.y + n.y * 0.5);
+        const pz = Math.floor(hit.z + n.z * 0.5);
+        requestScenePlacement(px, py, pz);
+        return;
+      }
       const sign = mode === "place" ? 0.5 : -0.5;
       const bx = Math.floor(hit.x + n.x * sign);
       const by = Math.floor(hit.y + n.y * sign);

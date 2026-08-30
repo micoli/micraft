@@ -42,6 +42,7 @@ import { GroupPanel } from "../game/components/social/GroupPanel";
 import { GuildPanel } from "../game/components/social/GuildPanel";
 import { FactionPanel } from "../game/components/social/FactionPanel";
 import { CreativeBlockPanel } from "../game/components/CreativeBlockPanel";
+import { SceneePlaceConfirmDialog } from "../game/components/SceneePlaceConfirmDialog";
 import { setCreativeSelectedItem, setCreativeSelectedScene } from "../game/lib/creativeMode";
 import { FramedBox } from "../primitives/FramedBox";
 import { SegmentedBar } from "../primitives/SegmentedBar";
@@ -345,6 +346,11 @@ export function GameScreen() {
               }}
             />
           )}
+          <SceneePlaceConfirmDialog
+            open={state.scenePlaceConfirmOpen}
+            onConfirm={() => window.mc.confirmScenePlacement?.()}
+            onCancel={() => window.mc.cancelScenePlacement?.()}
+          />
           <Notifications notif={state.notif?.msg ? state.notif : null} />
           {state.healthBarVisible && state.playerStatus && (
             <PlayerStatusBar

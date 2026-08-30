@@ -284,9 +284,19 @@
     "name": "Blocks",
     "source": ".stories/game/window/CreativeBlockPanel.stories.tsx"
   },
+  "game-windows-creativeblockpanel--filtered-blocks": {
+    "title": "Game/Windows/CreativeBlockPanel",
+    "name": "Filtered Blocks",
+    "source": ".stories/game/window/CreativeBlockPanel.stories.tsx"
+  },
   "game-windows-creativeblockpanel--hidden": {
     "title": "Game/Windows/CreativeBlockPanel",
     "name": "Hidden",
+    "source": ".stories/game/window/CreativeBlockPanel.stories.tsx"
+  },
+  "game-windows-creativeblockpanel--no-match": {
+    "title": "Game/Windows/CreativeBlockPanel",
+    "name": "No Match",
     "source": ".stories/game/window/CreativeBlockPanel.stories.tsx"
   },
   "game-windows-mailboxoverlay--compose-with-inventory": {
@@ -378,6 +388,21 @@
     "title": "Game/Windows/Preferences",
     "name": "Keybindings Tab",
     "source": ".stories/game/window/Preferences.stories.tsx"
+  },
+  "game-windows-sceneeplaceconfirmdialog--closed": {
+    "title": "Game/Windows/SceneePlaceConfirmDialog",
+    "name": "Closed",
+    "source": ".stories/game/window/SceneePlaceConfirmDialog.stories.tsx"
+  },
+  "game-windows-sceneeplaceconfirmdialog--confirms-on-yes": {
+    "title": "Game/Windows/SceneePlaceConfirmDialog",
+    "name": "Confirms On Yes",
+    "source": ".stories/game/window/SceneePlaceConfirmDialog.stories.tsx"
+  },
+  "game-windows-sceneeplaceconfirmdialog--open": {
+    "title": "Game/Windows/SceneePlaceConfirmDialog",
+    "name": "Open",
+    "source": ".stories/game/window/SceneePlaceConfirmDialog.stories.tsx"
   },
   "game-windows-social-factionpanel--disabled": {
     "title": "Game/Windows/Social/FactionPanel",
