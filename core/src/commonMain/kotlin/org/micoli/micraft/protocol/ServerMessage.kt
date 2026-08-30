@@ -520,7 +520,31 @@ sealed class ServerMessage {
     @ProtoId(81)
     @Serializable
     data class SocialDenied(val scope: String, val reason: String) : ServerMessage()
+
+    /**
+     * Sent on connect and on every roster change: the player's tamed pets and which one is active.
+     */
+    @ProtoId(82)
+    @Serializable
+    data class PetRosterSync(
+        val pets: List<PetInfo>,
+        val activePetId: String? = null,
+    ) : ServerMessage()
 }
+
+@Serializable
+data class PetInfo(
+    val id: String,
+    val name: String,
+    val npcType: String,
+    val level: Int,
+    val xp: Int,
+    val currentHp: Int,
+    val maxHp: Int,
+    val spawned: Boolean,
+    val dead: Boolean,
+    val resurrectReadyAtMs: Long,
+)
 
 @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
 @Serializable
