@@ -82,19 +82,20 @@ class PetCoordinator(
         val leftZ = sin(yaw)
         val station = Vec3(opos.x + leftX * SIDE_OFFSET, opos.y, opos.z + leftZ * SIDE_OFFSET)
 
-        val gap = distXZ(pet.state.pos, station)
         val fromOwner = distXZ(pet.state.pos, opos)
-        when {
-            fromOwner > TELEPORT_LEASH -> {
-                pet.state = pet.state.copy(pos = station)
-                pet.chaseTargetPos = null
-                npcManager.refreshNpcState(pet.state.id)
-            }
-            gap > STATION_DEADZONE -> {
-                pet.chaseTargetPos = station
-                pet.chaseLeash = FOLLOW_LEASH
-            }
-            else -> pet.chaseTargetPos = null
+        if (fromOwner > TELEPORT_LEASH) {
+            pet.state = pet.state.copy(pos = station, yaw = yaw)
+            pet.chaseTargetPos = null
+            npcManager.refreshNpcState(pet.state.id)
+            return
+        }
+        // Always hold the station (keeps the behaviour in its chase branch, off the wander/
+        // look-around path), and face the same way as the owner once parked on it.
+        pet.chaseTargetPos = station
+        pet.chaseLeash = FOLLOW_LEASH
+        if (distXZ(pet.state.pos, station) <= STATION_DEADZONE && pet.state.yaw != yaw) {
+            pet.state = pet.state.copy(yaw = yaw)
+            npcManager.refreshNpcState(pet.state.id)
         }
     }
 
