@@ -46,6 +46,7 @@ interface Props {
 export function CreativeBlockPanel({ visible, selectedItem, onSelectItem, selectedSceneId, onSelectScene }: Props) {
   const [pos, setPos] = useState(loadPanelPos);
   const [tab, setTab] = useState<CreativeTab>("blocks");
+  const [filter, setFilter] = useState("");
   const dragStateRef = useRef<{ startX: number; startY: number; startTop: number; startLeft: number } | null>(null);
   const defsReady = useBlockDefsReady();
   const getPreview = useBlockPreviews();
@@ -88,9 +89,11 @@ export function CreativeBlockPanel({ visible, selectedItem, onSelectItem, select
   const blocks: BlockEntry[] = (window.mcState.codexBlocks ?? []).map(
     (b: Omit<BlockEntry, "ordinal">, i: number) => ({ ...b, ordinal: i }) as BlockEntry,
   );
+  const query = filter.trim().toLowerCase();
   const items: ItemEntry[] = Object.entries(window.mcState.codexItems ?? {})
     .map(([name, info]: [string, unknown]) => ({ name, ...(info as Omit<ItemEntry, "name">) }))
     .filter((it: ItemEntry) => it.buildable)
+    .filter((it: ItemEntry) => !query || it.name.toLowerCase().includes(query))
     .sort((a: ItemEntry, b: ItemEntry) => a.name.localeCompare(b.name));
   const scenes: CreativeScene[] = [...(window.mcState.scenes ?? [])].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -148,55 +151,70 @@ export function CreativeBlockPanel({ visible, selectedItem, onSelectItem, select
           ))}
         </div>
       ) : (
-        <div className="flex flex-wrap gap-1 p-2 overflow-y-auto max-h-[70vh] justify-center">
-          {items.map((item) => {
-            const linkedBlock = item.placesBlock ? blocks.find((b) => b.name === item.placesBlock) : null;
-            const preview = linkedBlock ? getPreview(linkedBlock.ordinal) : null;
-            return (
-              <CodexCard
-                key={item.name}
-                selected={selectedItem === item.name}
-                onClick={() => onSelectItem(item.name)}
-                title={item.name}
-                label={item.name.replace(/_/g, " ")}
-                width={80}
-                padding="6px 4px"
-                gap={2}
-                labelFontSize={10}
-                thumbnail={
-                  preview ? (
-                    <img
-                      alt="preview"
-                      src={preview}
-                      width={48}
-                      height={48}
-                      style={{ imageRendering: "pixelated", display: "block" }}
-                    />
-                  ) : linkedBlock && defsReady ? (
-                    <CssBlockCube ordinal={linkedBlock.ordinal} size={36} />
-                  ) : (
-                    <div
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 4,
-                        background: linkedBlock
-                          ? `rgb(${linkedBlock.minimapColor[0]},${linkedBlock.minimapColor[1]},${linkedBlock.minimapColor[2]})`
-                          : "#6a5acd",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 18,
-                      }}
-                    >
-                      {!linkedBlock ? "✦" : ""}
-                    </div>
-                  )
-                }
-              />
-            );
-          })}
-        </div>
+        <>
+          <div className="shrink-0 border-b border-[#2E3A4E] p-2">
+            <input
+              type="text"
+              placeholder="Filter blocks…"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="w-full rounded border border-white/20 bg-white/10 px-2 py-1 text-[10px] text-white placeholder:text-white/30 focus:border-white/50 focus:outline-none"
+            />
+          </div>
+          <div className="flex flex-wrap gap-1 p-2 overflow-y-auto max-h-[70vh] justify-center">
+            {items.length === 0 && (
+              <span className="text-[10px] text-[#666] px-1 py-2 text-center">No block matches</span>
+            )}
+            {items.map((item) => {
+              const linkedBlock = item.placesBlock ? blocks.find((b) => b.name === item.placesBlock) : null;
+              const preview = linkedBlock ? getPreview(linkedBlock.ordinal) : null;
+              return (
+                <CodexCard
+                  key={item.name}
+                  selected={selectedItem === item.name}
+                  onClick={() => onSelectItem(item.name)}
+                  title={item.name}
+                  label={item.name.replace(/_/g, " ")}
+                  width={80}
+                  padding="6px 4px"
+                  gap={2}
+                  labelFontSize={10}
+                  thumbnail={
+                    preview ? (
+                      <img
+                        alt="preview"
+                        src={preview}
+                        width={48}
+                        height={48}
+                        style={{ imageRendering: "pixelated", display: "block" }}
+                      />
+                    ) : linkedBlock && defsReady ? (
+                      <CssBlockCube ordinal={linkedBlock.ordinal} size={36} />
+                    ) : (
+                      <div
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 4,
+                          background: linkedBlock
+                            ? `rgb(${linkedBlock.minimapColor[0]},${linkedBlock.minimapColor[1]},${linkedBlock.minimapColor[2]})`
+                            : "#6a5acd",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 18,
+                        }}
+                      >
+                        {!linkedBlock ? "✦" : ""}
+                      </div>
+                    )
+                  }
+                />
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

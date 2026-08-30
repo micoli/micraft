@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, userEvent, within } from "@storybook/test";
 import { CreativeBlockPanel } from "../../../game/components/CreativeBlockPanel";
 import { stubMcState } from "../../_support/mcState";
 
@@ -13,6 +14,7 @@ const codexItems = {
   COBBLESTONE: { buildable: true, placesBlock: "STONE" },
   DIRT: { buildable: true, placesBlock: "DIRT" },
   SAND: { buildable: true, placesBlock: "SAND" },
+  SANDSTONE: { buildable: true, placesBlock: "SAND" },
   FLINT: { buildable: false, placesBlock: null },
 };
 
@@ -46,6 +48,27 @@ function Harness() {
 }
 
 export const Blocks: Story = { render: () => <Harness /> };
+
+export const FilteredBlocks: Story = {
+  render: () => <Harness />,
+  play: async () => {
+    const body = within(document.body);
+    const input = body.getByPlaceholderText("Filter blocks…");
+    await userEvent.type(input, "sand", { pointerEventsCheck: 0 });
+    await expect(body.getByTitle("SAND")).toBeVisible();
+    await expect(body.getByTitle("SANDSTONE")).toBeVisible();
+    await expect(body.queryByTitle("COBBLESTONE")).toBeNull();
+  },
+};
+
+export const NoMatch: Story = {
+  render: () => <Harness />,
+  play: async () => {
+    const body = within(document.body);
+    await userEvent.type(body.getByPlaceholderText("Filter blocks…"), "zzz", { pointerEventsCheck: 0 });
+    await expect(body.getByText("No block matches")).toBeVisible();
+  },
+};
 
 export const Hidden: Story = {
   render: () => (
