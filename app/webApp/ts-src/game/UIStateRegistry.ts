@@ -82,6 +82,7 @@ export interface UiState {
   activeEffects: ActiveEffect[];
   godMode: boolean;
   editMode: "game" | "creative";
+  scenePlaceConfirmOpen: boolean;
   wallet: number;
   mailboxOpen: boolean;
   mails: MailData[];
@@ -263,6 +264,8 @@ const componentVisibilityRegistry = {
       : state.preferences,
   }),
   log_hide: (state: UiState) => ({ ...state, logVisible: false }),
+  scene_place_confirm_show: (state: UiState) => ({ ...state, scenePlaceConfirmOpen: true }),
+  scene_place_confirm_hide: (state: UiState) => ({ ...state, scenePlaceConfirmOpen: false }),
 };
 
 const gameRegistry = {
