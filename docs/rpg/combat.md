@@ -17,6 +17,12 @@ title: Combat
 - **`/rest`** — restore rage and tokens to max.
 - **`/buff <hp|mana|hpregen|manaregen>`** — apply a temporary self buff.
 
+{{ story "story/game-layout-combattargetframe--with-target-of-target" caption="CombatTargetFrame — focused enemy and its own target" }}
+
+{{ story "story/game-layout-attackpanel--on-cooldown-and-out-of-resources" caption="AttackPanel — attacks and spells, dimmed while on cooldown or short on resources" }}
+
+{{ story "story/game-layout-aggroindicators--crowd" caption="Aggro indicators — direction and distance of nearby hostiles" }}
+
 Processors: `SpellProcessor` (alongside the attack processor),
 `StatusEffectProcessor` (timed buffs/debuffs), `RegenProcessor` (HP/mana regen).
 

@@ -61,6 +61,9 @@ plugins:
       scripts:
         - scripts/docs/gen_docs.py
 
+hooks:
+  - scripts/docs/hooks.py
+
 markdown_extensions:
   - admonition
   - attr_list
