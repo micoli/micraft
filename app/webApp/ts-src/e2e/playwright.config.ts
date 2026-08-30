@@ -1,6 +1,8 @@
 import { defineConfig } from "@playwright/test";
+import { resolve } from "node:path";
 
 const PORT = process.env.E2E_PORT ?? "8091";
+const REPO_ROOT = resolve(__dirname, "../../..");
 
 /**
  * One Ktor server (booted with MICRAFT_E2E=1) hosts every test's world: each spec gets an
@@ -26,8 +28,9 @@ export default defineConfig({
   },
   webServer: {
     // `make e2e` builds the client first, so here we only boot the server. Locally you can also
-    // run it under pitchfork (`pitchfork start e2e-server`) and this block reuses it.
-    command: "cd ../../.. && ./gradlew :server:runE2eServer --console=plain",
+    // run it yourself (`make e2e-server` or `pitchfork start e2e-server`) and this block reuses it.
+    command: "./gradlew :server:runE2eServer --console=plain",
+    cwd: REPO_ROOT,
     url: `http://localhost:${PORT}/api/auth/config`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
