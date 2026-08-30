@@ -19,4 +19,5 @@ data class NpcState(
     val isDead: Boolean = false,
     val animalData: AnimalStateData? = null,
     val scale: Float = 1.0f,
+    val ownerId: String? = null,
 )

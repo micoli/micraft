@@ -3,6 +3,7 @@ package org.micoli.micraft.player
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.player.pet.PetRecord
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.quest.QuestProgress
 import org.micoli.micraft.schema.JsonSchemaConstraint
@@ -86,4 +87,6 @@ data class PlayerState(
     val guildTag: String? = null,
     val factionId: String? = null,
     val factionChangedAtMs: Long? = null,
+    val pets: List<PetRecord> = emptyList(),
+    val activePetId: String? = null,
 )
