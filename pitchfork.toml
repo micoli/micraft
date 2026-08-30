@@ -66,3 +66,10 @@ env = { DISABLE_MKDOCS_2_WARNING = "true" }
 ready-port = 8000
 boot_start = false
 retry = true
+
+[daemons.e2e-server]
+run = "bash -c './gradlew :app:webApp:copyResourcesToWebDist :app:webApp:copyStaticToWebDist --console=plain && (cd app/webApp/ts-src && npm run build) && ./gradlew :server:runE2eServer --console=plain'"
+dir = "."
+ready-port = 8091
+boot_start = false
+retry = false

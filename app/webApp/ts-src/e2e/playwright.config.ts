@@ -25,7 +25,8 @@ export default defineConfig({
     launchOptions: { args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"] },
   },
   webServer: {
-    // `make e2e` builds the client first; here we only need the server. Run from the repo root.
+    // `make e2e` builds the client first, so here we only boot the server. Locally you can also
+    // run it under pitchfork (`pitchfork start e2e-server`) and this block reuses it.
     command: "cd ../../.. && ./gradlew :server:runE2eServer --console=plain",
     url: `http://localhost:${PORT}/api/auth/config`,
     reuseExistingServer: !process.env.CI,
