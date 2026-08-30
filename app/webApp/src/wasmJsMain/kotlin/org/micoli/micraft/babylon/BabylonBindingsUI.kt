@@ -293,3 +293,14 @@ fun jsInstanceZonesSync(json: String): Unit = js("mc.instanceZonesSync(json)")
 fun jsScenesSync(json: String): Unit = js("mc.scenesSync(json)")
 
 fun jsScenePreviewData(json: String): Unit = js("mc.scenePreviewData(json)")
+
+// ── E2E test mode ──────────────────────────────────────────────────────────────
+
+fun jsE2eEnabled(): Boolean = js("(typeof window !== 'undefined' && window.__mcE2E === true)")
+
+fun jsE2eSessionId(): String =
+    js(
+        "(typeof window !== 'undefined' && window.__mcE2ESession) ? String(window.__mcE2ESession) : ''")
+
+fun jsUpdateE2E(json: String): Unit =
+    js("(window.mc && window.mc.updateE2E) ? window.mc.updateE2E(json) : undefined")
