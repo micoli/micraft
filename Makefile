@@ -27,7 +27,8 @@ endif
         code-standard check-docs check-openapi check-schemas ts-code-standard \
         check-configuration spotless-apply ts-typecheck ts-lint ts-lint-fix \
         ts-test-setup ts-test ts-test-storybook test kt-test kt-test-info kt-web-test \
-        docs gen-schemas docs-site-build docs-site-serve docs-site-stop help \
+        docs gen-schemas docs-screenshots check-docs-screenshots \
+        docs-site-build docs-site-serve docs-site-stop help \
         security security-locks security-relock security-verify security-audit \
         security-osv security-sbom
 
@@ -242,6 +243,12 @@ docs: ## Regenerate all generated docs (README commands + docs/reference/_genera
 
 gen-schemas: ## Regenerate data/config/schemas/ JSON Schemas from data classes
 	$(EXEC) "./gradlew :server:generateJsonSchemas"
+
+docs-screenshots: ## Regenerate docs/assets/stories/*.png from tagged Storybook stories
+	$(EXEC) "cd app/webApp/ts-src && npm run screenshot-stories"
+
+check-docs-screenshots: ## Fail if committed story screenshots / manifest are stale
+	$(EXEC) "cd app/webApp/ts-src && npm run screenshot-stories -- --check"
 
 docs-site-build: ## Build the static documentation site into ./site
 	$(EXEC) "DISABLE_MKDOCS_2_WARNING=true bash scripts/docs/mkdocs.sh build --strict -f mkdocs.yml"

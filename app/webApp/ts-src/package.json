@@ -35,6 +35,7 @@
     "format": "prettier --write . --log-level warn",
     "format:check": "prettier --check .",
     "storybook": "storybook dev -p 6006 --no-open",
+    "screenshot-stories": "node scripts/screenshot-stories.mjs",
     "build-storybook": "storybook build",
     "test": "vitest run",
     "test:watch": "vitest",

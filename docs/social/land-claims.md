@@ -17,6 +17,8 @@ Players in the **same faction** as the claim owner can build and interact
 without being explicitly trusted (see
 [groups, guilds & factions](groups-guilds-factions.md)).
 
+{{ story "story/game-windows-claimpanel--with-claims" caption="Claims - manage a claim" }}
+
 ## Configuration
 
 `data/config/claims.yaml` (bundled default `resources/config/claims.yaml`, schema

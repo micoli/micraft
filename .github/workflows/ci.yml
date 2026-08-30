@@ -30,6 +30,8 @@ jobs:
         working-directory: app/webApp/ts-src
       - run: npm run test-storybook:ci
         working-directory: app/webApp/ts-src
+      - run: npm run screenshot-stories -- --check
+        working-directory: app/webApp/ts-src
 
   check-docs:
     name: Generated docs up to date
