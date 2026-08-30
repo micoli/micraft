@@ -194,6 +194,24 @@ export interface GroupInfo {
   members: GroupMemberInfo[];
 }
 
+export interface PetInfo {
+  id: string;
+  name: string;
+  npcType: string;
+  level: number;
+  xp: number;
+  currentHp: number;
+  maxHp: number;
+  spawned: boolean;
+  dead: boolean;
+  resurrectReadyAtMs: number;
+}
+
+export interface PetRosterData {
+  pets: PetInfo[];
+  activePetId: string | null;
+}
+
 export interface FactionDefinition {
   id: string;
   name: string;

@@ -948,6 +948,8 @@ class LocalPlayerController(
                         else ClientMessage.NpcInteract(targetId))
                 }
                 event == "vehicle_mount" -> outMessages.trySend(ClientMessage.Command("/mount"))
+                event == "tame" -> outMessages.trySend(ClientMessage.Command("/tame"))
+                event == "pet_dismiss" -> outMessages.trySend(ClientMessage.Command("/pet dismiss"))
                 event == "siege_weapon_rotate" -> {
                     val targetId = currentCombatTargetId ?: return@repeat
                     if (isPlaceableTarget(targetId))
