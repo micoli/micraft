@@ -19,6 +19,13 @@ HP / mana / rage formulas and regeneration are defined per class in
 `regen.regenIntervalMs`; `StatusEffectProcessor` layers timed buffs/debuffs on
 top.
 
+The `PlayerStatusBar` HUD element renders whichever resource pools the class
+actually uses:
+
+{{ story "story/game-layout-playerstatusbar--caster" caption="PlayerStatusBar — caster with HP and mana" }}
+
+{{ story "story/game-layout-playerstatusbar--warrior" caption="PlayerStatusBar — warrior with HP and rage" }}
+
 ## Configuration
 
 Base-stat point-buy limits and derived-stat formulas live in

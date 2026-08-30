@@ -1,0 +1,797 @@
+{
+  "game-layout-aggroindicators--crowd": {
+    "title": "Game/Layout/AggroIndicators",
+    "name": "Crowd",
+    "source": ".stories/game/layout/AggroIndicators.stories.tsx"
+  },
+  "game-layout-aggroindicators--empty": {
+    "title": "Game/Layout/AggroIndicators",
+    "name": "Empty",
+    "source": ".stories/game/layout/AggroIndicators.stories.tsx"
+  },
+  "game-layout-aggroindicators--single-aggro": {
+    "title": "Game/Layout/AggroIndicators",
+    "name": "Single Aggro",
+    "source": ".stories/game/layout/AggroIndicators.stories.tsx"
+  },
+  "game-layout-aggroindicators--single-calm": {
+    "title": "Game/Layout/AggroIndicators",
+    "name": "Single Calm",
+    "source": ".stories/game/layout/AggroIndicators.stories.tsx"
+  },
+  "game-layout-attackpanel--attacks-only": {
+    "title": "Game/Layout/AttackPanel",
+    "name": "Attacks Only",
+    "source": ".stories/game/layout/AttackPanel.stories.tsx"
+  },
+  "game-layout-attackpanel--empty": {
+    "title": "Game/Layout/AttackPanel",
+    "name": "Empty",
+    "source": ".stories/game/layout/AttackPanel.stories.tsx"
+  },
+  "game-layout-attackpanel--on-cooldown-and-out-of-resources": {
+    "title": "Game/Layout/AttackPanel",
+    "name": "On Cooldown And Out Of Resources",
+    "source": ".stories/game/layout/AttackPanel.stories.tsx"
+  },
+  "game-layout-attackpanel--with-spells-and-macros": {
+    "title": "Game/Layout/AttackPanel",
+    "name": "With Spells And Macros",
+    "source": ".stories/game/layout/AttackPanel.stories.tsx"
+  },
+  "game-layout-buffbar--all-expired": {
+    "title": "Game/Layout/BuffBar",
+    "name": "All Expired",
+    "source": ".stories/game/layout/BuffBar.stories.tsx"
+  },
+  "game-layout-buffbar--empty": {
+    "title": "Game/Layout/BuffBar",
+    "name": "Empty",
+    "source": ".stories/game/layout/BuffBar.stories.tsx"
+  },
+  "game-layout-buffbar--many": {
+    "title": "Game/Layout/BuffBar",
+    "name": "Many",
+    "source": ".stories/game/layout/BuffBar.stories.tsx"
+  },
+  "game-layout-buffbar--single": {
+    "title": "Game/Layout/BuffBar",
+    "name": "Single",
+    "source": ".stories/game/layout/BuffBar.stories.tsx"
+  },
+  "game-layout-combattargetframe--basic": {
+    "title": "Game/Layout/CombatTargetFrame",
+    "name": "Basic",
+    "source": ".stories/game/layout/CombatTargetFrame.stories.tsx"
+  },
+  "game-layout-combattargetframe--no-target": {
+    "title": "Game/Layout/CombatTargetFrame",
+    "name": "No Target",
+    "source": ".stories/game/layout/CombatTargetFrame.stories.tsx"
+  },
+  "game-layout-combattargetframe--with-target-of-target": {
+    "title": "Game/Layout/CombatTargetFrame",
+    "name": "With Target Of Target",
+    "source": ".stories/game/layout/CombatTargetFrame.stories.tsx"
+  },
+  "game-layout-hotbar--empty": {
+    "title": "Game/Layout/Hotbar",
+    "name": "Empty",
+    "source": ".stories/game/layout/Hotbar.stories.tsx"
+  },
+  "game-layout-hotbar--full-inventory": {
+    "title": "Game/Layout/Hotbar",
+    "name": "Full Inventory",
+    "source": ".stories/game/layout/Hotbar.stories.tsx"
+  },
+  "game-layout-hotbar--hidden": {
+    "title": "Game/Layout/Hotbar",
+    "name": "Hidden",
+    "source": ".stories/game/layout/Hotbar.stories.tsx"
+  },
+  "game-layout-hotbar--with-items": {
+    "title": "Game/Layout/Hotbar",
+    "name": "With Items",
+    "source": ".stories/game/layout/Hotbar.stories.tsx"
+  },
+  "game-layout-hud--no-data": {
+    "title": "Game/Layout/HUD",
+    "name": "No Data",
+    "source": ".stories/game/layout/HUD.stories.tsx"
+  },
+  "game-layout-hud--simple": {
+    "title": "Game/Layout/HUD",
+    "name": "Simple",
+    "source": ".stories/game/layout/HUD.stories.tsx"
+  },
+  "game-layout-hud--sneaking": {
+    "title": "Game/Layout/HUD",
+    "name": "Sneaking",
+    "source": ".stories/game/layout/HUD.stories.tsx"
+  },
+  "game-layout-inventory--empty": {
+    "title": "Game/Layout/Inventory",
+    "name": "Empty",
+    "source": ".stories/game/layout/Inventory.stories.tsx"
+  },
+  "game-layout-inventory--hidden": {
+    "title": "Game/Layout/Inventory",
+    "name": "Hidden",
+    "source": ".stories/game/layout/Inventory.stories.tsx"
+  },
+  "game-layout-inventory--with-items": {
+    "title": "Game/Layout/Inventory",
+    "name": "With Items",
+    "source": ".stories/game/layout/Inventory.stories.tsx"
+  },
+  "game-layout-inventory--with-wallet": {
+    "title": "Game/Layout/Inventory",
+    "name": "With Wallet",
+    "source": ".stories/game/layout/Inventory.stories.tsx"
+  },
+  "game-layout-notifications--block-broken": {
+    "title": "Game/Layout/Notifications",
+    "name": "Block Broken",
+    "source": ".stories/game/layout/Notifications.stories.tsx"
+  },
+  "game-layout-notifications--item-pickup": {
+    "title": "Game/Layout/Notifications",
+    "name": "Item Pickup",
+    "source": ".stories/game/layout/Notifications.stories.tsx"
+  },
+  "game-layout-notifications--none": {
+    "title": "Game/Layout/Notifications",
+    "name": "None",
+    "source": ".stories/game/layout/Notifications.stories.tsx"
+  },
+  "game-layout-notifications--server-message": {
+    "title": "Game/Layout/Notifications",
+    "name": "Server Message",
+    "source": ".stories/game/layout/Notifications.stories.tsx"
+  },
+  "game-layout-playerstatusbar--caster": {
+    "title": "Game/Layout/PlayerStatusBar",
+    "name": "Caster",
+    "source": ".stories/game/layout/PlayerStatusBar.stories.tsx"
+  },
+  "game-layout-playerstatusbar--god-mode": {
+    "title": "Game/Layout/PlayerStatusBar",
+    "name": "God Mode",
+    "source": ".stories/game/layout/PlayerStatusBar.stories.tsx"
+  },
+  "game-layout-playerstatusbar--low-hp": {
+    "title": "Game/Layout/PlayerStatusBar",
+    "name": "Low Hp",
+    "source": ".stories/game/layout/PlayerStatusBar.stories.tsx"
+  },
+  "game-layout-playerstatusbar--on-global-cooldown": {
+    "title": "Game/Layout/PlayerStatusBar",
+    "name": "On Global Cooldown",
+    "source": ".stories/game/layout/PlayerStatusBar.stories.tsx"
+  },
+  "game-layout-playerstatusbar--warrior": {
+    "title": "Game/Layout/PlayerStatusBar",
+    "name": "Warrior",
+    "source": ".stories/game/layout/PlayerStatusBar.stories.tsx"
+  },
+  "game-layout-questtracker--hidden": {
+    "title": "Game/Layout/QuestTracker",
+    "name": "Hidden",
+    "source": ".stories/game/layout/QuestTracker.stories.tsx"
+  },
+  "game-layout-questtracker--no-active-quests": {
+    "title": "Game/Layout/QuestTracker",
+    "name": "No Active Quests",
+    "source": ".stories/game/layout/QuestTracker.stories.tsx"
+  },
+  "game-layout-questtracker--tracking": {
+    "title": "Game/Layout/QuestTracker",
+    "name": "Tracking",
+    "source": ".stories/game/layout/QuestTracker.stories.tsx"
+  },
+  "game-layout-xpbar--almost-level-up": {
+    "title": "Game/Layout/XpBar",
+    "name": "Almost Level Up",
+    "source": ".stories/game/layout/XpBar.stories.tsx"
+  },
+  "game-layout-xpbar--mid-level": {
+    "title": "Game/Layout/XpBar",
+    "name": "Mid Level",
+    "source": ".stories/game/layout/XpBar.stories.tsx"
+  },
+  "game-layout-xpbar--no-xp-state": {
+    "title": "Game/Layout/XpBar",
+    "name": "No Xp State",
+    "source": ".stories/game/layout/XpBar.stories.tsx"
+  },
+  "game-windows-auctionhouse--basic": {
+    "title": "Game/Windows/AuctionHouse",
+    "name": "Basic",
+    "source": ".stories/game/window/AuctionHouse.stories.tsx"
+  },
+  "game-windows-auctionhouse--controlled": {
+    "title": "Game/Windows/AuctionHouse",
+    "name": "Controlled",
+    "source": ".stories/game/window/AuctionHouse.stories.tsx"
+  },
+  "game-windows-auctionhouse--creating-auction": {
+    "title": "Game/Windows/AuctionHouse",
+    "name": "Creating Auction",
+    "source": ".stories/game/window/AuctionHouse.stories.tsx"
+  },
+  "game-windows-auctionhouse--empty": {
+    "title": "Game/Windows/AuctionHouse",
+    "name": "Empty",
+    "source": ".stories/game/window/AuctionHouse.stories.tsx"
+  },
+  "game-windows-character--closed": {
+    "title": "Game/Windows/Character",
+    "name": "Closed",
+    "source": ".stories/game/window/Character.stories.tsx"
+  },
+  "game-windows-character--equipment": {
+    "title": "Game/Windows/Character",
+    "name": "Equipment",
+    "source": ".stories/game/window/Character.stories.tsx"
+  },
+  "game-windows-character--with-stats": {
+    "title": "Game/Windows/Character",
+    "name": "With Stats",
+    "source": ".stories/game/window/Character.stories.tsx"
+  },
+  "game-windows-claimpanel--empty": {
+    "title": "Game/Windows/ClaimPanel",
+    "name": "Empty",
+    "source": ".stories/game/window/ClaimPanel.stories.tsx"
+  },
+  "game-windows-claimpanel--with-claims": {
+    "title": "Game/Windows/ClaimPanel",
+    "name": "With Claims",
+    "source": ".stories/game/window/ClaimPanel.stories.tsx"
+  },
+  "game-windows-creativeblockpanel--blocks": {
+    "title": "Game/Windows/CreativeBlockPanel",
+    "name": "Blocks",
+    "source": ".stories/game/window/CreativeBlockPanel.stories.tsx"
+  },
+  "game-windows-creativeblockpanel--hidden": {
+    "title": "Game/Windows/CreativeBlockPanel",
+    "name": "Hidden",
+    "source": ".stories/game/window/CreativeBlockPanel.stories.tsx"
+  },
+  "game-windows-mailboxoverlay--compose-with-inventory": {
+    "title": "Game/Windows/MailboxOverlay",
+    "name": "Compose With Inventory",
+    "source": ".stories/game/window/MailboxOverlay.stories.tsx"
+  },
+  "game-windows-mailboxoverlay--controlled": {
+    "title": "Game/Windows/MailboxOverlay",
+    "name": "Controlled",
+    "source": ".stories/game/window/MailboxOverlay.stories.tsx"
+  },
+  "game-windows-mailboxoverlay--empty-inbox": {
+    "title": "Game/Windows/MailboxOverlay",
+    "name": "Empty Inbox",
+    "source": ".stories/game/window/MailboxOverlay.stories.tsx"
+  },
+  "game-windows-mailboxoverlay--inbox-with-unread": {
+    "title": "Game/Windows/MailboxOverlay",
+    "name": "Inbox With Unread",
+    "source": ".stories/game/window/MailboxOverlay.stories.tsx"
+  },
+  "game-windows-mailboxoverlay--with-attachments": {
+    "title": "Game/Windows/MailboxOverlay",
+    "name": "With Attachments",
+    "source": ".stories/game/window/MailboxOverlay.stories.tsx"
+  },
+  "game-windows-npcshopdialog--basic": {
+    "title": "Game/Windows/NpcShopDialog",
+    "name": "Basic",
+    "source": ".stories/game/window/NpcShopDialog.stories.tsx"
+  },
+  "game-windows-npcshopdialog--empty-inventory": {
+    "title": "Game/Windows/NpcShopDialog",
+    "name": "Empty Inventory",
+    "source": ".stories/game/window/NpcShopDialog.stories.tsx"
+  },
+  "game-windows-npcshopdialog--null": {
+    "title": "Game/Windows/NpcShopDialog",
+    "name": "Null",
+    "source": ".stories/game/window/NpcShopDialog.stories.tsx"
+  },
+  "game-windows-npcshopdialog--poor-player": {
+    "title": "Game/Windows/NpcShopDialog",
+    "name": "Poor Player",
+    "source": ".stories/game/window/NpcShopDialog.stories.tsx"
+  },
+  "game-windows-npcshopdialog--rich-wallet": {
+    "title": "Game/Windows/NpcShopDialog",
+    "name": "Rich Wallet",
+    "source": ".stories/game/window/NpcShopDialog.stories.tsx"
+  },
+  "game-windows-pausemenu--click-disconnect": {
+    "title": "Game/Windows/PauseMenu",
+    "name": "Click Disconnect",
+    "source": ".stories/game/window/PauseMenu.stories.tsx"
+  },
+  "game-windows-pausemenu--controlled": {
+    "title": "Game/Windows/PauseMenu",
+    "name": "Controlled",
+    "source": ".stories/game/window/PauseMenu.stories.tsx"
+  },
+  "game-windows-pausemenu--open": {
+    "title": "Game/Windows/PauseMenu",
+    "name": "Open",
+    "source": ".stories/game/window/PauseMenu.stories.tsx"
+  },
+  "game-windows-preferences--chat-tab": {
+    "title": "Game/Windows/Preferences",
+    "name": "Chat Tab",
+    "source": ".stories/game/window/Preferences.stories.tsx"
+  },
+  "game-windows-preferences--closed": {
+    "title": "Game/Windows/Preferences",
+    "name": "Closed",
+    "source": ".stories/game/window/Preferences.stories.tsx"
+  },
+  "game-windows-preferences--game-tab": {
+    "title": "Game/Windows/Preferences",
+    "name": "Game Tab",
+    "source": ".stories/game/window/Preferences.stories.tsx"
+  },
+  "game-windows-preferences--graphics-tab": {
+    "title": "Game/Windows/Preferences",
+    "name": "Graphics Tab",
+    "source": ".stories/game/window/Preferences.stories.tsx"
+  },
+  "game-windows-preferences--keybindings-tab": {
+    "title": "Game/Windows/Preferences",
+    "name": "Keybindings Tab",
+    "source": ".stories/game/window/Preferences.stories.tsx"
+  },
+  "game-windows-social-factionpanel--disabled": {
+    "title": "Game/Windows/Social/FactionPanel",
+    "name": "Disabled",
+    "source": ".stories/game/window/social/FactionPanel.stories.tsx"
+  },
+  "game-windows-social-factionpanel--member": {
+    "title": "Game/Windows/Social/FactionPanel",
+    "name": "Member",
+    "source": ".stories/game/window/social/FactionPanel.stories.tsx"
+  },
+  "game-windows-social-factionpanel--no-faction-yet": {
+    "title": "Game/Windows/Social/FactionPanel",
+    "name": "No Faction Yet",
+    "source": ".stories/game/window/social/FactionPanel.stories.tsx"
+  },
+  "game-windows-social-factionpanel--on-cooldown": {
+    "title": "Game/Windows/Social/FactionPanel",
+    "name": "On Cooldown",
+    "source": ".stories/game/window/social/FactionPanel.stories.tsx"
+  },
+  "game-windows-social-grouppanel--as-leader": {
+    "title": "Game/Windows/Social/GroupPanel",
+    "name": "As Leader",
+    "source": ".stories/game/window/social/GroupPanel.stories.tsx"
+  },
+  "game-windows-social-grouppanel--as-member": {
+    "title": "Game/Windows/Social/GroupPanel",
+    "name": "As Member",
+    "source": ".stories/game/window/social/GroupPanel.stories.tsx"
+  },
+  "game-windows-social-grouppanel--no-group": {
+    "title": "Game/Windows/Social/GroupPanel",
+    "name": "No Group",
+    "source": ".stories/game/window/social/GroupPanel.stories.tsx"
+  },
+  "game-windows-social-grouppanel--no-group-with-invite": {
+    "title": "Game/Windows/Social/GroupPanel",
+    "name": "No Group With Invite",
+    "source": ".stories/game/window/social/GroupPanel.stories.tsx"
+  },
+  "game-windows-social-guildpanel--as-owner": {
+    "title": "Game/Windows/Social/GuildPanel",
+    "name": "As Owner",
+    "source": ".stories/game/window/social/GuildPanel.stories.tsx"
+  },
+  "game-windows-social-guildpanel--as-plain-member": {
+    "title": "Game/Windows/Social/GuildPanel",
+    "name": "As Plain Member",
+    "source": ".stories/game/window/social/GuildPanel.stories.tsx"
+  },
+  "game-windows-social-guildpanel--no-guild": {
+    "title": "Game/Windows/Social/GuildPanel",
+    "name": "No Guild",
+    "source": ".stories/game/window/social/GuildPanel.stories.tsx"
+  },
+  "game-windows-social-guildpanel--no-guild-with-invite": {
+    "title": "Game/Windows/Social/GuildPanel",
+    "name": "No Guild With Invite",
+    "source": ".stories/game/window/social/GuildPanel.stories.tsx"
+  },
+  "game-windows-trade--both-accepted": {
+    "title": "Game/Windows/Trade",
+    "name": "Both Accepted",
+    "source": ".stories/game/window/Trade.stories.tsx"
+  },
+  "game-windows-trade--empty-inventory": {
+    "title": "Game/Windows/Trade",
+    "name": "Empty Inventory",
+    "source": ".stories/game/window/Trade.stories.tsx"
+  },
+  "game-windows-trade--fresh": {
+    "title": "Game/Windows/Trade",
+    "name": "Fresh",
+    "source": ".stories/game/window/Trade.stories.tsx"
+  },
+  "game-windows-trade--they-offered": {
+    "title": "Game/Windows/Trade",
+    "name": "They Offered",
+    "source": ".stories/game/window/Trade.stories.tsx"
+  },
+  "primitives-badge--all-colors": {
+    "title": "Primitives/Badge",
+    "name": "All Colors",
+    "source": ".stories/primitives/Badge.stories.tsx"
+  },
+  "primitives-badge--blue": {
+    "title": "Primitives/Badge",
+    "name": "Blue",
+    "source": ".stories/primitives/Badge.stories.tsx"
+  },
+  "primitives-badge--neutral": {
+    "title": "Primitives/Badge",
+    "name": "Neutral",
+    "source": ".stories/primitives/Badge.stories.tsx"
+  },
+  "primitives-boolrow--checked": {
+    "title": "Primitives/BoolRow",
+    "name": "Checked",
+    "source": ".stories/primitives/BoolRow.stories.tsx"
+  },
+  "primitives-boolrow--list": {
+    "title": "Primitives/BoolRow",
+    "name": "List",
+    "source": ".stories/primitives/BoolRow.stories.tsx"
+  },
+  "primitives-boolrow--unchecked": {
+    "title": "Primitives/BoolRow",
+    "name": "Unchecked",
+    "source": ".stories/primitives/BoolRow.stories.tsx"
+  },
+  "primitives-button--all-sizes": {
+    "title": "Primitives/Button",
+    "name": "All Sizes",
+    "source": ".stories/primitives/Button.stories.tsx"
+  },
+  "primitives-button--all-variants": {
+    "title": "Primitives/Button",
+    "name": "All Variants",
+    "source": ".stories/primitives/Button.stories.tsx"
+  },
+  "primitives-button--blue": {
+    "title": "Primitives/Button",
+    "name": "Blue",
+    "source": ".stories/primitives/Button.stories.tsx"
+  },
+  "primitives-button--clickable": {
+    "title": "Primitives/Button",
+    "name": "Clickable",
+    "source": ".stories/primitives/Button.stories.tsx"
+  },
+  "primitives-button--danger": {
+    "title": "Primitives/Button",
+    "name": "Danger",
+    "source": ".stories/primitives/Button.stories.tsx"
+  },
+  "primitives-button--disabled": {
+    "title": "Primitives/Button",
+    "name": "Disabled",
+    "source": ".stories/primitives/Button.stories.tsx"
+  },
+  "primitives-button--ghost": {
+    "title": "Primitives/Button",
+    "name": "Ghost",
+    "source": ".stories/primitives/Button.stories.tsx"
+  },
+  "primitives-button--outline": {
+    "title": "Primitives/Button",
+    "name": "Outline",
+    "source": ".stories/primitives/Button.stories.tsx"
+  },
+  "primitives-button--primary": {
+    "title": "Primitives/Button",
+    "name": "Primary",
+    "source": ".stories/primitives/Button.stories.tsx"
+  },
+  "primitives-button--secondary": {
+    "title": "Primitives/Button",
+    "name": "Secondary",
+    "source": ".stories/primitives/Button.stories.tsx"
+  },
+  "primitives-clipaxesinput--all-axes": {
+    "title": "Primitives/ClipAxesInput",
+    "name": "All Axes",
+    "source": ".stories/primitives/ClipAxesInput.stories.tsx"
+  },
+  "primitives-clipaxesinput--x-axis": {
+    "title": "Primitives/ClipAxesInput",
+    "name": "X Axis",
+    "source": ".stories/primitives/ClipAxesInput.stories.tsx"
+  },
+  "primitives-currencydisplay--copper-only": {
+    "title": "Primitives/CurrencyDisplay",
+    "name": "Copper Only",
+    "source": ".stories/primitives/CurrencyDisplay.stories.tsx"
+  },
+  "primitives-currencydisplay--gold-and-copper-only": {
+    "title": "Primitives/CurrencyDisplay",
+    "name": "Gold And Copper Only",
+    "source": ".stories/primitives/CurrencyDisplay.stories.tsx"
+  },
+  "primitives-currencydisplay--gold-silver-copper": {
+    "title": "Primitives/CurrencyDisplay",
+    "name": "Gold Silver Copper",
+    "source": ".stories/primitives/CurrencyDisplay.stories.tsx"
+  },
+  "primitives-currencydisplay--silver-and-copper-only": {
+    "title": "Primitives/CurrencyDisplay",
+    "name": "Silver And Copper Only",
+    "source": ".stories/primitives/CurrencyDisplay.stories.tsx"
+  },
+  "primitives-currencydisplay--zero": {
+    "title": "Primitives/CurrencyDisplay",
+    "name": "Zero",
+    "source": ".stories/primitives/CurrencyDisplay.stories.tsx"
+  },
+  "primitives-currencyinput--empty": {
+    "title": "Primitives/CurrencyInput",
+    "name": "Empty",
+    "source": ".stories/primitives/CurrencyInput.stories.tsx"
+  },
+  "primitives-currencyinput--interactive": {
+    "title": "Primitives/CurrencyInput",
+    "name": "Interactive",
+    "source": ".stories/primitives/CurrencyInput.stories.tsx"
+  },
+  "primitives-currencyinput--with-initial-value": {
+    "title": "Primitives/CurrencyInput",
+    "name": "With Initial Value",
+    "source": ".stories/primitives/CurrencyInput.stories.tsx"
+  },
+  "primitives-dialog--basic-dialog": {
+    "title": "Primitives/Dialog",
+    "name": "Basic Dialog",
+    "source": ".stories/primitives/Dialog.stories.tsx"
+  },
+  "primitives-dialog--pause-style-dialog": {
+    "title": "Primitives/Dialog",
+    "name": "Pause Style Dialog",
+    "source": ".stories/primitives/Dialog.stories.tsx"
+  },
+  "primitives-dragmode--active": {
+    "title": "Primitives/DragMode",
+    "name": "Active",
+    "source": ".stories/primitives/DragMode.stories.tsx"
+  },
+  "primitives-dragmode--all-modes": {
+    "title": "Primitives/DragMode",
+    "name": "All Modes",
+    "source": ".stories/primitives/DragMode.stories.tsx"
+  },
+  "primitives-dragmode--inactive": {
+    "title": "Primitives/DragMode",
+    "name": "Inactive",
+    "source": ".stories/primitives/DragMode.stories.tsx"
+  },
+  "primitives-editor--default": {
+    "title": "Primitives/Editor",
+    "name": "Default",
+    "source": ".stories/primitives/Editor.stories.tsx"
+  },
+  "primitives-editor--with-schema": {
+    "title": "Primitives/Editor",
+    "name": "With Schema",
+    "source": ".stories/primitives/Editor.stories.tsx"
+  },
+  "primitives-emptydetail--default": {
+    "title": "Primitives/EmptyDetail",
+    "name": "Default",
+    "source": ".stories/primitives/EmptyDetail.stories.tsx"
+  },
+  "primitives-field--with-input": {
+    "title": "Primitives/Field",
+    "name": "With Input",
+    "source": ".stories/primitives/Field.stories.tsx"
+  },
+  "primitives-field--with-text": {
+    "title": "Primitives/Field",
+    "name": "With Text",
+    "source": ".stories/primitives/Field.stories.tsx"
+  },
+  "primitives-formfield--default": {
+    "title": "Primitives/FormField",
+    "name": "Default",
+    "source": ".stories/primitives/FormField.stories.tsx"
+  },
+  "primitives-formfield--stacked": {
+    "title": "Primitives/FormField",
+    "name": "Stacked",
+    "source": ".stories/primitives/FormField.stories.tsx"
+  },
+  "primitives-framedbox--both": {
+    "title": "Primitives/FramedBox",
+    "name": "Both",
+    "source": ".stories/primitives/FramedBox.stories.tsx"
+  },
+  "primitives-framedbox--danger": {
+    "title": "Primitives/FramedBox",
+    "name": "Danger",
+    "source": ".stories/primitives/FramedBox.stories.tsx"
+  },
+  "primitives-framedbox--default": {
+    "title": "Primitives/FramedBox",
+    "name": "Default",
+    "source": ".stories/primitives/FramedBox.stories.tsx"
+  },
+  "primitives-icon--all-icons": {
+    "title": "Primitives/Icon",
+    "name": "All Icons",
+    "source": ".stories/primitives/Icon.stories.tsx"
+  },
+  "primitives-icon--default": {
+    "title": "Primitives/Icon",
+    "name": "Default",
+    "source": ".stories/primitives/Icon.stories.tsx"
+  },
+  "primitives-icon--large": {
+    "title": "Primitives/Icon",
+    "name": "Large",
+    "source": ".stories/primitives/Icon.stories.tsx"
+  },
+  "primitives-input--default": {
+    "title": "Primitives/Input",
+    "name": "Default",
+    "source": ".stories/primitives/Input.stories.tsx"
+  },
+  "primitives-input--disabled": {
+    "title": "Primitives/Input",
+    "name": "Disabled",
+    "source": ".stories/primitives/Input.stories.tsx"
+  },
+  "primitives-input--filled": {
+    "title": "Primitives/Input",
+    "name": "Filled",
+    "source": ".stories/primitives/Input.stories.tsx"
+  },
+  "primitives-input--password": {
+    "title": "Primitives/Input",
+    "name": "Password",
+    "source": ".stories/primitives/Input.stories.tsx"
+  },
+  "primitives-input--with-label": {
+    "title": "Primitives/Input",
+    "name": "With Label",
+    "source": ".stories/primitives/Input.stories.tsx"
+  },
+  "primitives-label--default": {
+    "title": "Primitives/Label",
+    "name": "Default",
+    "source": ".stories/primitives/Label.stories.tsx"
+  },
+  "primitives-label--with-input": {
+    "title": "Primitives/Label",
+    "name": "With Input",
+    "source": ".stories/primitives/Label.stories.tsx"
+  },
+  "primitives-menugrid--clickable": {
+    "title": "Primitives/MenuGrid",
+    "name": "Clickable",
+    "source": ".stories/primitives/MenuGrid.stories.tsx"
+  },
+  "primitives-menugrid--default": {
+    "title": "Primitives/MenuGrid",
+    "name": "Default",
+    "source": ".stories/primitives/MenuGrid.stories.tsx"
+  },
+  "primitives-menugrid--three-columns": {
+    "title": "Primitives/MenuGrid",
+    "name": "Three Columns",
+    "source": ".stories/primitives/MenuGrid.stories.tsx"
+  },
+  "primitives-panel--default": {
+    "title": "Primitives/Panel",
+    "name": "Default",
+    "source": ".stories/primitives/Panel.stories.tsx"
+  },
+  "primitives-panel--info-panel": {
+    "title": "Primitives/Panel",
+    "name": "Info Panel",
+    "source": ".stories/primitives/Panel.stories.tsx"
+  },
+  "primitives-panel--login-form": {
+    "title": "Primitives/Panel",
+    "name": "Login Form",
+    "source": ".stories/primitives/Panel.stories.tsx"
+  },
+  "primitives-removablebadge--custom-color": {
+    "title": "Primitives/RemovableBadge",
+    "name": "Custom Color",
+    "source": ".stories/primitives/RemovableBadge.stories.tsx"
+  },
+  "primitives-removablebadge--default": {
+    "title": "Primitives/RemovableBadge",
+    "name": "Default",
+    "source": ".stories/primitives/RemovableBadge.stories.tsx"
+  },
+  "primitives-removablebadge--list": {
+    "title": "Primitives/RemovableBadge",
+    "name": "List",
+    "source": ".stories/primitives/RemovableBadge.stories.tsx"
+  },
+  "primitives-removablebadge--removable": {
+    "title": "Primitives/RemovableBadge",
+    "name": "Removable",
+    "source": ".stories/primitives/RemovableBadge.stories.tsx"
+  },
+  "primitives-savebutton--idle": {
+    "title": "Primitives/SaveButton",
+    "name": "Idle",
+    "source": ".stories/primitives/SaveButton.stories.tsx"
+  },
+  "primitives-savebutton--saved": {
+    "title": "Primitives/SaveButton",
+    "name": "Saved",
+    "source": ".stories/primitives/SaveButton.stories.tsx"
+  },
+  "primitives-savebutton--saving": {
+    "title": "Primitives/SaveButton",
+    "name": "Saving",
+    "source": ".stories/primitives/SaveButton.stories.tsx"
+  },
+  "primitives-segmentedbar--chunk-loading": {
+    "title": "Primitives/SegmentedBar",
+    "name": "Chunk Loading",
+    "source": ".stories/primitives/SegmentedBar.stories.tsx"
+  },
+  "primitives-segmentedbar--custom-colors": {
+    "title": "Primitives/SegmentedBar",
+    "name": "Custom Colors",
+    "source": ".stories/primitives/SegmentedBar.stories.tsx"
+  },
+  "primitives-segmentedbar--empty": {
+    "title": "Primitives/SegmentedBar",
+    "name": "Empty",
+    "source": ".stories/primitives/SegmentedBar.stories.tsx"
+  },
+  "primitives-segmentedbar--full": {
+    "title": "Primitives/SegmentedBar",
+    "name": "Full",
+    "source": ".stories/primitives/SegmentedBar.stories.tsx"
+  },
+  "primitives-tabs--default": {
+    "title": "Primitives/Tabs",
+    "name": "Default",
+    "source": ".stories/primitives/Tabs.stories.tsx"
+  },
+  "primitives-tabs--two-tabs": {
+    "title": "Primitives/Tabs",
+    "name": "Two Tabs",
+    "source": ".stories/primitives/Tabs.stories.tsx"
+  },
+  "primitives-toggle--interactive": {
+    "title": "Primitives/Toggle",
+    "name": "Interactive",
+    "source": ".stories/primitives/Toggle.stories.tsx"
+  },
+  "primitives-toggle--off": {
+    "title": "Primitives/Toggle",
+    "name": "Off",
+    "source": ".stories/primitives/Toggle.stories.tsx"
+  },
+  "primitives-toggle--on": {
+    "title": "Primitives/Toggle",
+    "name": "On",
+    "source": ".stories/primitives/Toggle.stories.tsx"
+  }
+}
