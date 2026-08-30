@@ -129,6 +129,10 @@ function anyQualifiedHeldOnKey(key: string, exceptAction: string): boolean {
 }
 
 function isActionHeld(action: string): boolean {
+  if (window.__mcE2E) {
+    const until = (window as unknown as { __mcE2EHeld?: Record<string, number> }).__mcE2EHeld?.[action];
+    if (until !== undefined && until > Date.now()) return true;
+  }
   const keys = window.mcState.bindings[action];
   if (!keys) return false;
   for (const k of keys) {

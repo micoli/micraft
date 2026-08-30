@@ -304,3 +304,7 @@ fun jsE2eSessionId(): String =
 
 fun jsUpdateE2E(json: String): Unit =
     js("(window.mc && window.mc.updateE2E) ? window.mc.updateE2E(json) : undefined")
+
+fun jsE2eConsumeLook(): String =
+    js(
+        "(function(){var l = window.__mcE2ELook; window.__mcE2ELook = null; return l ? (l.yaw + ',' + l.pitch) : '';})()")
