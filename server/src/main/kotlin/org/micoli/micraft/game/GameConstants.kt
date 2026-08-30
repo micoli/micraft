@@ -11,7 +11,6 @@ internal var SAVE_INTERVAL_TICKS = (30_000L / TICK_MS).toInt()
 internal var TICKS_PER_DAY = 72_000L
 internal var TIME_BROADCAST_TICKS = 20
 
-internal var DEBUG_WORLD = false
 internal var SPAWN_X = 8f
 internal var SPAWN_Y = 200f
 internal var SPAWN_Z = 8f

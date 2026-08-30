@@ -11,8 +11,8 @@ import org.micoli.micraft.game.world.road.RoadConfig
 
 /**
  * Koin's `single {}` cannot hold a `null` value (the instance factory throws once created), so
- * beans that are legitimately absent (debug world, auth disabled) are wrapped in one of these
- * non-null holders instead of registered as `single<T?>`.
+ * beans that are legitimately absent (e.g. auth disabled) are wrapped in one of these non-null
+ * holders instead of registered as `single<T?>`.
  */
 class OptionalWorldPersistence(val value: WorldPersistence?)
 

@@ -34,7 +34,7 @@ function registerServerCompleters(commands: Array<{ id: string; command: string;
 
 export function registerUtils(): Pick<
   McBindings,
-  "getUrlParam" | "reload" | "setConnectedPlayers" | "setNpcNames" | "registerCompleter" | "registerServerCompleters"
+  "reload" | "setConnectedPlayers" | "setNpcNames" | "registerCompleter" | "registerServerCompleters"
 > {
   window.mcState.connectedPlayers = [];
   window.mcState.npcNames = [];
@@ -86,11 +86,6 @@ export function registerUtils(): Pick<
   registerCompleter("/createchat", () => []);
 
   return {
-    getUrlParam: (name: string): string => {
-      const v = new URLSearchParams(window.location.search).get(name);
-      return v === null ? "" : v;
-    },
-
     reload: (): void => {
       window.location.reload();
     },

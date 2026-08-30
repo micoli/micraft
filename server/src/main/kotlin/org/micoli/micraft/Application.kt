@@ -165,8 +165,6 @@ fun Application.module() {
     val serverConfig = get<ServerConfig>()
     val gameConfig = get<GameConfig>()
 
-    val debugWorld = gameConfig.debugWorld
-
     val persistence = get<OptionalWorldPersistence>().value
     val blockRegistryLoader = get<BlockRegistryLoader>()
     val itemRegistryLoader = get<ItemRegistryLoader>()
@@ -182,17 +180,14 @@ fun Application.module() {
     val houseConfigPath = Path.of(dataPath + "/config/houses.yaml")
     val houseResourcesFile = resourcesConfigDir.resolve("houses.yaml")
 
-    val reloadBiomes: (() -> ChunkGenerator)? =
-        if (!debugWorld) {
-            {
-                ProceduralChunkGenerator(
-                    seed = gameConfig.worldSeed,
-                    biomeRegistry = loadBiomeRegistry(biomeFile, biomeResourcesFile),
-                    roadConfig = loadRoadConfig(roadConfigPath, roadResourcesFile),
-                    houseConfig = loadHouseConfig(houseConfigPath, houseResourcesFile),
-                )
-            }
-        } else null
+    val reloadBiomes: () -> ChunkGenerator = {
+        ProceduralChunkGenerator(
+            seed = gameConfig.worldSeed,
+            biomeRegistry = loadBiomeRegistry(biomeFile, biomeResourcesFile),
+            roadConfig = loadRoadConfig(roadConfigPath, roadResourcesFile),
+            houseConfig = loadHouseConfig(houseConfigPath, houseResourcesFile),
+        )
+    }
 
     val reloadRegistries: () -> Unit = {
         loadRegistries(

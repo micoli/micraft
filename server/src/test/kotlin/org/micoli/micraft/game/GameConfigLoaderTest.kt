@@ -22,17 +22,8 @@ class GameConfigLoaderTest {
     }
 
     @Test
-    fun applyGameConfig_debugWorld_overridesSpawnPosition() {
-        applyGameConfig(GameConfig(debugWorld = true, spawnX = 100f, spawnY = 5f, spawnZ = 3f))
-        assertEquals(true, DEBUG_WORLD)
-        assertEquals(100f, SPAWN_X)
-        assertEquals(1f, SPAWN_Y)
-        assertEquals(14f, SPAWN_Z)
-    }
-
-    @Test
-    fun applyGameConfig_normalWorld_usesConfiguredSpawn() {
-        applyGameConfig(GameConfig(debugWorld = false, spawnX = 100f, spawnY = 50f, spawnZ = 30f))
+    fun applyGameConfig_usesConfiguredSpawn() {
+        applyGameConfig(GameConfig(spawnX = 100f, spawnY = 50f, spawnZ = 30f))
         assertEquals(100f, SPAWN_X)
         assertEquals(50f, SPAWN_Y)
         assertEquals(30f, SPAWN_Z)

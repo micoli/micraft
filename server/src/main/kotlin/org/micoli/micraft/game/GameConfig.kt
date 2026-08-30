@@ -18,7 +18,6 @@ data class GameConfig(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val ticksPerDay: Long = 72_000L,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val timeBroadcastTicks: Int = 20,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val maxInteractionDistance: Double = 14.0,
-    @EncodeDefault(EncodeDefault.Mode.ALWAYS) val debugWorld: Boolean = false,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val reconcileToleranceXz: Double = 0.5,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val reconcileToleranceY: Double = 0.99,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val blockBreakBufferSize: Int = 1000,

@@ -1,4 +1,4 @@
-import type { Camera, Scene, TargetCamera } from "@babylonjs/core";
+import type { Camera } from "@babylonjs/core";
 
 // Cache the forward direction for the current JS task — all Dir3D/Forward calls
 // within a single Kotlin tick are synchronous, so one getForwardRay() suffices.
@@ -57,7 +57,6 @@ export function registerCamera(): Pick<
   | "getCameraForwardX"
   | "getCameraForwardZ"
   | "createCrosshair"
-  | "setupDebugCameraKeys"
 > {
   return {
     getCameraPositionX: (camera: Camera): number => camera.position.x,
@@ -96,46 +95,6 @@ export function registerCamera(): Pick<
         '<div style="position:absolute;top:50%;left:0;height:2px;width:100%;' +
         'background:#fff;opacity:0.8;transform:translateY(-50%)"></div>';
       document.body.appendChild(s);
-    },
-
-    /**
-     * Binds keys 1-6 to camera positions facing each face of the block at (bx,by,bz).
-     * Face mapping: 1=+Z, 2=-Z, 3=+X, 4=-X, 5=+Y, 6=-Y  (BabylonJS CreateBox order)
-     */
-    setupDebugCameraKeys: (camera: TargetCamera, scene: Scene, bx: number, by: number, bz: number): void => {
-      const dist = 5;
-      const faces: [number, number, number][] = [
-        [bx, by, bz + dist],
-        [bx, by, bz - dist],
-        [bx + dist, by, bz],
-        [bx - dist, by, bz],
-        [bx, by + dist, bz],
-        [bx, by - dist, bz],
-      ];
-
-      const lock = (px: number, py: number, pz: number): void => {
-        if (window.mcState.debugCamObserver) scene.onBeforeRenderObservable.remove(window.mcState.debugCamObserver);
-        window.mcState.debugCamObserver = scene.onBeforeRenderObservable.add(() => {
-          camera.position = new BABYLON.Vector3(px, py, pz);
-          camera.setTarget(new BABYLON.Vector3(bx, by, bz));
-        });
-      };
-
-      lock(...faces[0]);
-
-      document.addEventListener("keydown", (e: KeyboardEvent) => {
-        const idx = parseInt(e.key) - 1;
-        if (idx >= 0 && idx < 6) {
-          e.preventDefault();
-          lock(...faces[idx]);
-        }
-        if (e.key === "Escape") {
-          if (window.mcState.debugCamObserver) {
-            scene.onBeforeRenderObservable.remove(window.mcState.debugCamObserver);
-            window.mcState.debugCamObserver = null;
-          }
-        }
-      });
     },
   };
 }
