@@ -504,7 +504,28 @@ export function GameUI() {
         /* ignore */
       }
     };
-    window.mc.updateHotbar = (json: string) => dispatch("inventory", { data: JSON.parse(json) });
+    window.mc.updateHotbar = (json: string) => {
+      const data = JSON.parse(json);
+      if (window.__mcE2E) window.mcState.inventorySnapshot = data;
+      dispatch("inventory", { data });
+    };
+    window.mc.updateE2E = (json: string) => {
+      try {
+        const snapshot = JSON.parse(json);
+        const meshedChunks = Object.keys(window.mcState.chunks ?? {}).map((k) => {
+          const [cx, cz] = k.split(",").map(Number);
+          return { cx, cz };
+        });
+        window.mcE2E = {
+          ...(window.mcE2E ?? {}),
+          ...snapshot,
+          meshedChunks,
+          inventory: window.mcState.inventorySnapshot ?? {},
+        };
+      } catch {
+        /* ignore malformed e2e snapshot */
+      }
+    };
     window.mc.toggleHotbar = () => dispatch("hotbar_toggle");
     window.mc.toggleHealthBar = () => dispatch("healthbar_toggle");
     window.mc.toggleStatistics = () => {

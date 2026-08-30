@@ -251,4 +251,12 @@ class RemotePlayerManager(private val scene: JsAny) {
         val json = "[" + playerNames.values.joinToString(",") { "\"$it\"" } + "]"
         jsSetConnectedPlayers(json)
     }
+
+    /** `[{id,name,x,y,z}, …]` for every remote player currently tracked — e2e snapshot only. */
+    fun e2ePlayersJson(): String =
+        playerNames.entries.joinToString(prefix = "[", postfix = "]") { (id, name) ->
+            val p = playerCurrentPos[id] ?: Triple(0.0, 0.0, 0.0)
+            val safeName = name.replace("\\", "\\\\").replace("\"", "\\\"")
+            """{"id":"$id","name":"$safeName","x":${p.first},"y":${p.second},"z":${p.third}}"""
+        }
 }

@@ -130,6 +130,31 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private var serverPort = 0
     private var token = ""
     private val e2eSession: String = if (jsE2eEnabled()) jsE2eSessionId() else ""
+    private var lastWorldUpdateJson: String = "null"
+
+    @OptIn(ExperimentalWasmJsInterop::class)
+    private fun emitE2eSnapshot() {
+        val lc = localController
+        val ready = playerIdReady.isCompleted && chunkManager.loadedChunks.isNotEmpty()
+        val chunks =
+            chunkManager.loadedChunks.joinToString(prefix = "[", postfix = "]") {
+                """{"cx":${it.cx},"cz":${it.cz}}"""
+            }
+        val tb = lc.e2eTarget
+        val target = if (tb == null) "null" else """{"x":${tb.x},"y":${tb.y},"z":${tb.z}}"""
+        val json =
+            """{"ready":$ready,"playerId":"${localPlayerId ?: ""}","playerName":"$currentPlayerName",""" +
+                """"position":{"x":${lc.predX},"y":${lc.predY},"z":${lc.predZ}},""" +
+                """"serverPosition":{"x":${lc.serverX},"y":${lc.serverY},"z":${lc.serverZ}},""" +
+                """"yaw":${currentYaw.toDouble()},"pitch":${jsGetCameraRotationX(camera)},""" +
+                """"stance":"${lc.localStance.name.lowercase()}","hasPrediction":${lc.hasPrediction},""" +
+                """"reconcile":{"xz":${lc.e2eReconcileXz},"y":${lc.e2eReconcileY}},""" +
+                """"loadedChunks":$chunks,"targetBlock":$target,""" +
+                """"remotePlayers":${remotePlayerManager.e2ePlayersJson()},""" +
+                """"lastWorldUpdate":$lastWorldUpdateJson}"""
+        jsUpdateE2E(json)
+    }
+
     private var chunkTransportMode = "websocket"
     private var httpChunkFetcher: HttpChunkFetcher? = null
     private var currentPlayerCx = 0
@@ -209,6 +234,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 siegeProjectileManager.tick()
                 remotePlayerManager.tick()
                 localController.otherTickMs = jsNow() - otherT0
+                if (e2eSession.isNotEmpty()) runCatching { emitE2eSnapshot() }
             }
         }
 
@@ -536,6 +562,12 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             put(
                 ServerMessage.WorldUpdate::class,
                 typedHandler { msg: ServerMessage.WorldUpdate ->
+                    if (e2eSession.isNotEmpty()) {
+                        lastWorldUpdateJson =
+                            msg.changes.joinToString(prefix = "[", postfix = "]") { c ->
+                                """{"x":${c.pos.x},"y":${c.pos.y},"z":${c.pos.z},"block":"${c.type.id}"}"""
+                            }
+                    }
                     // Collect affected chunk positions for re-enqueue after applying all changes
                     val affectedChunks = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
 
