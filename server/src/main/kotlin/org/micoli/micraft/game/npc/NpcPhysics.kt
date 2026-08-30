@@ -8,6 +8,11 @@ import org.micoli.micraft.player.Vec3
 
 internal object NpcPhysics {
     fun applyGravity(instance: NpcInstance, world: WorldState): Boolean {
+        if (instance.weightless) {
+            instance.vy = 0f
+            instance.velocity = Vec3(instance.velocity.x, 0f, instance.velocity.z)
+            return false
+        }
         val def = instance.definition
         val pos = instance.state.pos
         val solid = { bx: Int, by: Int, bz: Int -> world.getBlockIfLoaded(bx, by, bz).isSolid }

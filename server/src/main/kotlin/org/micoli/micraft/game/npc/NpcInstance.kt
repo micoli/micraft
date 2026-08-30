@@ -60,6 +60,8 @@ class NpcInstance(
      * Id of the owner's [org.micoli.micraft.player.pet.PetRecord] this instance was summoned from.
      */
     @Volatile var petRecordId: String? = null,
+    /** Gravity disabled — a pet mirrors its flying owner; its Y is driven by [PetCoordinator]. */
+    @Volatile var weightless: Boolean = false,
     @Volatile var animalData: AnimalInstanceData? = null,
     /** Asleep for the current hibernation window: no movement, no aggro. */
     @Volatile var hibernating: Boolean = false,
