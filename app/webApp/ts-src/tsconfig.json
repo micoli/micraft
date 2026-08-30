@@ -17,5 +17,5 @@
     }
   },
   "include": ["./**/*.ts", "./**/*.tsx"],
-  "exclude": ["./__tests__/**", "./vitest.config.ts"]
+  "exclude": ["./__tests__/**", "./vitest.config.ts", "./e2e/**"]
 }

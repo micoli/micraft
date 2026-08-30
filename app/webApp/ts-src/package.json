@@ -40,6 +40,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
+    "test:e2e": "playwright test --config e2e/playwright.config.ts",
+    "test:e2e:headed": "playwright test --config e2e/playwright.config.ts --headed",
+    "test:e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
     "test-storybook": "JEST_CONFIG=test-runner-jest.config.js test-storybook",
     "test-storybook:ci": "kill $(cat /tmp/sb-ci.pid 2>/dev/null) 2>/dev/null; sleep 2; rm -f /tmp/sb-ci.pid; storybook dev -p 9009 --no-open >/dev/null 2>&1 </dev/null & echo $! >/tmp/sb-ci.pid; SB_PID=$!; trap 'kill $SB_PID 2>/dev/null; rm -f /tmp/sb-ci.pid' EXIT INT TERM; node_modules/.bin/wait-on http://127.0.0.1:9009 --timeout 60000 && JEST_CONFIG=test-runner-jest.config.js test-storybook --url http://127.0.0.1:9009"
   },
@@ -72,6 +75,7 @@
     "@7nohe/openapi-react-query-codegen": "^3.0.2",
     "@babylonjs/core": "7.48.0",
     "@eslint/js": "^9.0.0",
+    "@playwright/test": "1.61.1",
     "@storybook/addon-essentials": "^8.6.12",
     "@storybook/react": "^8.6.12",
     "@storybook/react-vite": "^8.6.12",
