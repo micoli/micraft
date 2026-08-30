@@ -11,9 +11,7 @@ others' listings; on close the item goes to the highest bidder and the seller is
 paid minus a duration-based tax. Payouts and unsold items are returned via
 [Mail](mail.md).
 
-{{ story "story/game-windows-auctionhouse--basic" caption="AuctionHouse - listing" }}
-
-{{ story "story/game-windows-auctionhouse--creating-auction" caption="AuctionHouse - create an auction" }}
+{{ story "story/game-windows-auctionhouse--basic" caption="Auction house — active listings, bids and buy-now" }}
 
 Admins can inspect and force-cancel listings:
 
