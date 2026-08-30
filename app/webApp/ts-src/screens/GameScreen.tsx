@@ -565,6 +565,30 @@ export function GameScreen() {
                   },
                 },
                 {
+                  icon: "👥",
+                  label: "Group",
+                  callback: () => {
+                    dispatch("pause_menu_hide");
+                    dispatch("group_panel_toggle");
+                  },
+                },
+                {
+                  icon: "🏰",
+                  label: "Guild",
+                  callback: () => {
+                    dispatch("pause_menu_hide");
+                    dispatch("guild_panel_toggle");
+                  },
+                },
+                {
+                  icon: "⚔",
+                  label: "Faction",
+                  callback: () => {
+                    dispatch("pause_menu_hide");
+                    dispatch("faction_panel_toggle");
+                  },
+                },
+                {
                   icon: "¶",
                   label: "Preferences",
                   callback: () => {
