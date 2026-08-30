@@ -7,7 +7,6 @@ import io.ktor.websocket.*
 import java.nio.file.Path
 import java.util.UUID
 import kotlinx.coroutines.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import org.micoli.micraft.I18nConfig
@@ -91,12 +90,12 @@ import org.micoli.micraft.game.vehicle.VehicleTickPipeline
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.EquipmentCategory
+import org.micoli.micraft.game.world.GameWorld
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
-import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.block.BlockBreaker
@@ -631,8 +630,23 @@ class GameLoop(
     /** Owns the NPC tick order; shared with the admin world simulator. */
     private val npcTickPipeline = npcSubsystem.pipeline
 
-    private var worldMeta: WorldMetadata? = persistence?.loadMetadata()
-    private var gameTicks: Long = worldMeta?.gameTicks ?: 18_000L
+    @Volatile private var appScope: Application? = null
+
+    private val gameWorld =
+        GameWorld(
+            id = GameWorld.DEFAULT_ID,
+            world = world,
+            persistence = persistence,
+            sessions = sessionRegistry,
+            terrainCache = terrainCache,
+            npcManager = npcManager,
+            vehicleManager = vehicleManager,
+            placeableManager = placeableManager,
+            siegeWeaponManager = siegeWeaponManager,
+            vegetationManager = vegetationManager,
+            gameTimeService = gameTimeService,
+            appScope = { appScope },
+        )
 
     private val commands: MutableMap<String, CommandHandler> =
         discoverCommandHandlers().toMutableMap()
@@ -660,8 +674,8 @@ class GameLoop(
             reloadConfig = ::reload,
             commands = { commands.values },
             savePlayer = ::savePlayer,
-            getGameTime = { gameTicks },
-            setGameTime = { gameTicks = it },
+            getGameTime = { gameWorld.gameTicks },
+            setGameTime = { gameWorld.gameTicks = it },
             refetchChunks = { session ->
                 session.loadedChunks.clear()
                 session.inFlightChunks.clear()
@@ -781,8 +795,6 @@ class GameLoop(
             onConsumeItem = ::handleConsumeItem,
         )
 
-    @Volatile private var appScope: Application? = null
-
     fun getPlayerStates(): List<PlayerState> = sessionRegistry.all().map { it.state }
 
     /** Live session for a connected player, looked up by display name — null if offline. */
@@ -852,10 +864,10 @@ class GameLoop(
 
     fun getNpcStates(): List<NpcState> = npcManager.getAll().map { it.state }
 
-    fun getGameTicks(): Long = gameTicks
+    fun getGameTicks(): Long = gameWorld.gameTicks
 
     fun setGameTicks(ticks: Long) {
-        gameTicks = ticks
+        gameWorld.gameTicks = ticks
     }
 
     fun getWeatherZones() = weatherManager.getZones()
@@ -880,43 +892,7 @@ class GameLoop(
 
     fun getActiveVegetationCount(): Int = vegetationManager.activeBlockCount()
 
-    private fun flushWorld() {
-        launchTerrainRebuild()
-        saveWorldState()
-    }
-
-    private fun saveWorldState() {
-        world.flushDirty()
-        val npcSavePath =
-            persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
-        npcManager.save(npcSavePath)
-        val vehicleSavePath =
-            persistence?.worldDir?.resolve("vehicles.yaml") ?: Path.of("data/config/vehicles.yaml")
-        vehicleManager.save(vehicleSavePath)
-        val placeableSavePath =
-            persistence?.worldDir?.resolve("placeables.yaml")
-                ?: Path.of("data/config/placeables_save.yaml")
-        placeableManager.save(placeableSavePath)
-        persistence?.let {
-            GameTimePersistence.save(it.worldDir.resolve("game_time.yaml"), gameTimeService)
-        }
-        vegetationManager.save()
-    }
-
-    private fun launchTerrainRebuild() {
-        val scope = appScope ?: return
-        val chunks = world.discoveredChunks().mapNotNull { world.getChunkIfDiscovered(it) }
-        scope.launch(Dispatchers.IO) {
-            terrainCache.rebuild(chunks)
-            persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache")) }
-        }
-    }
-
-    private fun rebuildTerrainSync() {
-        val chunks = world.discoveredChunks().mapNotNull { world.getChunkIfDiscovered(it) }
-        terrainCache.rebuild(chunks)
-        persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache")) }
-    }
+    private fun flushWorld() = gameWorld.flush()
 
     private fun buildPreferencesSync(session: PlayerSession): ServerMessage.PreferencesSync {
         val knownChannels = chatChannelManager.listKnownChannels()
@@ -1316,27 +1292,7 @@ class GameLoop(
         npcConfigLoader.load()
         npcManager.loadDefinitions(npcRegistryLoader.load())
         questRegistryLoader?.load()?.let { questManager?.reloadDefinitions(it) }
-        val npcSavePath =
-            persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
-        npcManager.load(npcSavePath)
-        val vehicleSavePath =
-            persistence?.worldDir?.resolve("vehicles.yaml") ?: Path.of("data/config/vehicles.yaml")
-        vehicleManager.load(vehicleSavePath)
-        val placeableSavePath =
-            persistence?.worldDir?.resolve("placeables.yaml")
-                ?: Path.of("data/config/placeables_save.yaml")
-        placeableManager.load(placeableSavePath)
-        placeableManager.getAll().forEach { siegeWeaponManager.linkFor(it) }
-        persistence?.let {
-            GameTimePersistence.load(it.worldDir.resolve("game_time.yaml"), gameTimeService)
-        }
-        vegetationManager.load()
-        persistence?.let {
-            terrainCache.prewarm(
-                chunksDir = it.worldDir.resolve("chunks"),
-                cacheDir = it.worldDir.resolve("terrain_cache"),
-            )
-        }
+        gameWorld.loadPersistedState()
         app.launch {
             var nextTickAt = System.currentTimeMillis() + TICK_MS
             while (isActive) {
@@ -1352,7 +1308,7 @@ class GameLoop(
                 if (saveTickCounter >= SAVE_INTERVAL_TICKS) {
                     saveTickCounter = 0
                     flushWorld()
-                    worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
+                    gameWorld.saveMetadata()
                 }
             }
         }
@@ -1370,10 +1326,10 @@ class GameLoop(
             }
         }
         world.flushDirty()
-        rebuildTerrainSync()
-        worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
+        gameWorld.rebuildTerrainSync()
+        gameWorld.saveMetadata()
         sessionRegistry.all().forEach { session -> savePlayer(session) }
-        saveWorldState()
+        gameWorld.saveState()
         log.info("World saved on shutdown")
     }
 
@@ -1448,11 +1404,11 @@ class GameLoop(
     private suspend fun tick(): Unit = tickProfiler.measure("total") { tickBody() }
 
     private suspend fun tickBody() {
-        gameTicks++
+        gameWorld.gameTicks++
         timeBroadcastCounter++
         if (timeBroadcastCounter >= TIME_BROADCAST_TICKS) {
             timeBroadcastCounter = 0
-            val timeMsg = ServerMessage.TimeUpdate(gameTicks)
+            val timeMsg = ServerMessage.TimeUpdate(gameWorld.gameTicks)
             sessionRegistry.all().forEach { it.send(timeMsg) }
         }
 
@@ -1535,7 +1491,7 @@ class GameLoop(
         if (pluginTickHandlers.isNotEmpty()) {
             val ctx =
                 TickContext(
-                    gameTicks = gameTicks,
+                    gameTicks = gameWorld.gameTicks,
                     sessionRegistry = sessionRegistry,
                     world = world,
                     commandContext = commandContext,
@@ -1777,7 +1733,7 @@ class GameLoop(
         mailManager?.let { session.send(ServerMessage.MailSync(it.loadForPlayer(playerName))) }
         claimManager.sendSync(session)
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBarPages.toPageMap()))
-        session.send(ServerMessage.TimeUpdate(gameTicks))
+        session.send(ServerMessage.TimeUpdate(gameWorld.gameTicks))
         val charData = session.characterData
         if (charData != null) {
             val bonuses =
