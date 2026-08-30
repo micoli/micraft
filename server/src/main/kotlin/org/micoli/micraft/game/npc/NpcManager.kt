@@ -100,6 +100,11 @@ class NpcManager(
         return UUID(random.nextLong(), random.nextLong()).toString()
     }
 
+    /** Wired post-construction by the pet subsystem (avoids a DI cycle). */
+    @Volatile var onPetDied: suspend (NpcInstance) -> Unit = {}
+    /** A wild NPC was killed — the pet subsystem shares its XP to any credited owner's pet. */
+    @Volatile var onNpcKilledForPets: suspend (NpcInstance) -> Unit = {}
+
     private val npcs = ConcurrentHashMap<String, NpcInstance>()
     @Volatile private var definitions: Map<String, NpcDefinition> = emptyMap()
     private var lastEffectTickMs = System.currentTimeMillis()
@@ -185,11 +190,13 @@ class NpcManager(
         runCatching {
                 savePath.parent?.createDirectories()
                 val states =
-                    npcs.values.map { instance ->
-                        val ad = instance.animalData
-                        if (ad != null) instance.state.copy(animalData = ad.toState())
-                        else instance.state
-                    }
+                    npcs.values
+                        .filter { it.ownerId == null }
+                        .map { instance ->
+                            val ad = instance.animalData
+                            if (ad != null) instance.state.copy(animalData = ad.toState())
+                            else instance.state
+                        }
                 savePath.writeText(
                     Yaml.default.encodeToString(ListSerializer(NpcState.serializer()), states))
             }
@@ -255,9 +262,16 @@ class NpcManager(
          * discard, which would shift every later draw in a seeded run.
          */
         animalData: AnimalInstanceData? = null,
+        /**
+         * Transform applied to the resolved definition before the instance is built. Pets pass one
+         * here to force a follow behaviour and strip animal/pack/hibernation config.
+         */
+        defOverride: (NpcDefinition) -> NpcDefinition = { it },
     ): NpcInstance {
         val def =
-            definitions[type] ?: error("Unknown NPC type: '$type'. Available: ${definitions.keys}")
+            (definitions[type]
+                    ?: error("Unknown NPC type: '$type'. Available: ${definitions.keys}"))
+                .let(defOverride)
         val effectiveLevel = if (instanceLevel < 1) def.minLevel else instanceLevel
         val spawnMaxHp = def.computeMaxHp(effectiveLevel)
         val id = nextNpcId()
@@ -361,14 +375,17 @@ class NpcManager(
             if (world.getChunkIfDiscovered(chunkPos) == null) continue
             // Player target wins; an NPC target (pack hunt, retaliation) is the fallback. Left null
             // otherwise so the animal behaviour can install its prey/mate target.
-            instance.chaseTargetPos =
-                instance.aggroTarget?.let { targetId ->
-                    sessions.find { it.id == targetId }?.state?.pos
-                }
-                    ?: instance.npcAggroTarget?.let { targetId ->
-                        npcs[targetId]?.takeIf { !it.isDead }?.state?.pos
+            // A pet's chase target is owned entirely by PetCoordinator — never touch it here.
+            if (instance.ownerId == null) {
+                instance.chaseTargetPos =
+                    instance.aggroTarget?.let { targetId ->
+                        sessions.find { it.id == targetId }?.state?.pos
                     }
-                    ?: instance.packRallyPos
+                        ?: instance.npcAggroTarget?.let { targetId ->
+                            npcs[targetId]?.takeIf { !it.isDead }?.state?.pos
+                        }
+                        ?: instance.packRallyPos
+            }
             val before = instance.state
             val changed =
                 instance.definition.behavior.tick(
@@ -595,6 +612,41 @@ class NpcManager(
 
     fun getInstance(id: String): NpcInstance? = npcs[id]
 
+    fun definitionMaxHp(type: String, level: Int): Int = definitions[type]?.computeMaxHp(level) ?: 1
+
+    /** Live, non-dead summoned pets across all owners. */
+    fun ownedPets(): List<NpcInstance> = npcs.values.filter { it.ownerId != null && !it.isDead }
+
+    /** Push the current [NpcInstance.state] of one NPC to every in-range player. */
+    suspend fun refreshNpcState(npcId: String) {
+        val instance = npcs[npcId] ?: return
+        val state = instance.state
+        val rangesq = tuning.updateRange * tuning.updateRange
+        for (s in getSessions()) {
+            val dx = s.state.pos.x - state.pos.x
+            val dz = s.state.pos.z - state.pos.z
+            if (dx * dx + dz * dz <= rangesq) {
+                lastSentToPlayer.getOrPut(s.id) { ConcurrentHashMap() }[npcId] = state
+                s.send(ServerMessage.NpcUpdate(state))
+            }
+        }
+    }
+
+    /**
+     * Force an NPC to target [attackerId] without dealing any damage — used when a tame attempt
+     * fails on an aggressive mob.
+     */
+    suspend fun aggroOnto(npcId: String, attackerId: String) {
+        val instance = npcs[npcId] ?: return
+        if (instance.isDead || instance.hibernating) return
+        if (instance.aggroTarget != null) return
+        val attackerSession = getSessions().find { it.id == attackerId } ?: return
+        if (attackerSession.state.godMode) return
+        instance.aggroTarget = attackerId
+        broadcastCombatLog("[m:${instance.state.name}] targets [p:${attackerSession.state.name}]!")
+        broadcastAggroUpdate(instance, getSessions())
+    }
+
     /** Late-bound because the pack coordinator is built from this manager. */
     fun setNpcDamagedByNpcHook(hook: (victim: NpcInstance, attacker: NpcInstance) -> Unit) {
         onNpcDamagedByNpc = hook
@@ -669,13 +721,16 @@ class NpcManager(
             broadcastCombatLog("[m:${instance.state.name}] has been slain!")
             val killerNpc = npcs[attackerId]
             if (getSessions().none { it.id == attackerId }) {
-                if (killerNpc != null && !killerNpc.isDead) {
+                // A pet's kill XP flows through the owner's shared-XP path instead, so it is not
+                // counted twice.
+                if (killerNpc != null && !killerNpc.isDead && killerNpc.ownerId == null) {
                     grantNpcKillXp(killerNpc, instance)
                     notifyAdmins(
                         """{"type":"npcXpUpdate","id":"${killerNpc.state.id}","xp":${killerNpc.xp},"level":${killerNpc.instanceLevel}}""")
                 }
             }
             onNpcKilled(instance, NpcDeathCause.KILLED, killerNpc)
+            if (instance.ownerId == null) onNpcKilledForPets(instance)
             markNpcDead(npcId, instance, System.currentTimeMillis())
         }
     }
@@ -747,6 +802,8 @@ class NpcManager(
         val now = System.currentTimeMillis()
         for (instance in npcs.values) {
             if (instance.isDead) continue
+            // Pets never take wild aggro; PetCoordinator drives their targeting.
+            if (instance.ownerId != null) continue
             if (instance.hibernating) {
                 // Asleep: drops whatever it was after and acquires nothing new.
                 if (instance.aggroTarget != null || instance.npcAggroTarget != null) {
@@ -911,6 +968,7 @@ class NpcManager(
             }
         val targets = getSessions().filter { lastSentToPlayer[it.id]?.containsKey(npcId) == true }
         targets.forEach { it.send(ServerMessage.NpcUpdate(instance.state)) }
+        if (instance.ownerId != null) onPetDied(instance)
     }
 
     companion object {

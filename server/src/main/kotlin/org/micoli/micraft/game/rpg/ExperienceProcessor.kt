@@ -14,8 +14,11 @@ class ExperienceProcessor(
     private val savePlayer: suspend (PlayerSession) -> Unit,
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit = { _, _ -> },
     private val broadcastCombatLog: suspend (String) -> Unit = {},
-    private val onNpcLevelUp: suspend (NpcInstance, Int) -> Unit = { _, _ -> },
+    onNpcLevelUp: suspend (NpcInstance, Int) -> Unit = { _, _ -> },
 ) {
+    /** Wired post-construction (pet subsystem) to avoid a DI cycle. */
+    @Volatile var onNpcLevelUp: suspend (NpcInstance, Int) -> Unit = onNpcLevelUp
+
     fun computeLevel(xp: Int, thresholds: List<Int>): Int {
         var level = 1
         var cumulative = 0

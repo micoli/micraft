@@ -306,6 +306,8 @@ fun Application.module() {
             networkStats = get<NetworkStats>(),
             commandContextFactory = { closures -> get<CommandContext> { parametersOf(closures) } },
             experienceProcessor = get<ExperienceProcessor>(),
+            petManager = get<org.micoli.micraft.game.pet.PetManager>(),
+            petCoordinator = get<org.micoli.micraft.game.pet.PetCoordinator>(),
             questManager = get<QuestManager>(),
             questRegistryLoader = get<QuestRegistryLoader>(),
         )

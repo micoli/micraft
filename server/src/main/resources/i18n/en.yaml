@@ -436,3 +436,39 @@ faction:
     cooldown: "You must wait {0}s before changing faction again."
     removed: "Your faction no longer exists; you are now unaffiliated."
     friendly_fire_blocked: "You cannot attack a member of your own faction."
+
+tame:
+  server:
+    no_target: "No creature targeted — target a wild creature first."
+    not_tameable: "{0} cannot be tamed."
+    too_high_level: "That creature is level {0}; you are only level {1}."
+    already_tamed: "That creature already belongs to someone."
+    out_of_range: "Get closer to tame it."
+    roster_full: "Your pet roster is full."
+    failed: "{0} broke free!"
+    failed_hostile: "{0} turns on you!"
+    success: "You tamed {0}!"
+
+pet:
+  server:
+    usage: "Usage: /pet <list|spawn|dismiss|resurrect|rename> [name] [newName]"
+    none_owned: "You have no tamed pets."
+    none_active: "You have no active pet."
+    not_found: "No pet named {0}."
+    list_header: "Your pets:"
+    list_line: "{0} — lv{1} {2} ({3})"
+    spawned: "{0} appears at your side."
+    dismissed: "{0} returns to rest."
+    is_dead: "{0} is dead — resurrect it first."
+    died: "{0} has fallen! Resurrect it with /pet resurrect."
+    leveled: "{0} grew to level {1}!"
+    resurrect_not_dead: "{0} is not dead."
+    resurrect_on_cooldown: "You must wait {0}s before resurrecting."
+    resurrected: "{0} has been resurrected. Summon it with /pet spawn."
+    renamed: "{0} is now called {1}."
+    rename_taken: "You already have a pet named {0}."
+    rename_invalid: "That name is not allowed."
+  client:
+    level: "Lv"
+    resurrect: "Resurrect"
+    cooldown: "Revive in"
