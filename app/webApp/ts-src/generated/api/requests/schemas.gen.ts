@@ -129,7 +129,8 @@ export const org_micoli_micraft_ui_WidgetTypeSchema = {
         'AGGRO_INDICATORS',
         'STATISTICS',
         'QUEST_TRACKER',
-        'BUFF_BAR'
+        'BUFF_BAR',
+        'PET_HUD'
     ],
     title: 'WidgetType'
 } as const;
@@ -2119,6 +2120,13 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             type: 'string',
             title: 'String'
         },
+        activePetId: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
         animatedFavicon: {
             type: 'boolean',
             title: 'Boolean'
@@ -2193,6 +2201,21 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             type: 'string',
             title: 'String'
         },
+        factionChangedAtMs: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int64',
+            title: 'Long'
+        },
+        factionId: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
         fieldOfView: {
             type: 'integer',
             format: 'int32',
@@ -2205,6 +2228,27 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         godMode: {
             type: 'boolean',
             title: 'Boolean'
+        },
+        guildId: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        guildRank: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        guildTag: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
         },
         id: {
             type: 'string',
@@ -2331,6 +2375,13 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
                 title: 'String'
             },
             title: 'List<String>'
+        },
+        pets: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.player.pet.PetRecord'
+            },
+            title: 'List<PetRecord>'
         },
         pos: {
             $ref: '#/components/schemas/org.micoli.micraft.player.Vec3'
@@ -2460,6 +2511,7 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'ownedArmors',
         'ownedTools',
         'ownedWeapons',
+        'pets',
         'pos',
         'quests',
         'rpgOptOut',
@@ -2753,6 +2805,65 @@ export const org_micoli_micraft_player_OrientationSchema = {
         'yaw'
     ],
     title: 'Orientation'
+} as const;
+
+export const org_micoli_micraft_player_pet_PetRecordSchema = {
+    type: 'object',
+    properties: {
+        currentHp: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        dead: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        id: {
+            type: 'string',
+            title: 'String'
+        },
+        level: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        },
+        npcType: {
+            type: 'string',
+            title: 'String'
+        },
+        resurrectReadyAtMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        tamedAtLevel: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        xp: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        }
+    },
+    required: [
+        'currentHp',
+        'dead',
+        'id',
+        'level',
+        'name',
+        'npcType',
+        'resurrectReadyAtMs',
+        'tamedAtLevel',
+        'xp'
+    ],
+    title: 'PetRecord'
 } as const;
 
 export const org_micoli_micraft_quest_QuestProgressSchema = {
