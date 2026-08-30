@@ -35,11 +35,6 @@ fun jsIsPerfInstrumentationEnabled(): Boolean =
 
 fun jsReload(): Unit = js("mc.reload()")
 
-fun jsHasUrlParam(name: String): Boolean =
-    js("(new URLSearchParams(window.location.search).has(name))")
-
-fun jsGetUrlParam(name: String): String = js("mc.getUrlParam(name)")
-
 // admin.html has no #renderCanvas (it hosts its own React-managed canvas) — used to skip the
 // full game bootstrap (engine/scene/login overlay/GameClient) when webApp.js loads there instead
 // of on the real game page, so only the admin chunk-preview exports remain callable.
@@ -76,12 +71,3 @@ fun jsLocalStorageGet(key: String): String = js("localStorage.getItem(key) || ''
 fun jsLocalStorageSet(key: String, value: String): Unit = js("localStorage.setItem(key, value)")
 
 // ── Debug camera ─────────────────────────────────────────────────────────────
-
-/**
- * Binds keys 1-6 to camera positions facing each face of the block at (bx,by,bz). Uses
- * onBeforeRenderObservable to override client-side prediction camera updates. Escape releases the
- * lock and restores free camera. Face mapping: 1=+Z, 2=-Z, 3=+X, 4=-X, 5=+Y, 6=-Y (BabylonJS
- * CreateBox order)
- */
-fun jsSetupDebugCameraKeys(camera: JsAny, scene: JsAny, bx: Double, by: Double, bz: Double): Unit =
-    js("mc.setupDebugCameraKeys(camera, scene, bx, by, bz)")

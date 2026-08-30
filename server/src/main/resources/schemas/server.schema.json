@@ -176,9 +176,6 @@
         "maxInteractionDistance": {
           "type": "number"
         },
-        "debugWorld": {
-          "type": "boolean"
-        },
         "reconcileToleranceXz": {
           "type": "number"
         },
