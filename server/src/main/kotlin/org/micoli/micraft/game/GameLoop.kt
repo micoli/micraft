@@ -1451,7 +1451,15 @@ class GameLoop(
         return handler.completeArg(argIndex, partial, session, commandContext)
     }
 
-    suspend fun onConnect(socket: DefaultWebSocketSession) {
+    /**
+     * [gameSessionId] comes from `/game?gameSession=`. Today every client lands in the single
+     * default world; A9.5 makes an unknown id spawn a dedicated [GameWorld] for parallel E2E runs.
+     */
+    private fun worldFor(@Suppress("UNUSED_PARAMETER") gameSessionId: String?): GameWorld =
+        gameWorld
+
+    suspend fun onConnect(socket: DefaultWebSocketSession, gameSessionId: String? = null) {
+        val gw = worldFor(gameSessionId)
         val connectMsg =
             runCatching {
                     val firstFrame = socket.incoming.receive()
@@ -1639,7 +1647,7 @@ class GameLoop(
         mailManager?.let { session.send(ServerMessage.MailSync(it.loadForPlayer(playerName))) }
         claimManager.sendSync(session)
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBarPages.toPageMap()))
-        session.send(ServerMessage.TimeUpdate(gameWorld.gameTicks))
+        session.send(ServerMessage.TimeUpdate(gw.gameTicks))
         val charData = session.characterData
         if (charData != null) {
             val bonuses =
@@ -1673,7 +1681,7 @@ class GameLoop(
         chunkStreamer.requestAround(session, spawnCp.cx, spawnCp.cz)
         log.info("chunk requests queued for {}", id.take(8))
 
-        gameWorld.onPlayerJoin(session)
+        gw.onPlayerJoin(session)
 
         try {
             socket.incoming.consumeEach { frame ->
@@ -1852,11 +1860,12 @@ class GameLoop(
                 }
             }
         } finally {
-            gameWorld.onPlayerLeave(session)
+            gw.onPlayerLeave(session)
         }
     }
 
-    suspend fun onChunkConnect(socket: DefaultWebSocketSession) {
+    suspend fun onChunkConnect(socket: DefaultWebSocketSession, gameSessionId: String? = null) {
+        val gw = worldFor(gameSessionId)
         val firstFrame =
             runCatching {
                     val frame = socket.incoming.receive()
@@ -1874,7 +1883,7 @@ class GameLoop(
             } else {
                 firstFrame
             }
-        val session = sessionRegistry[playerId] ?: return
+        val session = gw.sessions[playerId] ?: return
         session.chunkSocket = socket
         log.info("chunk socket attached for {}", playerId.take(8))
         try {

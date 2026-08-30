@@ -439,8 +439,10 @@ fun Application.module() {
                     }
                 call.respondText(json, ContentType.Application.Json)
             }
-        webSocket("/game") { gameLoop.onConnect(this) }
-        webSocket("/chunks") { gameLoop.onChunkConnect(this) }
+        webSocket("/game") { gameLoop.onConnect(this, call.request.queryParameters["gameSession"]) }
+        webSocket("/chunks") {
+            gameLoop.onChunkConnect(this, call.request.queryParameters["gameSession"])
+        }
         servedDir?.let { dir ->
             val indexFile = File(dir, "index.html")
             listOf("/", "/auth", "/chars", "/char-create", "/char-rpg-create").forEach { path ->
