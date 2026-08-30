@@ -11,7 +11,7 @@ title: HUD layout editor
 - **`/layout <name>`** — switch to a named layout.
 
 Every registered HUD widget (hotbar, bars, minimap, quest tracker, action bar,
-target frame, …) can be repositioned.
+target frame, pet HUD, …) can be repositioned.
 
 | Route | Purpose |
 |-------|---------|
