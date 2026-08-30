@@ -76,6 +76,26 @@ tasks.register<JavaExec>("addUser") {
     }
 }
 
+tasks.register<JavaExec>("runE2eServer") {
+    group = "e2e"
+    description = "Run the Ktor server with the bounded E2E generator on a dedicated port"
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.ApplicationKt")
+    workingDir = rootProject.projectDir
+    jvmArgs("-Xmx768m")
+    systemProperty("projectDir", rootDirPath)
+    environment("MICRAFT_PORT", providers.gradleProperty("e2ePort").getOrElse("8091"))
+    environment("MICRAFT_WORLD_NAME", providers.gradleProperty("e2eWorld").getOrElse("e2e_default"))
+    environment("MICRAFT_E2E", "1")
+    environment("MICRAFT_E2E_BOUNDS", providers.gradleProperty("e2eBounds").getOrElse("8x8"))
+    environment("MICRAFT_E2E_GROUND_Y", "64")
+    doFirst {
+        rootProject.projectDir
+            .resolve("data/world/${providers.gradleProperty("e2eWorld").getOrElse("e2e_default")}")
+            .deleteRecursively()
+    }
+}
+
 tasks.register<JavaExec>("validateConfig") {
     group = "verification"
     description =
