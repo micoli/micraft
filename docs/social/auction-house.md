@@ -13,6 +13,8 @@ paid minus a duration-based tax. Payouts and unsold items are returned via
 
 {{ story "story/game-windows-auctionhouse--basic" caption="Auction house — active listings, bids and buy-now" }}
 
+{{ story "story/game-windows-auctionhouse--creating-auction" caption="Auction house — the create-listing form" }}
+
 Admins can inspect and force-cancel listings:
 
 | Route | Purpose |
