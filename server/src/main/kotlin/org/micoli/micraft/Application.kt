@@ -145,10 +145,9 @@ fun main() {
  */
 private fun applyE2eOverridesIfEnabled() {
     if (System.getenv("MICRAFT_E2E").isNullOrBlank()) return
+    // Keep the Y range as-is — the GameConfig spawn (y=200) must stay inside the world.
     org.micoli.micraft.game.world.WorldConstants.VIEW_RADIUS = 3
     org.micoli.micraft.game.world.WorldConstants.FORWARD_VIEW_RADIUS = 3
-    org.micoli.micraft.game.world.WorldConstants.WORLD_MIN_Y = 0
-    org.micoli.micraft.game.world.WorldConstants.WORLD_MAX_Y = 128
     org.micoli.micraft.game.world.WorldConstants.WATER_LEVEL = 0
 }
 

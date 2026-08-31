@@ -62,16 +62,23 @@ export async function connectClient(page: Page, acct: E2eAccount, lang = "en"): 
     throw err;
   }
 
-  // Let gravity settle before any position assertion.
+  // Wait for the fall from the spawn height to finish and the y to hold steady.
   await page.waitForFunction(
     () => {
-      const w = window as unknown as { mcE2E?: { position: { y: number } }; __lastY?: number };
-      const y = w.mcE2E!.position.y;
-      const stable = w.__lastY !== undefined && Math.abs(y - w.__lastY) < 0.01;
+      const w = window as unknown as {
+        mcE2E?: { position: { y: number }; hasPrediction: boolean };
+        __lastY?: number;
+        __stableTicks?: number;
+      };
+      const e = w.mcE2E;
+      if (!e || !e.hasPrediction) return false;
+      const y = e.position.y;
+      const stable = w.__lastY !== undefined && Math.abs(y - w.__lastY) < 0.02;
       w.__lastY = y;
-      return stable;
+      w.__stableTicks = stable ? (w.__stableTicks ?? 0) + 1 : 0;
+      return (w.__stableTicks ?? 0) >= 3;
     },
-    { timeout: 10_000, polling: 250 },
+    { timeout: 20_000, polling: 200 },
   );
 }
 
