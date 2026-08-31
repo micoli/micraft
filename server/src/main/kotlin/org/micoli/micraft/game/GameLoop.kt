@@ -1611,6 +1611,7 @@ class GameLoop(
                 networkStats = networkStats,
                 permissions = sessionPermissions,
                 chunkMode = chunkSection.transport)
+        if (gw.e2eCreative) session.state = session.state.copy(editMode = EditMode.CREATIVE)
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
         saved?.shortcutBarPages?.forEachIndexed { page, pageSlots ->
             if (page in 0..9)
