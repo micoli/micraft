@@ -81,6 +81,8 @@ Provider selected via `data/config/server.yaml` → `auth.provider` (`none` | `l
 
 **Login overlay** (`LoginOverlay.tsx`): fetches `/api/auth/config` on mount. Token stored in `sessionStorage`. OAuth token arrives in URL fragment `#auth_token=`. Result written to `loginResultRef.current` as `user\tplayerName\tlang\ttoken` — tab-separated, parsed in `main.kt`.
 
+**Admin API + E2E worlds**: world-scoped admin routes (`status`, `players/*`, `gametime`, `instances/*`, `claims/*`, `scenes/*`, `npcs`) honor an `X-Micraft-Game-Session` header (WS edit/npcs sockets: `?gameSession=`). Absent / `default` / outside `MICRAFT_E2E` => the default world; under `MICRAFT_E2E` a fresh id spawns a dedicated `GameWorld` (like the `/game` WS). Process-level routes (`restart`, `reload`, `users`, `configs`, `schemas`) ignore it. `AdminController.adminWorld()` resolves it via `GameWorldRegistry`. E2E specs: `app/webApp/ts-src/e2e/helpers/admin.ts` (`admin(acct, path, init)`).
+
 ## Slash command
 - Every in-game action (except movement) can have slash command; each bindable to key via keybinding
 - Commands with arguments get autocompletion method attached

@@ -663,6 +663,8 @@ class GameLoop(
             questManager = questManager,
             mailManager = mailManager,
             claimManager = claimManager,
+            claimRegistry = claimRegistry,
+            railNetworkRegistry = railNetworkRegistry,
             sceneRegistry = sceneRegistry,
             playerPersister = playerPersister,
             intentCollectorProvider = { intentCollector },
@@ -679,9 +681,13 @@ class GameLoop(
             auctionManager = auctionManager,
             commandContextProvider = { commandContext },
             pluginTickHandlersProvider = { pluginTickHandlers },
-            broadcastPlayerAdmin = ::broadcastPlayerAdmin,
+            broadcastPlayerAdminSink = ::broadcastPlayerAdmin,
             appScope = { appScope },
         )
+
+    /** The single production world. Admin routes without a game-session header target this. */
+    val defaultWorld: GameWorld
+        get() = gameWorld
 
     private val e2eBounds: String? = System.getenv("MICRAFT_E2E_BOUNDS")?.takeIf { it.isNotBlank() }
 
@@ -692,7 +698,7 @@ class GameLoop(
             halfChunksX = w / 2, halfChunksZ = h / 2, groundY = groundY)
     }
 
-    private val gameWorldRegistry =
+    val gameWorldRegistry =
         GameWorldRegistry(
             defaultWorld = gameWorld,
             e2eEnabled = System.getenv("MICRAFT_E2E")?.isNotBlank() == true,

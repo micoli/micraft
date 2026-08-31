@@ -12,7 +12,7 @@ private val log = LoggerFactory.getLogger("GameWorldRegistry")
  */
 class GameWorldRegistry(
     val defaultWorld: GameWorld,
-    private val e2eEnabled: Boolean,
+    val e2eEnabled: Boolean,
     private val factory: (id: String) -> GameWorld,
 ) {
     private val dynamic = ConcurrentHashMap<String, GameWorld>()
