@@ -16,7 +16,7 @@ export default defineConfig({
   testDir: ".",
   testMatch: "**/*.spec.ts",
   fullyParallel: true,
-  workers: process.env.CI ? 4 : 4,
+  workers: process.env.CI ? 2 : 4,
   timeout: 120_000,
   expect: { timeout: 15_000 },
   retries: process.env.CI ? 1 : 0,
