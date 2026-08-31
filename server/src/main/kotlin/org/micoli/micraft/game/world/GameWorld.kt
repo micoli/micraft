@@ -43,14 +43,17 @@ import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.vehicle.VehicleTickPipeline
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.claim.ClaimManager
+import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.instance.toProto
 import org.micoli.micraft.game.world.liquid.LiquidManager
+import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.player.EditMode
+import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.plugin.TickContext
 import org.micoli.micraft.plugin.TickHandler
 import org.micoli.micraft.protocol.ServerMessage
@@ -103,6 +106,8 @@ class GameWorld(
     val questManager: QuestManager?,
     val mailManager: MailManager?,
     val claimManager: ClaimManager,
+    val claimRegistry: ClaimRegistry,
+    val railNetworkRegistry: RailNetworkRegistry,
     val sceneRegistry: SceneRegistry,
     private val playerPersister: PlayerPersister,
     private val intentCollectorProvider: () -> IntentCollector,
@@ -119,7 +124,8 @@ class GameWorld(
     val auctionManager: AuctionManager?,
     private val commandContextProvider: () -> CommandContext,
     private val pluginTickHandlersProvider: () -> List<TickHandler>,
-    private val broadcastPlayerAdmin: suspend (String) -> Unit,
+    /** Extra sink for player-admin events, on top of this world's own listener list. */
+    private val broadcastPlayerAdminSink: suspend (String) -> Unit = {},
     private val appScope: () -> Application?,
     /** Where the game clock starts when there is no persisted metadata (a simulator wants 0). */
     private val initialGameTicks: Long? = null,
@@ -436,6 +442,59 @@ class GameWorld(
         launchTerrainRebuild()
         saveState()
     }
+
+    private val playerAdminListeners =
+        java.util.concurrent.CopyOnWriteArrayList<suspend (String) -> Unit>()
+
+    fun addPlayerAdminListener(listener: suspend (String) -> Unit) {
+        playerAdminListeners.add(listener)
+    }
+
+    fun removePlayerAdminListener(listener: suspend (String) -> Unit) {
+        playerAdminListeners.remove(listener)
+    }
+
+    private suspend fun broadcastPlayerAdmin(json: String) {
+        broadcastPlayerAdminSink(json)
+        for (l in playerAdminListeners) runCatching { l(json) }
+    }
+
+    // ── World-scoped admin surface (mirrors GameLoop's accessors so admin routes can target
+    //    a specific GameWorld). ────────────────────────────────────────────────────────────
+    fun getPlayerStates(): List<PlayerState> = sessions.all().map { it.state }
+
+    fun findSession(name: String): PlayerSession? =
+        sessions.all().find { sanitizePlayerName(it.state.name).equals(name, ignoreCase = true) }
+
+    fun savePlayerSession(session: PlayerSession) = playerPersister.save(session)
+
+    suspend fun broadcastPlayerUpdate(session: PlayerSession) =
+        sessions.broadcast(ServerMessage.PlayerUpdate(session.state))
+
+    suspend fun broadcastInstanceZonesSync() {
+        val msg = ServerMessage.InstanceZonesSync(instanceRegistry.all().map { it.toProto() })
+        sessions.all().filter { it.hasPermission("admin") }.forEach { it.send(msg) }
+    }
+
+    suspend fun broadcastWorldUpdate(
+        changes: List<org.micoli.micraft.protocol.BlockChange>,
+        entityAdds: List<org.micoli.micraft.protocol.BlockEntityProto> = emptyList(),
+        entityRemoves: List<org.micoli.micraft.game.world.BlockPos> = emptyList(),
+        entityRemovesAt: List<org.micoli.micraft.protocol.EntityRemoveAt> = emptyList(),
+    ) {
+        sessions.broadcast(
+            ServerMessage.WorldUpdate(changes, entityAdds, entityRemoves, entityRemovesAt))
+    }
+
+    fun getNpcInstances() = npcManager.getAll()
+
+    fun instances() = instanceRegistry
+
+    fun scenes() = sceneRegistry
+
+    fun claims() = claimRegistry
+
+    fun getWorldState() = world
 
     companion object {
         const val DEFAULT_ID = "default"

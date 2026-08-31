@@ -1,5 +1,6 @@
 /// <reference path="../global.d.ts" />
 import { test } from "@playwright/test";
+import { admin } from "./helpers/admin";
 import { accountFor, connectClient, e2e, expect } from "./helpers/connectClient";
 import { GROUND_Y } from "./helpers/constants";
 
@@ -39,4 +40,24 @@ test("breaking then placing a block each propagate a WorldUpdate", async ({ page
 
   const s = await e2e(page);
   expect(s.lastWorldUpdate, "a WorldUpdate is recorded").not.toBeNull();
+});
+
+test("the admin API seeds a fixture into this test's isolated world", async ({ page }, info) => {
+  const acct = accountFor(info.parallelIndex);
+  await connectClient(page, acct);
+
+  const res = await admin(acct, `/api/admin/players/${encodeURIComponent(acct.charName)}/give`, {
+    method: "POST",
+    body: JSON.stringify({ name: "COBBLESTONE", count: 7 }),
+  });
+  expect(res.status).toBe(204);
+
+  await page.waitForFunction(
+    () => {
+      const inv = window.mcE2E?.inventory ?? {};
+      return Object.entries(inv).some(([k, v]) => k.toLowerCase() === "cobblestone" && v >= 7);
+    },
+    undefined,
+    { timeout: 10_000, polling: 100 },
+  );
 });

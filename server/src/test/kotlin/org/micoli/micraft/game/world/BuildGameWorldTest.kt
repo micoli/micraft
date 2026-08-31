@@ -43,6 +43,15 @@ class BuildGameWorldTest {
     }
 
     @Test
+    fun eachWorld_getsItsOwnClaimAndRailRegistries() {
+        val a = buildGameWorld("reg-a", gen(), shared)
+        val b = buildGameWorld("reg-b", gen(), shared)
+        assertFalse(a.claimRegistry === b.claimRegistry, "claim registries must be per-world")
+        assertFalse(
+            a.railNetworkRegistry === b.railNetworkRegistry, "rail registries must be per-world")
+    }
+
+    @Test
     fun initialGameTicks_overridesTheDefaultClockStart() {
         val fresh =
             buildGameWorld("clock-test", gen(), shared, GameWorldOptions(initialGameTicks = 0L))

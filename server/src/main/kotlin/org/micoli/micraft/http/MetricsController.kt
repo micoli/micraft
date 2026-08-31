@@ -192,7 +192,10 @@ private fun webAssetBuildTimestamp(fileName: String): String {
         .format(Instant.ofEpochMilli(file.lastModified()))
 }
 
-fun buildStatusSnapshot(gameLoop: GameLoop): StatusSnapshot {
+fun buildStatusSnapshot(
+    gameLoop: GameLoop,
+    world: org.micoli.micraft.game.world.GameWorld = gameLoop.defaultWorld,
+): StatusSnapshot {
     val memMx = ManagementFactory.getMemoryMXBean()
     val heapUsed = memMx.heapMemoryUsage.used
     val heapMax = memMx.heapMemoryUsage.max
@@ -209,21 +212,21 @@ fun buildStatusSnapshot(gameLoop: GameLoop): StatusSnapshot {
         }
     val runtimeMx = ManagementFactory.getRuntimeMXBean()
 
-    val npcStates = gameLoop.getNpcStates()
+    val npcStates = world.getNpcInstances().map { it.state }
     val activeLiquids = gameLoop.getActiveLiquidCount()
     val pendingLiquidTicks = gameLoop.getLiquidPendingTickCount()
     val activeVegetation = gameLoop.getActiveVegetationCount()
     val net = gameLoop.networkStats
 
     return StatusSnapshot(
-        connectedPlayers = gameLoop.getPlayerStates().size,
-        playerNames = gameLoop.getPlayerStates().map { it.name },
+        connectedPlayers = world.getPlayerStates().size,
+        playerNames = world.getPlayerStates().map { it.name },
         npcTotal = npcStates.size,
         npcByType = npcStates.groupingBy { it.type }.eachCount(),
         npcEstBytes = npcStates.size * NPC_BYTES_PER_ENTRY,
-        worldItems = gameLoop.getWorldItemCount(),
-        loadedChunks = gameLoop.getLoadedChunkCount(),
-        gameTicks = gameLoop.getGameTicks(),
+        worldItems = world.worldItems.itemCount(),
+        loadedChunks = world.world.loadedChunkCount(),
+        gameTicks = world.gameTicks,
         networkBytesIn = net.bytesIn.get(),
         networkBytesOut = net.bytesOut.get(),
         activeLiquids = activeLiquids,

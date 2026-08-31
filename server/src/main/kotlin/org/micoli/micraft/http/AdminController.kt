@@ -323,8 +323,41 @@ class AdminController(
     private val gameLoop: GameLoop,
     private val dataPath: String,
     private val tokenStore: TokenStore? = null,
+    private val gameWorldRegistry: org.micoli.micraft.game.world.GameWorldRegistry =
+        gameLoop.gameWorldRegistry,
 ) {
     private val configDir = Path.of("$dataPath/config")
+
+    companion object {
+        /**
+         * E2E only: targets an isolated per-test [org.micoli.micraft.game.world.GameWorld]. Absent
+         * / "default" / outside `MICRAFT_E2E` => the default world. A fresh id spawns a dedicated
+         * world, same as the first `/game` WebSocket connect for that session.
+         */
+        const val GAME_SESSION_HEADER = "X-Micraft-Game-Session"
+    }
+
+    private fun RoutingContext.adminWorld(): org.micoli.micraft.game.world.GameWorld {
+        val id = call.request.headers[GAME_SESSION_HEADER]?.trim()?.takeIf { it.isNotEmpty() }
+        if (id == null ||
+            id == org.micoli.micraft.game.world.GameWorldRegistry.DEFAULT_ID ||
+            !gameWorldRegistry.e2eEnabled) {
+            return gameWorldRegistry.defaultWorld
+        }
+        return gameWorldRegistry.resolve(id)
+    }
+
+    // Browser WebSockets can't set request headers, so the admin edit/list sockets take the
+    // target world as a `?gameSession=` query param (same convention as `/game` and `/chunks`).
+    private fun DefaultWebSocketServerSession.wsWorld(): org.micoli.micraft.game.world.GameWorld {
+        val id = call.request.queryParameters["gameSession"]?.trim()?.takeIf { it.isNotEmpty() }
+        if (id == null ||
+            id == org.micoli.micraft.game.world.GameWorldRegistry.DEFAULT_ID ||
+            !gameWorldRegistry.e2eEnabled) {
+            return gameWorldRegistry.defaultWorld
+        }
+        return gameWorldRegistry.resolve(id)
+    }
 
     // Loaded fresh per call rather than borrowed from `gameLoop` — its own copies only populate
     // once `GameLoop.start()` runs, which a bare-bones test setup never calls.
@@ -351,9 +384,11 @@ class AdminController(
     // Chunks eligible for an instance zone: in-memory (this run) union persisted-to-disk (any
     // prior run) — WorldState.discoveredChunks() alone misses chunks generated before the last
     // server restart that no player has revisited yet.
-    private fun generatedChunks(): Set<ChunkPos> =
-        gameLoop.getWorldState().discoveredChunks() +
-            (persistence?.persistedChunkPositions() ?: emptySet())
+    private fun generatedChunks(gw: org.micoli.micraft.game.world.GameWorld): Set<ChunkPos> =
+        gw.getWorldState().discoveredChunks() +
+            (persistence
+                ?.takeIf { gw.id == org.micoli.micraft.game.world.GameWorld.DEFAULT_ID }
+                ?.persistedChunkPositions() ?: emptySet())
 
     private suspend fun RoutingContext.requireAdmin(): Boolean {
         tokenStore ?: return true
@@ -423,7 +458,11 @@ class AdminController(
      * Shared by the WS scene-edit handler (only writer for scene blocks). Mirrors the previous `PUT
      * /api/admin/scenes/{id}/blocks` handler body.
      */
-    private fun applySceneBlockEdit(id: String, dto: SceneBlockDto): EditResult<SceneBlockDto> {
+    private fun applySceneBlockEdit(
+        gw: org.micoli.micraft.game.world.GameWorld,
+        id: String,
+        dto: SceneBlockDto
+    ): EditResult<SceneBlockDto> {
         val type =
             BlockRegistry.all().find { it.id == dto.type }
                 ?: return EditResult.Failed("Unknown block type")
@@ -433,7 +472,7 @@ class AdminController(
             // AIR always routes through breakBlock — removeAt resolves whichever slot/entity is
             // targeted (or falls back to a plain block clear when there's no entity there).
             val result =
-                gameLoop.scenes().breakBlock(id, dto.x, dto.y, dto.z, xOffset, zOffset)
+                gw.scenes().breakBlock(id, dto.x, dto.y, dto.z, xOffset, zOffset)
                     ?: return EditResult.Failed("Scene not found or coordinate out of bounds")
             return EditResult.Applied(dto)
         }
@@ -446,8 +485,7 @@ class AdminController(
             val rotation = BlockState.rotation(dto.state)
             val colorIndex = BlockState.colorIndex(dto.state)
             val result =
-                gameLoop
-                    .scenes()
+                gw.scenes()
                     .placeBlock(
                         id, dto.x, dto.y, dto.z, type, rotation, colorIndex, xOffset, zOffset)
                     ?: return EditResult.Failed("Scene not found or coordinate out of bounds")
@@ -455,8 +493,7 @@ class AdminController(
             return EditResult.Applied(dto)
         }
         val ok =
-            gameLoop
-                .scenes()
+            gw.scenes()
                 .setBlock(
                     id, dto.x, dto.y, dto.z, BlockRegistry.wireIndex(type).toByte(), dto.state)
         if (!ok) return EditResult.Failed("Scene not found or coordinate out of bounds")
@@ -464,10 +501,11 @@ class AdminController(
     }
 
     private fun applySceneSwitchToggle(
+        gw: org.micoli.micraft.game.world.GameWorld,
         id: String,
         dto: SceneSwitchToggleDto
     ): EditResult<SceneSwitchToggleDto> =
-        when (val result = gameLoop.scenes().toggleSwitch(id, dto.x, dto.y, dto.z)) {
+        when (val result = gw.scenes().toggleSwitch(id, dto.x, dto.y, dto.z)) {
             is org.micoli.micraft.game.world.scene.SceneRegistry.SwitchToggleResult.Applied ->
                 EditResult.Applied(dto)
             is org.micoli.micraft.game.world.scene.SceneRegistry.SwitchToggleResult.Rejected ->
@@ -482,17 +520,18 @@ class AdminController(
      * call.
      */
     private fun applyInstanceBlockEdit(
+        gw: org.micoli.micraft.game.world.GameWorld,
         id: String,
         dto: InstanceBlockDto
     ): EditResult<InstanceEditOutcome> {
-        val zone = gameLoop.instances().get(id) ?: return EditResult.Failed("Instance not found")
+        val zone = gw.instances().get(id) ?: return EditResult.Failed("Instance not found")
         if (!zone.contains(dto.x, dto.y, dto.z)) {
             return EditResult.Failed("Coordinate outside zone bounds")
         }
         val type =
             BlockRegistry.all().find { it.id == dto.type }
                 ?: return EditResult.Failed("Unknown block type")
-        val world = gameLoop.getWorldState()
+        val world = gw.getWorldState()
         val pos = BlockPos(dto.x, dto.y, dto.z)
         if (type == BlockType.AIR) {
             val result =
@@ -530,14 +569,15 @@ class AdminController(
     )
 
     private fun applyInstanceSwitchToggle(
+        gw: org.micoli.micraft.game.world.GameWorld,
         id: String,
         dto: InstanceSwitchToggleDto
     ): EditResult<InstanceSwitchToggleOutcome> {
-        val zone = gameLoop.instances().get(id) ?: return EditResult.Failed("Instance not found")
+        val zone = gw.instances().get(id) ?: return EditResult.Failed("Instance not found")
         if (!zone.contains(dto.x, dto.y, dto.z)) {
             return EditResult.Failed("Coordinate outside zone bounds")
         }
-        val world = gameLoop.getWorldState()
+        val world = gw.getWorldState()
         val pos = BlockPos(dto.x, dto.y, dto.z)
         val blockType = world.getBlock(dto.x, dto.y, dto.z)
         if (!RailConnection.isJunction(blockType)) {
@@ -549,7 +589,7 @@ class AdminController(
         val nextBranch = (BlockState.extra(extraState) + 1) % branches
         val change = BlockChange(pos, blockType, state, BlockState.packExtra(nextBranch))
         world.applyChange(change)
-        gameLoop.railNetworkRegistry().invalidate(pos)
+        gw.railNetworkRegistry.invalidate(pos)
         return EditResult.Applied(InstanceSwitchToggleOutcome(dto, change))
     }
 
@@ -572,11 +612,12 @@ class AdminController(
                     call.parameters["id"]
                         ?: return@webSocket close(
                             CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Missing id"))
-                if (gameLoop.scenes().get(id) == null) {
+                val gw = wsWorld()
+                if (gw.scenes().get(id) == null) {
                     return@webSocket close(
                         CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Not found"))
                 }
-                val key = "scene:$id"
+                val key = "${gw.id}:scene:$id"
                 val listener: suspend (String) -> Unit = { json ->
                     try {
                         send(json)
@@ -596,7 +637,7 @@ class AdminController(
                         if (batch != null) {
                             val applied = mutableListOf<SceneBlockDto>()
                             for (dto in batch.edits) {
-                                if (applySceneBlockEdit(id, dto) is EditResult.Applied)
+                                if (applySceneBlockEdit(gw, id, dto) is EditResult.Applied)
                                     applied += dto
                             }
                             if (applied.isNotEmpty()) {
@@ -619,7 +660,7 @@ class AdminController(
                             runCatching { Json.decodeFromString<SceneSwitchToggleDto>(text) }
                                 .getOrNull()
                         if (toggle != null) {
-                            when (val result = applySceneSwitchToggle(id, toggle)) {
+                            when (val result = applySceneSwitchToggle(gw, id, toggle)) {
                                 is EditResult.Applied ->
                                     broadcastEdit(
                                         key,
@@ -639,7 +680,7 @@ class AdminController(
                                 send("""{"type":"error","message":"Invalid block edit"}""")
                                 continue
                             }
-                        when (val result = applySceneBlockEdit(id, dto)) {
+                        when (val result = applySceneBlockEdit(gw, id, dto)) {
                             is EditResult.Applied ->
                                 broadcastEdit(
                                     key,
@@ -660,11 +701,12 @@ class AdminController(
                     call.parameters["id"]
                         ?: return@webSocket close(
                             CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Missing id"))
-                if (gameLoop.instances().get(id) == null) {
+                val gw = wsWorld()
+                if (gw.instances().get(id) == null) {
                     return@webSocket close(
                         CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Not found"))
                 }
-                val key = "instance:$id"
+                val key = "${gw.id}:instance:$id"
                 val listener: suspend (String) -> Unit = { json ->
                     try {
                         send(json)
@@ -687,7 +729,7 @@ class AdminController(
                             val entityRemoves = mutableListOf<BlockPos>()
                             val entityRemovesAt = mutableListOf<EntityRemoveAt>()
                             for (dto in batch.edits) {
-                                val result = applyInstanceBlockEdit(id, dto)
+                                val result = applyInstanceBlockEdit(gw, id, dto)
                                 if (result is EditResult.Applied) {
                                     applied += dto
                                     changes += result.dto.changes
@@ -697,7 +739,7 @@ class AdminController(
                                 }
                             }
                             if (applied.isNotEmpty()) {
-                                gameLoop.broadcastWorldUpdate(
+                                gw.broadcastWorldUpdate(
                                     changes,
                                     entityAdds = entityAdds,
                                     entityRemoves = entityRemoves,
@@ -722,9 +764,9 @@ class AdminController(
                             runCatching { Json.decodeFromString<InstanceSwitchToggleDto>(text) }
                                 .getOrNull()
                         if (toggle != null) {
-                            when (val result = applyInstanceSwitchToggle(id, toggle)) {
+                            when (val result = applyInstanceSwitchToggle(gw, id, toggle)) {
                                 is EditResult.Applied -> {
-                                    gameLoop.broadcastWorldUpdate(listOf(result.dto.change))
+                                    gw.broadcastWorldUpdate(listOf(result.dto.change))
                                     broadcastEdit(
                                         key,
                                         adminJson.encodeToString(
@@ -744,9 +786,9 @@ class AdminController(
                                 send("""{"type":"error","message":"Invalid block edit"}""")
                                 continue
                             }
-                        when (val result = applyInstanceBlockEdit(id, dto)) {
+                        when (val result = applyInstanceBlockEdit(gw, id, dto)) {
                             is EditResult.Applied -> {
-                                gameLoop.broadcastWorldUpdate(
+                                gw.broadcastWorldUpdate(
                                     result.dto.changes,
                                     entityAdds = result.dto.entityAdds,
                                     entityRemoves = result.dto.entityRemoves,
@@ -800,7 +842,7 @@ class AdminController(
                     requireAdminDocs()
                 }) {
                     if (!requireAdmin()) return@get
-                    val snapshot = buildStatusSnapshot(gameLoop)
+                    val snapshot = buildStatusSnapshot(gameLoop, adminWorld())
                     call.respondText(
                         adminJson.encodeToString(StatusSnapshot.serializer(), snapshot),
                         ContentType.Application.Json)
@@ -857,7 +899,7 @@ class AdminController(
                     val newTicks =
                         (hour.toLong() * TICKS_PER_DAY / 24L) +
                             (minute.toLong() * TICKS_PER_DAY / 1440L)
-                    gameLoop.setGameTicks(newTicks)
+                    adminWorld().gameTicks = newTicks
                     call.respond(HttpStatusCode.NoContent)
                 }
 
@@ -1264,11 +1306,11 @@ class AdminController(
                                 } ?: state.dominantHand,
                         )
 
-                    val live = gameLoop.findSession(name)
+                    val live = adminWorld().findSession(name)
                     if (live != null) {
                         live.state = applyEquipment(live.state)
-                        gameLoop.broadcastPlayerUpdate(live)
-                        gameLoop.savePlayerSession(live)
+                        adminWorld().broadcastPlayerUpdate(live)
+                        adminWorld().savePlayerSession(live)
                         live.characterData?.let { char ->
                             val bonuses =
                                 live.state.equipmentBonuses(
@@ -1325,7 +1367,7 @@ class AdminController(
                     val count =
                         body["count"]?.jsonPrimitive?.content?.toIntOrNull()?.coerceAtLeast(1) ?: 1
 
-                    val live = gameLoop.findSession(name)
+                    val live = adminWorld().findSession(name)
 
                     val itemType =
                         ItemRegistry.keys().firstOrNull { it.id.equals(itemName, true) }
@@ -1338,7 +1380,7 @@ class AdminController(
                     if (itemType != null) {
                         if (live != null) {
                             live.inventory.merge(itemType, count, Int::plus)
-                            gameLoop.savePlayerSession(live)
+                            adminWorld().savePlayerSession(live)
                             live.send(ServerMessage.InventoryUpdate(live.inventory.toMap()))
                         } else {
                             val p =
@@ -1381,7 +1423,7 @@ class AdminController(
                     if (live != null) {
                         grant(live.state)?.let {
                             live.state = it
-                            gameLoop.savePlayerSession(live)
+                            adminWorld().savePlayerSession(live)
                         }
                         return@post call.respond(HttpStatusCode.NoContent)
                     }
@@ -1606,7 +1648,7 @@ class AdminController(
                 }) {
                     if (!requireAdmin()) return@get
                     val dtos =
-                        gameLoop.getNpcInstances().map { npc ->
+                        adminWorld().getNpcInstances().map { npc ->
                             val ad = npc.animalData
                             val maxHp = npc.maxHp
                             val zoneX =
@@ -1716,7 +1758,8 @@ class AdminController(
                     if (!requireAdmin()) return@get
                     call.respondText(
                         Json.encodeToString(
-                            ListSerializer(ChunkPos.serializer()), generatedChunks().toList()),
+                            ListSerializer(ChunkPos.serializer()),
+                            generatedChunks(adminWorld()).toList()),
                         ContentType.Application.Json)
                 }
 
@@ -1730,7 +1773,8 @@ class AdminController(
                     if (!requireAdmin()) return@get
                     call.respondText(
                         Json.encodeToString(
-                            ListSerializer(InstanceZone.serializer()), gameLoop.instances().all()),
+                            ListSerializer(InstanceZone.serializer()),
+                            adminWorld().instances().all()),
                         ContentType.Application.Json)
                 }
 
@@ -1749,7 +1793,7 @@ class AdminController(
                     val id =
                         call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                     val zone =
-                        gameLoop.instances().get(id)
+                        adminWorld().instances().get(id)
                             ?: return@get call.respond(HttpStatusCode.NotFound)
                     call.respondText(
                         Json.encodeToString(InstanceZone.serializer(), zone),
@@ -1777,13 +1821,15 @@ class AdminController(
                     if (body.name.isBlank() || body.chunks.isEmpty() || body.yMin >= body.yMax) {
                         return@post call.respond(HttpStatusCode.BadRequest, "Invalid zone")
                     }
-                    val discovered = generatedChunks()
+                    val discovered = generatedChunks(adminWorld())
                     if (body.chunks.any { it !in discovered }) {
                         return@post call.respond(
                             HttpStatusCode.BadRequest,
                             "Zone must only cover already-generated chunks")
                     }
-                    if (gameLoop.instances().overlaps(body.chunks.toSet(), body.yMin, body.yMax)) {
+                    if (adminWorld()
+                        .instances()
+                        .overlaps(body.chunks.toSet(), body.yMin, body.yMax)) {
                         return@post call.respond(HttpStatusCode.Conflict)
                     }
                     val zone =
@@ -1795,7 +1841,7 @@ class AdminController(
                                 yMax = body.yMax,
                                 chunks = body.chunks.toSet(),
                                 ownerName = "admin")
-                    gameLoop.broadcastInstanceZonesSync()
+                    adminWorld().broadcastInstanceZonesSync()
                     call.respondText(
                         Json.encodeToString(InstanceZone.serializer(), zone),
                         ContentType.Application.Json)
@@ -1820,9 +1866,9 @@ class AdminController(
                         call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
                     val body = Json.decodeFromString<InstanceRenameRequest>(call.receiveText())
                     val zone =
-                        gameLoop.instances().rename(id, body.name)
+                        adminWorld().instances().rename(id, body.name)
                             ?: return@put call.respond(HttpStatusCode.NotFound)
-                    gameLoop.broadcastInstanceZonesSync()
+                    adminWorld().broadcastInstanceZonesSync()
                     call.respondText(
                         Json.encodeToString(InstanceZone.serializer(), zone),
                         ContentType.Application.Json)
@@ -1857,7 +1903,7 @@ class AdminController(
                             HttpStatusCode.BadRequest, "yMin must be less than yMax")
                     }
                     val existing =
-                        gameLoop.instances().get(id)
+                        adminWorld().instances().get(id)
                             ?: return@put call.respond(HttpStatusCode.NotFound)
                     if (gameLoop
                         .instances()
@@ -1865,9 +1911,9 @@ class AdminController(
                         return@put call.respond(HttpStatusCode.Conflict)
                     }
                     val zone =
-                        gameLoop.instances().updateBounds(id, body.yMin, body.yMax)
+                        adminWorld().instances().updateBounds(id, body.yMin, body.yMax)
                             ?: return@put call.respond(HttpStatusCode.NotFound)
-                    gameLoop.broadcastInstanceZonesSync()
+                    adminWorld().broadcastInstanceZonesSync()
                     call.respondText(
                         Json.encodeToString(InstanceZone.serializer(), zone),
                         ContentType.Application.Json)
@@ -1892,9 +1938,9 @@ class AdminController(
                         call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
                     val body = Json.decodeFromString<InstanceEnabledRequest>(call.receiveText())
                     val zone =
-                        gameLoop.instances().setEnabled(id, body.enabled)
+                        adminWorld().instances().setEnabled(id, body.enabled)
                             ?: return@put call.respond(HttpStatusCode.NotFound)
-                    gameLoop.broadcastInstanceZonesSync()
+                    adminWorld().broadcastInstanceZonesSync()
                     call.respondText(
                         Json.encodeToString(InstanceZone.serializer(), zone),
                         ContentType.Application.Json)
@@ -1928,14 +1974,14 @@ class AdminController(
                         return@put call.respond(
                             HttpStatusCode.BadRequest, "Zone must have at least one chunk")
                     }
-                    val discovered = generatedChunks()
+                    val discovered = generatedChunks(adminWorld())
                     if (body.chunks.any { it !in discovered }) {
                         return@put call.respond(
                             HttpStatusCode.BadRequest,
                             "Zone must only cover already-generated chunks")
                     }
                     val existing =
-                        gameLoop.instances().get(id)
+                        adminWorld().instances().get(id)
                             ?: return@put call.respond(HttpStatusCode.NotFound)
                     if (gameLoop
                         .instances()
@@ -1944,9 +1990,9 @@ class AdminController(
                         return@put call.respond(HttpStatusCode.Conflict)
                     }
                     val zone =
-                        gameLoop.instances().updateChunks(id, body.chunks.toSet())
+                        adminWorld().instances().updateChunks(id, body.chunks.toSet())
                             ?: return@put call.respond(HttpStatusCode.NotFound)
-                    gameLoop.broadcastInstanceZonesSync()
+                    adminWorld().broadcastInstanceZonesSync()
                     call.respondText(
                         Json.encodeToString(InstanceZone.serializer(), zone),
                         ContentType.Application.Json)
@@ -1995,10 +2041,10 @@ class AdminController(
                     val id =
                         call.parameters["id"]
                             ?: return@delete call.respond(HttpStatusCode.BadRequest)
-                    if (!gameLoop.instances().delete(id)) {
+                    if (!adminWorld().instances().delete(id)) {
                         return@delete call.respond(HttpStatusCode.NotFound)
                     }
-                    gameLoop.broadcastInstanceZonesSync()
+                    adminWorld().broadcastInstanceZonesSync()
                     call.respond(HttpStatusCode.NoContent)
                 }
 
@@ -2012,7 +2058,7 @@ class AdminController(
                     if (!requireAdmin()) return@get
                     call.respondText(
                         Json.encodeToString(
-                            ListSerializer(Claim.serializer()), gameLoop.claims().all()),
+                            ListSerializer(Claim.serializer()), adminWorld().claims().all()),
                         ContentType.Application.Json)
                 }
 
@@ -2031,7 +2077,7 @@ class AdminController(
                     val id =
                         call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                     val claim =
-                        gameLoop.claims().get(id)
+                        adminWorld().claims().get(id)
                             ?: return@get call.respond(HttpStatusCode.NotFound)
                     call.respondText(
                         Json.encodeToString(Claim.serializer(), claim),
@@ -2067,7 +2113,7 @@ class AdminController(
                             HttpStatusCode.BadRequest, "yMin must be less than or equal to yMax")
                     }
                     val existing =
-                        gameLoop.claims().get(id)
+                        adminWorld().claims().get(id)
                             ?: return@put call.respond(HttpStatusCode.NotFound)
                     if (gameLoop
                         .claims()
@@ -2075,7 +2121,7 @@ class AdminController(
                         return@put call.respond(HttpStatusCode.Conflict)
                     }
                     val claim =
-                        gameLoop.claims().updateBounds(id, body.yMin, body.yMax)
+                        adminWorld().claims().updateBounds(id, body.yMin, body.yMax)
                             ?: return@put call.respond(HttpStatusCode.NotFound)
                     call.respondText(
                         Json.encodeToString(Claim.serializer(), claim),
@@ -2100,8 +2146,9 @@ class AdminController(
                     val id =
                         call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
                     val body = Json.decodeFromString<ClaimTrustRequest>(call.receiveText())
-                    gameLoop.claims().get(id) ?: return@put call.respond(HttpStatusCode.NotFound)
-                    val onlineTarget = gameLoop.findSession(body.playerName)
+                    adminWorld().claims().get(id)
+                        ?: return@put call.respond(HttpStatusCode.NotFound)
+                    val onlineTarget = adminWorld().findSession(body.playerName)
                     val targetId =
                         onlineTarget?.state?.id ?: persistence?.loadPlayerState(body.playerName)?.id
                     val targetName = onlineTarget?.state?.name ?: body.playerName
@@ -2109,7 +2156,7 @@ class AdminController(
                         return@put call.respond(HttpStatusCode.NotFound, "Player not found")
                     }
                     val claim =
-                        gameLoop.claims().setTrusted(id, targetId, targetName, body.trusted)
+                        adminWorld().claims().setTrusted(id, targetId, targetName, body.trusted)
                             ?: return@put call.respond(HttpStatusCode.NotFound)
                     call.respondText(
                         Json.encodeToString(Claim.serializer(), claim),
@@ -2131,7 +2178,7 @@ class AdminController(
                     val id =
                         call.parameters["id"]
                             ?: return@delete call.respond(HttpStatusCode.BadRequest)
-                    if (gameLoop.claims().delete(id) == null) {
+                    if (adminWorld().claims().delete(id) == null) {
                         return@delete call.respond(HttpStatusCode.NotFound)
                     }
                     call.respond(HttpStatusCode.NoContent)
@@ -2168,9 +2215,9 @@ class AdminController(
                     val id =
                         call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                     val zone =
-                        gameLoop.instances().get(id)
+                        adminWorld().instances().get(id)
                             ?: return@get call.respond(HttpStatusCode.NotFound)
-                    val world = gameLoop.getWorldState()
+                    val world = adminWorld().getWorldState()
                     val cx = call.request.queryParameters["cx"]?.toIntOrNull()
                     val cz = call.request.queryParameters["cz"]?.toIntOrNull()
                     // Streamed as newline-delimited JSON, one block per line. With cx/cz given,
@@ -2229,7 +2276,7 @@ class AdminController(
                     call.respondText(
                         adminJson.encodeToString(
                             ListSerializer(SceneDto.serializer()),
-                            gameLoop.scenes().all().map { it.toDto() }),
+                            adminWorld().scenes().all().map { it.toDto() }),
                         ContentType.Application.Json)
                 }
 
@@ -2248,7 +2295,7 @@ class AdminController(
                     val id =
                         call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                     val scene =
-                        gameLoop.scenes().get(id)
+                        adminWorld().scenes().get(id)
                             ?: return@get call.respond(HttpStatusCode.NotFound)
                     call.respondText(
                         adminJson.encodeToString(SceneDto.serializer(), scene.toDto()),
@@ -2305,7 +2352,7 @@ class AdminController(
                     val id =
                         call.parameters["id"] ?: return@post call.respond(HttpStatusCode.BadRequest)
                     val scene =
-                        gameLoop.scenes().duplicate(id)
+                        adminWorld().scenes().duplicate(id)
                             ?: return@post call.respond(HttpStatusCode.NotFound)
                     call.respond(
                         HttpStatusCode.Created,
@@ -2331,7 +2378,7 @@ class AdminController(
                         call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
                     val body = Json.decodeFromString<SceneRenameRequest>(call.receiveText())
                     val scene =
-                        gameLoop.scenes().rename(id, body.name)
+                        adminWorld().scenes().rename(id, body.name)
                             ?: return@put call.respond(HttpStatusCode.NotFound)
                     call.respondText(
                         adminJson.encodeToString(SceneDto.serializer(), scene.toDto()),
@@ -2361,7 +2408,7 @@ class AdminController(
                         return@put call.respond(HttpStatusCode.BadRequest, "Invalid dimensions")
                     }
                     val scene =
-                        gameLoop.scenes().resize(id, body.width, body.height, body.depth)
+                        adminWorld().scenes().resize(id, body.width, body.height, body.depth)
                             ?: return@put call.respond(HttpStatusCode.NotFound)
                     call.respondText(
                         adminJson.encodeToString(SceneDto.serializer(), scene.toDto()),
@@ -2387,7 +2434,7 @@ class AdminController(
                         call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
                     val body = Json.decodeFromString<SceneLayoutRequest>(call.receiveText())
                     val scene =
-                        gameLoop.scenes().updateLayout(id, body.shortcutBarPages)
+                        adminWorld().scenes().updateLayout(id, body.shortcutBarPages)
                             ?: return@put call.respond(HttpStatusCode.NotFound)
                     call.respondText(
                         adminJson.encodeToString(SceneDto.serializer(), scene.toDto()),
@@ -2409,7 +2456,7 @@ class AdminController(
                     val id =
                         call.parameters["id"]
                             ?: return@delete call.respond(HttpStatusCode.BadRequest)
-                    if (!gameLoop.scenes().delete(id)) {
+                    if (!adminWorld().scenes().delete(id)) {
                         return@delete call.respond(HttpStatusCode.NotFound)
                     }
                     call.respond(HttpStatusCode.NoContent)
@@ -2443,7 +2490,7 @@ class AdminController(
                     val id =
                         call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                     val scene =
-                        gameLoop.scenes().get(id)
+                        adminWorld().scenes().get(id)
                             ?: return@get call.respond(HttpStatusCode.NotFound)
                     val buffer = ByteArrayOutputStream()
                     DataOutputStream(buffer).use { out ->
@@ -2475,7 +2522,7 @@ class AdminController(
                     val id =
                         call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
                     val scene =
-                        gameLoop.scenes().get(id)
+                        adminWorld().scenes().get(id)
                             ?: return@get call.respond(HttpStatusCode.NotFound)
                     call.respondText(
                         adminJson.encodeToString(
@@ -2493,7 +2540,7 @@ class AdminController(
                 }) {
                     if (!requireAdmin()) return@get
                     val types =
-                        gameLoop.getNpcManager().getDefinitions().mapValues { (_, def) ->
+                        adminWorld().npcManager.getDefinitions().mapValues { (_, def) ->
                             NpcCodexInfo(
                                 bbmodelFile = def.bbmodelFile,
                                 behaviorKey = def.behaviorKey,
@@ -2616,7 +2663,8 @@ class AdminController(
                     return@webSocket
                 }
             }
-            val npcManager = gameLoop.getNpcManager()
+            val gw = wsWorld()
+            val npcManager = gw.npcManager
             val listener: suspend (String) -> Unit = { json ->
                 try {
                     send(json)
@@ -2628,15 +2676,15 @@ class AdminController(
                 } catch (_: Exception) {}
             }
             npcManager.addAdminListener(listener)
-            gameLoop.addPlayerAdminListener(playerListener)
+            gw.addPlayerAdminListener(playerListener)
             try {
-                for (npc in gameLoop.getNpcInstances()) {
+                for (npc in gw.getNpcInstances()) {
                     val s = npc.state
                     val maxHp = npc.maxHp
                     send(
                         """{"type":"npcSpawned","id":"${s.id}","name":${s.name.adminWsJson()},"npcType":${s.type.adminWsJson()},"x":${s.pos.x},"y":${s.pos.y},"z":${s.pos.z},"yaw":${s.yaw},"currentHp":${npc.currentHp},"maxHp":$maxHp,"isDead":${npc.isDead}}""")
                 }
-                for (state in gameLoop.getPlayerStates()) {
+                for (state in gw.getPlayerStates()) {
                     send(
                         """{"type":"playerJoined","id":"${state.id}","name":${state.name.adminWsJson()},"x":${state.pos.x},"y":${state.pos.y},"z":${state.pos.z},"yaw":${state.orientation.yaw}}""")
                 }
@@ -2645,7 +2693,7 @@ class AdminController(
                 }
             } finally {
                 npcManager.removeAdminListener(listener)
-                gameLoop.removePlayerAdminListener(playerListener)
+                gw.removePlayerAdminListener(playerListener)
             }
         }
 
