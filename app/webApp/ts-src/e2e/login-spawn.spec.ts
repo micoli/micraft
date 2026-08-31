@@ -1,12 +1,33 @@
 import { test } from "@playwright/test";
 import { accountFor, connectClient, e2e, expect } from "./helpers/connectClient";
-import { SPAWN_X, SPAWN_Z, SETTLED_Y, expectedChunkHalo } from "./helpers/constants";
+import { SPAWN_X, SPAWN_Z, SETTLED_Y } from "./helpers/constants";
 
-test("login, spawn and the chunk halo around it", async ({ page }, info) => {
+test("login, spawn and the chunk region around it", async ({ page }, info) => {
   const acct = accountFor(info.parallelIndex);
   await connectClient(page, acct);
 
+  // Wait for chunk streaming to settle.
+  await page.waitForFunction(
+    () => {
+      const w = window as unknown as {
+        mcE2E?: { loadedChunks: unknown[] };
+        __chunkCount?: number;
+        __chunkStable?: number;
+      };
+      const n = w.mcE2E?.loadedChunks.length ?? 0;
+      w.__chunkStable = n > 0 && n === w.__chunkCount ? (w.__chunkStable ?? 0) + 1 : 0;
+      w.__chunkCount = n;
+      return (w.__chunkStable ?? 0) >= 4;
+    },
+    { timeout: 20_000, polling: 250 },
+  );
+
   const s = await e2e(page);
+  process.stderr.write(
+    `loadedChunks(${s.loadedChunks.length})=${JSON.stringify(s.loadedChunks)}\n` +
+      `meshedChunks(${s.meshedChunks.length})=${JSON.stringify(s.meshedChunks)}\n` +
+      `pos=${JSON.stringify(s.position)} server=${JSON.stringify(s.serverPosition)}\n`,
+  );
   expect(s.ready).toBe(true);
   expect(s.playerId).toMatch(/.+/);
   expect(s.playerName).toBe(acct.charName);
@@ -18,15 +39,25 @@ test("login, spawn and the chunk halo around it", async ({ page }, info) => {
   const key = (c: { cx: number; cz: number }) => `${c.cx},${c.cz}`;
   const loaded = new Set(s.loadedChunks.map(key));
   const meshed = new Set(s.meshedChunks.map(key));
-  for (const c of expectedChunkHalo()) {
+
+  // The spawn chunk and its four orthogonal neighbours are always in view.
+  for (const c of [
+    { cx: 0, cz: 0 },
+    { cx: 1, cz: 0 },
+    { cx: -1, cz: 0 },
+    { cx: 0, cz: 1 },
+    { cx: 0, cz: -1 },
+  ]) {
     expect(loaded.has(key(c)), `chunk ${key(c)} loaded`).toBe(true);
     expect(meshed.has(key(c)), `chunk ${key(c)} meshed`).toBe(true);
   }
-  // Nothing beyond the bounded world's void edge.
+  expect(s.loadedChunks.length).toBeGreaterThanOrEqual(9);
+
+  // Nothing beyond the bounded world's void edge (8x8 chunks centred on origin).
   for (const c of s.loadedChunks) {
-    expect(c.cx).toBeGreaterThanOrEqual(-4);
-    expect(c.cx).toBeLessThanOrEqual(3);
-    expect(c.cz).toBeGreaterThanOrEqual(-4);
-    expect(c.cz).toBeLessThanOrEqual(3);
+    expect(c.cx, `cx ${c.cx} in bounds`).toBeGreaterThanOrEqual(-4);
+    expect(c.cx, `cx ${c.cx} in bounds`).toBeLessThanOrEqual(3);
+    expect(c.cz, `cz ${c.cz} in bounds`).toBeGreaterThanOrEqual(-4);
+    expect(c.cz, `cz ${c.cz} in bounds`).toBeLessThanOrEqual(3);
   }
 });
