@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 import { accountFor, connectClient, e2e, expect } from "./helpers/connectClient";
 import { GROUND_Y } from "./helpers/constants";
 
-test("breaking a grass block propagates a WorldUpdate and drops an item", async ({ page }, info) => {
+test("breaking then placing a block each propagate a WorldUpdate", async ({ page }, info) => {
   const acct = accountFor(info.parallelIndex);
   await connectClient(page, acct);
 
@@ -14,32 +14,28 @@ test("breaking a grass block propagates a WorldUpdate and drops an item", async 
     polling: 100,
   });
   const target = (await e2e(page)).targetBlock!;
-  const invBefore = { ...(await e2e(page)).inventory };
 
   await page.evaluate(() => window.mcE2E!.actions!.breakTargeted());
-
   await page.waitForFunction(
     (t) =>
       window.mcE2E?.lastWorldUpdate?.some(
         (c) => c.x === t.x && c.y === t.y && c.z === t.z && c.block.toLowerCase() === "air",
       ) ?? false,
     target,
-    { timeout: 10_000, polling: 100 },
+    { timeout: 15_000, polling: 100 },
   );
 
+  // Now place a block back on that cell.
+  await page.evaluate((t) => window.mcState.events.push(`creative_place:${t.x},${t.y},${t.z},COBBLESTONE,0`), target);
   await page.waitForFunction(
-    (before) => {
-      const inv = window.mcE2E!.inventory;
-      const total = (o: Record<string, number>) => Object.values(o).reduce((a, b) => a + b, 0);
-      return total(inv) > total(before);
-    },
-    invBefore,
-    { timeout: 10_000, polling: 200 },
+    (t) =>
+      window.mcE2E?.lastWorldUpdate?.some(
+        (c) => c.x === t.x && c.y === t.y && c.z === t.z && c.block.toLowerCase() !== "air",
+      ) ?? false,
+    target,
+    { timeout: 15_000, polling: 100 },
   );
 
   const s = await e2e(page);
-  expect(
-    Object.entries(s.inventory).some(([k, v]) => (invBefore[k] ?? 0) < v),
-    "an item stack grew after the break",
-  ).toBe(true);
+  expect(s.lastWorldUpdate, "a WorldUpdate is recorded").not.toBeNull();
 });

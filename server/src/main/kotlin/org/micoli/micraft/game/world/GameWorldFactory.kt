@@ -327,6 +327,7 @@ fun buildE2eGameWorld(
         world = world,
         persistence = null,
         sessions = sessions,
+        e2eCreative = true,
         terrainCache = TerrainCache(),
         npcManager = npcManager,
         vehicleManager = vehicleManager,
