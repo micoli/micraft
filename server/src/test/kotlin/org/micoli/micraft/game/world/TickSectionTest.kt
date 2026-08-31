@@ -13,7 +13,8 @@ class TickSectionTest {
 
     @Test
     fun e2e_skipsExactlyTheOldFullSimulationTick() {
-        // Pre-TickSection, an `e2eCreative` world ran gameTicks + time-broadcast + the player pass +
+        // Pre-TickSection, an `e2eCreative` world ran gameTicks + time-broadcast + the player pass
+        // +
         // world-item collection + plugins, and skipped all of fullSimulationTick().
         val fullSimulationTick =
             setOf(
