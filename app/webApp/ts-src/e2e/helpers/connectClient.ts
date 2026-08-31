@@ -40,23 +40,25 @@ export async function connectClient(page: Page, acct: E2eAccount, lang = "en"): 
 
   try {
     await page.waitForFunction(() => (window as { mcE2E?: { ready?: boolean } }).mcE2E?.ready === true, {
-      timeout: 45_000,
+      timeout: 35_000,
     });
   } catch (err) {
-    const diag = await page.evaluate(() => {
-      const w = window as unknown as Record<string, unknown>;
-      return {
-        __mcE2E: w.__mcE2E,
-        __mcE2ESession: w.__mcE2ESession,
-        hasMc: typeof w.mc,
-        hasUpdateE2E: typeof (w.mc as Record<string, unknown> | undefined)?.updateE2E,
-        mcE2E: w.mcE2E ?? null,
-        loginResult: (w.mc as { consumeLoginResult?: () => string } | undefined)?.consumeLoginResult?.(),
-        mcStatePlayerId: (w.mcState as Record<string, unknown> | undefined)?.playerId,
-      };
-    });
+    const diag = await page
+      .evaluate(() => {
+        const w = window as unknown as Record<string, unknown>;
+        return {
+          __mcE2E: w.__mcE2E,
+          __mcE2ESession: w.__mcE2ESession,
+          hasMc: typeof w.mc,
+          hasUpdateE2E: typeof (w.mc as Record<string, unknown> | undefined)?.updateE2E,
+          mcE2E: w.mcE2E ?? null,
+          loginResult: (w.mc as { consumeLoginResult?: () => string } | undefined)?.consumeLoginResult?.(),
+          mcStatePlayerId: (w.mcState as Record<string, unknown> | undefined)?.playerId,
+        };
+      })
+      .catch((e) => ({ evalFailed: String(e) }));
     process.stderr.write(`connectClient timeout — diagnostics:\n${JSON.stringify(diag, null, 2)}\n`);
-    process.stderr.write(`browser console:\n${logs.slice(-60).join("\n")}\n`);
+    process.stderr.write(`browser console (last 80):\n${logs.slice(-80).join("\n")}\n`);
     throw err;
   }
 
