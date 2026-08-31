@@ -282,6 +282,34 @@ class GameWorld(
         }
         tickProfiler.measure("worldItems") { worldItems.tickCollection(sessions.all()) }
         gameTimeService.tick(TICK_SECONDS.toDouble())
+
+        // E2E worlds carry no NPCs / vehicles / weather / liquids / vegetation (bounded flat
+        // generator, maxNpcs=0). Skipping those keeps N dynamic worlds cheap on the shared pump.
+        if (!e2eCreative) {
+            fullSimulationTick()
+        }
+
+        val pluginTickHandlers = pluginTickHandlersProvider()
+        if (pluginTickHandlers.isNotEmpty()) {
+            val ctx =
+                TickContext(
+                    gameTicks = gameTicks,
+                    sessionRegistry = sessions,
+                    world = world,
+                    commandContext = commandContextProvider(),
+                )
+            tickProfiler.measure("plugins") {
+                pluginTickHandlers.forEach { handler ->
+                    runCatching { handler.tick(ctx) }
+                        .onFailure {
+                            log.error("TickHandler {} error: {}", handler.name, it.message, it)
+                        }
+                }
+            }
+        }
+    }
+
+    private suspend fun fullSimulationTick() {
         tickProfiler.measure("npc") { npcTickPipeline.tick(world, sessions.all(), combatProcessor) }
         tickProfiler.measure("vehicles") { vehicleTickPipeline.tick(world, sessions.all()) }
         tickProfiler.measure("siegeProjectiles") {
@@ -316,24 +344,6 @@ class GameWorld(
             sessions.all().forEach { session ->
                 if (session.combatState.targetId != null) {
                     session.send(combatProcessor.buildTargetUpdate(session))
-                }
-            }
-        }
-        val pluginTickHandlers = pluginTickHandlersProvider()
-        if (pluginTickHandlers.isNotEmpty()) {
-            val ctx =
-                TickContext(
-                    gameTicks = gameTicks,
-                    sessionRegistry = sessions,
-                    world = world,
-                    commandContext = commandContextProvider(),
-                )
-            tickProfiler.measure("plugins") {
-                pluginTickHandlers.forEach { handler ->
-                    runCatching { handler.tick(ctx) }
-                        .onFailure {
-                            log.error("TickHandler {} error: {}", handler.name, it.message, it)
-                        }
                 }
             }
         }
