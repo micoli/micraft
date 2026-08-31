@@ -82,8 +82,11 @@ export async function connectClient(page: Page, acct: E2eAccount, lang = "en"): 
   );
 }
 
-/** Read `window.mcE2E` from the page. */
-export async function e2e(page: Page) {
+/** Read `window.mcE2E` from the page, waiting briefly if the snapshot is between frames. */
+export async function e2e(page: Page): Promise<E2eSnapshot> {
+  await page.waitForFunction(() => (window as { mcE2E?: { ready?: boolean } }).mcE2E?.ready === true, {
+    timeout: 10_000,
+  });
   return page.evaluate(() => (window as { mcE2E?: unknown }).mcE2E as E2eSnapshot);
 }
 
