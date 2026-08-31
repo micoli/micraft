@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.world
 
 import java.nio.file.Path
+import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.game.FactionsSection
@@ -21,6 +22,7 @@ import org.micoli.micraft.game.placeable.siege.SiegeProjectileTickPipeline
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.ExperienceConfigData
 import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.social.FactionManager
 import org.micoli.micraft.game.social.GroupManager
@@ -45,19 +47,40 @@ import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcDeathCause
+import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.protocol.ServerMessage
 
 /**
- * Builds a self-contained, memory-only [GameWorld] for a browser E2E session: its own [WorldState]
- * (no persistence), its own copy of every gameplay subsystem, wired with the same production hooks.
- * Additive — it duplicates the wiring the Koin graph does for the default world, the same way
- * `simulation.WorldSimulator` builds its own. Deduplicating the two paths is A9.4.
+ * What a non-Koin caller ([buildGameWorld]) may vary: the tick shape, spawn mode, the accelerated
+ * game clock a simulator wants, and a decorator over the NPC hooks (the simulator injects its
+ * `canSpawn` veto, its typed-event listeners and its own kill/level handlers there).
  */
-fun buildE2eGameWorld(
+data class GameWorldOptions(
+    val tickSections: Set<TickSection> = TickSection.REALTIME,
+    val spawnEditMode: EditMode = EditMode.GAME,
+    val npcHooksDecorator: (NpcSubsystemHooks) -> NpcSubsystemHooks = { it },
+    val gameDayDurationSecondsOf: () -> Double = { NpcConstants.live.gameDayDurationSeconds },
+    /** `null` = use [SharedGameServices.experienceConfigData]. */
+    val experienceConfigData: ExperienceConfigData? = null,
+    val vegetationSavePath: Path = Path.of("data/world/_e2e_discard/vegetation_state.yaml"),
+    val commandContextProvider: () -> CommandContext = {
+        error("this GameWorld has no CommandContext")
+    },
+    val broadcastPlayerAdmin: suspend (String) -> Unit = {},
+)
+
+/**
+ * Builds a self-contained, memory-only [GameWorld]: its own [WorldState] (no persistence), its own
+ * copy of every gameplay subsystem, wired with the same production hooks. Additive — it duplicates
+ * the wiring the Koin graph does for the default world. Two callers: the browser-E2E harness
+ * ([buildE2eGameWorld]) and the admin world simulator.
+ */
+fun buildGameWorld(
     id: String,
     generator: ChunkGenerator,
-    shared: SharedGameServices
+    shared: SharedGameServices,
+    opts: GameWorldOptions = GameWorldOptions(),
 ): GameWorld {
     val world = WorldState(generator = generator, persistence = null)
     val sessions = SessionRegistry()
@@ -80,7 +103,7 @@ fun buildE2eGameWorld(
 
     val experienceProcessor =
         ExperienceProcessor(
-            shared.experienceConfigData,
+            opts.experienceConfigData ?: shared.experienceConfigData,
             sessions::all,
             playerPersister::save,
             subscribeToChannel = subscribeToChannel,
@@ -108,7 +131,7 @@ fun buildE2eGameWorld(
         VegetationManager(
             world,
             shared.vegetationConfig,
-            savePath = Path.of("data/world/_e2e_discard/vegetation_state.yaml"),
+            savePath = opts.vegetationSavePath,
         )
     val instanceRegistry = InstanceRegistry(null)
     val claimRegistry = ClaimRegistry(null)
@@ -134,7 +157,7 @@ fun buildE2eGameWorld(
         )
     factionManager.applyConfig(FactionsSection())
 
-    val hooks =
+    val baseHooks =
         NpcSubsystemHooks(
             broadcast = sessions::broadcast,
             broadcastWorldUpdate = sessions::broadcast,
@@ -151,12 +174,13 @@ fun buildE2eGameWorld(
                 experienceProcessor.grantXpToNpcForKill(predator, prey)
             },
         )
+    val hooks = opts.npcHooksDecorator(baseHooks)
     val npcSubsystemFactory =
         NpcSubsystemFactory(
             hooks = hooks,
             world = world,
             vegetationManager = vegetationManager,
-            gameDayDurationSecondsOf = { NpcConstants.live.gameDayDurationSeconds },
+            gameDayDurationSecondsOf = opts.gameDayDurationSecondsOf,
         )
     val npcManager = npcSubsystemFactory.npcManager
 
@@ -327,7 +351,8 @@ fun buildE2eGameWorld(
         world = world,
         persistence = null,
         sessions = sessions,
-        e2eCreative = true,
+        tickSections = opts.tickSections,
+        spawnEditMode = opts.spawnEditMode,
         terrainCache = TerrainCache(),
         npcManager = npcManager,
         vehicleManager = vehicleManager,
@@ -363,9 +388,28 @@ fun buildE2eGameWorld(
         weatherManager = weatherManager,
         liquidManager = liquidManager,
         auctionManager = null,
-        commandContextProvider = { error("e2e GameWorld $id has no CommandContext") },
+        commandContextProvider = opts.commandContextProvider,
         pluginTickHandlersProvider = { emptyList() },
-        broadcastPlayerAdmin = {},
+        broadcastPlayerAdmin = opts.broadcastPlayerAdmin,
         appScope = { null },
     )
 }
+
+/**
+ * A memory-only [GameWorld] for a browser E2E session: bounded flat generator, players in creative
+ * mode, only the tick sections a static test client observes.
+ */
+fun buildE2eGameWorld(
+    id: String,
+    generator: ChunkGenerator,
+    shared: SharedGameServices,
+): GameWorld =
+    buildGameWorld(
+        id,
+        generator,
+        shared,
+        GameWorldOptions(
+            tickSections = TickSection.E2E,
+            spawnEditMode = EditMode.CREATIVE,
+        ),
+    )
