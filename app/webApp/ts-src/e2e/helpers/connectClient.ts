@@ -1,4 +1,5 @@
 import { Page, expect } from "@playwright/test";
+import { GROUND_Y } from "./constants";
 
 export interface E2eAccount {
   email: string;
@@ -62,23 +63,25 @@ export async function connectClient(page: Page, acct: E2eAccount, lang = "en"): 
     throw err;
   }
 
-  // Wait for the fall from the spawn height to finish and the y to hold steady.
+  // Wait for the fall from spawn (y=200) to finish: y must be near the ground AND hold steady.
   await page.waitForFunction(
-    () => {
+    (groundY) => {
       const w = window as unknown as {
-        mcE2E?: { position: { y: number }; hasPrediction: boolean };
+        mcE2E?: { position: { y: number }; serverPosition: { y: number }; hasPrediction: boolean };
         __lastY?: number;
         __stableTicks?: number;
       };
       const e = w.mcE2E;
       if (!e || !e.hasPrediction) return false;
       const y = e.position.y;
-      const stable = w.__lastY !== undefined && Math.abs(y - w.__lastY) < 0.02;
+      const landed = y < groundY + 5 && e.serverPosition.y < groundY + 5;
+      const stable = w.__lastY !== undefined && Math.abs(y - w.__lastY) < 0.05;
       w.__lastY = y;
-      w.__stableTicks = stable ? (w.__stableTicks ?? 0) + 1 : 0;
+      w.__stableTicks = landed && stable ? (w.__stableTicks ?? 0) + 1 : 0;
       return (w.__stableTicks ?? 0) >= 3;
     },
-    { timeout: 20_000, polling: 200 },
+    GROUND_Y,
+    { timeout: 30_000, polling: 200 },
   );
 }
 
