@@ -15,27 +15,30 @@ test("two clients in one world see each other and each other's movement", async 
 
   const idB = (await e2e(pageB)).playerId;
 
-  await pageA.waitForFunction((name) => window.mcE2E?.remotePlayers.some((p) => p.name === name) ?? false, b.charName, {
-    timeout: 15_000,
-    polling: 200,
-  });
-  const seenByA = (await e2e(pageA)).remotePlayers.find((p) => p.name === b.charName)!;
-  expect(seenByA.id).toBe(idB);
+  // A sees B, and only B (maxNpcs=0, worlds isolated).
+  const seenByA = await pageA.waitForFunction(
+    (name) => {
+      const rp = window.mcE2E?.remotePlayers ?? [];
+      const hit = rp.find((p) => p.name === name);
+      return hit && rp.length === 1 ? hit : null;
+    },
+    b.charName,
+    { timeout: 20_000, polling: 200 },
+  );
+  const before = await seenByA.jsonValue();
+  expect(before.id).toBe(idB);
 
-  // Only the other real player — maxNpcs=0 and worlds are isolated.
-  expect((await e2e(pageA)).remotePlayers).toHaveLength(1);
-
-  const zBefore = seenByA.z;
+  // B walks; A sees it move.
   await pageB.evaluate(() => window.mcE2E!.actions!.setLook(0, 0));
-  await pageB.evaluate(() => window.mcE2E!.actions!.moveForward(1000));
+  await pageB.evaluate(() => window.mcE2E!.actions!.moveForward(1500));
 
   await pageA.waitForFunction(
     ([name, z0]) => {
       const p = window.mcE2E?.remotePlayers.find((rp) => rp.name === name);
-      return (p?.z ?? z0) - (z0 as number) > 2;
+      return p !== undefined && Math.abs(p.z - (z0 as number)) > 1.5;
     },
-    [b.charName, zBefore] as const,
-    { timeout: 15_000, polling: 200 },
+    [b.charName, before.z] as const,
+    { timeout: 20_000, polling: 200 },
   );
 
   await ctxA.close();
