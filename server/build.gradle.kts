@@ -89,6 +89,7 @@ tasks.register<JavaExec>("runE2eServer") {
     environment("MICRAFT_E2E", "1")
     environment("MICRAFT_E2E_BOUNDS", providers.gradleProperty("e2eBounds").getOrElse("8x8"))
     environment("MICRAFT_E2E_GROUND_Y", "64")
+    environment("MICRAFT_WEB_DIST", rootDir.resolve("app/webApp/build/web").path)
     doFirst {
         rootProject.projectDir
             .resolve("data/world/${providers.gradleProperty("e2eWorld").getOrElse("e2e_default")}")
