@@ -56,3 +56,40 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@da187c8e6ffbd3802e00f2477aa5a822b25f2dda # v4.4.4
       - run: ./gradlew :core:jvmTest :server:test --no-daemon
+
+  e2e:
+    name: Browser E2E
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@da187c8e6ffbd3802e00f2477aa5a822b25f2dda # v4.4.4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/webApp/ts-src/package-lock.json
+      - run: npm ci
+        working-directory: app/webApp/ts-src
+      - run: echo "export const MC_BUILD_TIMESTAMP = 'e2e-ci';" > app/webApp/ts-src/buildConfig.ts
+      - name: Build web client
+        run: |
+          ./gradlew :app:webApp:copyResourcesToWebDist :app:webApp:copyStaticToWebDist --no-daemon
+          (cd app/webApp/ts-src && npm run build)
+      - run: npx playwright install --with-deps chromium
+        working-directory: app/webApp/ts-src
+      - run: npm run test:e2e
+        working-directory: app/webApp/ts-src
+        env:
+          CI: "true"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            app/webApp/ts-src/playwright-report/
+            app/webApp/ts-src/test-results/
+          retention-days: 7
