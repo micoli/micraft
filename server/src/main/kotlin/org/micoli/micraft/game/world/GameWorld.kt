@@ -88,9 +88,8 @@ class GameWorld(
     val vehicleManager: VehicleManager,
     val placeableManager: PlaceableManager,
     val siegeWeaponManager: SiegeWeaponManager,
-    private val vegetationManager: VegetationManager,
-    private val gameTimeService: GameTimeService,
-    private val npcTickPipeline: NpcTickPipeline,
+    val vegetationManager: VegetationManager,
+    val npcSubsystem: org.micoli.micraft.game.npc.NpcSubsystem,
     private val vehicleTickPipeline: VehicleTickPipeline,
     private val siegeProjectileTickPipeline: SiegeProjectileTickPipeline,
     val siegeProjectileManager: SiegeProjectileManager,
@@ -122,11 +121,23 @@ class GameWorld(
     private val pluginTickHandlersProvider: () -> List<TickHandler>,
     private val broadcastPlayerAdmin: suspend (String) -> Unit,
     private val appScope: () -> Application?,
+    /** Where the game clock starts when there is no persisted metadata (a simulator wants 0). */
+    private val initialGameTicks: Long? = null,
+    /** Extra sink for world changes the tick broadcasts (vegetation regrowth, liquid, weather). */
+    private val broadcastWorldChange: suspend (ServerMessage) -> Unit = {},
+    /** Gate on the slow NPC lane — a simulator only runs it with a player present. */
+    private val npcLifecycleGate: () -> Boolean = { true },
 ) {
+    val gameTimeService: GameTimeService
+        get() = npcSubsystem.gameTimeService
+
+    private val npcTickPipeline: NpcTickPipeline
+        get() = npcSubsystem.pipeline
+
     var worldMeta: WorldMetadata? = persistence?.loadMetadata()
         private set
 
-    var gameTicks: Long = worldMeta?.gameTicks ?: 18_000L
+    var gameTicks: Long = worldMeta?.gameTicks ?: initialGameTicks ?: 18_000L
 
     val tickProfiler = TickProfiler()
 
@@ -320,6 +331,11 @@ class GameWorld(
         }
     }
 
+    private suspend fun broadcastWorldChangeAndSessions(msg: ServerMessage) {
+        broadcastWorldChange(msg)
+        sessions.all().forEach { it.send(msg) }
+    }
+
     private suspend fun fullSimulationTick() {
         if (TickSection.NPC in tickSections) {
             tickProfiler.measure("npc") {
@@ -337,7 +353,7 @@ class GameWorld(
         // In the tick, not in a wall-clock coroutine of its own: driving the slow lane from a
         // separate 5 s loop raced the main tick and gave the same arena a different spawn rate
         // depending on whether the live server or the simulator was running it.
-        if (TickSection.NPC_LIFECYCLE in tickSections) {
+        if (TickSection.NPC_LIFECYCLE in tickSections && npcLifecycleGate()) {
             npcLifecycleTickCounter++
             if (npcLifecycleTickCounter >= NpcSubsystemFactory.LIFECYCLE_INTERVAL_TICKS) {
                 npcLifecycleTickCounter = 0
@@ -355,17 +371,17 @@ class GameWorld(
         }
         if (TickSection.WEATHER in tickSections) {
             tickProfiler.measure("weather") {
-                weatherManager.tick(world) { msg -> sessions.all().forEach { it.send(msg) } }
+                weatherManager.tick(world) { msg -> broadcastWorldChangeAndSessions(msg) }
             }
         }
         if (TickSection.LIQUID in tickSections) {
             tickProfiler.measure("liquid") {
-                liquidManager.tick { msg -> sessions.all().forEach { it.send(msg) } }
+                liquidManager.tick { msg -> broadcastWorldChangeAndSessions(msg) }
             }
         }
         if (TickSection.VEGETATION in tickSections) {
             tickProfiler.measure("vegetation") {
-                vegetationManager.tick { msg -> sessions.all().forEach { it.send(msg) } }
+                vegetationManager.tick { msg -> broadcastWorldChangeAndSessions(msg) }
             }
         }
         if (TickSection.AUCTION in tickSections) {

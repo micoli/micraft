@@ -6,7 +6,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.npc.AggroMode
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcDefinition
@@ -14,8 +13,6 @@ import org.micoli.micraft.game.npc.NpcYamlOverride
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
 import org.micoli.micraft.game.npc.pack.PackConfig
 import org.micoli.micraft.game.world.BlockType
-import org.micoli.micraft.game.world.vegetation.VegetationConfig
-import org.micoli.micraft.support.testI18n
 
 private const val HALF = 32
 
@@ -59,12 +56,6 @@ private fun hunterDef() =
 private fun testDeps() =
     SimulationDeps(
         definitions = mapOf("walker" to walkerDef(), "hunter" to hunterDef()),
-        combatConfig = CombatConfigData(),
-        attackRegistry = emptyMap(),
-        armorRegistry = emptyMap(),
-        classRegistry = emptyMap(),
-        i18n = testI18n(),
-        vegetationConfig = VegetationConfig(),
     )
 
 private fun testConfig(

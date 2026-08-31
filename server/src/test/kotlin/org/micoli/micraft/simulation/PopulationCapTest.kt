@@ -5,16 +5,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.npc.AggroMode
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.animal.AnimalYamlEntry
 import org.micoli.micraft.game.npc.animal.NpcDiet
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
 import org.micoli.micraft.game.world.BlockType
-import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.player.rpg.BaseStats
-import org.micoli.micraft.support.testI18n
 
 private const val HALF = 24
 
@@ -58,12 +55,6 @@ private fun rabbitDef() =
 private fun deps() =
     SimulationDeps(
         definitions = mapOf("rabbit" to rabbitDef()),
-        combatConfig = CombatConfigData(),
-        attackRegistry = emptyMap(),
-        armorRegistry = emptyMap(),
-        classRegistry = emptyMap(),
-        i18n = testI18n(),
-        vegetationConfig = VegetationConfig(),
     )
 
 private fun config(cap: Int) =

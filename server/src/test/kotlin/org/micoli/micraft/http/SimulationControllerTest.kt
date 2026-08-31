@@ -25,14 +25,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import org.micoli.micraft.auth.AuthResult
 import org.micoli.micraft.auth.TokenStore
-import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
-import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.simulation.SimulationDeps
 import org.micoli.micraft.simulation.SimulationRegistry
-import org.micoli.micraft.support.testI18n
 
 private const val INIT_COMMAND =
     """{"t":"init","config":{"halfSize":20,"ticksPerSecond":0,"seed":3,"gameDayDurationSeconds":1.0,"initialSpawns":[{"type":"walker","count":2}]}}"""
@@ -52,12 +49,6 @@ private fun deps() =
                         wanderSpeed = 4f,
                         wanderRadius = 12f,
                     )),
-        combatConfig = CombatConfigData(),
-        attackRegistry = emptyMap(),
-        armorRegistry = emptyMap(),
-        classRegistry = emptyMap(),
-        i18n = testI18n(),
-        vegetationConfig = VegetationConfig(),
     )
 
 /** Poll until [condition] holds; false when it never does. */

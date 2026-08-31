@@ -3,6 +3,7 @@ package org.micoli.micraft.simulation
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import org.micoli.micraft.game.SharedGameServices
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(SimulationRegistry::class.java)
@@ -15,6 +16,9 @@ private val log = LoggerFactory.getLogger(SimulationRegistry::class.java)
  * arena nobody has watched for [IDLE_TIMEOUT_MS] is reaped by [reapIdle].
  */
 class SimulationRegistry(private val depsProvider: () -> SimulationDeps) {
+
+    /** Loaded once and shared by every arena — the same config the live server runs on. */
+    private val shared: SharedGameServices by lazy { SharedGameServices.default() }
 
     private class Entry(
         val id: String,
@@ -43,7 +47,7 @@ class SimulationRegistry(private val depsProvider: () -> SimulationDeps) {
             "trop de simulations en cours (${simulations.size}/$MAX_SIMULATIONS) — ferme-en une"
         }
         val id = UUID.randomUUID().toString()
-        val simulator = WorldSimulator(config, depsProvider())
+        val simulator = WorldSimulator(config, depsProvider(), shared)
         val label = name.ifBlank { defaultName(config) }
         simulations[id] = Entry(id, simulator, label, System.currentTimeMillis())
         simulator.start()
@@ -55,7 +59,7 @@ class SimulationRegistry(private val depsProvider: () -> SimulationDeps) {
     suspend fun restart(id: String): WorldSimulator? {
         val previous = simulations[id] ?: return null
         previous.simulator.stop()
-        val simulator = WorldSimulator(previous.simulator.config, depsProvider())
+        val simulator = WorldSimulator(previous.simulator.config, depsProvider(), shared)
         val replacement = Entry(id, simulator, previous.name, System.currentTimeMillis())
         replacement.viewers.set(previous.viewers.get())
         simulations[id] = replacement

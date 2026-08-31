@@ -68,6 +68,12 @@ data class GameWorldOptions(
         error("this GameWorld has no CommandContext")
     },
     val broadcastPlayerAdmin: suspend (String) -> Unit = {},
+    /** Non-null makes the game clock start here instead of at the live-server default. */
+    val initialGameTicks: Long? = null,
+    /** Extra sink for tick-broadcast world changes — the simulator feeds its food tracker. */
+    val broadcastWorldChange: suspend (ServerMessage) -> Unit = {},
+    /** Gate on the slow NPC lane. */
+    val npcLifecycleGate: () -> Boolean = { true },
 )
 
 /**
@@ -359,8 +365,7 @@ fun buildGameWorld(
         placeableManager = placeableManager,
         siegeWeaponManager = siegeWeaponManager,
         vegetationManager = vegetationManager,
-        gameTimeService = npcSubsystem.gameTimeService,
-        npcTickPipeline = npcSubsystem.pipeline,
+        npcSubsystem = npcSubsystem,
         vehicleTickPipeline = vehicleTickPipeline,
         siegeProjectileTickPipeline = siegeProjectileTickPipeline,
         siegeProjectileManager = siegeProjectileManager,
@@ -392,6 +397,9 @@ fun buildGameWorld(
         pluginTickHandlersProvider = { emptyList() },
         broadcastPlayerAdmin = opts.broadcastPlayerAdmin,
         appScope = { null },
+        initialGameTicks = opts.initialGameTicks,
+        broadcastWorldChange = opts.broadcastWorldChange,
+        npcLifecycleGate = opts.npcLifecycleGate,
     )
 }
 

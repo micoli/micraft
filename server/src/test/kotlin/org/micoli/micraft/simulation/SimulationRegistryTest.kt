@@ -7,11 +7,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
-import org.micoli.micraft.game.world.vegetation.VegetationConfig
-import org.micoli.micraft.support.testI18n
 
 private fun deps() =
     SimulationDeps(
@@ -28,12 +25,6 @@ private fun deps() =
                         wanderSpeed = 4f,
                         wanderRadius = 12f,
                     )),
-        combatConfig = CombatConfigData(),
-        attackRegistry = emptyMap(),
-        armorRegistry = emptyMap(),
-        classRegistry = emptyMap(),
-        i18n = testI18n(),
-        vegetationConfig = VegetationConfig(),
     )
 
 private val CONFIG =
