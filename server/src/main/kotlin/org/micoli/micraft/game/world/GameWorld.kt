@@ -50,6 +50,7 @@ import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.http.TerrainCache
+import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.plugin.TickContext
 import org.micoli.micraft.plugin.TickHandler
 import org.micoli.micraft.protocol.ServerMessage
@@ -76,8 +77,12 @@ class GameWorld(
     val world: WorldState,
     val persistence: WorldPersistence?,
     val sessions: SessionRegistry,
-    /** Dynamic E2E worlds spawn players in creative mode so break/place needs no inventory. */
-    val e2eCreative: Boolean = false,
+    /** Which slices of [tick] actually run — [TickSection.REALTIME] for the default world. */
+    val tickSections: Set<TickSection> = TickSection.REALTIME,
+    /**
+     * Edit mode a joining player is placed in — CREATIVE for E2E so break/place needs no inventory.
+     */
+    val spawnEditMode: EditMode = EditMode.GAME,
     private val terrainCache: TerrainCache,
     val npcManager: NpcManager,
     val vehicleManager: VehicleManager,
@@ -238,112 +243,142 @@ class GameWorld(
 
     private suspend fun tickBody() {
         gameTicks++
-        timeBroadcastCounter++
-        if (timeBroadcastCounter >= TIME_BROADCAST_TICKS) {
-            timeBroadcastCounter = 0
-            val timeMsg = ServerMessage.TimeUpdate(gameTicks)
-            sessions.all().forEach { it.send(timeMsg) }
+        if (TickSection.TIME_BROADCAST in tickSections) {
+            timeBroadcastCounter++
+            if (timeBroadcastCounter >= TIME_BROADCAST_TICKS) {
+                timeBroadcastCounter = 0
+                val timeMsg = ServerMessage.TimeUpdate(gameTicks)
+                sessions.all().forEach { it.send(timeMsg) }
+            }
         }
 
-        val intentCollector = intentCollectorProvider()
-        tickProfiler.measure("players") {
-            sessions.all().forEach { session ->
-                val input = intentCollector.collect(session)
-                blockBreaker.tick(session)
-                val newState = movementProcessor.process(session, input)
-                if (newState != session.state) {
-                    session.state = newState
-                    val update = ServerMessage.PlayerUpdate(newState, session.lastProcessedSeq)
-                    sessions.all().forEach { it.send(update) }
-                    broadcastPlayerAdmin(
-                        """{"type":"playerMoved","id":"${session.id}","name":${newState.name.toPlayerAdminJson()},"x":${newState.pos.x},"y":${newState.pos.y},"z":${newState.pos.z},"yaw":${newState.orientation.yaw}}""")
-                }
-                if (session.chunkMode == "websocket") {
-                    chunkStreamer.checkAndRequest(session)
-                    chunkStreamer.deliverReady(session)
-                }
-                val (newZoneX, newZoneZ) =
-                    npcTickPipeline.zoneOf(session.state.pos.x, session.state.pos.z)
-                val lastZone = session.lastZonePos
-                if (lastZone == null || lastZone.first != newZoneX || lastZone.second != newZoneZ) {
-                    session.lastZonePos = Pair(newZoneX, newZoneZ)
-                    npcTickPipeline.onZoneCrossed(world, newZoneX, newZoneZ)
-                }
-                if (session.hasPermission("admin")) {
-                    val pos = session.state.pos
-                    val instanceZone =
-                        instanceRegistry.zoneAt(pos.x.toInt(), pos.y.toInt(), pos.z.toInt())
-                    if (instanceZone?.id != session.lastInstanceZoneId) {
-                        session.lastInstanceZoneId = instanceZone?.id
-                        session.send(ServerMessage.AdminZoneWireframe(instanceZone?.toProto()))
+        if (TickSection.PLAYERS in tickSections) {
+            val intentCollector = intentCollectorProvider()
+            tickProfiler.measure("players") {
+                sessions.all().forEach { session ->
+                    val input = intentCollector.collect(session)
+                    blockBreaker.tick(session)
+                    val newState = movementProcessor.process(session, input)
+                    if (newState != session.state) {
+                        session.state = newState
+                        val update = ServerMessage.PlayerUpdate(newState, session.lastProcessedSeq)
+                        sessions.all().forEach { it.send(update) }
+                        broadcastPlayerAdmin(
+                            """{"type":"playerMoved","id":"${session.id}","name":${newState.name.toPlayerAdminJson()},"x":${newState.pos.x},"y":${newState.pos.y},"z":${newState.pos.z},"yaw":${newState.orientation.yaw}}""")
+                    }
+                    if (session.chunkMode == "websocket") {
+                        chunkStreamer.checkAndRequest(session)
+                        chunkStreamer.deliverReady(session)
+                    }
+                    val (newZoneX, newZoneZ) =
+                        npcTickPipeline.zoneOf(session.state.pos.x, session.state.pos.z)
+                    val lastZone = session.lastZonePos
+                    if (lastZone == null ||
+                        lastZone.first != newZoneX ||
+                        lastZone.second != newZoneZ) {
+                        session.lastZonePos = Pair(newZoneX, newZoneZ)
+                        npcTickPipeline.onZoneCrossed(world, newZoneX, newZoneZ)
+                    }
+                    if (session.hasPermission("admin")) {
+                        val pos = session.state.pos
+                        val instanceZone =
+                            instanceRegistry.zoneAt(pos.x.toInt(), pos.y.toInt(), pos.z.toInt())
+                        if (instanceZone?.id != session.lastInstanceZoneId) {
+                            session.lastInstanceZoneId = instanceZone?.id
+                            session.send(ServerMessage.AdminZoneWireframe(instanceZone?.toProto()))
+                        }
                     }
                 }
             }
         }
-        tickProfiler.measure("worldItems") { worldItems.tickCollection(sessions.all()) }
+        if (TickSection.WORLD_ITEMS in tickSections) {
+            tickProfiler.measure("worldItems") { worldItems.tickCollection(sessions.all()) }
+        }
         gameTimeService.tick(TICK_SECONDS.toDouble())
 
-        // E2E worlds carry no NPCs / vehicles / weather / liquids / vegetation (bounded flat
-        // generator, maxNpcs=0). Skipping those keeps N dynamic worlds cheap on the shared pump.
-        if (!e2eCreative) {
-            fullSimulationTick()
-        }
+        fullSimulationTick()
 
-        val pluginTickHandlers = pluginTickHandlersProvider()
-        if (pluginTickHandlers.isNotEmpty()) {
-            val ctx =
-                TickContext(
-                    gameTicks = gameTicks,
-                    sessionRegistry = sessions,
-                    world = world,
-                    commandContext = commandContextProvider(),
-                )
-            tickProfiler.measure("plugins") {
-                pluginTickHandlers.forEach { handler ->
-                    runCatching { handler.tick(ctx) }
-                        .onFailure {
-                            log.error("TickHandler {} error: {}", handler.name, it.message, it)
-                        }
+        if (TickSection.PLUGINS in tickSections) {
+            val pluginTickHandlers = pluginTickHandlersProvider()
+            if (pluginTickHandlers.isNotEmpty()) {
+                val ctx =
+                    TickContext(
+                        gameTicks = gameTicks,
+                        sessionRegistry = sessions,
+                        world = world,
+                        commandContext = commandContextProvider(),
+                    )
+                tickProfiler.measure("plugins") {
+                    pluginTickHandlers.forEach { handler ->
+                        runCatching { handler.tick(ctx) }
+                            .onFailure {
+                                log.error("TickHandler {} error: {}", handler.name, it.message, it)
+                            }
+                    }
                 }
             }
         }
     }
 
     private suspend fun fullSimulationTick() {
-        tickProfiler.measure("npc") { npcTickPipeline.tick(world, sessions.all(), combatProcessor) }
-        tickProfiler.measure("vehicles") { vehicleTickPipeline.tick(world, sessions.all()) }
-        tickProfiler.measure("siegeProjectiles") {
-            siegeProjectileTickPipeline.tick(world, sessions.all(), npcManager, combatProcessor)
+        if (TickSection.NPC in tickSections) {
+            tickProfiler.measure("npc") {
+                npcTickPipeline.tick(world, sessions.all(), combatProcessor)
+            }
+        }
+        if (TickSection.VEHICLES in tickSections) {
+            tickProfiler.measure("vehicles") { vehicleTickPipeline.tick(world, sessions.all()) }
+        }
+        if (TickSection.SIEGE in tickSections) {
+            tickProfiler.measure("siegeProjectiles") {
+                siegeProjectileTickPipeline.tick(world, sessions.all(), npcManager, combatProcessor)
+            }
         }
         // In the tick, not in a wall-clock coroutine of its own: driving the slow lane from a
         // separate 5 s loop raced the main tick and gave the same arena a different spawn rate
         // depending on whether the live server or the simulator was running it.
-        npcLifecycleTickCounter++
-        if (npcLifecycleTickCounter >= NpcSubsystemFactory.LIFECYCLE_INTERVAL_TICKS) {
-            npcLifecycleTickCounter = 0
-            tickProfiler.measure("npcLifecycle") {
-                runCatching { npcTickPipeline.lifecycle(world, sessions.all()) }
-                    .onFailure { log.error("npc lifecycle error: {}", it.message, it) }
+        if (TickSection.NPC_LIFECYCLE in tickSections) {
+            npcLifecycleTickCounter++
+            if (npcLifecycleTickCounter >= NpcSubsystemFactory.LIFECYCLE_INTERVAL_TICKS) {
+                npcLifecycleTickCounter = 0
+                tickProfiler.measure("npcLifecycle") {
+                    runCatching { npcTickPipeline.lifecycle(world, sessions.all()) }
+                        .onFailure { log.error("npc lifecycle error: {}", it.message, it) }
+                }
             }
         }
-        tickProfiler.measure("statusEffects") { statusEffectProcessor.tick(sessions.all()) }
-        tickProfiler.measure("regen") { regenProcessor.tick(sessions.all()) }
-        tickProfiler.measure("weather") {
-            weatherManager.tick(world) { msg -> sessions.all().forEach { it.send(msg) } }
+        if (TickSection.STATUS_EFFECTS in tickSections) {
+            tickProfiler.measure("statusEffects") { statusEffectProcessor.tick(sessions.all()) }
         }
-        tickProfiler.measure("liquid") {
-            liquidManager.tick { msg -> sessions.all().forEach { it.send(msg) } }
+        if (TickSection.REGEN in tickSections) {
+            tickProfiler.measure("regen") { regenProcessor.tick(sessions.all()) }
         }
-        tickProfiler.measure("vegetation") {
-            vegetationManager.tick { msg -> sessions.all().forEach { it.send(msg) } }
+        if (TickSection.WEATHER in tickSections) {
+            tickProfiler.measure("weather") {
+                weatherManager.tick(world) { msg -> sessions.all().forEach { it.send(msg) } }
+            }
         }
-        tickProfiler.measure("auction") { auctionManager?.tick() }
-        targetDistanceTickCounter++
-        if (targetDistanceTickCounter >= TARGET_DISTANCE_REFRESH_TICKS) {
-            targetDistanceTickCounter = 0
-            sessions.all().forEach { session ->
-                if (session.combatState.targetId != null) {
-                    session.send(combatProcessor.buildTargetUpdate(session))
+        if (TickSection.LIQUID in tickSections) {
+            tickProfiler.measure("liquid") {
+                liquidManager.tick { msg -> sessions.all().forEach { it.send(msg) } }
+            }
+        }
+        if (TickSection.VEGETATION in tickSections) {
+            tickProfiler.measure("vegetation") {
+                vegetationManager.tick { msg -> sessions.all().forEach { it.send(msg) } }
+            }
+        }
+        if (TickSection.AUCTION in tickSections) {
+            tickProfiler.measure("auction") { auctionManager?.tick() }
+        }
+        if (TickSection.TARGET_DISTANCE in tickSections) {
+            targetDistanceTickCounter++
+            if (targetDistanceTickCounter >= TARGET_DISTANCE_REFRESH_TICKS) {
+                targetDistanceTickCounter = 0
+                sessions.all().forEach { session ->
+                    if (session.combatState.targetId != null) {
+                        session.send(combatProcessor.buildTargetUpdate(session))
+                    }
                 }
             }
         }
