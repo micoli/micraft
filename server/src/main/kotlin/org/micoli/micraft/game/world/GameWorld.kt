@@ -76,6 +76,8 @@ class GameWorld(
     val world: WorldState,
     val persistence: WorldPersistence?,
     val sessions: SessionRegistry,
+    /** Dynamic E2E worlds spawn players in creative mode so break/place needs no inventory. */
+    val e2eCreative: Boolean = false,
     private val terrainCache: TerrainCache,
     val npcManager: NpcManager,
     val vehicleManager: VehicleManager,
