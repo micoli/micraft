@@ -178,12 +178,6 @@ class NpcTickParityTest {
             ),
             SimulationDeps(
                 definitions = DEFS,
-                combatConfig = CombatConfigData(),
-                attackRegistry = emptyMap(),
-                armorRegistry = emptyMap(),
-                classRegistry = emptyMap(),
-                i18n = testI18n(),
-                vegetationConfig = VegetationConfig(),
             ),
         )
 

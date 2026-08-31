@@ -5,13 +5,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.npc.AggroMode
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
-import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.player.Vec3
-import org.micoli.micraft.support.testI18n
 
 private fun capDef() =
     NpcDefinition(
@@ -31,12 +28,6 @@ private fun capDef() =
 private fun deps() =
     SimulationDeps(
         definitions = mapOf("capybara" to capDef()),
-        combatConfig = CombatConfigData(),
-        attackRegistry = emptyMap(),
-        armorRegistry = emptyMap(),
-        classRegistry = emptyMap(),
-        i18n = testI18n(),
-        vegetationConfig = VegetationConfig(),
     )
 
 /**

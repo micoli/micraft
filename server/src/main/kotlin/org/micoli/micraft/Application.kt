@@ -335,28 +335,14 @@ fun Application.module() {
 
     // Resolved here, not inside `routing {}`: there `get(...)` binds to the Routing DSL instead of
     // the Koin container. The lambda re-reads the live NPC registry on every simulation start.
-    val combatConfigData = get<CombatConfigData>()
-    val simulationAttackRegistry =
-        get<Map<String, org.micoli.micraft.combat.AttackDefinition>>(named("attacks"))
-    val armorRegistryLoader = get<ArmorRegistryLoader>()
-    val simulationI18n = get<I18nConfig>()
-    val simulationVegetationConfig = get<VegetationConfig>()
     val simulationExperienceConfig = get<ExperienceConfigData>()
-    val simulationSpellRegistry =
-        get<Map<String, org.micoli.micraft.game.combat.SpellDefinition>>(named("spells"))
+    // The lambda re-reads the live NPC registry on every simulation start; everything else the
+    // arena
+    // needs comes from SharedGameServices, loaded once inside SimulationRegistry.
     val simulationRegistry = SimulationRegistry {
         SimulationDeps(
             definitions = gameLoop.getNpcManager().getDefinitions(),
-            combatConfig = combatConfigData,
-            attackRegistry = simulationAttackRegistry,
-            armorRegistry = armorRegistryLoader.load(),
-            classRegistry = gameLoop.classRegistry,
-            weaponRegistry = get(),
-            toolRegistry = get(),
-            i18n = simulationI18n,
-            vegetationConfig = simulationVegetationConfig,
             experienceConfig = simulationExperienceConfig,
-            spellRegistry = simulationSpellRegistry,
         )
     }
 
