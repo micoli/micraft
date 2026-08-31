@@ -8,23 +8,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.di.PlayerPersister
-import org.micoli.micraft.game.chat.ChatService
-import org.micoli.micraft.game.mail.MailManager
-import org.micoli.micraft.game.quest.QuestManager
-import org.micoli.micraft.game.rpg.ExperienceProcessor
-import org.micoli.micraft.game.social.FactionManager
-import org.micoli.micraft.game.social.GuildManager
-import org.micoli.micraft.game.world.claim.ClaimManager
-import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.game.GameTimePersistence
 import org.micoli.micraft.game.GameTimeService
 import org.micoli.micraft.game.TICK_SECONDS
 import org.micoli.micraft.game.TIME_BROADCAST_TICKS
 import org.micoli.micraft.game.auction.AuctionManager
+import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.RegenProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
+import org.micoli.micraft.game.mail.MailManager
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.npc.NpcTickPipeline
@@ -33,9 +27,13 @@ import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileManager
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileTickPipeline
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
+import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.hasPermission
+import org.micoli.micraft.game.social.FactionManager
 import org.micoli.micraft.game.social.GroupManager
+import org.micoli.micraft.game.social.GuildManager
 import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.IntentCollector
 import org.micoli.micraft.game.tick.MovementProcessor
@@ -44,9 +42,11 @@ import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.vehicle.VehicleTickPipeline
 import org.micoli.micraft.game.world.block.BlockBreaker
+import org.micoli.micraft.game.world.claim.ClaimManager
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.instance.toProto
 import org.micoli.micraft.game.world.liquid.LiquidManager
+import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.http.TerrainCache
@@ -88,7 +88,7 @@ class GameWorld(
     private val npcTickPipeline: NpcTickPipeline,
     private val vehicleTickPipeline: VehicleTickPipeline,
     private val siegeProjectileTickPipeline: SiegeProjectileTickPipeline,
-    private val siegeProjectileManager: SiegeProjectileManager,
+    val siegeProjectileManager: SiegeProjectileManager,
     val petManager: PetManager,
     private val tradeManager: TradeManager,
     val groupManager: GroupManager,
@@ -112,7 +112,7 @@ class GameWorld(
     private val regenProcessor: RegenProcessor,
     private val weatherManager: WeatherManager,
     private val liquidManager: LiquidManager,
-    private val auctionManager: AuctionManager?,
+    val auctionManager: AuctionManager?,
     private val commandContextProvider: () -> CommandContext,
     private val pluginTickHandlersProvider: () -> List<TickHandler>,
     private val broadcastPlayerAdmin: suspend (String) -> Unit,
