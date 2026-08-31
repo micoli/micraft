@@ -1715,6 +1715,23 @@ class GameLoop(
 
         gw.onPlayerJoin(session)
 
+        // The frame loop below targets this player's world — for a ?gameSession= client that is a
+        // dynamic GameWorld, not GameLoop's default one. Alias the world-scoped subsystems so the
+        // handlers read gw.*.
+        val world = gw.world
+        val npcManager = gw.npcManager
+        val vehicleManager = gw.vehicleManager
+        val placeableManager = gw.placeableManager
+        val siegeWeaponManager = gw.siegeWeaponManager
+        val siegeProjectileManager = gw.siegeProjectileManager
+        val sceneRegistry = gw.sceneRegistry
+        val mailManager = gw.mailManager
+        val auctionManager = gw.auctionManager
+        val claimManager = gw.claimManager
+        val groupManager = gw.groupManager
+        val guildManager = gw.guildManager
+        val factionManager = gw.factionManager
+
         try {
             socket.incoming.consumeEach { frame ->
                 if (frame is Frame.Binary) {
