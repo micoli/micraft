@@ -8,6 +8,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.di.PlayerPersister
+import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.mail.MailManager
+import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.rpg.ExperienceProcessor
+import org.micoli.micraft.game.social.FactionManager
+import org.micoli.micraft.game.social.GuildManager
+import org.micoli.micraft.game.world.claim.ClaimManager
+import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.game.GameTimePersistence
 import org.micoli.micraft.game.GameTimeService
@@ -69,27 +77,35 @@ class GameWorld(
     val persistence: WorldPersistence?,
     val sessions: SessionRegistry,
     private val terrainCache: TerrainCache,
-    private val npcManager: NpcManager,
-    private val vehicleManager: VehicleManager,
-    private val placeableManager: PlaceableManager,
-    private val siegeWeaponManager: SiegeWeaponManager,
+    val npcManager: NpcManager,
+    val vehicleManager: VehicleManager,
+    val placeableManager: PlaceableManager,
+    val siegeWeaponManager: SiegeWeaponManager,
     private val vegetationManager: VegetationManager,
     private val gameTimeService: GameTimeService,
     private val npcTickPipeline: NpcTickPipeline,
     private val vehicleTickPipeline: VehicleTickPipeline,
     private val siegeProjectileTickPipeline: SiegeProjectileTickPipeline,
     private val siegeProjectileManager: SiegeProjectileManager,
-    private val petManager: PetManager,
+    val petManager: PetManager,
     private val tradeManager: TradeManager,
-    private val groupManager: GroupManager,
+    val groupManager: GroupManager,
+    val guildManager: GuildManager,
+    val factionManager: FactionManager,
+    val chatService: ChatService,
+    val experienceProcessor: ExperienceProcessor,
+    val questManager: QuestManager?,
+    val mailManager: MailManager?,
+    val claimManager: ClaimManager,
+    val sceneRegistry: SceneRegistry,
     private val playerPersister: PlayerPersister,
     private val intentCollectorProvider: () -> IntentCollector,
     private val blockBreaker: BlockBreaker,
     private val movementProcessor: MovementProcessor,
-    private val chunkStreamer: ChunkStreamer,
-    private val instanceRegistry: InstanceRegistry,
-    private val worldItems: WorldItemManager,
-    private val combatProcessor: CombatProcessor,
+    val chunkStreamer: ChunkStreamer,
+    val instanceRegistry: InstanceRegistry,
+    val worldItems: WorldItemManager,
+    val combatProcessor: CombatProcessor,
     private val statusEffectProcessor: StatusEffectProcessor,
     private val regenProcessor: RegenProcessor,
     private val weatherManager: WeatherManager,

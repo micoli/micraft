@@ -657,6 +657,14 @@ class GameLoop(
             petManager = petManager,
             tradeManager = tradeManager,
             groupManager = groupManager,
+            guildManager = guildManager,
+            factionManager = factionManager,
+            chatService = chatService,
+            experienceProcessor = experienceProcessor,
+            questManager = questManager,
+            mailManager = mailManager,
+            claimManager = claimManager,
+            sceneRegistry = sceneRegistry,
             playerPersister = playerPersister,
             intentCollectorProvider = { intentCollector },
             blockBreaker = blockBreaker,
@@ -1647,10 +1655,10 @@ class GameLoop(
         session.send(buildPreferencesSync(session))
         if (session.hasPermission("admin")) {
             session.send(
-                ServerMessage.InstanceZonesSync(instanceRegistry.all().map { it.toProto() }))
+                ServerMessage.InstanceZonesSync(gw.instanceRegistry.all().map { it.toProto() }))
             session.send(
                 ServerMessage.ScenesSync(
-                    sceneRegistry.all().map {
+                    gw.sceneRegistry.all().map {
                         SceneSummaryProto(it.id, it.name, it.width, it.height, it.depth)
                     }))
         }
@@ -1658,17 +1666,17 @@ class GameLoop(
         if (session.state.editMode == EditMode.CREATIVE) {
             session.send(ServerMessage.EditModeUpdate(session.state.editMode))
         }
-        chatService.onPlayerConnect(session)
-        session.state.guildId?.let { chatService.subscribe(session, "guild:$it") }
-        session.state.factionId?.let { chatService.subscribe(session, "faction:$it") }
-        groupManager.sendSync(session)
-        guildManager.sendSync(session)
-        factionManager.sendSync(session)
+        gw.chatService.onPlayerConnect(session)
+        session.state.guildId?.let { gw.chatService.subscribe(session, "guild:$it") }
+        session.state.factionId?.let { gw.chatService.subscribe(session, "faction:$it") }
+        gw.groupManager.sendSync(session)
+        gw.guildManager.sendSync(session)
+        gw.factionManager.sendSync(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         session.send(ServerMessage.WalletUpdate(session.state.wallet))
-        questManager?.sendQuestSync(session)
-        mailManager?.let { session.send(ServerMessage.MailSync(it.loadForPlayer(playerName))) }
-        claimManager.sendSync(session)
+        gw.questManager?.sendQuestSync(session)
+        gw.mailManager?.let { session.send(ServerMessage.MailSync(it.loadForPlayer(playerName))) }
+        gw.claimManager.sendSync(session)
         session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBarPages.toPageMap()))
         session.send(ServerMessage.TimeUpdate(gw.gameTicks))
         val charData = session.characterData
@@ -1682,14 +1690,14 @@ class GameLoop(
                     derived,
                     DerivedStatsCalculator.effectiveBaseStats(charData, bonuses)))
             session.send(
-                combatProcessor.makeStatusUpdate(
+                gw.combatProcessor.makeStatusUpdate(
                     charData,
                     derived,
                     session.state.stance,
                     session.combatState.attackCooldownUntilMs,
                     session.combatState.attackCooldownsUntilMs,
                     session.state.godMode))
-            experienceProcessor.sendXpState(session)
+            gw.experienceProcessor.sendXpState(session)
         } else if (!session.state.rpgOptOut) {
             session.send(ServerMessage.CharacterCreationRequired)
         }
@@ -1700,8 +1708,8 @@ class GameLoop(
                 Math.floorDiv(spawn.z.toInt(), WorldConstants.CHUNK_SIZE),
             )
         session.lastChunkPos = spawnCp
-        chunkStreamer.sendCenterChunkNow(session, spawnCp)
-        chunkStreamer.requestAround(session, spawnCp.cx, spawnCp.cz)
+        gw.chunkStreamer.sendCenterChunkNow(session, spawnCp)
+        gw.chunkStreamer.requestAround(session, spawnCp.cx, spawnCp.cz)
         log.info("chunk requests queued for {}", id.take(8))
 
         gw.onPlayerJoin(session)
