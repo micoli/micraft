@@ -15,6 +15,7 @@
     "build:css": "tailwindcss -i ./styles/main.css -o ${MC_OUT_CSS:-../build/web/main.css} ${MC_TW_FLAGS:---minify}",
     "build:game": "npm run build && npm run build:chunkWorker && npm run build:css",
     "typecheck": "tsc --noEmit",
+    "typecheck:e2e": "tsc -p e2e/tsconfig.json --noEmit",
     "watch:mc_bindings": "node scripts/gen-plugins-index.mjs && esbuild index.ts --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --alias:@plugins=../../../plugins --outfile=${MC_OUT_JS:-../build/web/mc_bindings.js} --watch=forever",
     "watch:css": "tailwindcss -i ./styles/main.css -o ${MC_OUT_CSS:-../build/web/main.css} --watch=always",
     "build:map": "esbuild map/index.tsx --bundle --platform=browser --target=es2017 --format=iife --jsx=automatic --loader:.tsx=tsx --outfile=${MC_OUT_MAP_JS:-../build/web/map.js}",

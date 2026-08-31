@@ -1,3 +1,4 @@
+/// <reference path="../global.d.ts" />
 import { test } from "@playwright/test";
 import { accountFor, connectClient, e2e, expect } from "./helpers/connectClient";
 

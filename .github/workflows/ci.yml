@@ -24,6 +24,8 @@ jobs:
       - run: echo "export const MC_BUILD_TIMESTAMP = '20260718-12.22.06';" > app/webApp/ts-src/buildConfig.ts
       - run: npm run typecheck
         working-directory: app/webApp/ts-src
+      - run: npm run typecheck:e2e
+        working-directory: app/webApp/ts-src
       - run: npm run lint
         working-directory: app/webApp/ts-src
       - run: npx playwright install chromium --with-deps

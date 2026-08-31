@@ -53,6 +53,15 @@ export default tseslint.config(
       },
     },
   },
+  {
+    // e2e specs pull the app's window augmentation (window.mcE2E, window.mcState) in
+    // via a triple-slash reference to ../global.d.ts — that is the correct tool for an
+    // ambient .d.ts, and an `import` of it breaks the Playwright runtime loader.
+    files: ["e2e/**/*.ts"],
+    rules: {
+      "@typescript-eslint/triple-slash-reference": "off",
+    },
+  },
   prettierConfig,
   {
     ignores: [
