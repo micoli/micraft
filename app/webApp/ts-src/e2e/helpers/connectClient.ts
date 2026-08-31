@@ -21,6 +21,10 @@ export async function connectClient(page: Page, acct: E2eAccount, lang = "en"): 
   const logs: string[] = [];
   page.on("console", (m) => logs.push(`[${m.type()}] ${m.text()}`));
   page.on("pageerror", (e) => logs.push(`[pageerror] ${e.message}`));
+  page.on("response", (r) => {
+    if (r.status() >= 400) logs.push(`[http ${r.status()}] ${r.url()}`);
+  });
+  page.on("requestfailed", (r) => logs.push(`[reqfail] ${r.url()} ${r.failure()?.errorText ?? ""}`));
 
   await page.addInitScript(
     ([a, l]) => {
