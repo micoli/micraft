@@ -139,7 +139,7 @@ class GameLoopTest {
     }
 
     @Test
-    fun onConnect_inE2e_pushesTheServerViewRadiiToTheClient() = runTest {
+    fun onConnect_inE2e_pushesTheServerViewRadiiAndForcesImpostorMeshing() = runTest {
         val gameLoop = GameLoop(testWorld(), e2eEnabled = true)
         val socket = FakeWebSocketSession()
         val connect = ClientMessage.Connect(playerName = "Viewer", userName = "viewer@example.com")
@@ -153,12 +153,16 @@ class GameLoopTest {
                 .filterIsInstance<ServerMessage.PreferencesSync>()
                 .first()
         // applyE2eOverridesIfEnabled is Application-level; here WorldConstants keeps its defaults,
-        // so the override just mirrors those — the point is that it is non-null.
+        // so the view-radius override just mirrors those — the point is that it is non-null.
         assertEquals(
             org.micoli.micraft.game.world.WorldConstants.FORWARD_VIEW_RADIUS,
             prefs.overrideForwardViewRadius)
         assertEquals(
             org.micoli.micraft.game.world.WorldConstants.VIEW_RADIUS, prefs.overrideViewRadius)
+        // Every chunk past the player's own is forced to the flat impostor mesh.
+        assertEquals(true, prefs.overrideUseImpostor)
+        assertEquals(0, prefs.overrideImpostorRadiusChunks)
+        assertEquals(0, prefs.overrideImpostorFovBonusChunks)
     }
 
     @Test
