@@ -139,6 +139,65 @@ class GameLoopTest {
     }
 
     @Test
+    fun onConnect_inE2e_pushesTheServerViewRadiiToTheClient() = runTest {
+        val gameLoop = GameLoop(testWorld(), e2eEnabled = true)
+        val socket = FakeWebSocketSession()
+        val connect = ClientMessage.Connect(playerName = "Viewer", userName = "viewer@example.com")
+        socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        socket.incomingChannel.close()
+        gameLoop.onConnect(socket)
+
+        val prefs =
+            generateSequence { socket.outgoingChannel.tryReceive().getOrNull() }
+                .map { ServerMessageCodec.decode((it as Frame.Binary).readBytes()) }
+                .filterIsInstance<ServerMessage.PreferencesSync>()
+                .first()
+        // applyE2eOverridesIfEnabled is Application-level; here WorldConstants keeps its defaults,
+        // so the override just mirrors those — the point is that it is non-null.
+        assertEquals(
+            org.micoli.micraft.game.world.WorldConstants.FORWARD_VIEW_RADIUS,
+            prefs.overrideForwardViewRadius)
+        assertEquals(
+            org.micoli.micraft.game.world.WorldConstants.VIEW_RADIUS, prefs.overrideViewRadius)
+    }
+
+    @Test
+    fun onConnect_reservedRpgPlayer_sendsCharacterSyncNotCreationPrompt() = runTest {
+        val gameLoop = GameLoop(testWorld())
+        val character =
+            (org.micoli.micraft.game.rpg.character.RpgCharacterBuilder.build(
+                    "RpgHero",
+                    org.micoli.micraft.player.rpg.CharacterClass.WARRIOR,
+                    8,
+                    8,
+                    8,
+                    8,
+                    8,
+                    8) as org.micoli.micraft.game.rpg.character.RpgCharacterResult.Success)
+                .character
+        val reserved = gameLoop.defaultWorld.reservePlayer("RpgHero", character)
+
+        val socket = FakeWebSocketSession()
+        val connect =
+            ClientMessage.Connect(playerName = "RpgHero", userName = "rpghero@example.com")
+        socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        socket.incomingChannel.close()
+        gameLoop.onConnect(socket)
+
+        val received =
+            generateSequence { socket.outgoingChannel.tryReceive().getOrNull() }
+                .map { ServerMessageCodec.decode((it as Frame.Binary).readBytes()) }
+                .toList()
+
+        assertTrue(received.any { it is ServerMessage.CharacterSync }, "gets CharacterSync")
+        assertTrue(
+            received.none { it is ServerMessage.CharacterCreationRequired },
+            "no character-creation prompt")
+        assertEquals(
+            reserved.id, received.filterIsInstance<ServerMessage.Welcome>().first().playerId)
+    }
+
+    @Test
     fun onConnect_reusesPersistedPlayerIdAcrossReconnects() = runTest {
         val persistence = WorldPersistence(Files.createTempDirectory("gameloop-reconnect-test"))
         val gameLoop = GameLoop(testWorld(), persistence)

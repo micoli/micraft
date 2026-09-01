@@ -406,8 +406,9 @@ fun buildGameWorld(
 }
 
 /**
- * A memory-only [GameWorld] for a browser E2E session: bounded flat generator, players in creative
- * mode, only the tick sections a static test client observes.
+ * A memory-only [GameWorld] for a browser E2E session: bounded flat generator, players in normal
+ * GAME mode (same as a manual join — specs seed any items they need via the admin API), only the
+ * tick sections a static test client observes.
  */
 fun buildE2eGameWorld(
     id: String,
@@ -420,6 +421,6 @@ fun buildE2eGameWorld(
         shared,
         GameWorldOptions(
             tickSections = TickSection.E2E,
-            spawnEditMode = EditMode.CREATIVE,
+            spawnEditMode = EditMode.GAME,
         ),
     )

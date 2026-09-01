@@ -240,10 +240,18 @@ ts-test-storybook: ## Storybook test-runner (CI mode)
 e2e-server: ## Run the bounded E2E Ktor server standalone (port 8091)
 	$(EXEC) "./gradlew :server:runE2eServer --console=plain"
 
-e2e: ## Build the client (wasm + mc_bindings + chunk worker + css), then run the Playwright browser E2E suite
+e2e-build: ## Build the client (wasm + mc_bindings + chunk worker + css), then run the Playwright browser E2E suite
 	$(MAKE) build-wasm
 	$(EXEC) "cd app/webApp/ts-src && npm run build:game"
 	$(EXEC) "cd app/webApp/ts-src && npx playwright install chromium --with-deps && npm run test:e2e"
+
+e2e:
+	$(EXEC) "cd app/webApp/ts-src && npx playwright install chromium --with-deps && npm run test:e2e"
+
+e2e-ui:
+	#$(MAKE) build-wasm
+	#$(EXEC) "cd app/webApp/ts-src && npm run build:game"
+	$(EXEC) "cd app/webApp/ts-src && npx playwright test --ui --config e2e/playwright.config.ts"
 
 ##@ Docs
 

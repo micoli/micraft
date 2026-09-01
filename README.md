@@ -174,6 +174,7 @@ never hand-edit either.
 | GET | `/api/admin/npcs` | Live NPC instances with full animal/combat state |
 | GET | `/api/admin/plain-colors` | All registered plain paint colors |
 | GET | `/api/admin/players` | All player names |
+| POST | `/api/admin/players` | Create a player identity in the target world and return its id. Reserves the id (and, with `characterClass`, a fresh RPG character) that `onConnect` will use — so an E2E test's RPG player is ready before the browser connects, with no character-creation screen. Also ensures the matching no-auth account exists. Does not write to persistence. |
 | GET | `/api/admin/players/{name}` | Full player file (state, keybindings, RPG data) |
 | PUT | `/api/admin/players/{name}/equipment` | Partially update a player's owned/equipped armor and wielded hand items |
 | POST | `/api/admin/players/{name}/give` | Give an inventory item, or grant ownership of an armor/weapon/tool |

@@ -8,6 +8,7 @@ import io.ktor.server.testing.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.game.GameLoop
@@ -67,6 +68,42 @@ class AdminSessionRoutingTest {
 
         assertEquals(30_000L, w1, "w1 world reflects the admin write")
         assertEquals(before, default, "the default world is untouched")
+    }
+
+    @Test
+    fun `create-player reserves a stable id and an rpg character`() = testApplication {
+        application { routing { controller(e2e = true).register(this) } }
+
+        suspend fun post(body: String) =
+            client.post("/api/admin/players") {
+                headers.append(AdminController.GAME_SESSION_HEADER, "w1")
+                contentType(ContentType.Application.Json)
+                setBody(body)
+            }
+
+        val a =
+            Json.parseToJsonElement(
+                    post("""{"name":"Alice","characterClass":"WARRIOR"}""").bodyAsText())
+                .jsonObject
+        val id = a["playerId"]!!.jsonPrimitive.content
+        assertEquals(36, id.length, "playerId is a UUID")
+        assertEquals("WARRIOR", a["characterClass"]!!.jsonPrimitive.content)
+        assertEquals(1, a["level"]!!.jsonPrimitive.content.toInt())
+
+        // idempotent + case-insensitive on the reserved id
+        val b =
+            Json.parseToJsonElement(
+                    post("""{"name":"alice","characterClass":"MAGE"}""").bodyAsText())
+                .jsonObject
+        assertEquals(id, b["playerId"]!!.jsonPrimitive.content)
+
+        // no class => plain player, null characterClass in the response
+        val plain = Json.parseToJsonElement(post("""{"name":"Bob"}""").bodyAsText()).jsonObject
+        assertEquals(JsonNull, plain["characterClass"])
+
+        assertEquals(
+            HttpStatusCode.BadRequest,
+            post("""{"name":"Carol","characterClass":"WIZARD"}""").status)
     }
 
     @Test

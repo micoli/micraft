@@ -9,6 +9,7 @@ import type {
   ShaderMaterial,
   Vector4,
 } from "@babylonjs/core";
+import type { McE2E } from "./game/lib/e2eBridge";
 
 declare global {
   // BabylonJS is loaded from CDN — never import it, reference via this global
@@ -717,34 +718,7 @@ declare global {
     // e2e test mode — set by the Playwright harness before the app boots
     __mcE2E?: boolean;
     __mcE2ESession?: string;
-    mcE2E?: {
-      ready: boolean;
-      playerId: string;
-      playerName: string;
-      position: { x: number; y: number; z: number };
-      serverPosition: { x: number; y: number; z: number };
-      yaw: number;
-      pitch: number;
-      stance: string;
-      hasPrediction: boolean;
-      reconcile: { xz: number; y: number };
-      loadedChunks: { cx: number; cz: number }[];
-      meshedChunks: { cx: number; cz: number }[];
-      inventory: Record<string, number>;
-      targetBlock: { x: number; y: number; z: number } | null;
-      remotePlayers: { id: string; name: string; x: number; y: number; z: number }[];
-      lastWorldUpdate: { x: number; y: number; z: number; block: string }[] | null;
-      actions?: {
-        moveForward(ms: number): void;
-        moveBack(ms: number): void;
-        moveLeft(ms: number): void;
-        moveRight(ms: number): void;
-        setLook(yaw: number, pitch: number): void;
-        breakTargeted(): void;
-        placeTargeted(): void;
-        selectHotbar(i: number): void;
-      };
-    };
+    mcE2E?: McE2E;
     BABYLON?: typeof import("@babylonjs/core");
     // Kotlin/Wasm module (webApp.js) — a Promise resolving to its @JsExport surface. Only
     // loaded on admin.html (see AdminChunkPreview.kt); the real game page never calls this,

@@ -11,15 +11,13 @@ import org.micoli.micraft.command.commands.availablePlayerSkins
 import org.micoli.micraft.game.SPAWN_X
 import org.micoli.micraft.game.SPAWN_Y
 import org.micoli.micraft.game.SPAWN_Z
-import org.micoli.micraft.game.rpg.CharacterConstants
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.character.RpgCharacterBuilder
+import org.micoli.micraft.game.rpg.character.RpgCharacterResult
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
-import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
-import org.micoli.micraft.player.rpg.CharacterData
 
 @Serializable
 private data class CreateCharacterRequest(
@@ -164,52 +162,19 @@ class CharacterController(private val persistence: WorldPersistence?) {
                         extractInt("con") ?: return@post call.respond(HttpStatusCode.BadRequest)
                     val cha =
                         extractInt("cha") ?: return@post call.respond(HttpStatusCode.BadRequest)
-                    val statValues = listOf(str, dex, intel, wis, con, cha)
-                    if (statValues.any {
-                        it !in CharacterConstants.STAT_MIN_BUY..CharacterConstants.STAT_MAX_BUY
-                    })
-                        return@post call.respond(HttpStatusCode.BadRequest)
-                    val totalCost = statValues.sumOf { CharacterConstants.POINT_BUY_COST[it] ?: 9 }
-                    if (totalCost > CharacterConstants.POINT_BUY_BUDGET)
-                        return@post call.respond(HttpStatusCode.BadRequest)
                     val p =
                         persistence ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
                     val existing = p.loadPlayerState(playerName)
                     if (existing?.characterData != null)
                         return@post call.respond(HttpStatusCode.Conflict)
-                    val finalStats =
-                        BaseStats(
-                            str =
-                                (str + characterClass.strBonus).coerceIn(
-                                    1, CharacterConstants.STAT_MAX_TOTAL),
-                            dex =
-                                (dex + characterClass.dexBonus).coerceIn(
-                                    1, CharacterConstants.STAT_MAX_TOTAL),
-                            intel =
-                                (intel + characterClass.intelBonus).coerceIn(
-                                    1, CharacterConstants.STAT_MAX_TOTAL),
-                            wis =
-                                (wis + characterClass.wisBonus).coerceIn(
-                                    1, CharacterConstants.STAT_MAX_TOTAL),
-                            con =
-                                (con + characterClass.conBonus).coerceIn(
-                                    1, CharacterConstants.STAT_MAX_TOTAL),
-                            cha =
-                                (cha + characterClass.chaBonus).coerceIn(
-                                    1, CharacterConstants.STAT_MAX_TOTAL),
-                        )
-                    val prelimChar =
-                        CharacterData(
-                            id = UUID.randomUUID().toString(),
-                            name = playerName,
-                            characterClass = characterClass,
-                            baseStats = finalStats,
-                            currentHp = 0,
-                            currentMana = 0,
-                        )
-                    val derived = DerivedStatsCalculator.compute(prelimChar)
                     val character =
-                        prelimChar.copy(currentHp = derived.maxHp, currentMana = derived.maxMana)
+                        when (val r =
+                            RpgCharacterBuilder.build(
+                                playerName, characterClass, str, dex, intel, wis, con, cha)) {
+                            is RpgCharacterResult.Success -> r.character
+                            is RpgCharacterResult.Failure ->
+                                return@post call.respond(HttpStatusCode.BadRequest)
+                        }
                     val available = availablePlayerSkins()
                     val safeSkin =
                         if (skin in available) skin else available.firstOrNull() ?: "articulated"
