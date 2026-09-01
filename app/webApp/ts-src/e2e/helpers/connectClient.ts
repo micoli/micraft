@@ -81,30 +81,27 @@ export async function connectClient(page: Page, acct: E2eAccount, lang = "en", r
     throw err;
   }
 
-  // Wait for chunk streaming to settle: the loaded-chunk set stops growing AND every loaded chunk
-  // has been meshed by the worker (mcState.chunks). Held a few polls so a mid-stream lull doesn't
-  // pass.
+  // Wait until the chunk under the player and its four orthogonal neighbours are meshed — the
+  // deterministic minimum every spec relies on (a target block to break, ground to stand on,
+  // remote players in view). Meshing the *whole* view distance takes far longer under CI's
+  // software GL and isn't needed; specs that care assert their own wider region afterwards.
   await page.waitForFunction(
     () => {
-      const w = window as unknown as {
-        mcE2E?: {
-          loadedChunks?: { cx: number; cz: number }[];
-          meshedChunks?: { cx: number; cz: number }[];
-        };
-        __chunkCount?: number;
-        __meshStable?: number;
-      };
-      const e = w.mcE2E;
-      const loaded = e?.loadedChunks ?? [];
-      const meshed = new Set((e?.meshedChunks ?? []).map((c) => `${c.cx},${c.cz}`));
-      const allMeshed = loaded.length > 0 && loaded.every((c) => meshed.has(`${c.cx},${c.cz}`));
-      const steady = allMeshed && loaded.length === w.__chunkCount;
-      w.__chunkCount = loaded.length;
-      w.__meshStable = steady ? (w.__meshStable ?? 0) + 1 : 0;
-      return (w.__meshStable ?? 0) >= 4;
+      const e = window.mcE2E;
+      if (!e?.position) return false;
+      const pcx = Math.floor(e.position.x / 16);
+      const pcz = Math.floor(e.position.z / 16);
+      const meshed = new Set((e.meshedChunks ?? []).map((c) => `${c.cx},${c.cz}`));
+      return [
+        [0, 0],
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ].every(([dx, dz]) => meshed.has(`${pcx + dx},${pcz + dz}`));
     },
     undefined,
-    { timeout: 25_000, polling: 250 },
+    { timeout: 25_000, polling: 200 },
   );
 
   // God mode + re-centre: every spec (except login-spawn) runs from the middle of the map, a few
