@@ -1622,10 +1622,13 @@ class GameLoop(
                 chunkMode = chunkSection.transport)
         if (gw.spawnEditMode != EditMode.GAME)
             session.state = session.state.copy(editMode = gw.spawnEditMode)
-        // The E2E override only touches the server's WorldConstants; push the same radii to the
-        // client via PreferencesSync so its `allFovChunksMeshed` gate (the "Loading world…"
-        // spinner)
-        // waits for the radius the server actually streams, not the built-in default of 7.
+        // E2E graphics overrides, pushed to the client via PreferencesSync:
+        //  - view radii: mirror the server's WorldConstants so the client's `allFovChunksMeshed`
+        //    gate waits for the radius actually streamed, not the built-in default of 7.
+        //  - impostor: force every chunk past the player's own to the cheap flat impostor mesh
+        //    (radius 0, no FOV bonus). Full block geometry meshing dominates E2E wall time under
+        //    headless software GL; the game logic under test is unaffected by the render style.
+        // A spec that needs real geometry can pre-set any of these before connecting.
         if (e2eEnabled) {
             session.state =
                 session.state.copy(
@@ -1634,6 +1637,10 @@ class GameLoop(
                     overrideForwardViewRadius =
                         session.state.overrideForwardViewRadius
                             ?: WorldConstants.FORWARD_VIEW_RADIUS,
+                    overrideUseImpostor = session.state.overrideUseImpostor ?: true,
+                    overrideImpostorRadiusChunks = session.state.overrideImpostorRadiusChunks ?: 0,
+                    overrideImpostorFovBonusChunks =
+                        session.state.overrideImpostorFovBonusChunks ?: 0,
                 )
         }
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
