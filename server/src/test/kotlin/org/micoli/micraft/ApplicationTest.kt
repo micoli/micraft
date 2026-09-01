@@ -17,8 +17,28 @@ import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
+import org.micoli.micraft.game.world.WorldConstants
 
 class ApplicationTest {
+
+    @Test
+    fun applyE2eWorldOverrides_spawnsJustAboveTheGroundAndShrinksTheView() {
+        val spawn = org.micoli.micraft.game.SPAWN_Y
+        val viewRadius = WorldConstants.VIEW_RADIUS
+        val forwardViewRadius = WorldConstants.FORWARD_VIEW_RADIUS
+        val waterLevel = WorldConstants.WATER_LEVEL
+        try {
+            applyE2eWorldOverrides(groundY = 64)
+            assertEquals(72f, org.micoli.micraft.game.SPAWN_Y, "spawn 8 blocks above ground")
+            assertEquals(3, WorldConstants.FORWARD_VIEW_RADIUS)
+            assertEquals(0, WorldConstants.WATER_LEVEL)
+        } finally {
+            org.micoli.micraft.game.SPAWN_Y = spawn
+            WorldConstants.VIEW_RADIUS = viewRadius
+            WorldConstants.FORWARD_VIEW_RADIUS = forwardViewRadius
+            WorldConstants.WATER_LEVEL = waterLevel
+        }
+    }
 
     @Test
     fun testAssetManifestReturnsJsonObject() = testApplication {

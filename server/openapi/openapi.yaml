@@ -1583,6 +1583,37 @@ paths:
           description: Missing admin permission
           headers: {}
       deprecated: false
+    post:
+      tags: []
+      description: "Create a player identity in the target world and return its id.\
+        \ Reserves the id (and, with `characterClass`, a fresh RPG character) that\
+        \ `onConnect` will use — so an E2E test's RPG player is ready before the browser\
+        \ connects, with no character-creation screen. Also ensures the matching no-auth\
+        \ account exists. Does not write to persistence."
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.CreatePlayerRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.CreatePlayerResponse"
+        "400":
+          description: "Missing name, unknown class, or invalid point-buy stats"
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/admin/players/{name}:
     get:
       tags: []
@@ -4691,6 +4722,83 @@ components:
             title: String
           title: List<String>
       title: UpdateUserRequest
+    org.micoli.micraft.http.CreatePlayerRequest:
+      type: object
+      properties:
+        cha:
+          type: integer
+          format: int32
+          title: Int
+        characterClass:
+          type:
+          - "null"
+          - string
+          title: String
+        con:
+          type: integer
+          format: int32
+          title: Int
+        dex:
+          type: integer
+          format: int32
+          title: Int
+        email:
+          type:
+          - "null"
+          - string
+          title: String
+        intel:
+          type: integer
+          format: int32
+          title: Int
+        name:
+          type: string
+          title: String
+        str:
+          type: integer
+          format: int32
+          title: Int
+        wis:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - cha
+      - con
+      - dex
+      - intel
+      - name
+      - str
+      - wis
+      title: CreatePlayerRequest
+    org.micoli.micraft.http.CreatePlayerResponse:
+      type: object
+      properties:
+        characterClass:
+          type:
+          - "null"
+          - string
+          title: String
+        email:
+          type: string
+          title: String
+        level:
+          type:
+          - "null"
+          - integer
+          format: int32
+          title: Int
+        name:
+          type: string
+          title: String
+        playerId:
+          type: string
+          title: String
+      required:
+      - email
+      - name
+      - playerId
+      title: CreatePlayerResponse
     org.micoli.micraft.player.PlayerState:
       type: object
       properties:

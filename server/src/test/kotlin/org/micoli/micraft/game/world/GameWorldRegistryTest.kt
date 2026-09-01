@@ -9,6 +9,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import org.micoli.micraft.game.SharedGameServices
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.EndToEndBoundedChunkGenerator
+import org.micoli.micraft.player.EditMode
 
 private val shared by lazy { SharedGameServices.default() }
 
@@ -41,6 +42,11 @@ class GameWorldRegistryTest {
         assertTrue(a !== b)
         assertSame(a, r.resolve("a"), "same id returns the same world")
         assertEquals(3, r.all().size)
+    }
+
+    @Test
+    fun e2eWorld_joinsPlayersInGameModeNotCreative() {
+        assertEquals(EditMode.GAME, world("game-mode").spawnEditMode)
     }
 
     @Test

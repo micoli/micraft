@@ -5,27 +5,13 @@ import { SPAWN_X, SPAWN_Z, SETTLED_Y } from "./helpers/constants";
 
 test("login, spawn and the chunk region around it", async ({ page }, info) => {
   const acct = accountFor(info.parallelIndex);
-  await connectClient(page, acct);
-
-  // Wait for chunk streaming to settle.
-  await page.waitForFunction(
-    () => {
-      const w = window as unknown as {
-        mcE2E?: { loadedChunks: unknown[] };
-        __chunkCount?: number;
-        __chunkStable?: number;
-      };
-      const n = w.mcE2E?.loadedChunks.length ?? 0;
-      w.__chunkStable = n > 0 && n === w.__chunkCount ? (w.__chunkStable ?? 0) + 1 : 0;
-      w.__chunkCount = n;
-      return (w.__chunkStable ?? 0) >= 4;
-    },
-    { timeout: 20_000, polling: 250 },
-  );
+  // connectClient already waits for chunk-mesh settle + the spawn fall to finish.
+  // recenter=false: this spec asserts the real spawn point, not the shared re-centred pose.
+  await connectClient(page, acct, "en", false);
 
   const s = await e2e(page);
   expect(s.ready).toBe(true);
-  expect(s.playerId).toMatch(/.+/);
+  expect(s.playerId).toBe(acct.playerId);
   expect(s.playerName).toBe(acct.charName);
   expect(s.stance).toBe("standing");
   expect(s.position.x).toBeCloseTo(SPAWN_X, 0);

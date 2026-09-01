@@ -1,6 +1,7 @@
 /// <reference path="../global.d.ts" />
 import { test } from "@playwright/test";
 import { accountFor, connectClient, e2e, expect } from "./helpers/connectClient";
+import { actions } from "./helpers/game";
 
 test("client prediction tracks the server position while and after moving", async ({ page }, info) => {
   const acct = accountFor(info.parallelIndex);
@@ -8,8 +9,8 @@ test("client prediction tracks the server position while and after moving", asyn
 
   const start = (await e2e(page)).position;
 
-  await page.evaluate(() => window.mcE2E!.actions!.setLook(0, 0)); // face +Z
-  await page.evaluate(() => window.mcE2E!.actions!.moveForward(1200));
+  await actions(page).setLook(0, 0); // face +Z
+  await actions(page).moveForward(1200);
 
   // Wait until the move is done and the predicted position holds steady next to the server one.
   await page.waitForFunction(

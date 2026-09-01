@@ -37,6 +37,8 @@ import org.micoli.micraft.game.TICKS_PER_DAY
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.character.RpgCharacterBuilder
+import org.micoli.micraft.game.rpg.character.RpgCharacterResult
 import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
@@ -236,6 +238,29 @@ private data class CreateUserRequest(
 private data class UpdateUserRequest(
     val displayName: String? = null,
     val groups: List<String>? = null
+)
+
+@Serializable
+private data class CreatePlayerRequest(
+    val name: String,
+    val email: String? = null,
+    /** Omit for a plain (non-RPG) player — only its id is reserved. */
+    val characterClass: String? = null,
+    val str: Int = 8,
+    val dex: Int = 8,
+    val intel: Int = 8,
+    val wis: Int = 8,
+    val con: Int = 8,
+    val cha: Int = 8,
+)
+
+@Serializable
+private data class CreatePlayerResponse(
+    val playerId: String,
+    val name: String,
+    val email: String,
+    val characterClass: String? = null,
+    val level: Int? = null,
 )
 
 @Serializable private data class RenamePlayerRequest(val newName: String)
@@ -1060,6 +1085,80 @@ class AdminController(
                     val names = p.listPlayers()
                     call.respondText(
                         adminJson.encodeToString(ListSerializer(String.serializer()), names),
+                        ContentType.Application.Json)
+                }
+
+            post(
+                "/api/admin/players",
+                {
+                    description =
+                        "Create a player identity in the target world and return its id. Reserves " +
+                            "the id (and, with `characterClass`, a fresh RPG character) that " +
+                            "`onConnect` will use — so an E2E test's RPG player is ready before the " +
+                            "browser connects, with no character-creation screen. Also ensures the " +
+                            "matching no-auth account exists. Does not write to persistence."
+                    request { body<CreatePlayerRequest>() }
+                    response {
+                        code(HttpStatusCode.OK) { body<CreatePlayerResponse>() }
+                        code(HttpStatusCode.BadRequest) {
+                            description = "Missing name, unknown class, or invalid point-buy stats"
+                        }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val world = adminWorld()
+                    val body =
+                        runCatching {
+                                Json.decodeFromString<CreatePlayerRequest>(call.receiveText())
+                            }
+                            .getOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val name =
+                        body.name.trim().ifBlank {
+                            return@post call.respond(HttpStatusCode.BadRequest)
+                        }
+                    val email = body.email?.trim()?.ifBlank { null } ?: "$name@e2e.local"
+
+                    val character =
+                        if (body.characterClass == null) null
+                        else {
+                            val cc =
+                                runCatching {
+                                        CharacterClass.valueOf(body.characterClass.uppercase())
+                                    }
+                                    .getOrNull()
+                                    ?: return@post call.respond(HttpStatusCode.BadRequest)
+                            when (val r =
+                                RpgCharacterBuilder.build(
+                                    name,
+                                    cc,
+                                    body.str,
+                                    body.dex,
+                                    body.intel,
+                                    body.wis,
+                                    body.con,
+                                    body.cha)) {
+                                is RpgCharacterResult.Success -> r.character
+                                is RpgCharacterResult.Failure ->
+                                    return@post call.respond(HttpStatusCode.BadRequest)
+                            }
+                        }
+
+                    when {
+                        noAuthAccountStore != null -> noAuthAccountStore.getOrCreate(email)
+                        localAuth != null && localAuth.listUsers().none { it.email == email } ->
+                            runCatching { localAuth.addUser(email, email, name, emptyList()) }
+                    }
+                    val reserved = world.reservePlayer(name, character)
+                    call.respondText(
+                        adminJson.encodeToString(
+                            CreatePlayerResponse.serializer(),
+                            CreatePlayerResponse(
+                                reserved.id,
+                                name,
+                                email,
+                                character?.characterClass?.name,
+                                character?.level)),
                         ContentType.Application.Json)
                 }
 

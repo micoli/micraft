@@ -1,6 +1,7 @@
 /// <reference path="../global.d.ts" />
 import { test } from "@playwright/test";
 import { accountFor, connectClient, e2e, expect } from "./helpers/connectClient";
+import { actions } from "./helpers/game";
 
 test("two clients in one world see each other and each other's movement", async ({ browser }, info) => {
   const a = accountFor(info.parallelIndex, "a");
@@ -30,8 +31,8 @@ test("two clients in one world see each other and each other's movement", async 
   expect(before.id).toBe(idB);
 
   // B walks; A sees it move.
-  await pageB.evaluate(() => window.mcE2E!.actions!.setLook(0, 0));
-  await pageB.evaluate(() => window.mcE2E!.actions!.moveForward(1500));
+  await actions(pageB).setLook(0, 0);
+  await actions(pageB).moveForward(1500);
 
   await pageA.waitForFunction(
     ([name, z0]) => {

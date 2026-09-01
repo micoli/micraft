@@ -41,5 +41,13 @@ done
 
 if command -v mkdocs >/dev/null 2>&1; then exec mkdocs "$@"; fi
 
-echo "mkdocs not found. Install it: python -m venv .venv && .venv/bin/pip install -r docs/requirements.txt" >&2
-exit 1
+# Nothing found (HOST mode, fresh checkout): bootstrap the repo-root .venv.
+python="$(command -v python3 || command -v python || true)"
+if [ -z "$python" ]; then
+  echo "python3 not found — cannot bootstrap .venv for mkdocs." >&2
+  exit 1
+fi
+echo "mkdocs not found — creating .venv and installing docs/requirements.txt ..." >&2
+"$python" -m venv .venv
+.venv/bin/pip install --disable-pip-version-check -q -r docs/requirements.txt
+exec .venv/bin/mkdocs "$@"

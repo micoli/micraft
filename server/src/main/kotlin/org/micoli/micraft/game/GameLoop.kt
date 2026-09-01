@@ -519,6 +519,7 @@ class GameLoop(
         ),
     private val questManager: QuestManager? = null,
     private val questRegistryLoader: QuestRegistryLoader? = null,
+    private val e2eEnabled: Boolean = System.getenv("MICRAFT_E2E")?.isNotBlank() == true,
     private val shared: SharedGameServices = SharedGameServices.default(),
 ) {
     val classRegistry: Map<String, org.micoli.micraft.game.classes.ClassDefinitionEntry>
@@ -701,7 +702,7 @@ class GameLoop(
     val gameWorldRegistry =
         GameWorldRegistry(
             defaultWorld = gameWorld,
-            e2eEnabled = System.getenv("MICRAFT_E2E")?.isNotBlank() == true,
+            e2eEnabled = e2eEnabled,
             factory = { id -> buildE2eGameWorld(id, newE2eGenerator(), shared) },
         )
 
@@ -1535,7 +1536,9 @@ class GameLoop(
             }
 
         val saved = persistence?.loadPlayerState(playerName)
-        val id = saved?.id ?: UUID.randomUUID().toString()
+        val reserved = gw.reservedPlayers[playerName.lowercase()]
+        val id = reserved?.id ?: saved?.id ?: UUID.randomUUID().toString()
+        val reservedCharacter = reserved?.characterData
         if (saved != null &&
             saved.email.isNotEmpty() &&
             !saved.email.equals(accountEmail, ignoreCase = true)) {
@@ -1581,7 +1584,8 @@ class GameLoop(
                 dynamicFogEnabled = saved?.dynamicFogEnabled ?: true,
                 knownRecipes = saved?.knownRecipes ?: emptySet(),
                 rpgOptOut =
-                    if (saved?.characterData != null) false else (saved?.rpgOptOut ?: false),
+                    if (saved?.characterData != null || reservedCharacter != null) false
+                    else (saved?.rpgOptOut ?: false),
                 godMode = saved?.godMode ?: false,
                 lightBoostEnabled = saved?.lightBoostEnabled ?: false,
                 zoneLevel = saved?.zoneLevel ?: 0,
@@ -1618,6 +1622,20 @@ class GameLoop(
                 chunkMode = chunkSection.transport)
         if (gw.spawnEditMode != EditMode.GAME)
             session.state = session.state.copy(editMode = gw.spawnEditMode)
+        // The E2E override only touches the server's WorldConstants; push the same radii to the
+        // client via PreferencesSync so its `allFovChunksMeshed` gate (the "Loading world…"
+        // spinner)
+        // waits for the radius the server actually streams, not the built-in default of 7.
+        if (e2eEnabled) {
+            session.state =
+                session.state.copy(
+                    overrideViewRadius =
+                        session.state.overrideViewRadius ?: WorldConstants.VIEW_RADIUS,
+                    overrideForwardViewRadius =
+                        session.state.overrideForwardViewRadius
+                            ?: WorldConstants.FORWARD_VIEW_RADIUS,
+                )
+        }
         saved?.inventory?.forEach { (type, count) -> session.inventory[type] = count }
         saved?.shortcutBarPages?.forEachIndexed { page, pageSlots ->
             if (page in 0..9)
@@ -1630,7 +1648,9 @@ class GameLoop(
                 if (i in 0..9) session.shortcutBarPages[0][i] = item
             }
         }
-        session.characterData = saved?.characterData
+        session.characterData = reservedCharacter ?: saved?.characterData
+        if (reservedCharacter != null)
+            session.state = session.state.copy(characterData = reservedCharacter)
         log.info(
             "player connected: {} name={} user={} (total={})",
             id.take(8),

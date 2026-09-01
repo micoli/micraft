@@ -54,6 +54,7 @@ import org.micoli.micraft.game.world.weather.WeatherManager
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.PlayerState
+import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.plugin.TickContext
 import org.micoli.micraft.plugin.TickHandler
 import org.micoli.micraft.protocol.ServerMessage
@@ -82,9 +83,7 @@ class GameWorld(
     val sessions: SessionRegistry,
     /** Which slices of [tick] actually run — [TickSection.REALTIME] for the default world. */
     val tickSections: Set<TickSection> = TickSection.REALTIME,
-    /**
-     * Edit mode a joining player is placed in — CREATIVE for E2E so break/place needs no inventory.
-     */
+    /** Edit mode a joining player is placed in — GAME everywhere; CREATIVE only via `/mode`. */
     val spawnEditMode: EditMode = EditMode.GAME,
     private val terrainCache: TerrainCache,
     val npcManager: NpcManager,
@@ -458,6 +457,20 @@ class GameWorld(
         broadcastPlayerAdminSink(json)
         for (l in playerAdminListeners) runCatching { l(json) }
     }
+
+    // Filled by `POST /api/admin/players` before the browser connects, keyed by lower-cased player
+    // name. `onConnect` consumes it in place of minting a fresh id / running character creation, so
+    // an E2E test's RPG player is ready up front (memory-only worlds have no persistence).
+    data class ReservedPlayer(val id: String, val characterData: CharacterData?)
+
+    val reservedPlayers = java.util.concurrent.ConcurrentHashMap<String, ReservedPlayer>()
+
+    fun reservePlayer(name: String, characterData: CharacterData? = null): ReservedPlayer =
+        reservedPlayers.compute(name.lowercase()) { _, cur ->
+            ReservedPlayer(
+                cur?.id ?: java.util.UUID.randomUUID().toString(),
+                characterData ?: cur?.characterData)
+        }!!
 
     // ── World-scoped admin surface (mirrors GameLoop's accessors so admin routes can target
     //    a specific GameWorld). ────────────────────────────────────────────────────────────

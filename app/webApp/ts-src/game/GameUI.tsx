@@ -33,6 +33,7 @@ import {
   confirmScenePlacement,
   cancelScenePlacement,
 } from "./lib/creativeMode";
+import type { E2eActions } from "./lib/e2eBridge";
 
 const initial: UiState = {
   hud: null,
@@ -516,27 +517,30 @@ export function GameUI() {
       const hold = (action: string, ms: number) => {
         held[action] = Date.now() + ms;
       };
-      window.mcE2E = {
-        ...(window.mcE2E ?? ({} as NonNullable<Window["mcE2E"]>)),
-        actions: {
-          moveForward: (ms: number) => hold("forward", ms),
-          moveBack: (ms: number) => hold("backward", ms),
-          moveLeft: (ms: number) => hold("strafe_left", ms),
-          moveRight: (ms: number) => hold("strafe_right", ms),
-          setLook: (yaw: number, pitch: number) => {
-            (window as unknown as { __mcE2ELook?: unknown }).__mcE2ELook = { yaw, pitch };
-          },
-          breakTargeted: () => {
-            const t = window.mcE2E?.targetBlock;
-            if (t) window.mcState.events.push(`creative_break:${t.x},${t.y},${t.z}`);
-          },
-          placeTargeted: () => {
-            const t = window.mcE2E?.targetBlock;
-            if (t) window.mcState.events.push(`creative_place:${t.x},${t.y + 1},${t.z},cobblestone,0`);
-          },
-          selectHotbar: (i: number) => window.mcState.events.push(`slot_${i + 1}`),
+      const actions: E2eActions = {
+        moveForward: (ms) => hold("forward", ms),
+        moveBack: (ms) => hold("backward", ms),
+        moveLeft: (ms) => hold("strafe_left", ms),
+        moveRight: (ms) => hold("strafe_right", ms),
+        setLook: (yaw, pitch) => {
+          (window as unknown as { __mcE2ELook?: unknown }).__mcE2ELook = { yaw, pitch };
         },
-      } as NonNullable<Window["mcE2E"]>;
+        breakTargeted: () => {
+          const t = window.mcE2E?.targetBlock;
+          if (t) window.mcState.events.push(`creative_break:${t.x},${t.y},${t.z}`);
+        },
+        placeTargeted: () => {
+          const t = window.mcE2E?.targetBlock;
+          if (t) window.mcState.events.push(`creative_place:${t.x},${t.y + 1},${t.z},cobblestone,0`);
+        },
+        selectHotbar: (i) => window.mcState.events.push(`slot_${i + 1}`),
+        runCommand: (cmd) => {
+          // Same path as the in-game console: the wasm loop polls consumeConsoleInput() and
+          // dispatches a "/..." string as ClientMessage.Command, anything else as ChatSend.
+          consoleSubmittedRef.current = cmd;
+        },
+      };
+      window.mcE2E = { ...(window.mcE2E ?? {}), actions };
     }
     window.mc.updateE2E = (json: string) => {
       try {

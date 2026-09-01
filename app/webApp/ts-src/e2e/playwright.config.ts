@@ -27,7 +27,18 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "retain-on-failure",
     // Babylon needs a GL context in headless Chromium.
-    launchOptions: { args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"] },
+    // launchOptions: { args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"] },
+    headless: !!process.env.CI,
+    // CI: software GL (no GPU). Local: real GPU + no background throttling so the WebGL canvas
+    // updates in real-time in the headed browser window.
+    launchOptions: {
+      args: [
+        ...(process.env.CI ? ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"] : []),
+        "--disable-backgrounding-occluded-windows",
+        "--disable-renderer-backgrounding",
+        "--disable-background-timer-throttling",
+      ],
+    },
   },
   webServer: {
     // `make e2e` builds the client first, so here we only boot the server. Locally you can also
