@@ -191,6 +191,8 @@ tasks.register<Test>("checkOpenApi") {
     configureOpenApiExport(check = true)
 }
 
+ksp { arg("KOIN_DEFAULT_MODULE", "false") }
+
 group = "org.micoli.micraft"
 
 version = "1.0.0"
