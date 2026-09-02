@@ -112,7 +112,8 @@
   },
   "overrides": {
     "uuid": "^11.1.0",
-    "js-yaml": "^4.3.1"
+    "js-yaml": "^4.3.1",
+    "browserslist": "^4.28.7"
   },
   "allowScripts": {
     "@parcel/watcher@2.5.1": true,
