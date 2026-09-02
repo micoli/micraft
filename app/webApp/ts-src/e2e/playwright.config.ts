@@ -41,15 +41,18 @@ export default defineConfig({
       ],
     },
   },
-  webServer: {
-    // `make e2e` builds the client first, so here we only boot the server. Locally you can also
-    // run it yourself (`make e2e-server` or `pitchfork start e2e-server`) and this block reuses it.
-    command: "./gradlew :server:runE2eServer --console=plain",
-    cwd: REPO_ROOT,
-    url: `http://localhost:${PORT}/api/auth/config`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
-    stdout: "pipe",
-    stderr: "pipe",
-  },
+  // Set E2E_NO_SERVER=1 to skip managing the server entirely (already running / hosted elsewhere).
+  webServer: process.env.E2E_NO_SERVER
+    ? undefined
+    : {
+        // `make e2e` builds the client first, so here we only boot the server. Locally you can also
+        // run it yourself (`make e2e-server` or `pitchfork start e2e-server`) and this block reuses it.
+        command: "./gradlew :server:runE2eServer --console=plain",
+        cwd: REPO_ROOT,
+        url: `http://localhost:${PORT}/api/auth/config`,
+        reuseExistingServer: !process.env.CI,
+        timeout: 180_000,
+        stdout: "pipe",
+        stderr: "pipe",
+      },
 });
