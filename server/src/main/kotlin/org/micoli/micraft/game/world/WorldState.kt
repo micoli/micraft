@@ -28,7 +28,7 @@ class WorldState(
                 } else {
                     val t0 = System.currentTimeMillis()
                     val chunk = generator.generate(pos)
-                    log.info("Generated chunk {} in {}ms", pos, System.currentTimeMillis() - t0)
+                    log.debug("Generated chunk {} in {}ms", pos, System.currentTimeMillis() - t0)
                     chunk
                 }
                 .also { dirtyChunks.add(pos) }

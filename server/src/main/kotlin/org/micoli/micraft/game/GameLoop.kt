@@ -1744,7 +1744,7 @@ class GameLoop(
         session.lastChunkPos = spawnCp
         gw.chunkStreamer.sendCenterChunkNow(session, spawnCp)
         gw.chunkStreamer.requestAround(session, spawnCp.cx, spawnCp.cz)
-        log.info("chunk requests queued for {}", id.take(8))
+        log.debug("chunk requests queued for {}", id.take(8))
 
         gw.onPlayerJoin(session)
 

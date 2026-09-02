@@ -95,7 +95,7 @@ class VehicleManager(private val broadcast: suspend (ServerMessage) -> Unit) {
 
     /** Replays every currently-spawned vehicle to a newly-connected session. */
     suspend fun sendAllTo(session: PlayerSession) {
-        log.info("sendAllTo {}: {} vehicles in memory", session.id.take(8), vehicles.size)
+        log.debug("sendAllTo {}: {} vehicles in memory", session.id.take(8), vehicles.size)
         for (instance in vehicles.values) session.send(
             ServerMessage.VehicleSpawned(instance.toState()))
     }

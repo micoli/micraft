@@ -513,7 +513,7 @@ class NpcManager(
     }
 
     suspend fun sendAllTo(session: PlayerSession) {
-        log.info("sendAllTo {}: {} NPCs in memory", session.id.take(8), npcs.size)
+        log.debug("sendAllTo {}: {} NPCs in memory", session.id.take(8), npcs.size)
         val rangesq = tuning.updateRange * tuning.updateRange
         val playerPos = session.state.pos
         val playerStates = lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
@@ -528,7 +528,7 @@ class NpcManager(
             session.send(ServerMessage.NpcSpawned(stateWithAggro))
             sent++
         }
-        log.info("sendAllTo {}: sent {} in-range NPCs", session.id.take(8), sent)
+        log.debug("sendAllTo {}: sent {} in-range NPCs", session.id.take(8), sent)
     }
 
     fun getAll(): Collection<NpcInstance> = npcs.values
