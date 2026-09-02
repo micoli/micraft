@@ -151,8 +151,8 @@ private fun applyE2eOverridesIfEnabled() {
 
 /**
  * The actual mutations (extracted so tests can exercise them without the env gate): a short view
- * distance, no water, and a spawn a few blocks above the flat E2E ground ([groundY]) instead of
- * the production y=200 — a quick settle and an initial view that matches a normal join.
+ * distance, no water, and a spawn a few blocks above the flat E2E ground ([groundY]) instead of the
+ * production y=200 — a quick settle and an initial view that matches a normal join.
  */
 internal fun applyE2eWorldOverrides(groundY: Int) {
     org.micoli.micraft.game.SPAWN_Y = (groundY + 8).toFloat()
