@@ -62,7 +62,7 @@ class BlockBreaker(
             return
         }
         val claim = claimRegistry?.claimAt(rawBp.x, rawBp.y, rawBp.z)
-        if (claim != null && !claimRegistry!!.canEdit(claim, session)) {
+        if (claim != null && !claimRegistry.canEdit(claim, session)) {
             blockBreakerLog.debug(
                 "BlockBreakStart rejected: pos={} is inside {}'s claim", rawBp, claim.ownerName)
             return

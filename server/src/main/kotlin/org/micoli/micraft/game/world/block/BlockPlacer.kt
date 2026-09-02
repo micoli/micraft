@@ -115,7 +115,7 @@ class BlockPlacer(
             return
         }
         val claim = claimRegistry?.claimAt(rawPos.x, rawPos.y, rawPos.z)
-        if (claim != null && !claimRegistry!!.canEdit(claim, session)) {
+        if (claim != null && !claimRegistry.canEdit(claim, session)) {
             blockPlacerLog.debug(
                 "BlockPlace rejected: pos={} is inside {}'s claim", rawPos, claim.ownerName)
             return
