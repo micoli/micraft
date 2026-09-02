@@ -38,7 +38,7 @@ class BlockInteractor(
             return
         }
         val claim = claimRegistry?.claimAt(pos.x, pos.y, pos.z)
-        if (claim != null && !claimRegistry!!.canEdit(claim, session)) {
+        if (claim != null && !claimRegistry.canEdit(claim, session)) {
             log.debug("BlockInteract rejected: pos={} is inside {}'s claim", pos, claim.ownerName)
             return
         }

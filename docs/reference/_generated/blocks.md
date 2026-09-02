@@ -91,6 +91,7 @@ Sourced from `resources/blocks/<name>/<name>.yaml`, overridable per-block under 
 | `RAIL_CROSS` | 1.0 | true | false | false | false | — |
 | `RAIL_CURVE_60` | 1.0 | true | false | false | false | — |
 | `RAIL_CURVE_90` | 1.0 | true | false | false | false | — |
+| `RAIL_DOUBLE_CURVE_90` | 1.0 | true | false | false | false | — |
 | `RAIL_LEFT_60` | 1.0 | true | false | false | false | — |
 | `RAIL_RIGHT_60` | 1.0 | true | false | false | false | — |
 | `RAIL_SLOPE_45` | 1.0 | true | false | false | false | — |
