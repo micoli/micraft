@@ -21,6 +21,10 @@ fun validateYaml(yamlPath: Path, schemaUri: URI) {
     }
     runCatching {
             val jsonNode = yamlMapper.readTree(yamlPath.toFile())
+            if (jsonNode == null || jsonNode.isNull || jsonNode.isMissingNode) {
+                log.debug("YAML {} empty — skipping", yamlPath)
+                return@runCatching
+            }
             val schema = schemaFactory.getSchema(schemaUri)
             val errors = schema.validate(jsonNode)
             if (errors.isNotEmpty()) {
