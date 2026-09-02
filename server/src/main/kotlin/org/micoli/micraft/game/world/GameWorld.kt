@@ -14,6 +14,7 @@ import org.micoli.micraft.game.GameTimeService
 import org.micoli.micraft.game.TICK_SECONDS
 import org.micoli.micraft.game.TIME_BROADCAST_TICKS
 import org.micoli.micraft.game.auction.AuctionManager
+import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.RegenProcessor
@@ -96,11 +97,13 @@ class GameWorld(
     private val siegeProjectileTickPipeline: SiegeProjectileTickPipeline,
     val siegeProjectileManager: SiegeProjectileManager,
     val petManager: PetManager,
-    private val tradeManager: TradeManager,
+    val tradeManager: TradeManager,
     val groupManager: GroupManager,
     val guildManager: GuildManager,
+    val guildRegistry: org.micoli.micraft.game.social.GuildRegistry,
     val factionManager: FactionManager,
     val chatService: ChatService,
+    val chatChannelManager: ChatChannelManager,
     val experienceProcessor: ExperienceProcessor,
     val questManager: QuestManager?,
     val mailManager: MailManager?,
@@ -117,9 +120,9 @@ class GameWorld(
     val worldItems: WorldItemManager,
     val combatProcessor: CombatProcessor,
     private val statusEffectProcessor: StatusEffectProcessor,
-    private val regenProcessor: RegenProcessor,
-    private val weatherManager: WeatherManager,
-    private val liquidManager: LiquidManager,
+    val regenProcessor: RegenProcessor,
+    val weatherManager: WeatherManager,
+    val liquidManager: LiquidManager,
     val auctionManager: AuctionManager?,
     private val commandContextProvider: () -> CommandContext,
     private val pluginTickHandlersProvider: () -> List<TickHandler>,

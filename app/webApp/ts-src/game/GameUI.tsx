@@ -923,7 +923,9 @@ export function GameUI() {
     };
     window.mc.groupSync = (json: string) => {
       try {
-        dispatch("group_sync", { group: JSON.parse(json).group ?? null });
+        const group = JSON.parse(json).group ?? null;
+        dispatch("group_sync", { group });
+        window.mcE2E = { ...(window.mcE2E ?? {}), group };
       } catch (e) {
         console.error("[social] groupSync parse error:", e, json);
       }

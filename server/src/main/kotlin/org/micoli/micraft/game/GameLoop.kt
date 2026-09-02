@@ -6,6 +6,7 @@ import io.ktor.server.application.*
 import io.ktor.websocket.*
 import java.nio.file.Path
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
@@ -658,8 +659,10 @@ class GameLoop(
             tradeManager = tradeManager,
             groupManager = groupManager,
             guildManager = guildManager,
+            guildRegistry = guildRegistry,
             factionManager = factionManager,
             chatService = chatService,
+            chatChannelManager = chatChannelManager,
             experienceProcessor = experienceProcessor,
             questManager = questManager,
             mailManager = mailManager,
@@ -703,7 +706,7 @@ class GameLoop(
         GameWorldRegistry(
             defaultWorld = gameWorld,
             e2eEnabled = e2eEnabled,
-            factory = { id -> buildE2eGameWorld(id, newE2eGenerator(), shared) },
+            factory = { id -> buildE2eGameWorld(id, newE2eGenerator(), shared, ::handleCommand) },
         )
 
     fun getTickProfile() = gameWorld.getTickProfile()
@@ -806,29 +809,107 @@ class GameLoop(
             questManager = questManager,
             clearAccumulators = regenProcessor::clearAccumulators,
             applyBuff = closures.applyBuff,
-            sendStatusUpdate = sendStatusUpdate@{ session ->
-                    val charData = session.characterData ?: return@sendStatusUpdate
-                    val armors =
-                        session.state.equipmentBonuses(armorRegistry, weaponRegistry, toolRegistry)
-                    val effectNames =
-                        session.combatState.activeEffects
-                            .map { it.effect::class.simpleName ?: "" }
-                            .toSet()
-                    val derived = DerivedStatsCalculator.compute(charData, armors, effectNames)
-                    session.send(
-                        combatProcessor.makeStatusUpdate(
-                            charData,
-                            derived,
-                            session.state.stance,
-                            session.combatState.attackCooldownUntilMs,
-                            session.combatState.attackCooldownsUntilMs,
-                            session.state.godMode,
-                        ))
-                },
+            sendStatusUpdate = statusUpdateSender(combatProcessor),
         )
+
+    /** Recompute + push a StatusUpdate for [session] through the given world's combat processor. */
+    private fun statusUpdateSender(
+        combatProcessor: CombatProcessor
+    ): suspend (PlayerSession) -> Unit = sender@{ session ->
+        val charData = session.characterData ?: return@sender
+        val armors = session.state.equipmentBonuses(armorRegistry, weaponRegistry, toolRegistry)
+        val effectNames =
+            session.combatState.activeEffects.map { it.effect::class.simpleName ?: "" }.toSet()
+        val derived = DerivedStatsCalculator.compute(charData, armors, effectNames)
+        session.send(
+            combatProcessor.makeStatusUpdate(
+                charData,
+                derived,
+                session.state.stance,
+                session.combatState.attackCooldownUntilMs,
+                session.combatState.attackCooldownsUntilMs,
+                session.state.godMode,
+            ))
+    }
 
     private val commandContext =
         (commandContextFactory ?: ::buildDefaultCommandContext).invoke(commandContextClosures)
+
+    // A ?gameSession= connection runs its commands against its own GameWorld's subsystems, not the
+    // default world's. Derived once per world from [commandContext] (process-level closures stay
+    // shared, world-scoped managers are swapped in).
+    private val worldCommandContexts = ConcurrentHashMap<String, CommandContext>()
+
+    /**
+     * A connected player by name, across every world (a `?gameSession=` browser client included).
+     */
+    internal fun sessionByName(playerName: String): PlayerSession? =
+        gameWorldRegistry.all().firstNotNullOfOrNull { w ->
+            w.sessions.all().find { it.state.name == playerName }
+        }
+
+    /**
+     * The [GameWorld] this session is connected to (a `?gameSession=` client's own, or default).
+     */
+    internal fun worldOf(session: PlayerSession): GameWorld =
+        gameWorldRegistry.resolve(session.gameSessionId)
+
+    internal fun commandContextFor(session: PlayerSession): CommandContext {
+        val gw = worldOf(session)
+        if (gw === gameWorld) return commandContext
+        return worldCommandContexts.getOrPut(gw.id) {
+            commandContext.copy(
+                world = gw.world,
+                worldItems = gw.worldItems,
+                npcManager = gw.npcManager,
+                petManager = gw.petManager,
+                vehicleManager = gw.vehicleManager,
+                placeableManager = gw.placeableManager,
+                siegeWeaponManager = gw.siegeWeaponManager,
+                scenes = gw.sceneRegistry,
+                tradeManager = gw.tradeManager,
+                auctionManager = gw.auctionManager,
+                claimRegistry = gw.claimRegistry,
+                claimManager = gw.claimManager,
+                groupManager = gw.groupManager,
+                guildManager = gw.guildManager,
+                guildRegistry = gw.guildRegistry,
+                factionManager = gw.factionManager,
+                questManager = gw.questManager,
+                weatherManager = gw.weatherManager,
+                liquidManager = gw.liquidManager,
+                chatService = gw.chatService,
+                chatChannelManager = gw.chatChannelManager,
+                clearAccumulators = gw.regenProcessor::clearAccumulators,
+                applyBuff = { session, effect, durationSec ->
+                    gw.combatProcessor.applyStatusEffectTo(
+                        session, effect, durationSec, System.currentTimeMillis())
+                },
+                sendStatusUpdate = statusUpdateSender(gw.combatProcessor),
+                flushWorld = { gw.world.flushDirty() },
+                sessions = gw.sessions::all,
+                broadcast = { msg -> gw.sessions.broadcast(msg) },
+                kickSession = { name ->
+                    gw.sessions
+                        .all()
+                        .find { it.state.name == name }
+                        ?.socket
+                        ?.close(CloseReason(CloseReason.Codes.NORMAL, "Kicked by server"))
+                },
+                getGameTime = { gw.gameTicks },
+                setGameTime = { gw.gameTicks = it },
+                refetchChunks = { s ->
+                    s.loadedChunks.clear()
+                    s.inFlightChunks.clear()
+                    s.lastChunkPos = null
+                    val cx = Math.floorDiv(s.state.pos.x.toInt(), WorldConstants.CHUNK_SIZE)
+                    val cz = Math.floorDiv(s.state.pos.z.toInt(), WorldConstants.CHUNK_SIZE)
+                    gw.chunkStreamer.requestAround(s, cx, cz)
+                },
+            )
+        }
+    }
+
     private val intentCollector =
         IntentCollector(
             blockBreaker,
@@ -941,7 +1022,7 @@ class GameLoop(
     private fun flushWorld() = gameWorld.flush()
 
     private fun buildPreferencesSync(session: PlayerSession): ServerMessage.PreferencesSync {
-        val knownChannels = chatChannelManager.listKnownChannels()
+        val knownChannels = worldOf(session).chatChannelManager.listKnownChannels()
         val commandList =
             commands.values
                 .filter { cmd ->
@@ -992,7 +1073,7 @@ class GameLoop(
         session: PlayerSession,
         msg: ClientMessage.PreferencesUpdate
     ) {
-        val knownChannels = chatChannelManager.listKnownChannels()
+        val knownChannels = worldOf(session).chatChannelManager.listKnownChannels()
         val newSubscribed =
             (msg.subscribedChannels.filter { it.name in knownChannels } +
                     ChatChannelManager.PROTECTED.map { ChannelSubscription(it) })
@@ -1469,7 +1550,7 @@ class GameLoop(
                         i18n.t(session.state.language, "rbac:server:no_permission")))
                 return
             }
-            handler.execute(session, args, commandContext)
+            handler.execute(session, args, commandContextFor(session))
         } else
             session.send(
                 ServerMessage.Notification(
@@ -1484,8 +1565,9 @@ class GameLoop(
     ): List<String> {
         val handler = commands.values.find { it.id.toString() == commandId } ?: return emptyList()
         if (argIndex !in handler.autocompleteArgs) return emptyList()
-        val session = sessionRegistry.all().find { it.state.name == playerName }
-        return handler.completeArg(argIndex, partial, session, commandContext)
+        val session = sessionByName(playerName)
+        return handler.completeArg(
+            argIndex, partial, session, session?.let { commandContextFor(it) } ?: commandContext)
     }
 
     /**
@@ -1620,6 +1702,7 @@ class GameLoop(
                 networkStats = networkStats,
                 permissions = sessionPermissions,
                 chunkMode = chunkSection.transport)
+        session.gameSessionId = gameSessionId
         if (gw.spawnEditMode != EditMode.GAME)
             session.state = session.state.copy(editMode = gw.spawnEditMode)
         // E2E graphics overrides, pushed to the client via PreferencesSync:
@@ -1659,11 +1742,12 @@ class GameLoop(
         if (reservedCharacter != null)
             session.state = session.state.copy(characterData = reservedCharacter)
         log.info(
-            "player connected: {} name={} user={} (total={})",
+            "player connected: {} name={} user={} world={} (total={})",
             id.take(8),
             playerName,
             userName,
-            sessionRegistry.size + 1)
+            gw.id,
+            gw.sessions.size + 1)
 
         session.send(
             ServerMessage.Welcome(

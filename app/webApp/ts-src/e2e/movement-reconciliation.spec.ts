@@ -4,7 +4,7 @@ import { accountFor, connectClient, e2e, expect } from "./helpers/connectClient"
 import { actions } from "./helpers/game";
 
 test("client prediction tracks the server position while and after moving", async ({ page }, info) => {
-  const acct = accountFor(info.parallelIndex);
+  const acct = accountFor(info);
   await connectClient(page, acct);
 
   const start = (await e2e(page)).position;

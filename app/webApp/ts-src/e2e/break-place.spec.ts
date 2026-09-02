@@ -7,7 +7,7 @@ import { actions, creativePlaceBlock, targetBlockIs, targetBlockIsNot, waitForIn
 import { postApiAdminPlayersByNameGive } from "../generated/api/requests";
 
 test("breaking then placing a block each propagate a WorldUpdate", async ({ page }, info) => {
-  const acct = accountFor(info.parallelIndex);
+  const acct = accountFor(info);
   await connectClient(page, acct);
 
   await postApiAdminPlayersByNameGive({
@@ -36,7 +36,7 @@ test("breaking then placing a block each propagate a WorldUpdate", async ({ page
 });
 
 test("the admin API seeds a fixture into this test's isolated world", async ({ page }, info) => {
-  const acct = accountFor(info.parallelIndex);
+  const acct = accountFor(info);
   await connectClient(page, acct);
   await postApiAdminPlayersByNameGive({
     ...adminWorldContext(acct),
