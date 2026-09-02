@@ -8,9 +8,10 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, "../../../..");
 
 /**
- * One Ktor server (booted with MICRAFT_E2E=1) hosts every test's world: each spec gets an
- * isolated GameWorld keyed by its Playwright parallelIndex via ?gameSession=. So workers can run
- * in parallel against the single server without sharing terrain or a player set.
+ * One Ktor server (booted with MICRAFT_E2E=1) hosts every test's world: each test gets its own
+ * isolated GameWorld and account, keyed by `testInfo.testId` (+ retry) via ?gameSession= — see
+ * `accountFor` in helpers/connectClient.ts. So tests never share terrain, drops or a player set,
+ * whether run in parallel or sequentially on the same worker.
  */
 export default defineConfig({
   testDir: ".",

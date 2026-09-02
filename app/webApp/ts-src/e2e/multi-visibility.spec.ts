@@ -4,8 +4,8 @@ import { accountFor, connectClient, e2e, expect } from "./helpers/connectClient"
 import { actions } from "./helpers/game";
 
 test("two clients in one world see each other and each other's movement", async ({ browser }, info) => {
-  const a = accountFor(info.parallelIndex, "a");
-  const b = { ...accountFor(info.parallelIndex, "b"), session: a.session }; // same world
+  const a = accountFor(info, "a");
+  const b = { ...accountFor(info, "b"), session: a.session }; // same world
 
   const ctxA = await browser.newContext();
   const ctxB = await browser.newContext();

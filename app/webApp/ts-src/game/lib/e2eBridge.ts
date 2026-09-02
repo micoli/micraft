@@ -28,6 +28,13 @@ export interface E2eSnapshot {
   targetBlock: { x: number; y: number; z: number } | null;
   remotePlayers: { id: string; name: string; x: number; y: number; z: number }[];
   lastWorldUpdate: { x: number; y: number; z: number; block: string }[] | null;
+  /** Current party, mirrored from the GroupSync message. `null` when not in a group. */
+  group: {
+    id: string;
+    leaderId: string;
+    leaderName: string;
+    members: { playerId: string; playerName: string; online: boolean }[];
+  } | null;
 }
 
 /**

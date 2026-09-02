@@ -137,6 +137,7 @@ Rebuild outputs write directly into `app/webApp/build/web/` (the only dir Ktor s
 - Never read `data/world/default_world/chunks/` — binary compressed, useless.
 - Commits must respect Conventional Commits + Semantic Commit Messages standard; body ≤10 lines.
 - Every server-side change (`server/src/main/`) needs new or updated test in `server/src/test/`. Run `make dc CMD="./gradlew :server:test"` before committing.
+- **E2E tests (`app/webApp/ts-src/e2e/`) must drive the game the way a player does**: slash commands (`actions(page).runCommand("/…")`), real key presses (`page.keyboard.press`), clicks on in-game UI. Do not push raw `window.mcState.events` / WebSocket messages or mutate game state in memory. Assertions may *read* `window.mcE2E` (the observation bridge); to expose new state for an assertion, add a field to `E2eSnapshot` fed from the same server message the UI consumes. New per-test account/world via `accountFor(testInfo)`.
 - Before any commit use `make dc CMD="./gradlew :spotlessApply"` and `make dc CMD="npm run format"` (ts-src working dir handled by Makefile target).
 - never update mc_bindings.js, it's a generated JS-side BabylonJS binding glue, you should rather update source files.
 - never edit `app/webApp/ts-src/generated/api/**` by hand — TanStack Query hooks/types generated from `server/openapi/openapi.yaml` via `make gen-api` (or `npm run gen:api`). Committed like mc_bindings.js, regenerate after changing a server route.

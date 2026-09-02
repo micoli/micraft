@@ -6,6 +6,7 @@ import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.game.FactionsSection
 import org.micoli.micraft.game.SharedGameServices
+import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.RegenProcessor
@@ -24,6 +25,7 @@ import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.ExperienceConfigData
 import org.micoli.micraft.game.rpg.ExperienceProcessor
+import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.social.FactionManager
 import org.micoli.micraft.game.social.GroupManager
 import org.micoli.micraft.game.social.GuildManager
@@ -67,6 +69,8 @@ data class GameWorldOptions(
     val commandContextProvider: () -> CommandContext = {
         error("this GameWorld has no CommandContext")
     },
+    /** Runs a slash command typed by a player in this world (default: drop it). */
+    val onCommand: suspend (PlayerSession, String) -> Unit = { _, _ -> },
     val broadcastPlayerAdmin: suspend (String) -> Unit = {},
     /** Non-null makes the game clock start here instead of at the live-server default. */
     val initialGameTicks: Long? = null,
@@ -91,7 +95,7 @@ fun buildGameWorld(
     val world = WorldState(generator = generator, persistence = null)
     val sessions = SessionRegistry()
     val playerPersister = PlayerPersister(null)
-    val chatChannelManager = shared.chatChannelManager
+    val chatChannelManager = ChatChannelManager() // per-world: custom channels don't leak across
     val chatService = ChatService(chatChannelManager, playerPersister::save, sessions::all)
 
     val combatLog: suspend (String) -> Unit = { msg ->
@@ -345,7 +349,7 @@ fun buildGameWorld(
         IntentCollector(
             blockBreaker,
             blockPlacer,
-            onCommand = { _, _ -> },
+            onCommand = { session, cmd -> opts.onCommand(session, cmd) },
             blockInteractor = blockInteractor,
             onChatSend = { s, c, t -> chatService.routeMessage(s, c, t) },
             combatProcessor = combatProcessor,
@@ -373,8 +377,10 @@ fun buildGameWorld(
         tradeManager = tradeManager,
         groupManager = groupManager,
         guildManager = guildManager,
+        guildRegistry = guildRegistry,
         factionManager = factionManager,
         chatService = chatService,
+        chatChannelManager = chatChannelManager,
         experienceProcessor = experienceProcessor,
         questManager = questManager,
         mailManager = null,
@@ -414,6 +420,7 @@ fun buildE2eGameWorld(
     id: String,
     generator: ChunkGenerator,
     shared: SharedGameServices,
+    onCommand: suspend (PlayerSession, String) -> Unit = { _, _ -> },
 ): GameWorld =
     buildGameWorld(
         id,
@@ -422,5 +429,6 @@ fun buildE2eGameWorld(
         GameWorldOptions(
             tickSections = TickSection.E2E,
             spawnEditMode = EditMode.GAME,
+            onCommand = onCommand,
         ),
     )

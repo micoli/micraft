@@ -1,4 +1,5 @@
-import { Page, expect } from "@playwright/test";
+import { Page, TestInfo, expect } from "@playwright/test";
+import { createHash } from "node:crypto";
 import { adminWorldContext, createPlayer } from "./admin";
 import { CENTER_X, CENTER_Z, DROP_Y, GROUND_Y, SETTLED_Y } from "./constants";
 import { actions } from "./game";
@@ -147,12 +148,19 @@ export async function e2e(page: Page): Promise<E2eSnapshot> {
 
 export type { E2eSnapshot };
 
-export function accountFor(index: number, slot: "a" | "b" = "a"): E2eAccount {
+/**
+ * A fresh account + isolated GameWorld per test. Keyed by `testInfo.testId` (+ `retry`, so a
+ * retried run never inherits the failed attempt's world). `parallelIndex` stays in the visible
+ * names to keep server logs readable; `slot` distinguishes the clients of a multi-client spec.
+ */
+export function accountFor(testInfo: TestInfo, slot: "a" | "b" | "c" = "a"): E2eAccount {
+  const h = createHash("sha256").update(`${testInfo.testId}:${testInfo.retry}:${slot}`).digest("hex");
+  const short = h.slice(0, 12);
   return {
-    email: `e2e-${slot}-${index}@test.local`,
-    charName: `E2E_${slot.toUpperCase()}_${index}`,
-    charId: `00000000-0000-4000-8000-${slot}${String(index).padStart(11, "0")}`,
-    session: `w${index}`,
+    email: `e2e-${slot}-${testInfo.parallelIndex}-${short}@test.local`,
+    charName: `E2E_${slot.toUpperCase()}_${short}`,
+    charId: `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`,
+    session: `w-${short}`,
   };
 }
 

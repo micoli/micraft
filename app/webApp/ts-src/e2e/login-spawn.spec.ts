@@ -4,7 +4,7 @@ import { accountFor, connectClient, e2e, expect } from "./helpers/connectClient"
 import { SPAWN_X, SPAWN_Z, SETTLED_Y } from "./helpers/constants";
 
 test("login, spawn and the chunk region around it", async ({ page }, info) => {
-  const acct = accountFor(info.parallelIndex);
+  const acct = accountFor(info);
   // connectClient already waits for chunk-mesh settle + the spawn fall to finish.
   // recenter=false: this spec asserts the real spawn point, not the shared re-centred pose.
   await connectClient(page, acct, "en", false);

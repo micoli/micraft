@@ -97,6 +97,10 @@ open class PlayerSession(
 
     @Volatile var chunkSocket: DefaultWebSocketSession? = null
 
+    // The `?gameSession=` id this connection joined — null / "default" is GameLoop's default world.
+    // Lets command handling resolve the session's own GameWorld instead of the default one.
+    @Volatile var gameSessionId: String? = null
+
     // Ktor's WebSocketSession.send() isn't safe to call concurrently from multiple coroutines
     // (e.g. the per-tick movement broadcast racing another player's action broadcast landing on
     // this same session) — it can silently wedge the outgoing frame channel, leaving the socket
