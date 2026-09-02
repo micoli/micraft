@@ -400,6 +400,7 @@ group:
     player_not_found: "Player '{0}' not found."
     target_in_group: "That player is already in a group."
     invited: "Invited {0} to your group."
+    joined: "You joined {0}'s group."
     invite_expired: "That group invitation has expired."
 guild:
   server:
