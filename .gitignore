@@ -43,3 +43,4 @@ data/world/
 
 # scratch output of `gradlew --write-verification-metadata ... --dry-run`
 /gradle/verification-metadata.dryrun.xml
+test-results
