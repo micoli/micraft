@@ -119,6 +119,7 @@ class GroupManager(
         channelManager.registerChannel(group.channel)
         chatService.subscribe(target, group.channel)
         chatService.syncChannels(target)
+        target.send(ServerMessage.Notification(t(target, "group:server:joined", group.leaderName)))
         pushSync(group)
     }
 

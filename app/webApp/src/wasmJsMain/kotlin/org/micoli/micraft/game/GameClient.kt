@@ -131,6 +131,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private var token = ""
     private val e2eSession: String = if (jsE2eEnabled()) jsE2eSessionId() else ""
     private var lastWorldUpdateJson: String = "null"
+    /** Rolling window of `ServerMessage.Notification` texts, mirrored into the e2e snapshot. */
+    private val e2eNotifications = ArrayDeque<String>()
 
     @OptIn(ExperimentalWasmJsInterop::class)
     private fun applyE2eLook() {
@@ -163,6 +165,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 """"reconcile":{"xz":${lc.e2eReconcileXz},"y":${lc.e2eReconcileY}},""" +
                 """"loadedChunks":$chunks,"targetBlock":$target,""" +
                 """"remotePlayers":${remotePlayerManager.e2ePlayersJson()},""" +
+                """"notifications":${Json.encodeToString(e2eNotifications.toList())},""" +
                 """"lastWorldUpdate":$lastWorldUpdateJson}"""
         jsUpdateE2E(json)
     }
@@ -743,6 +746,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 typedHandler { msg: ServerMessage.Notification ->
                     uiState.pushNotification(msg.message)
                     uiState.pushLog(msg.message, msg.channel)
+                    if (e2eSession.isNotEmpty()) {
+                        e2eNotifications.addLast(msg.message)
+                        while (e2eNotifications.size > 50) e2eNotifications.removeFirst()
+                    }
                 })
             put(
                 ServerMessage.ChatMessage::class,

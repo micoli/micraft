@@ -36,6 +36,18 @@ class GroupManagerTest {
     }
 
     @Test
+    fun `accepting an invite notifies the joiner`() = runBlocking {
+        val a = testSession(id = "a", name = "A")
+        val b = testSession(id = "b", name = "B")
+        val gm = setup(a, b)
+        gm.create(a)
+        gm.invite(a, "B")
+        gm.respondInvite(b, gm.pendingGroupIdFor(b.id)!!, true)
+        assertTrue(
+            b.sent.filterIsInstance<ServerMessage.Notification>().any { it.message.contains("A") })
+    }
+
+    @Test
     fun `leader leaving transfers leadership to oldest member`() = runBlocking {
         val a = testSession(id = "a", name = "A")
         val b = testSession(id = "b", name = "B")

@@ -27,6 +27,8 @@ export interface E2eSnapshot {
   inventory: Record<string, number>;
   targetBlock: { x: number; y: number; z: number } | null;
   remotePlayers: { id: string; name: string; x: number; y: number; z: number }[];
+  /** Rolling window of `ServerMessage.Notification` texts, newest last. */
+  notifications: string[];
   lastWorldUpdate: { x: number; y: number; z: number; block: string }[] | null;
   /** Current party, mirrored from the GroupSync message. `null` when not in a group. */
   group: {
