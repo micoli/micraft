@@ -234,6 +234,31 @@
     "name": "No Xp State",
     "source": ".stories/game/layout/XpBar.stories.tsx"
   },
+  "game-windows-actionblockeditor--adds-a-variable": {
+    "title": "Game/Windows/ActionBlockEditor",
+    "name": "Adds A Variable",
+    "source": ".stories/game/window/ActionBlockEditor.stories.tsx"
+  },
+  "game-windows-actionblockeditor--cancel-closes": {
+    "title": "Game/Windows/ActionBlockEditor",
+    "name": "Cancel Closes",
+    "source": ".stories/game/window/ActionBlockEditor.stories.tsx"
+  },
+  "game-windows-actionblockeditor--delete-closes": {
+    "title": "Game/Windows/ActionBlockEditor",
+    "name": "Delete Closes",
+    "source": ".stories/game/window/ActionBlockEditor.stories.tsx"
+  },
+  "game-windows-actionblockeditor--open": {
+    "title": "Game/Windows/ActionBlockEditor",
+    "name": "Open",
+    "source": ".stories/game/window/ActionBlockEditor.stories.tsx"
+  },
+  "game-windows-actionblockeditor--with-name-error": {
+    "title": "Game/Windows/ActionBlockEditor",
+    "name": "With Name Error",
+    "source": ".stories/game/window/ActionBlockEditor.stories.tsx"
+  },
   "game-windows-auctionhouse--basic": {
     "title": "Game/Windows/AuctionHouse",
     "name": "Basic",
@@ -298,6 +323,26 @@
     "title": "Game/Windows/CreativeBlockPanel",
     "name": "No Match",
     "source": ".stories/game/window/CreativeBlockPanel.stories.tsx"
+  },
+  "game-windows-macroeditor--adds-a-macro": {
+    "title": "Game/Windows/MacroEditor",
+    "name": "Adds A Macro",
+    "source": ".stories/game/window/MacroEditor.stories.tsx"
+  },
+  "game-windows-macroeditor--cancel-closes": {
+    "title": "Game/Windows/MacroEditor",
+    "name": "Cancel Closes",
+    "source": ".stories/game/window/MacroEditor.stories.tsx"
+  },
+  "game-windows-macroeditor--empty": {
+    "title": "Game/Windows/MacroEditor",
+    "name": "Empty",
+    "source": ".stories/game/window/MacroEditor.stories.tsx"
+  },
+  "game-windows-macroeditor--with-macros": {
+    "title": "Game/Windows/MacroEditor",
+    "name": "With Macros",
+    "source": ".stories/game/window/MacroEditor.stories.tsx"
   },
   "game-windows-mailboxoverlay--compose-with-inventory": {
     "title": "Game/Windows/MailboxOverlay",
