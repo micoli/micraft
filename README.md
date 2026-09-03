@@ -45,6 +45,9 @@ make test                     # all test suites
 
 | Command | Usage | Description | Options / Autocomplete |
 |---------|-------|-------------|------------------------|
+| `/actionblock:activate` | `/actionblock:activate [x y z]` | Turn the targeted block into a named action block. | — |
+| `/actionblock:delete` | `/actionblock:delete <name>` | Delete a named action block. | — |
+| `/actionblock:edit` | `/actionblock:edit <name> <name\|onActivate\|onTargetEvent\|onRemoteEvent\|var:key> <value>` | Edit a field of a named action block. | — |
 | `/auction` | `/auction` | Opens the auction house. | — |
 | `/buff` | `/buff <hp\|mana\|hpregen\|manaregen>` | Apply a temporary buff to yourself. | hp, mana, hpregen, manaregen |
 | `/character` | `/character` | Show your RPG character sheet | — |

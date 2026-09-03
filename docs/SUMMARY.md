@@ -19,6 +19,7 @@
     - [Slash commands](systems/slash-commands.md)
     - [Keybindings](systems/keybindings.md)
     - [Macros](systems/macros.md)
+    - [Action blocks](systems/action-blocks.md)
     - [HUD layout editor](systems/layout-editor.md)
     - [Translations (i18n)](systems/i18n.md)
     - [Auth & RBAC](systems/auth-rbac.md)
