@@ -14,6 +14,21 @@ fun jsCreatePlayerModelNow(scene: JsAny, skin: String): JsAny =
 fun jsSetPlayerNameplate(model: JsAny, scene: JsAny, text: String, color: String): Unit =
     js("mc.setPlayerNameplate(model, scene, text, color)")
 
+// ── Action blocks ────────────────────────────────────────────────────────────
+
+fun jsAddActionBlockIcon(scene: JsAny, id: String, x: Double, y: Double, z: Double): Unit =
+    js("mc.addActionBlockIcon(scene, id, x, y, z)")
+
+fun jsRemoveActionBlockIcon(id: String): Unit = js("mc.removeActionBlockIcon(id)")
+
+fun jsClearActionBlockIcons(): Unit = js("mc.clearActionBlockIcons()")
+
+fun jsSetActionBlockHighlight(scene: JsAny, x: Double, y: Double, z: Double): Unit =
+    js("mc.setActionBlockHighlight(scene, x, y, z)")
+
+fun jsClearActionBlockHighlight(scene: JsAny): Unit =
+    js("mc.setActionBlockHighlight(scene, null, null, null)")
+
 fun jsSetPlayerTransform(
     model: JsAny,
     x: Double,

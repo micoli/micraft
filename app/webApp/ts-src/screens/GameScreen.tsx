@@ -15,6 +15,7 @@ import { ServerLog } from "../game/components/ServerLog";
 import { Notifications } from "../game/components/Notifications";
 import { PauseMenu } from "../game/overlays/PauseMenu";
 import { MacroEditor } from "../game/overlays/MacroEditor";
+import { ActionBlockEditor } from "../game/overlays/ActionBlockEditor";
 import { LayoutEditor } from "../game/layout/LayoutEditor";
 import { getWidget, resolveActiveLayout, widgetStyle, WIDGET_REGISTRY } from "../game/layout/LayoutEngine";
 import { CodexModal } from "../game/components/codex/CodexModal";
@@ -265,7 +266,7 @@ export function GameScreen() {
 
       {!state.disconnectMsg && !state.chunkLoading && (
         <>
-          <HUD data={state.hud} layoutStyle={widgetStyle(activeLayout, "HUD")} />
+          <HUD data={state.hud} actionBlock={state.hudActionBlock} layoutStyle={widgetStyle(activeLayout, "HUD")} />
           {(state.preferences?.statisticsVisible ?? false) && (
             <Statistics data={state.hud} layoutStyle={widgetStyle(activeLayout, "STATISTICS")} />
           )}
@@ -628,6 +629,15 @@ export function GameScreen() {
               onSave={handleMacrosSave}
               onClose={() => {
                 dispatch("macro_editor_close");
+                resumePointerLock();
+              }}
+            />
+          )}
+          {state.actionBlockForm && (
+            <ActionBlockEditor
+              data={state.actionBlockForm}
+              onClose={() => {
+                dispatch("actionblock_form_close");
                 resumePointerLock();
               }}
             />

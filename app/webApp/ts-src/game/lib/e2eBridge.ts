@@ -29,6 +29,10 @@ export interface E2eSnapshot {
   remotePlayers: { id: string; name: string; x: number; y: number; z: number }[];
   /** Rolling window of `ServerMessage.Notification` texts, newest last. */
   notifications: string[];
+  /** Named action blocks known to the client (drives ★ icons + Tab targeting). */
+  actionBlocks: { name: string; x: number; y: number; z: number }[];
+  /** The action block currently Tab-targeted, or null. */
+  actionBlockTarget: { x: number; y: number; z: number } | null;
   lastWorldUpdate: { x: number; y: number; z: number; block: string }[] | null;
   /** Current party, mirrored from the GroupSync message. `null` when not in a group. */
   group: {

@@ -408,6 +408,11 @@ declare global {
       zOff?: number,
     ): void;
     hideTargetOutline(): void;
+    // Action blocks
+    addActionBlockIcon(scene: Scene, id: string, x: number, y: number, z: number): void;
+    removeActionBlockIcon(id: string): void;
+    clearActionBlockIcons(): void;
+    setActionBlockHighlight(scene: Scene, x: number | null, y: number | null, z: number | null): void;
     showBreakOverlay(
       scene: Scene,
       x: number,
@@ -639,6 +644,12 @@ declare global {
     consumePreferencesUpdate(): string;
     setPendingRunMacroScript(script: string): void;
     consumeRunMacroScript(): string;
+    openActionBlockForm(json: string): void;
+    saveActionBlock(json: string): void;
+    consumeSaveActionBlock(): string;
+    deleteActionBlock(json: string): void;
+    consumeDeleteActionBlock(): string;
+    hudActionBlock(json: string): void;
     showPreferences(tab?: string): void;
     openCodex(): void;
     openCraft(): void;

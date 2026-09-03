@@ -1,8 +1,16 @@
-import { HudData } from "../../types";
+import { ActionBlockHudData, HudData } from "../../types";
 import { cn } from "../../../primitives/cn";
 import { HudRow } from "./HudRow";
 
-export function HUD({ data, layoutStyle }: { data: HudData | null; layoutStyle?: React.CSSProperties }) {
+export function HUD({
+  data,
+  actionBlock,
+  layoutStyle,
+}: {
+  data: HudData | null;
+  actionBlock?: ActionBlockHudData | null;
+  layoutStyle?: React.CSSProperties;
+}) {
   if (!data) return null;
   const { stance, biome, weather, targetBlock, zoneLevel } = data;
 
@@ -20,6 +28,14 @@ export function HUD({ data, layoutStyle }: { data: HudData | null; layoutStyle?:
         <HudRow label={"Stance"} value={stance} />
         <HudRow label={"Block"} value={targetBlock ?? ""} />
         <HudRow label={"Zone Lv"} value={zoneLevel ?? ""} />
+        {actionBlock && (
+          <>
+            <HudRow label={"ActionBlock"} value={actionBlock.name} />
+            <div className="text-amber-300/80 text-[11px] whitespace-pre-wrap break-all max-w-[240px]">
+              {JSON.stringify(actionBlock.values)}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

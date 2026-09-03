@@ -75,6 +75,8 @@ const initial: UiState = {
   preferences: null,
   pauseMenuOpen: false,
   macroEditorOpen: false,
+  actionBlockForm: null,
+  hudActionBlock: null,
   characterOpen: false,
   characterSyncData: null,
   ingameMapVisible: false,
@@ -163,6 +165,7 @@ export function GameUI() {
   const questJournalOpenRef = useRef(false);
   const mailboxOpenRef = useRef(false);
   const macroEditorOpenRef = useRef(false);
+  const actionBlockFormOpenRef = useRef(false);
   const ingameMapOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
   const chunkLoadingRef = useRef(false);
@@ -298,6 +301,10 @@ export function GameUI() {
   useLayoutEffect(() => {
     macroEditorOpenRef.current = state.macroEditorOpen;
   }, [state.macroEditorOpen]);
+
+  useEffect(() => {
+    actionBlockFormOpenRef.current = state.actionBlockForm !== null;
+  }, [state.actionBlockForm]);
   useLayoutEffect(() => {
     ingameMapOpenRef.current = state.ingameMapVisible;
   }, [state.ingameMapVisible]);
@@ -316,6 +323,7 @@ export function GameUI() {
       state.auctionHouseOpen ||
       state.claimPanelOpen ||
       state.trade !== null ||
+      state.actionBlockForm !== null ||
       state.npcDialog !== null;
 
     // Any modal takes over the screen: close the pause menu and always release pointer lock.
@@ -343,6 +351,7 @@ export function GameUI() {
     state.auctionHouseOpen,
     state.claimPanelOpen,
     state.trade,
+    state.actionBlockForm,
     state.npcDialog,
     dispatch,
   ]);
@@ -366,6 +375,7 @@ export function GameUI() {
         state.characterOpen ||
         state.macroEditorOpen ||
         state.pauseMenuOpen ||
+        state.actionBlockForm !== null ||
         state.scenePlaceConfirmOpen;
   }, [
     state.chunkLoading,
@@ -375,6 +385,7 @@ export function GameUI() {
     state.characterOpen,
     state.macroEditorOpen,
     state.pauseMenuOpen,
+    state.actionBlockForm,
     state.scenePlaceConfirmOpen,
   ]);
 
@@ -743,6 +754,33 @@ export function GameUI() {
       return v;
     };
 
+    const pendingSaveActionBlockRef = { current: "" };
+    window.mc.openActionBlockForm = (json: string) => {
+      dispatch("actionblock_form_open", { data: JSON.parse(json) });
+    };
+    window.mc.saveActionBlock = (json: string) => {
+      pendingSaveActionBlockRef.current = json;
+    };
+    window.mc.consumeSaveActionBlock = () => {
+      const v = pendingSaveActionBlockRef.current;
+      pendingSaveActionBlockRef.current = "";
+      return v;
+    };
+
+    window.mc.hudActionBlock = (json: string) => {
+      dispatch("hud_actionblock", { data: json === "null" ? null : JSON.parse(json) });
+    };
+
+    const pendingDeleteActionBlockRef = { current: "" };
+    window.mc.deleteActionBlock = (json: string) => {
+      pendingDeleteActionBlockRef.current = json;
+    };
+    window.mc.consumeDeleteActionBlock = () => {
+      const v = pendingDeleteActionBlockRef.current;
+      pendingDeleteActionBlockRef.current = "";
+      return v;
+    };
+
     window.mc.showPreferences = (tab) => dispatch("preferences_show", tab ? { tab: tab as Tab } : undefined);
     window.mc.openCodex = () => dispatch("codex_open");
     window.mc.openCraft = () => dispatch("craft_open");
@@ -1080,6 +1118,11 @@ export function GameUI() {
         }
         if (macroEditorOpenRef.current) {
           dispatch("macro_editor_close");
+          resumeGame();
+          return;
+        }
+        if (actionBlockFormOpenRef.current) {
+          dispatch("actionblock_form_close");
           resumeGame();
           return;
         }

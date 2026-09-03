@@ -11,6 +11,7 @@ import { registerKeyboard } from "./game/lib/input/keyboard";
 import { registerMouse } from "./game/lib/input/mouse";
 import { registerCamera } from "./game/lib/camera";
 import { registerTargeting } from "./game/lib/targeting/targeting";
+import { registerActionBlockIcons } from "./game/lib/world/actionBlockIcons";
 import { registerSiegeTrajectory } from "./game/lib/siegeTrajectory";
 import { registerZoneBounds } from "./game/lib/targeting/zoneBounds";
 import { registerClaimTool } from "./game/lib/targeting/claimTool";
@@ -179,6 +180,7 @@ window.mc = {
   ...registerMouse(),
   ...registerCamera(),
   ...registerTargeting(),
+  ...registerActionBlockIcons(),
   ...registerSiegeTrajectory(),
   ...registerZoneBounds(),
   ...registerClaimTool(),
@@ -333,6 +335,12 @@ window.mc = {
   consumePreferencesUpdate: () => "",
   setPendingRunMacroScript: () => {},
   consumeRunMacroScript: () => "",
+  openActionBlockForm: () => {},
+  saveActionBlock: () => {},
+  consumeSaveActionBlock: () => "",
+  deleteActionBlock: () => {},
+  consumeDeleteActionBlock: () => "",
+  hudActionBlock: () => {},
   showPreferences: () => {},
   openCodex: () => {},
   openCraft: () => {},

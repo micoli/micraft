@@ -64,6 +64,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private val chunkManager = ChunkManager(scene)
     private val remotePlayerManager = RemotePlayerManager(scene)
     private val npcManager = NpcManager(scene) { localPlayerId }
+    private val actionBlockManager = ActionBlockManager(scene)
     private val vehicleManager = VehicleManager(scene)
     private val placeableManager = PlaceableManager(scene)
     private val siegeWeaponManager = SiegeWeaponManager()
@@ -110,6 +111,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             playerName = { currentPlayerName },
             playerId = { localPlayerId ?: "" },
             npcManager = npcManager,
+            actionBlockManager = actionBlockManager,
             isVehicleTarget = { id -> id in vehicleManager.modelsMap() },
             vehiclePositionOf = { id -> vehicleManager.positionsMap()[id] },
             isPlaceableTarget = { id -> id in placeableManager.modelsMap() },
@@ -167,6 +169,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 """"loadedChunks":$chunks,"targetBlock":$target,""" +
                 """"remotePlayers":${remotePlayerManager.e2ePlayersJson()},""" +
                 """"notifications":${Json.encodeToString(e2eNotifications.toList())},""" +
+                """"actionBlocks":${actionBlockManager.e2eJson()},""" +
+                """"actionBlockTarget":${
+                    actionBlockManager.currentTarget()?.let { """{"x":${it.x},"y":${it.y},"z":${it.z}}""" } ?: "null"
+                },""" +
                 """"lastWorldUpdate":$lastWorldUpdateJson}"""
         jsUpdateE2E(json)
     }
@@ -490,6 +496,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         chunkManager.clear()
         remotePlayerManager.clear()
         npcManager.clear()
+        actionBlockManager.clear()
     }
 
     private fun handleMessage(msg: ServerMessage) {
@@ -1082,6 +1089,26 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 ServerMessage.PetRosterSync::class,
                 typedHandler { msg: ServerMessage.PetRosterSync ->
                     jsPetRosterUpdate(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.ActionBlockSync::class,
+                typedHandler { msg: ServerMessage.ActionBlockSync ->
+                    actionBlockManager.sync(msg.blocks)
+                })
+            put(
+                ServerMessage.ActionBlockUpsert::class,
+                typedHandler { msg: ServerMessage.ActionBlockUpsert ->
+                    actionBlockManager.upsert(msg.info)
+                })
+            put(
+                ServerMessage.ActionBlockRemove::class,
+                typedHandler { msg: ServerMessage.ActionBlockRemove ->
+                    actionBlockManager.remove(msg.pos)
+                })
+            put(
+                ServerMessage.ActionBlockPayload::class,
+                typedHandler { msg: ServerMessage.ActionBlockPayload ->
+                    jsOpenActionBlockForm(Json.encodeToString(msg))
                 })
         }
 }

@@ -1,4 +1,6 @@
 import {
+  ActionBlockFormData,
+  ActionBlockHudData,
   AttackMeta,
   AuctionData,
   ChannelSubscription,
@@ -66,6 +68,8 @@ export interface UiState {
   preferences: PreferencesData | null;
   pauseMenuOpen: boolean;
   macroEditorOpen: boolean;
+  actionBlockForm: ActionBlockFormData | null;
+  hudActionBlock: ActionBlockHudData | null;
   characterOpen: boolean;
   characterSyncData: CharacterSyncData | null;
   ingameMapVisible: boolean;
@@ -245,6 +249,15 @@ const componentVisibilityRegistry = {
   pause_menu_hide: (state: UiState) => ({ ...state, pauseMenuOpen: false }),
   macro_editor_open: (state: UiState) => ({ ...state, macroEditorOpen: true }),
   macro_editor_close: (state: UiState) => ({ ...state, macroEditorOpen: false }),
+  actionblock_form_open: (state: UiState, payload: { data: ActionBlockFormData }) => ({
+    ...state,
+    actionBlockForm: payload.data,
+  }),
+  actionblock_form_close: (state: UiState) => ({ ...state, actionBlockForm: null }),
+  hud_actionblock: (state: UiState, payload: { data: ActionBlockHudData | null }) => ({
+    ...state,
+    hudActionBlock: payload.data,
+  }),
   character_open: (state: UiState) => ({ ...state, characterOpen: true }),
   character_close: (state: UiState) => ({ ...state, characterOpen: false }),
   hotbar_toggle: (state: UiState) => ({ ...state, hotbarVisible: !state.hotbarVisible }),

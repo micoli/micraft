@@ -77,6 +77,21 @@ export interface NpcDialogData {
   shopItems?: ShopItemData[];
 }
 
+export interface ActionBlockHudData {
+  name: string;
+  values: Record<string, string>;
+}
+
+export interface ActionBlockFormData {
+  pos: { x: number; y: number; z: number };
+  name: string;
+  onActivate: string;
+  onTargetEvent: string;
+  onRemoteEvent: string;
+  variables: Record<string, string>;
+  error?: string | null;
+}
+
 export interface MailData {
   id: string;
   from: string;
