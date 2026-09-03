@@ -225,7 +225,11 @@ const loadingRegistry = {
 };
 
 const componentVisibilityRegistry = {
-  disconnect_show: (state: UiState, payload: { message: string }) => ({ ...state, disconnectMsg: payload.message }),
+  disconnect_show: (state: UiState, payload: { message: string }) => ({
+    ...state,
+    disconnectMsg: payload.message,
+    chunkLoading: { meshed: 0, downloaded: 0, total: 0 },
+  }),
   disconnect_hide: (state: UiState) => ({ ...state, disconnectMsg: null }),
   npc_dialog_open: (state: UiState, payload: { data: NpcDialogData }) => ({
     ...state,

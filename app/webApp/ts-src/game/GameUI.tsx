@@ -61,7 +61,7 @@ const initial: UiState = {
   nonEmptyPages: [],
   consoleOpen: false,
   disconnectMsg: null,
-  chunkLoading: null,
+  chunkLoading: { meshed: 0, downloaded: 0, total: 0 },
   layouts: [defaultLayout()],
   activeLayout: "default",
   layoutEditorOpen: false,
