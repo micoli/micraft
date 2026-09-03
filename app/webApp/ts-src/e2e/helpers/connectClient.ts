@@ -25,7 +25,30 @@ export interface E2eAccount {
  * WARRIOR character `onConnect` then uses), so `acct.playerId` matches `mcE2E.playerId`, the
  * client gets CharacterSync, and it never routes to `/char-rpg-create`.
  */
-export async function connectClient(page: Page, acct: E2eAccount, lang = "en", recenter = true): Promise<void> {
+export interface ConnectOptions {
+  lang?: string;
+  recenter?: boolean;
+  /** Multiplies every internal wait. Multi-client specs boot several Babylon contexts at once —
+   *  under CI's software GL the later clients need more slack. */
+  timeoutScale?: number;
+  /** Skip the chunk-mesh + gravity-settle waits (and any re-centre). For specs that only drive
+   *  UI / server state and never touch the player's position or the terrain. */
+  worldReady?: boolean;
+}
+
+export async function connectClient(
+  page: Page,
+  acct: E2eAccount,
+  opts: ConnectOptions | string = {},
+  recenterLegacy = true,
+): Promise<void> {
+  const {
+    lang = "en",
+    recenter = true,
+    timeoutScale = 1,
+    worldReady = true,
+  } = typeof opts === "string" ? { lang: opts, recenter: recenterLegacy } : opts;
+  const scale = (ms: number) => Math.round(ms * timeoutScale);
   const created = await createPlayer(acct);
   await putApiAdminGametime({ ...adminWorldContext(acct), body: { hour: 9, minute: 0 } });
   acct.playerId = created.playerId;
@@ -59,7 +82,7 @@ export async function connectClient(page: Page, acct: E2eAccount, lang = "en", r
 
   try {
     await page.waitForFunction(() => (window as { mcE2E?: { ready?: boolean } }).mcE2E?.ready === true, {
-      timeout: 35_000,
+      timeout: scale(35_000),
     });
     await actions(page).runCommand("/god:on");
   } catch (err) {
@@ -82,6 +105,11 @@ export async function connectClient(page: Page, acct: E2eAccount, lang = "en", r
     throw err;
   }
 
+  if (!worldReady) {
+    expect(page.url(), "client stayed in-game, no rpg-create bounce").not.toContain("char-rpg-create");
+    return;
+  }
+
   // Wait until the chunk under the player and its four orthogonal neighbours are meshed — the
   // deterministic minimum every spec relies on (a target block to break, ground to stand on,
   // remote players in view). Meshing the *whole* view distance takes far longer under CI's
@@ -102,7 +130,7 @@ export async function connectClient(page: Page, acct: E2eAccount, lang = "en", r
       ].every(([dx, dz]) => meshed.has(`${pcx + dx},${pcz + dz}`));
     },
     undefined,
-    { timeout: 25_000, polling: 200 },
+    { timeout: scale(25_000), polling: 200 },
   );
 
   // God mode + re-centre: every spec (except login-spawn) runs from the middle of the map, a few
@@ -132,7 +160,7 @@ export async function connectClient(page: Page, acct: E2eAccount, lang = "en", r
       return (w.__stableTicks ?? 0) >= 5;
     },
     [GROUND_Y, SETTLED_Y] as const,
-    { timeout: 30_000, polling: 200 },
+    { timeout: scale(30_000), polling: 200 },
   );
 
   expect(page.url(), "client stayed in-game, no rpg-create bounce").not.toContain("char-rpg-create");

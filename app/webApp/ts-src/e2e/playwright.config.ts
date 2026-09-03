@@ -1,11 +1,9 @@
 import { defineConfig } from "@playwright/test";
-import { fileURLToPath } from "node:url";
-import { resolve, dirname } from "node:path";
+import { resolve } from "node:path";
 
 const PORT = process.env.E2E_PORT ?? "8091";
-// this file: <repo>/app/webApp/ts-src/e2e/playwright.config.ts  → up 4
-const HERE = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(HERE, "../../../..");
+// playwright loads this config with cwd = app/webApp/ts-src (see package.json scripts)  → up 3
+const REPO_ROOT = resolve(process.cwd(), "../../..");
 
 /**
  * One Ktor server (booted with MICRAFT_E2E=1) hosts every test's world: each test gets its own

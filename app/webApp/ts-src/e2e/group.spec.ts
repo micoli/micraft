@@ -109,9 +109,12 @@ async function formsGroupAndTwoOthersJoin(browser: Browser, info: TestInfo, driv
   const contexts = await Promise.all([browser.newContext(), browser.newContext(), browser.newContext()]);
   const [pageA, pageB, pageC] = await Promise.all(contexts.map((ctx) => ctx.newPage()));
 
-  await connectClient(pageA, a);
-  await connectClient(pageB, b);
-  await connectClient(pageC, c);
+  // Group is pure UI + server state — no movement, no terrain. Skip the world-ready waits and
+  // give the later Babylon contexts extra slack under CI's software GL.
+  const opts = { worldReady: false, recenter: false, timeoutScale: 2 } as const;
+  await connectClient(pageA, a, opts);
+  await connectClient(pageB, b, opts);
+  await connectClient(pageC, c, opts);
 
   const idA = (await e2e(pageA)).playerId;
 
@@ -150,9 +153,11 @@ async function formsGroupAndTwoOthersJoin(browser: Browser, info: TestInfo, driv
 }
 
 test("a player forms a group and two others join it (gui)", async ({ browser }, info) => {
+  test.setTimeout(240_000); // three Babylon contexts to boot
   await formsGroupAndTwoOthersJoin(browser, info, guiDriver);
 });
 
 test("a player forms a group and two others join it (command)", async ({ browser }, info) => {
+  test.setTimeout(240_000);
   await formsGroupAndTwoOthersJoin(browser, info, commandDriver);
 });
