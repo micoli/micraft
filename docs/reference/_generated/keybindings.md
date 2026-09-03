@@ -61,6 +61,7 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 | `ui` | `faction_panel` | Alt+KeyF |
 | `building` | `place_rotate` | KeyR |
 | `building` | `block_interact` | KeyC |
+| `building` | `actionblock_edit` | Alt+KeyB |
 | `building` | `scene_confirm` | Enter |
 | `building` | `scene_cancel` | Escape |
 | `building` | `claim_mark_corner` | KeyL |

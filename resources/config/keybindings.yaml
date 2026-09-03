@@ -62,6 +62,7 @@ ui:
 building:
   place_rotate: [KeyR]
   block_interact: [KeyC]
+  actionblock_edit: ["Alt+KeyB"]
   scene_confirm: [Enter]
   scene_cancel: [Escape]
   claim_mark_corner: [KeyL]

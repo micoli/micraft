@@ -131,6 +131,7 @@ class LocalPlayerController(
     private val playerName: () -> String,
     private val playerId: () -> String,
     private val npcManager: NpcManager,
+    private val actionBlockManager: org.micoli.micraft.game.ActionBlockManager? = null,
     private val isVehicleTarget: (String) -> Boolean = { false },
     private val vehiclePositionOf: (String) -> Vec3? = { null },
     private val isPlaceableTarget: (String) -> Boolean = { false },
@@ -211,6 +212,7 @@ class LocalPlayerController(
     @OptIn(ExperimentalWasmJsInterop::class) var localPlayerModel: JsAny? = null
 
     var currentCombatTargetId: String? = null
+    var currentActionBlockTarget: BlockPos? = null
     var autoTargetEnabled: Boolean = true
     var continuousBreak: Boolean = false
     private var breakArmed = true
@@ -691,6 +693,22 @@ class LocalPlayerController(
                     outMessages.trySend(ClientMessage.ChatSend(jsGetActiveChannel(), consoleInput))
             }
         }
+        val saveAb = jsConsumeSaveActionBlock()
+        if (saveAb.isNotEmpty()) {
+            runCatching {
+                    outMessages.trySend(
+                        Json.decodeFromString<ClientMessage.SaveActionBlock>(saveAb))
+                }
+                .onFailure { jsConsoleLog("bad SaveActionBlock: ${it.message}") }
+        }
+        val deleteAb = jsConsumeDeleteActionBlock()
+        if (deleteAb.isNotEmpty()) {
+            runCatching {
+                    outMessages.trySend(
+                        Json.decodeFromString<ClientMessage.DeleteActionBlock>(deleteAb))
+                }
+                .onFailure { jsConsoleLog("bad DeleteActionBlock: ${it.message}") }
+        }
         if (jsIsConsoleInputFocused()) return
 
         val physicsT0 = jsNow()
@@ -938,17 +956,11 @@ class LocalPlayerController(
                     val n = event.removePrefix("shortcut_page_").toIntOrNull()
                     if (n != null && n in 1..10) goToPage(n - 1)
                 }
-                event == "combat_target_cycle" -> {
-                    val next =
-                        npcManager.cycleNearestNpc(
-                            predX,
-                            predY,
-                            predZ,
-                            jsGetCameraRotationY(camera),
-                            currentCombatTargetId)
-                    currentCombatTargetId = next
-                    npcManager.setHighlightTarget(next)
-                    outMessages.trySend(ClientMessage.SetCombatTarget(next, isNpc = true))
+                event == "combat_target_cycle" -> cycleUnifiedTarget()
+                event == "actionblock_edit" -> {
+                    val pos =
+                        currentActionBlockTarget ?: raycastBlock(maxInteractionDistance)?.target
+                    if (pos != null) outMessages.trySend(ClientMessage.RequestActionBlock(pos))
                 }
                 event == "npc_interact" -> {
                     val targetId = currentCombatTargetId ?: return@repeat
@@ -1874,6 +1886,7 @@ class LocalPlayerController(
                 gpuUploadMsMax,
                 wsDecodeMsAvg,
             )
+            jsHudActionBlock(actionBlockManager?.hudJson(target) ?: "null")
             uiState.hud =
                 HudData(
                     x = hudX,
@@ -2258,6 +2271,41 @@ class LocalPlayerController(
         return null
     }
 
+    /** Tab: cycle NPCs first, then named action blocks, then deselect — one unified target. */
+    private fun cycleUnifiedTarget() {
+        val yaw = jsGetCameraRotationY(camera)
+        val abm = actionBlockManager
+        if (currentActionBlockTarget == null) {
+            val next = npcManager.cycleNearestNpc(predX, predY, predZ, yaw, currentCombatTargetId)
+            if (next != null) {
+                currentCombatTargetId = next
+                npcManager.setHighlightTarget(next)
+                outMessages.trySend(ClientMessage.SetCombatTarget(next, isNpc = true))
+                return
+            }
+        }
+        if (currentCombatTargetId != null) {
+            currentCombatTargetId = null
+            npcManager.setHighlightTarget(null)
+            outMessages.trySend(ClientMessage.SetCombatTarget(null, isNpc = true))
+        }
+        if (abm == null) return
+        val candidates = abm.targetCandidates(predX, predY, predZ)
+        val cur = currentActionBlockTarget
+        val nextBlock =
+            when {
+                candidates.isEmpty() -> null
+                cur == null -> candidates.first()
+                else -> {
+                    val idx = candidates.indexOf(cur)
+                    if (idx < 0 || idx == candidates.lastIndex) null else candidates[idx + 1]
+                }
+            }
+        currentActionBlockTarget = nextBlock
+        abm.setHighlight(nextBlock)
+        outMessages.trySend(ClientMessage.ActionBlockTarget(nextBlock))
+    }
+
     private fun enrichCommand(cmd: String): String {
         val trimmed = cmd.trim()
         val parts = trimmed.split(Regex("\\s+"))
@@ -2268,6 +2316,10 @@ class LocalPlayerController(
         if (parts.size == 2 && parts[0] == "/vehicule:add") {
             val t = hoverTarget ?: return cmd
             return "/vehicule:add ${parts[1]} ${t.x} ${t.y} ${t.z}"
+        }
+        if (parts.size == 1 && parts[0] == "/actionblock:activate") {
+            val t = hoverTarget ?: return cmd
+            return "/actionblock:activate ${t.x} ${t.y} ${t.z}"
         }
         if (parts.size != 1) return cmd
         return when (parts[0]) {

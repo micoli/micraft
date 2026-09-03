@@ -66,6 +66,7 @@ const ACTION_GROUPS: Record<string, string[]> = {
   building: [
     "place_rotate",
     "block_interact",
+    "actionblock_edit",
     "scene_confirm",
     "scene_cancel",
     "claim_mark_corner",

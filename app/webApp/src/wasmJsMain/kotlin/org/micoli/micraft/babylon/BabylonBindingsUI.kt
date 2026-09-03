@@ -45,6 +45,14 @@ fun jsIsConsoleInputFocused(): Boolean = js("mc.isConsoleInputFocused()")
 
 fun jsConsumeConsoleInput(): String = js("mc.consumeConsoleInput()")
 
+fun jsOpenActionBlockForm(json: String): Unit = js("mc.openActionBlockForm(json)")
+
+fun jsConsumeSaveActionBlock(): String = js("mc.consumeSaveActionBlock()")
+
+fun jsConsumeDeleteActionBlock(): String = js("mc.consumeDeleteActionBlock()")
+
+fun jsHudActionBlock(json: String): Unit = js("mc.hudActionBlock(json)")
+
 fun jsShowNotification(message: String): Unit = js("mc.showNotification(message)")
 
 // ── Hotbar / ShortcutBar ──────────────────────────────────────────────────────
