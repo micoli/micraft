@@ -18,4 +18,6 @@ val MACRO_CONTEXT_SCHEMA: List<MacroContextVar> =
         MacroContextVar("currentHp", "Int"),
         MacroContextVar("currentMana", "Int"),
         MacroContextVar("effects", "List<String>"),
+        MacroContextVar("player", "{ name, id, hp, mana }", listOf("name", "id", "hp", "mana")),
+        MacroContextVar("self", "{ name, x, y, z, vars }", listOf("name", "x", "y", "z", "vars")),
     )

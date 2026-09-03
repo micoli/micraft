@@ -13,9 +13,21 @@ class MacroExecutorTest {
     fun `MACRO_CONTEXT_SCHEMA covers all MacroContext fields and no more`() {
         val schemaNames = MACRO_CONTEXT_SCHEMA.map { it.name }.toSet()
         val contextFields = MacroContext::class.memberProperties.map { it.name }.toSet()
-        // posX/posY/posZ are exposed as position.x/y/z in JEXL
-        val posFields = setOf("posX", "posY", "posZ")
-        val directFields = contextFields - posFields
+        // posX/posY/posZ -> position.x/y/z; playerName/playerId -> player.*;
+        // blockName/blockX/blockY/blockZ/blockVariables -> self.*
+        val backingFields =
+            setOf(
+                "posX",
+                "posY",
+                "posZ",
+                "playerName",
+                "playerId",
+                "blockName",
+                "blockX",
+                "blockY",
+                "blockZ",
+                "blockVariables")
+        val directFields = contextFields - backingFields
 
         val missing = directFields - schemaNames
         assertTrue(missing.isEmpty(), "MacroContext fields missing from schema: $missing")
@@ -24,7 +36,7 @@ class MacroExecutorTest {
         assertNotNull(posEntry, "'position' entry missing from schema")
         assertEquals(setOf("x", "y", "z"), posEntry.children.toSet(), "position.children mismatch")
 
-        val orphaned = schemaNames - (directFields + setOf("position"))
+        val orphaned = schemaNames - (directFields + setOf("position", "player", "self"))
         assertTrue(orphaned.isEmpty(), "Schema entries with no MacroContext field: $orphaned")
     }
 
