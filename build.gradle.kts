@@ -25,6 +25,7 @@ plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
         resolution("fast-uri", "3.1.6")
         resolution("body-parser", "1.20.6")
         resolution("brace-expansion", "2.1.4")
+        resolution("qs", "6.16.0")
         // Cross-major, but the public API is unchanged and both are consumed via require().
         resolution("serialize-javascript", "7.0.7")
         resolution("diff", "8.0.3")
