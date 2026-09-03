@@ -130,6 +130,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private var serverPort = 0
     private var token = ""
     private val e2eSession: String = if (jsE2eEnabled()) jsE2eSessionId() else ""
+    private val needsWorld: Boolean = if (jsE2eEnabled()) jsE2eNeedsWorld() else true
     private var lastWorldUpdateJson: String = "null"
     /** Rolling window of `ServerMessage.Notification` texts, mirrored into the e2e snapshot. */
     private val e2eNotifications = ArrayDeque<String>()
@@ -350,7 +351,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                             playerName = currentPlayerNameLocal,
                                             userName = currentUsername,
                                             preferredLanguage = currentLang,
-                                            token = currentToken))))
+                                            token = currentToken,
+                                            needsWorld = needsWorld))))
 
                             val inputJob = launch {
                                 while (isActive) {
@@ -500,8 +502,9 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             put(
                 ServerMessage.Welcome::class,
                 typedHandler { msg: ServerMessage.Welcome ->
-                    isInitialLoading = true
-                    uiState.chunkLoadingProgress = Triple(0, 0, expectedChunkCount)
+                    isInitialLoading = needsWorld
+                    uiState.chunkLoadingProgress =
+                        if (needsWorld) Triple(0, 0, expectedChunkCount) else null
                     localPlayerId = msg.playerId
                     chunkTransportMode = msg.chunkTransport
                     if (msg.chunkTransport == "http") {

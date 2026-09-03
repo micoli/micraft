@@ -109,6 +109,28 @@ class GameLoopTest {
     }
 
     @Test
+    fun onConnect_needsWorldFalse_forcesFlyingAndSendsOnlyCenterChunk() = runTest {
+        val gameLoop = GameLoop(testWorld())
+        val socket = FakeWebSocketSession()
+        val connect =
+            ClientMessage.Connect(
+                playerName = "Nomad", userName = "nomad@example.com", needsWorld = false)
+        socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        socket.incomingChannel.close()
+
+        gameLoop.onConnect(socket)
+
+        val received =
+            generateSequence { socket.outgoingChannel.tryReceive().getOrNull() }
+                .map { ServerMessageCodec.decode((it as Frame.Binary).readBytes()) }
+                .toList()
+
+        assertEquals(1, received.filterIsInstance<ServerMessage.ChunkData>().size)
+        val update = received.filterIsInstance<ServerMessage.PlayerUpdate>().last()
+        assertTrue(update.state.flying)
+    }
+
+    @Test
     fun preferencesUpdate_continuousBreak_roundTripsThroughSync() = runTest {
         val gameLoop = GameLoop(testWorld())
         val socket = FakeWebSocketSession()
