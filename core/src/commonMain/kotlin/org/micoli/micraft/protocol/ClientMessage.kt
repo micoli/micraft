@@ -20,6 +20,7 @@ sealed class ClientMessage {
         val userName: String = playerName,
         val preferredLanguage: String = "en",
         val token: String = "",
+        val needsWorld: Boolean = true,
     ) : ClientMessage()
 
     @ProtoId(1)

@@ -302,6 +302,9 @@ fun jsE2eSessionId(): String =
     js(
         "(typeof window !== 'undefined' && window.__mcE2ESession) ? String(window.__mcE2ESession) : ''")
 
+fun jsE2eNeedsWorld(): Boolean =
+    js("!(typeof window !== 'undefined' && window.__mcE2ENoWorld === true)")
+
 fun jsUpdateE2E(json: String): Unit =
     js("(window.mc && window.mc.updateE2E) ? window.mc.updateE2E(json) : undefined")
 

@@ -31,9 +31,14 @@ export interface ConnectOptions {
   /** Multiplies every internal wait. Multi-client specs boot several Babylon contexts at once —
    *  under CI's software GL the later clients need more slack. */
   timeoutScale?: number;
-  /** Skip the chunk-mesh + gravity-settle waits (and any re-centre). For specs that only drive
-   *  UI / server state and never touch the player's position or the terrain. */
+  /** Skip the chunk-mesh + gravity-settle waits (and any re-centre). The server still streams the
+   *  full view radius — use `noWorld` to also switch that off. */
   worldReady?: boolean;
+  /** Strongest opt-out: tells the server not to stream the world at all
+   *  (`ClientMessage.Connect.needsWorld = false`) — only the spawn chunk is sent and the player is
+   *  forced into flying. Implies `worldReady: false` (no chunk-mesh / gravity waits, no loading
+   *  overlay). For specs that only drive UI / server state and never touch terrain or position. */
+  noWorld?: boolean;
 }
 
 export async function connectClient(
@@ -46,7 +51,8 @@ export async function connectClient(
     lang = "en",
     recenter = true,
     timeoutScale = 1,
-    worldReady = true,
+    noWorld = false,
+    worldReady = !noWorld,
   } = typeof opts === "string" ? { lang: opts, recenter: recenterLegacy } : opts;
   const scale = (ms: number) => Math.round(ms * timeoutScale);
   const created = await createPlayer(acct);
@@ -61,10 +67,15 @@ export async function connectClient(
   page.on("requestfailed", (r) => logs.push(`[reqfail] ${r.url()} ${r.failure()?.errorText ?? ""}`));
 
   await page.addInitScript(
-    ([a, l]) => {
-      const w = window as unknown as { __mcE2E?: boolean; __mcE2ESession?: string };
+    ([a, l, noWorld]) => {
+      const w = window as unknown as {
+        __mcE2E?: boolean;
+        __mcE2ESession?: string;
+        __mcE2ENoWorld?: boolean;
+      };
       w.__mcE2E = true;
       w.__mcE2ESession = a.session;
+      w.__mcE2ENoWorld = noWorld;
       localStorage.setItem("micraft_last_user", a.email);
       localStorage.setItem("micraft_account_email", a.email);
       localStorage.setItem("micraft_last_lang", l);
@@ -75,7 +86,7 @@ export async function connectClient(
       );
       sessionStorage.setItem("micraft_auth_token", "");
     },
-    [acct, lang] as const,
+    [acct, lang, noWorld] as const,
   );
 
   await page.goto(`/game/${encodeURIComponent(acct.email)}/${acct.playerId ?? acct.charId}`);

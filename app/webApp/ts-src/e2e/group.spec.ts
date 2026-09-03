@@ -109,9 +109,11 @@ async function formsGroupAndTwoOthersJoin(browser: Browser, info: TestInfo, driv
   const contexts = await Promise.all([browser.newContext(), browser.newContext(), browser.newContext()]);
   const [pageA, pageB, pageC] = await Promise.all(contexts.map((ctx) => ctx.newPage()));
 
-  // Group is pure UI + server state — no movement, no terrain. Skip the world-ready waits and
-  // give the later Babylon contexts extra slack under CI's software GL.
-  const opts = { worldReady: false, recenter: false, timeoutScale: 2 } as const;
+  // Group is pure UI + server state — no movement, no terrain. `noWorld` tells the server not to
+  // stream the world at all (needsWorld=false) and skips the world-ready waits. Three (here, six
+  // across the two parallel tests) headless Babylon contexts under CI's software GL still need
+  // generous slack.
+  const opts = { noWorld: true, recenter: false, timeoutScale: process.env.CI ? 2 : 1 } as const;
   await connectClient(pageA, a, opts);
   await connectClient(pageB, b, opts);
   await connectClient(pageC, c, opts);
@@ -153,11 +155,11 @@ async function formsGroupAndTwoOthersJoin(browser: Browser, info: TestInfo, driv
 }
 
 test("a player forms a group and two others join it (gui)", async ({ browser }, info) => {
-  test.setTimeout(240_000); // three Babylon contexts to boot
+  test.setTimeout(process.env.CI ? 240_000 : 60_000);
   await formsGroupAndTwoOthersJoin(browser, info, guiDriver);
 });
 
 test("a player forms a group and two others join it (command)", async ({ browser }, info) => {
-  test.setTimeout(240_000);
+  test.setTimeout(process.env.CI ? 240_000 : 60_000);
   await formsGroupAndTwoOthersJoin(browser, info, commandDriver);
 });

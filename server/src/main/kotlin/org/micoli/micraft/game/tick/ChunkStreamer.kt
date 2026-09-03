@@ -39,6 +39,7 @@ class ChunkStreamer(private val world: WorldState) {
     }
 
     fun checkAndRequest(session: PlayerSession) {
+        if (!session.worldStreaming) return
         val focus = session.creativeFocusPos
         val (fx, fz) = focus ?: (session.state.pos.x to session.state.pos.z)
         if (focus == null) updateVelocity(session)
@@ -71,6 +72,7 @@ class ChunkStreamer(private val world: WorldState) {
         session.state.overrideForwardViewRadius ?: WorldConstants.FORWARD_VIEW_RADIUS
 
     fun requestAround(session: PlayerSession, cx: Int, cz: Int) {
+        if (!session.worldStreaming) return
         val yaw = session.state.orientation.yaw.toDouble()
         val radius = forwardViewRadius(session)
         val offsets = buildOffsets(yaw, cx, cz, radius)
@@ -149,6 +151,7 @@ class ChunkStreamer(private val world: WorldState) {
     }
 
     suspend fun deliverReady(session: PlayerSession) {
+        if (!session.worldStreaming) return
         val pool = readyPools[session.id] ?: return
         if (pool.isEmpty()) return
 

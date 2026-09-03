@@ -1601,6 +1601,9 @@ class GameLoop(
 
         val playerName = connectMsg?.playerName ?: "Player"
         val userName = connectMsg?.userName ?: playerName
+        // needsWorld=false (E2E, no terrain): skip chunk streaming past the center chunk and force
+        // flying so the player doesn't fall through the missing ground.
+        val needsWorld = connectMsg?.needsWorld ?: true
         val preferredLanguage =
             connectMsg?.preferredLanguage?.let { if (it in i18n.locales) it else "en" } ?: "en"
 
@@ -1638,7 +1641,7 @@ class GameLoop(
                 pos = spawn,
                 orientation = saved?.orientation ?: Orientation(0f, 0f),
                 stance = saved?.stance ?: PlayerStance.STANDING,
-                flying = saved?.flying ?: false,
+                flying = if (!needsWorld) true else (saved?.flying ?: false),
                 speedMultiplier = saved?.speedMultiplier ?: 1f,
                 language = language,
                 shadersEnabled = shadersEnabled,
@@ -1703,6 +1706,7 @@ class GameLoop(
                 permissions = sessionPermissions,
                 chunkMode = chunkSection.transport)
         session.gameSessionId = gameSessionId
+        session.worldStreaming = needsWorld
         if (gw.spawnEditMode != EditMode.GAME)
             session.state = session.state.copy(editMode = gw.spawnEditMode)
         // E2E graphics overrides, pushed to the client via PreferencesSync:
@@ -1827,10 +1831,14 @@ class GameLoop(
             )
         session.lastChunkPos = spawnCp
         gw.chunkStreamer.sendCenterChunkNow(session, spawnCp)
-        gw.chunkStreamer.requestAround(session, spawnCp.cx, spawnCp.cz)
+        if (session.worldStreaming) gw.chunkStreamer.requestAround(session, spawnCp.cx, spawnCp.cz)
         log.debug("chunk requests queued for {}", id.take(8))
 
         gw.onPlayerJoin(session)
+
+        // No terrain to stand on: push the forced-flying state to the client itself (onPlayerJoin
+        // only broadcasts to other sessions) so it stops predicting a fall and settles at once.
+        if (!needsWorld) session.send(ServerMessage.PlayerUpdate(session.state))
 
         // The frame loop below targets this player's world — for a ?gameSession= client that is a
         // dynamic GameWorld, not GameLoop's default one. Alias the world-scoped subsystems so the

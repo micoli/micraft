@@ -54,6 +54,15 @@ class ChunkStreamerTest {
     }
 
     @Test
+    fun worldStreamingDisabled_noChunksQueued() {
+        val streamer = ChunkStreamer(testWorld())
+        val session = testSession(pos = Vec3(8f, 8f, 8f)).also { it.worldStreaming = false }
+        streamer.checkAndRequest(session)
+        streamer.requestAround(session, 0, 0)
+        assertTrue(session.inFlightChunks.isEmpty() && session.lastChunkPos == null)
+    }
+
+    @Test
     fun cleanupSession_unknownSession_doesNotThrow() {
         val streamer = ChunkStreamer(testWorld())
         streamer.cleanupSession("nonexistent-session-id")
