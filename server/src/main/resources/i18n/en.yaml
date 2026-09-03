@@ -278,6 +278,18 @@ macros:
   server:
     error: "Macro '{0}' error: {1}"
 
+actionblock:
+  server:
+    unavailable: "Action blocks are not available on this world."
+    usage: "Usage: /actionblock:edit <name> <field> <value>"
+    not_a_block: "You must target a solid block."
+    no_permission: "You cannot edit this action block."
+    created: "Action block '{0}' created."
+    saved: "Action block '{0}' saved."
+    deleted: "Action block '{0}' deleted."
+    name_taken: "The name '{0}' is already used by another action block."
+    error: "Action block '{0}' error: {1}"
+
 set:
   server:
     usage: "Usage: /set <hp|mana> <playerName> <value>"

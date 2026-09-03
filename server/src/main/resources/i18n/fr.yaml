@@ -278,6 +278,18 @@ macros:
   server:
     error: "Erreur dans la macro '{0}' : {1}"
 
+actionblock:
+  server:
+    unavailable: "Les blocs d'action ne sont pas disponibles sur ce monde."
+    usage: "Usage : /actionblock:edit <nom> <champ> <valeur>"
+    not_a_block: "Vous devez viser un bloc solide."
+    no_permission: "Vous ne pouvez pas éditer ce bloc d'action."
+    created: "Bloc d'action « {0} » créé."
+    saved: "Bloc d'action « {0} » enregistré."
+    deleted: "Bloc d'action « {0} » supprimé."
+    name_taken: "Le nom « {0} » est déjà utilisé par un autre bloc d'action."
+    error: "Erreur du bloc d'action « {0} » : {1}"
+
 set:
   server:
     usage: "Utilisation : /set <hp|mana> <nomJoueur> <valeur>"

@@ -99,6 +99,8 @@ import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
+import org.micoli.micraft.game.world.actionblock.ActionBlockService
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockInteractor
 import org.micoli.micraft.game.world.block.BlockPlacer
@@ -293,6 +295,7 @@ class GameLoop(
         ToolCategoryRegistryLoader(Path.of("data/config/tools.yaml")),
     private val instanceRegistry: InstanceRegistry = InstanceRegistry(persistence),
     private val claimRegistry: ClaimRegistry = ClaimRegistry(persistence),
+    private val actionBlockRegistry: ActionBlockRegistry = ActionBlockRegistry(persistence),
     private var weaponRegistry: Map<String, WeaponDefinition> = weaponRegistryLoader.load(),
     private var toolRegistry: Map<String, ToolDefinition> = toolRegistryLoader.load(),
     private var weaponCategories: Map<EquipmentCategory, WeaponCategoryDefinition> =
@@ -316,6 +319,7 @@ class GameLoop(
             instanceRegistry = instanceRegistry,
             claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
+            actionBlockRegistry = actionBlockRegistry,
         ),
     private val sceneRegistry: SceneRegistry = SceneRegistry(persistence),
     private val npcConfigLoader: NpcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml")),
@@ -471,6 +475,7 @@ class GameLoop(
             instanceRegistry = instanceRegistry,
             claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
+            actionBlockRegistry = actionBlockRegistry,
             weaponRegistry = { weaponRegistry },
             toolRegistry = { toolRegistry },
         ),
@@ -611,6 +616,21 @@ class GameLoop(
 
     private val macroExecutor = MacroExecutor()
 
+    private val actionBlockService =
+        ActionBlockService(
+            registry = actionBlockRegistry,
+            i18n = i18n,
+            broadcast = sessionRegistry::broadcast,
+            runCommand = ::handleCommand,
+            blockAt = { p -> world.getBlock(p.x, p.y, p.z) },
+            claimRegistry = claimRegistry,
+            macroExecutor = macroExecutor,
+        )
+
+    init {
+        blockInteractor.onActionBlockActivate = { s, p -> actionBlockService.onActivate(s, p) }
+    }
+
     private var saveTickCounter = 0
 
     /**
@@ -668,6 +688,7 @@ class GameLoop(
             mailManager = mailManager,
             claimManager = claimManager,
             claimRegistry = claimRegistry,
+            actionBlockService = actionBlockService,
             railNetworkRegistry = railNetworkRegistry,
             sceneRegistry = sceneRegistry,
             playerPersister = playerPersister,
@@ -802,6 +823,7 @@ class GameLoop(
             auctionManager = auctionManager,
             claimRegistry = claimRegistry,
             claimManager = claimManager,
+            actionBlockRegistry = actionBlockRegistry,
             groupManager = groupManager,
             guildManager = guildManager,
             guildRegistry = guildRegistry,
@@ -871,6 +893,7 @@ class GameLoop(
                 auctionManager = gw.auctionManager,
                 claimRegistry = gw.claimRegistry,
                 claimManager = gw.claimManager,
+                actionBlockRegistry = gw.actionBlockService.registry,
                 groupManager = gw.groupManager,
                 guildManager = gw.guildManager,
                 guildRegistry = gw.guildRegistry,
@@ -1132,6 +1155,30 @@ class GameLoop(
             effects =
                 session.combatState.activeEffects.map { it.effect::class.simpleName ?: "Unknown" },
         )
+    }
+
+    private suspend fun handleActionBlockMessage(
+        gw: GameWorld,
+        session: PlayerSession,
+        msg: ClientMessage,
+    ) {
+        val svc = gw.actionBlockService
+        when (msg) {
+            is ClientMessage.ActionBlockTarget -> svc.onTargetEvent(session, msg.pos)
+            is ClientMessage.RequestActionBlock -> svc.handleRequest(session, msg.pos)
+            is ClientMessage.SaveActionBlock ->
+                svc.handleSave(
+                    session,
+                    msg.pos,
+                    msg.name,
+                    msg.onActivate,
+                    msg.onTargetEvent,
+                    msg.onRemoteEvent,
+                    msg.variables,
+                )
+            is ClientMessage.DeleteActionBlock -> svc.handleDelete(session, msg.pos)
+            else -> {}
+        }
     }
 
     private suspend fun handleRunMacro(session: PlayerSession, msg: ClientMessage.RunMacro) {
@@ -1769,6 +1816,7 @@ class GameLoop(
                 SERVER_BUILD_TIMESTAMP,
                 MAX_INTERACTION_DISTANCE))
         session.send(buildRegistrySync())
+        session.send(ServerMessage.ActionBlockSync(gw.actionBlockService.syncList()))
         session.send(
             ServerMessage.RecipeSync(
                 recipes = RecipeRegistry.all(),
@@ -1935,6 +1983,11 @@ class GameLoop(
                                                 }
                                             }
                                         }
+                                        is ClientMessage.ActionBlockTarget,
+                                        is ClientMessage.RequestActionBlock,
+                                        is ClientMessage.SaveActionBlock,
+                                        is ClientMessage.DeleteActionBlock ->
+                                            handleActionBlockMessage(gw, session, msg)
                                         is ClientMessage.RunMacro -> handleRunMacro(session, msg)
                                         is ClientMessage.RunMacroContent ->
                                             handleRunMacroContent(session, msg)

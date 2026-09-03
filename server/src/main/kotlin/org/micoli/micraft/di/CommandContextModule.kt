@@ -25,6 +25,7 @@ import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
 import org.micoli.micraft.game.world.claim.ClaimManager
 import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
@@ -85,6 +86,7 @@ class CommandContextModule {
         instanceRegistry: InstanceRegistry,
         claimRegistry: ClaimRegistry,
         claimManager: ClaimManager,
+        actionBlockRegistry: ActionBlockRegistry,
         vehicleManager: VehicleManager,
         sceneRegistry: SceneRegistry,
     ): CommandContext {
@@ -145,6 +147,7 @@ class CommandContextModule {
             scenes = sceneRegistry,
             claimRegistry = claimRegistry,
             claimManager = claimManager,
+            actionBlockRegistry = actionBlockRegistry,
             groupManager = closures.groupManager,
             guildManager = closures.guildManager,
             guildRegistry = closures.guildRegistry,

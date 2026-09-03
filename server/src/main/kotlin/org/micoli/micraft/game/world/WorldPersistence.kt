@@ -15,6 +15,7 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
+import org.micoli.micraft.game.world.actionblock.ActionBlock
 import org.micoli.micraft.game.world.claim.Claim
 import org.micoli.micraft.game.world.instance.InstanceZone
 import org.micoli.micraft.game.world.scene.Scene
@@ -470,6 +471,28 @@ class WorldPersistence(val worldDir: Path) {
                 Yaml.default.encodeToString(ListSerializer(Claim.serializer()), claims))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save claims: {}", e.message)
+        }
+    }
+
+    private val actionBlocksFile = worldDir.resolve("actionblocks.yaml")
+
+    fun loadActionBlocks(): List<ActionBlock> {
+        if (!actionBlocksFile.exists()) return emptyList()
+        return try {
+            Yaml.default.decodeFromString(
+                ListSerializer(ActionBlock.serializer()), actionBlocksFile.readText())
+        } catch (e: Exception) {
+            worldPersistenceLog.warn("Failed to load action blocks: {}", e.message)
+            emptyList()
+        }
+    }
+
+    fun saveActionBlocks(blocks: List<ActionBlock>) {
+        try {
+            actionBlocksFile.writeText(
+                Yaml.default.encodeToString(ListSerializer(ActionBlock.serializer()), blocks))
+        } catch (e: IOException) {
+            worldPersistenceLog.warn("Failed to save action blocks: {}", e.message)
         }
     }
 

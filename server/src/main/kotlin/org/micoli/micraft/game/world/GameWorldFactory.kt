@@ -36,6 +36,8 @@ import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.vehicle.VehicleTickPipeline
+import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
+import org.micoli.micraft.game.world.actionblock.ActionBlockService
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockInteractor
 import org.micoli.micraft.game.world.block.BlockPlacer
@@ -145,6 +147,7 @@ fun buildGameWorld(
         )
     val instanceRegistry = InstanceRegistry(null)
     val claimRegistry = ClaimRegistry(null)
+    val actionBlockRegistry = ActionBlockRegistry(null)
     val sceneRegistry = SceneRegistry(null)
     val guildRegistry = GuildRegistry(null)
     val railNetworkRegistry = RailNetworkRegistry(world)
@@ -280,6 +283,7 @@ fun buildGameWorld(
             instanceRegistry = instanceRegistry,
             claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
+            actionBlockRegistry = actionBlockRegistry,
         )
     val blockBreaker =
         BlockBreaker(
@@ -291,6 +295,7 @@ fun buildGameWorld(
             instanceRegistry = instanceRegistry,
             claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
+            actionBlockRegistry = actionBlockRegistry,
             weaponRegistry = { shared.weaponRegistry },
             toolRegistry = { shared.toolRegistry },
         )
@@ -335,6 +340,17 @@ fun buildGameWorld(
             i18n = shared.i18n,
         )
     val groupManager = GroupManager(sessions::all, chatService, chatChannelManager, shared.i18n)
+
+    val actionBlockService =
+        ActionBlockService(
+            registry = actionBlockRegistry,
+            i18n = shared.i18n,
+            broadcast = sessions::broadcast,
+            runCommand = { s, cmd -> opts.onCommand(s, cmd) },
+            blockAt = { p -> world.getBlock(p.x, p.y, p.z) },
+            claimRegistry = claimRegistry,
+        )
+    blockInteractor.onActionBlockActivate = { s, p -> actionBlockService.onActivate(s, p) }
 
     npcManager.onPetDied = { pet -> petManager.onPetDied(pet) }
     npcManager.onNpcKilledForPets = { killed -> petManager.grantSharedXpForKill(killed) }
@@ -386,6 +402,7 @@ fun buildGameWorld(
         mailManager = null,
         claimManager = claimManager,
         claimRegistry = claimRegistry,
+        actionBlockService = actionBlockService,
         railNetworkRegistry = railNetworkRegistry,
         sceneRegistry = sceneRegistry,
         playerPersister = playerPersister,

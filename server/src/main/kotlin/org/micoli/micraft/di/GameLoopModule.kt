@@ -63,6 +63,7 @@ import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockInteractor
 import org.micoli.micraft.game.world.block.BlockPlacer
@@ -627,6 +628,7 @@ class GameLoopModule {
         instanceRegistry: InstanceRegistry,
         claimRegistry: ClaimRegistry,
         railNetworkRegistry: RailNetworkRegistry,
+        actionBlockRegistry: ActionBlockRegistry,
     ): BlockInteractor =
         BlockInteractor(
             worldState,
@@ -634,6 +636,7 @@ class GameLoopModule {
             instanceRegistry = instanceRegistry,
             claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
+            actionBlockRegistry = actionBlockRegistry,
         )
 
     @Single
@@ -646,6 +649,7 @@ class GameLoopModule {
         instanceRegistry: InstanceRegistry,
         claimRegistry: ClaimRegistry,
         railNetworkRegistry: RailNetworkRegistry,
+        actionBlockRegistry: ActionBlockRegistry,
         weaponRegistry: Map<String, WeaponDefinition>,
         toolRegistry: Map<String, ToolDefinition>,
     ): BlockBreaker =
@@ -658,6 +662,7 @@ class GameLoopModule {
             instanceRegistry = instanceRegistry,
             claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
+            actionBlockRegistry = actionBlockRegistry,
             weaponRegistry = { weaponRegistry },
             toolRegistry = { toolRegistry },
         )

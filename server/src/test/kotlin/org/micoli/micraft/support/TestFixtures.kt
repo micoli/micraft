@@ -281,6 +281,7 @@ fun testContext(
     scenes: SceneRegistry? = null,
     vehicleManager: VehicleManager? = null,
     petManager: org.micoli.micraft.game.pet.PetManager? = null,
+    actionBlockRegistry: org.micoli.micraft.game.world.actionblock.ActionBlockRegistry? = null,
 ) =
     CommandContext(
         world = world,
@@ -316,6 +317,7 @@ fun testContext(
         namedPoints = namedPoints,
         scenes = scenes,
         vehicleManager = vehicleManager,
+        actionBlockRegistry = actionBlockRegistry,
     )
 
 fun testWeatherManager() = WeatherManager(WeatherConfig())

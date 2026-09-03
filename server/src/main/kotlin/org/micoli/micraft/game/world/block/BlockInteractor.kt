@@ -3,8 +3,10 @@ package org.micoli.micraft.game.world.block
 import kotlin.math.sqrt
 import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
 import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.rail.RailConnection
@@ -29,7 +31,11 @@ class BlockInteractor(
     private val instanceRegistry: InstanceRegistry? = null,
     private val claimRegistry: ClaimRegistry? = null,
     private val railNetworkRegistry: RailNetworkRegistry? = null,
+    private val actionBlockRegistry: ActionBlockRegistry? = null,
 ) {
+    /** Wired by GameLoop: runs a named block's `onActivate` script. */
+    var onActionBlockActivate: suspend (PlayerSession, BlockPos) -> Unit = { _, _ -> }
+
     suspend fun handleInteract(session: PlayerSession, intent: ClientMessage.BlockInteract) {
         val pos = intent.pos
 
@@ -55,6 +61,11 @@ class BlockInteractor(
                 "BlockInteract rejected: dist={} > {}",
                 "%.2f".format(dist),
                 MAX_INTERACTION_DISTANCE)
+            return
+        }
+
+        if (actionBlockRegistry?.isActionBlock(pos) == true) {
+            onActionBlockActivate(session, pos)
             return
         }
 
