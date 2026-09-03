@@ -326,4 +326,30 @@ sealed class ClientMessage {
     @ProtoId(65)
     @Serializable
     data class FactionSetAffiliation(val factionId: String? = null) : ClientMessage()
+
+    /** Client's currently selected action-block target changed (`null` = deselected). */
+    @ProtoId(66)
+    @Serializable
+    data class ActionBlockTarget(val pos: BlockPos? = null) : ClientMessage()
+
+    /**
+     * Open the action-block editor for [pos] — server replies with
+     * [ServerMessage.ActionBlockPayload].
+     */
+    @ProtoId(67) @Serializable data class RequestActionBlock(val pos: BlockPos) : ClientMessage()
+
+    /** Save the action-block logic edited in the form. */
+    @ProtoId(68)
+    @Serializable
+    data class SaveActionBlock(
+        val pos: BlockPos,
+        val name: String,
+        val onActivate: String = "",
+        val onTargetEvent: String = "",
+        val onRemoteEvent: String = "",
+        val variables: Map<String, String> = emptyMap(),
+    ) : ClientMessage()
+
+    /** Remove the action-block logic at [pos] (the block itself stays). */
+    @ProtoId(69) @Serializable data class DeleteActionBlock(val pos: BlockPos) : ClientMessage()
 }
