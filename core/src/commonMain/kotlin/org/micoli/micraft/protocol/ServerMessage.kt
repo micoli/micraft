@@ -530,6 +530,36 @@ sealed class ServerMessage {
         val pets: List<PetInfo>,
         val activePetId: String? = null,
     ) : ServerMessage()
+
+    /** Full list of named action blocks — sent on connect and after any registry change. */
+    @ProtoId(83)
+    @Serializable
+    data class ActionBlockSync(
+        val blocks: List<org.micoli.micraft.game.world.actionblock.ActionBlockInfo>,
+    ) : ServerMessage()
+
+    /** Incremental add/rename of one action block. */
+    @ProtoId(84)
+    @Serializable
+    data class ActionBlockUpsert(
+        val info: org.micoli.micraft.game.world.actionblock.ActionBlockInfo,
+    ) : ServerMessage()
+
+    /** One action block was removed (block broken or unnamed). */
+    @ProtoId(85) @Serializable data class ActionBlockRemove(val pos: BlockPos) : ServerMessage()
+
+    /** Fills the action-block editor form; [error] set when a save was rejected. */
+    @ProtoId(86)
+    @Serializable
+    data class ActionBlockPayload(
+        val pos: BlockPos,
+        val name: String,
+        val onActivate: String = "",
+        val onTargetEvent: String = "",
+        val onRemoteEvent: String = "",
+        val variables: Map<String, String> = emptyMap(),
+        val error: String? = null,
+    ) : ServerMessage()
 }
 
 @Serializable
