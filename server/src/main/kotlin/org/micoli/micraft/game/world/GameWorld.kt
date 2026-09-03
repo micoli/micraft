@@ -109,6 +109,7 @@ class GameWorld(
     val mailManager: MailManager?,
     val claimManager: ClaimManager,
     val claimRegistry: ClaimRegistry,
+    val actionBlockService: org.micoli.micraft.game.world.actionblock.ActionBlockService,
     val railNetworkRegistry: RailNetworkRegistry,
     val sceneRegistry: SceneRegistry,
     private val playerPersister: PlayerPersister,

@@ -40,6 +40,9 @@ class BlockBreaker(
     private val instanceRegistry: InstanceRegistry? = null,
     private val claimRegistry: ClaimRegistry? = null,
     private val railNetworkRegistry: RailNetworkRegistry? = null,
+    private val actionBlockRegistry:
+        org.micoli.micraft.game.world.actionblock.ActionBlockRegistry? =
+        null,
     private val weaponRegistry: () -> Map<String, WeaponDefinition> = { emptyMap() },
     private val toolRegistry: () -> Map<String, ToolDefinition> = { emptyMap() },
 ) {
@@ -171,6 +174,9 @@ class BlockBreaker(
                     entityRemoves = result.entityRemoves,
                     entityRemovesAt = result.entityRemovesAt))
             result.changes.forEach { railNetworkRegistry?.invalidate(it.pos) }
+            actionBlockRegistry?.removeAt(bt)?.let {
+                broadcast(ServerMessage.ActionBlockRemove(bt))
+            }
             activateAdjacentLiquids(bt)
             val spawned = worldItems.spawnDrops(bt, block, brokenColorIndex)
             session.actionHistory.addLast(WorldActionRecord.Break(bt, block, spawned))

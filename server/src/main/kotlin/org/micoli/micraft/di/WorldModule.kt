@@ -11,6 +11,7 @@ import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
 import org.micoli.micraft.game.world.biome.BiomeRegistry
 import org.micoli.micraft.game.world.biome.loadBiomeRegistry
 import org.micoli.micraft.game.world.claim.ClaimRegistry
@@ -120,4 +121,9 @@ class WorldModule {
     @Single
     fun sceneRegistry(optionalWorldPersistence: OptionalWorldPersistence): SceneRegistry =
         SceneRegistry(optionalWorldPersistence.value)
+
+    @Single
+    fun actionBlockRegistry(
+        optionalWorldPersistence: OptionalWorldPersistence
+    ): ActionBlockRegistry = ActionBlockRegistry(optionalWorldPersistence.value)
 }
