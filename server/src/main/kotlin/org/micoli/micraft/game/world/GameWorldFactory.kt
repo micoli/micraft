@@ -197,6 +197,10 @@ fun buildGameWorld(
             gameDayDurationSecondsOf = opts.gameDayDurationSecondsOf,
         )
     val npcManager = npcSubsystemFactory.npcManager
+    // Same as the live GameLoop: every world needs the NPC catalogue so `/spawn`, shops, taming
+    // and KILL quests work. Auto-spawn stays off — the E2E/arena biomes carry `maxNpcs = 0`.
+    shared.npcConfigLoader.load()
+    npcManager.loadDefinitions(shared.npcRegistryLoader.load())
 
     val combatProcessor =
         CombatProcessor(
