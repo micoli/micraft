@@ -129,6 +129,7 @@ fun buildGameWorld(
             subscribeToChannel = subscribeToChannel,
             i18n = shared.i18n,
         )
+    questManager.reloadDefinitions(shared.questRegistryLoader.load())
     val worldItems =
         WorldItemManager(
             shared.dropConfig,
