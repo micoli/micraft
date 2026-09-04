@@ -11,15 +11,23 @@ const REPO_ROOT = resolve(process.cwd(), "../../..");
  * `accountFor` in helpers/connectClient.ts. So tests never share terrain, drops or a player set,
  * whether run in parallel or sequentially on the same worker.
  */
+// Specs that open 2+ browser contexts per test — CPU-heavy under CI's headless software-GL
+// Chromium. Isolated into their own project so they never share workers with each other (a
+// second multi-context test landing on the same 2-vCPU runner starves both and causes timeouts).
+const HEAVY_SPECS = ["group.spec.ts", "guild.spec.ts", "trade.spec.ts", "multi-visibility.spec.ts"];
+
 export default defineConfig({
   testDir: ".",
-  testMatch: "**/*.spec.ts",
   fullyParallel: true,
   workers: process.env.CI ? 2 : 4,
   timeout: 120_000,
   expect: { timeout: 15_000 },
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
+  projects: [
+    { name: "heavy", testMatch: HEAVY_SPECS },
+    { name: "default", testMatch: "**/*.spec.ts", testIgnore: HEAVY_SPECS },
+  ],
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: "retain-on-failure",
