@@ -60,6 +60,14 @@ class BuildGameWorldTest {
     }
 
     @Test
+    fun npcDefinitions_areLoadedIntoEachWorld() {
+        val world = buildGameWorld("npc-test", gen(), shared)
+        assertTrue(
+            world.npcManager.getDefinitions().containsKey("seller"),
+            "a per-world NpcManager must have its catalogue loaded (seller, animals, …)")
+    }
+
+    @Test
     fun initialGameTicks_overridesTheDefaultClockStart() {
         val fresh =
             buildGameWorld("clock-test", gen(), shared, GameWorldOptions(initialGameTicks = 0L))

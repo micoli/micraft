@@ -58,6 +58,8 @@ export interface E2eSnapshot {
   character: { character: unknown; derived: { maxHp?: number } & Record<string, unknown> } | null;
   /** Latest XP / level payload, mirrored from XpGained. `null` before the first kill. */
   xp: { level?: number; currentXp?: number; xpForNextLevel?: number } | null;
+  /** Currency wallet in copper, mirrored from WalletUpdate. */
+  wallet: number;
   /** Quest progress by id, mirrored from QuestSync / QuestUpdate. */
   quests: Record<string, { status: string; progress: Record<string, number>; completedAt: number | null }>;
   /** Active P2P trade, mirrored from Open/Update/Close trade messages. `null` when no trade. */

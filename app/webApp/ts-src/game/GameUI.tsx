@@ -899,7 +899,10 @@ export function GameUI() {
       }
       dispatch("edit_mode_update", { mode });
     };
-    window.mc.walletUpdate = (copper: number) => dispatch("wallet_update", { copper: Number(copper) });
+    window.mc.walletUpdate = (copper: number) => {
+      if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), wallet: Number(copper) };
+      dispatch("wallet_update", { copper: Number(copper) });
+    };
     window.mc.questSync = (json: string) => {
       try {
         const msg = JSON.parse(json) as { quests: Record<string, QuestProgress> };
