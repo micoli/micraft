@@ -14,6 +14,21 @@ plugins {
 // ── Supply-chain: lock every resolved dependency version ──────────────────────
 allprojects { dependencyLocking { lockAllConfigurations() } }
 
+// Pin the JVM toolchain explicitly to 21 — the actual runtime requirement (ktor-openapi's
+// schemakenerator dependency calls java.util.List.removeFirst(), a JDK 21 API — NoSuchMethodError
+// on 17). Without an explicit toolchain, Kotlin 2.x compiles against whichever JDK happens to run
+// Gradle, so a build cache entry produced under one JDK can silently poison a run on another
+// (ci.yml's security.yml job already used 21; ci.yml itself was the one job stuck on 17).
+// foojay-resolver-convention (settings.gradle.kts) auto-downloads 21 wherever it's missing.
+subprojects {
+    plugins.withId("org.jetbrains.kotlin.jvm") {
+        configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> { jvmToolchain(21) }
+    }
+    plugins.withId("org.jetbrains.kotlin.multiplatform") {
+        configure<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension> { jvmToolchain(21) }
+    }
+}
+
 // Force patched versions of the Kotlin/JS webpack toolchain (kotlin-js-store/yarn.lock).
 // Build-time only. Refresh with `./gradlew kotlinUpgradeYarnLock`.
 plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
