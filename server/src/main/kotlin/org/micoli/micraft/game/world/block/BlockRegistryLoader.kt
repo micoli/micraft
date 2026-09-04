@@ -19,7 +19,7 @@ import org.micoli.micraft.game.world.rail.RailConnectionPoint
 import org.micoli.micraft.game.world.rail.RailDefinition
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("BlockRegistryLoader")
+private val log = LoggerFactory.getLogger(BlockRegistryLoader::class.java)
 
 private val ENTRY_PROPERTIES =
     BlockYamlEntry::class

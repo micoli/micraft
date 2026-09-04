@@ -10,7 +10,7 @@ import kotlinx.serialization.builtins.ListSerializer
 import org.micoli.micraft.protocol.MailMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("MailPersistence")
+private val log = LoggerFactory.getLogger(MailPersistence::class.java)
 
 private val yaml =
     Yaml(configuration = YamlConfiguration(strictMode = false, encodeDefaults = true))

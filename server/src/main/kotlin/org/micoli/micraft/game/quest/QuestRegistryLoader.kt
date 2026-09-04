@@ -14,7 +14,7 @@ fun findRecursive(path: Path, mask: String): List<Path> {
     return Files.walk(path).filter { matcher.matches(it.fileName) }.toList()
 }
 
-private val log = LoggerFactory.getLogger("QuestRegistryLoader")
+private val log = LoggerFactory.getLogger(QuestRegistryLoader::class.java)
 
 class QuestRegistryLoader(private val questsPath: Path) {
     fun load(): Map<String, QuestDefinition> {

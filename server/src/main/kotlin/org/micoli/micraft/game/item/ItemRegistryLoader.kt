@@ -20,7 +20,7 @@ import org.micoli.micraft.game.world.ItemDefinition
 import org.micoli.micraft.game.world.ItemType
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("ItemRegistryLoader")
+private val log = LoggerFactory.getLogger(ItemRegistryLoader::class.java)
 
 private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), ItemYamlEntry.serializer())
 

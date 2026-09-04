@@ -13,7 +13,7 @@ import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.config.yamlConfigSection
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("WeatherConfig")
+private val log = LoggerFactory.getLogger(WeatherConfig::class.java)
 
 private const val SCHEMA_HEADER = "# yaml-language-server: \$schema=../schemas/weather.schema.json"
 

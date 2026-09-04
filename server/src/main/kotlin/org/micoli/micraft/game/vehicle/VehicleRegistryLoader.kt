@@ -19,7 +19,7 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.vehicle.VehicleDefinition
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("VehicleRegistryLoader")
+private val log = LoggerFactory.getLogger(VehicleRegistryLoader::class.java)
 
 private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), VehicleYamlEntry.serializer())
 

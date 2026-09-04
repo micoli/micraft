@@ -14,7 +14,7 @@ import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("WeatherManager")
+private val log = LoggerFactory.getLogger(WeatherManager::class.java)
 
 private data class ActiveZone(
     val id: String,

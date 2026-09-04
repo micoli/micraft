@@ -11,7 +11,7 @@ import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.yamlConfigSection
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("ArmorRegistryLoader")
+private val log = LoggerFactory.getLogger(ArmorRegistryLoader::class.java)
 
 private fun ArmorYamlEntry.applyOverride(o: ArmorYamlOverride) =
     copy(wearable = o.wearable ?: wearable, statBonus = o.statBonus ?: statBonus)

@@ -8,7 +8,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("SkinRegistryLoader")
+private val log = LoggerFactory.getLogger(SkinRegistryLoader::class.java)
 
 private fun SkinDefinition.applyOverride(o: SkinYamlOverride) =
     copy(

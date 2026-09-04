@@ -17,7 +17,7 @@ import org.micoli.micraft.config.yamlConfigSection
 import org.micoli.micraft.schema.JsonSchemaRoot
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("GroupConfig")
+private val log = LoggerFactory.getLogger(GroupsConfig::class.java)
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable

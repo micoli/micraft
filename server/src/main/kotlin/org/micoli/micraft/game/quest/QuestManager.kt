@@ -9,7 +9,7 @@ import org.micoli.micraft.quest.QuestProgress
 import org.micoli.micraft.quest.QuestStatus
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("QuestManager")
+private val log = LoggerFactory.getLogger(QuestManager::class.java)
 
 class QuestManager(
     private val getSessions: () -> Collection<PlayerSession>,

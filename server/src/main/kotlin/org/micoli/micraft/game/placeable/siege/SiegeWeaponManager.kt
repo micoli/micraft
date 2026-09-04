@@ -18,7 +18,7 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("SiegeWeaponManager")
+private val log = LoggerFactory.getLogger(SiegeWeaponManager::class.java)
 
 /**
  * Siege-specific sub-system layered on top of [org.micoli.micraft.game.placeable.PlaceableManager]

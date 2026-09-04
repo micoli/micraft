@@ -17,7 +17,7 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("SiegeProjectileManager")
+private val log = LoggerFactory.getLogger(SiegeProjectileManager::class.java)
 
 /**
  * Fallback collision-sphere radius when a projectile type has no [SiegeProjectileRegistry] entry.

@@ -11,7 +11,7 @@ import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.yamlConfigSection
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("ToolRegistryLoader")
+private val log = LoggerFactory.getLogger(ToolRegistryLoader::class.java)
 
 private fun ToolYamlEntry.applyOverride(o: ToolYamlOverride) =
     copy(

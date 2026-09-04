@@ -10,7 +10,7 @@ import org.micoli.micraft.game.world.block.BlockRegistryLoader
 import org.micoli.micraft.game.world.block.DropEntry
 import org.slf4j.LoggerFactory
 
-private val dropConfigLog = LoggerFactory.getLogger("DropConfig")
+private val dropConfigLog = LoggerFactory.getLogger(DropConfig::class.java)
 
 class DropConfig(private val blockRegistryLoader: BlockRegistryLoader) {
     @Volatile

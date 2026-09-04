@@ -8,7 +8,7 @@ import org.micoli.micraft.protocol.AuctionFilter
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("AuctionCommand")
+private val log = LoggerFactory.getLogger(AuctionCommand::class.java)
 
 class AuctionCommand : CommandHandler {
     override val id: UUID = UUID.fromString("d3f1a9e2-6c8b-4f7a-9d0e-1b2c3d4e5f60")

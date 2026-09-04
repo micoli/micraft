@@ -8,7 +8,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("AuctionConfigLoader")
+private val log = LoggerFactory.getLogger(AuctionConfigLoader::class.java)
 
 class AuctionConfigLoader(private val path: Path) {
     init {

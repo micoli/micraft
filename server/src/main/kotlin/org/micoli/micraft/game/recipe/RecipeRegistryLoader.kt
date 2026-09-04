@@ -19,7 +19,7 @@ import org.micoli.micraft.game.world.RecipeDefinition
 import org.micoli.micraft.game.world.RecipeIngredient
 import org.slf4j.LoggerFactory
 
-private val recipeLog = LoggerFactory.getLogger("RecipeRegistryLoader")
+private val recipeLog = LoggerFactory.getLogger(RecipeRegistryLoader::class.java)
 
 private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), RecipeYamlEntry.serializer())
 

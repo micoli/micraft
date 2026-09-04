@@ -12,7 +12,7 @@ import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.player.rpg.ClassResource
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("RegenProcessor")
+private val log = LoggerFactory.getLogger(RegenProcessor::class.java)
 
 class RegenProcessor(
     @Volatile private var config: ClassesConfigData,

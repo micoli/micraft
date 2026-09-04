@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
 import org.micoli.micraft.config.validateYamlConfig
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("BlockIdRegistryLoader")
+private val log = LoggerFactory.getLogger(BlockIdRegistryLoader::class.java)
 
 @Serializable private data class BlockIdsYaml(val blocks: Map<String, Int> = emptyMap())
 

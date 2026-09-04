@@ -6,7 +6,7 @@ import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("org.micoli.micraft.rpg.ExperienceProcessor")
+private val log = LoggerFactory.getLogger(ExperienceProcessor::class.java)
 
 class ExperienceProcessor(
     @Volatile private var config: ExperienceConfigData,

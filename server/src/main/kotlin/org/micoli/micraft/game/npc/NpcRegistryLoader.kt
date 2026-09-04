@@ -15,7 +15,7 @@ import org.micoli.micraft.game.npc.pack.applyOverride
 import org.micoli.micraft.game.npc.pack.toConfig
 import org.slf4j.LoggerFactory
 
-private val npcLog = LoggerFactory.getLogger("NpcRegistryLoader")
+private val npcLog = LoggerFactory.getLogger(NpcRegistryLoader::class.java)
 
 private fun NpcSpawnConfigRaw.applyOverride(o: NpcSpawnConfigRawOverride) =
     copy(

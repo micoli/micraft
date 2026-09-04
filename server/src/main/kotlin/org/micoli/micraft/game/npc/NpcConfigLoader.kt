@@ -8,7 +8,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("NpcConfigLoader")
+private val log = LoggerFactory.getLogger(NpcConfigLoader::class.java)
 
 class NpcConfigLoader(private val path: Path) {
     init {

@@ -17,7 +17,7 @@ import org.micoli.micraft.config.yamlMapSection
 import org.micoli.micraft.game.world.EquipmentCategory
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("WeaponCategoryRegistryLoader")
+private val log = LoggerFactory.getLogger(WeaponCategoryRegistryLoader::class.java)
 
 private val ENTRY_MAP_SERIALIZER =
     MapSerializer(String.serializer(), WeaponCategoryYamlEntry.serializer())
