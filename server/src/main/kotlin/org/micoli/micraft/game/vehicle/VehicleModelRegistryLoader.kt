@@ -6,7 +6,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("VehicleModelRegistryLoader")
+private val log = LoggerFactory.getLogger(VehicleModelRegistryLoader::class.java)
 
 private fun VehicleModelDefinition.applyOverride(o: VehicleModelYamlOverride) =
     copy(speed = o.speed ?: speed, seatOffset = o.seatOffset ?: seatOffset)

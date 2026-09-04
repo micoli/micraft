@@ -18,7 +18,7 @@ import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.PlainColor
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("PlainColorRegistryLoader")
+private val log = LoggerFactory.getLogger(PlainColorRegistryLoader::class.java)
 
 private const val ROOT_KEY = "plainColors"
 

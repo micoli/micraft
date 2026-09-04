@@ -15,7 +15,7 @@ import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("SpellProcessor")
+private val log = LoggerFactory.getLogger(SpellProcessor::class.java)
 
 class SpellProcessor(
     @Volatile private var spellRegistry: Map<String, SpellDefinition>,

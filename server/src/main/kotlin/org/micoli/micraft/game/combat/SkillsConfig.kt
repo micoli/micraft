@@ -16,7 +16,7 @@ import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.yamlConfigSection
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("SkillsConfig")
+private val log = LoggerFactory.getLogger(SkillsConfig::class.java)
 
 private const val ATTACK_SCHEMA_HEADER =
     "# yaml-language-server: \$schema=../../schemas/skill-attack.schema.json"

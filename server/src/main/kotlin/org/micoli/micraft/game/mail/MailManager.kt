@@ -10,7 +10,7 @@ import org.micoli.micraft.protocol.MailMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("MailManager")
+private val log = LoggerFactory.getLogger(MailManager::class.java)
 
 class MailManager(
     private val persistence: MailPersistence,

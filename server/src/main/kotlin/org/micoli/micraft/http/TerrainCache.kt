@@ -17,7 +17,7 @@ import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("TerrainCache")
+private val log = LoggerFactory.getLogger(TerrainCache::class.java)
 
 @Serializable private data class ChunkHeightInfo(val cx: Int, val cz: Int, val avgHeight: Int?)
 

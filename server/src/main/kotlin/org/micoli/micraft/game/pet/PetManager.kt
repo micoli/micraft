@@ -15,7 +15,7 @@ import org.micoli.micraft.protocol.PetInfo
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("PetManager")
+private val log = LoggerFactory.getLogger(PetManager::class.java)
 
 /**
  * Owns the tamed-pet roster lifecycle: summon / dismiss / death / resurrect / rename, and pushes

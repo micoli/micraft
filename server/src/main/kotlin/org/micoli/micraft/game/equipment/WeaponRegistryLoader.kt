@@ -11,7 +11,7 @@ import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.yamlConfigSection
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("WeaponRegistryLoader")
+private val log = LoggerFactory.getLogger(WeaponRegistryLoader::class.java)
 
 private fun WeaponYamlEntry.applyOverride(o: WeaponYamlOverride) =
     copy(

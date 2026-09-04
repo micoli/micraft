@@ -8,7 +8,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("ClaimConfigLoader")
+private val log = LoggerFactory.getLogger(ClaimConfigLoader::class.java)
 
 class ClaimConfigLoader(private val path: Path) {
     init {

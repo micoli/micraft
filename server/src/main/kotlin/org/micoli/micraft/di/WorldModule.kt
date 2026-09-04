@@ -25,7 +25,7 @@ import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.resourcesConfigDir
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("WorldModule")
+private val log = LoggerFactory.getLogger(WorldModule::class.java)
 
 fun worldName(): String =
     System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world"

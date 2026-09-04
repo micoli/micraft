@@ -23,7 +23,7 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("PlaceableManager")
+private val log = LoggerFactory.getLogger(PlaceableManager::class.java)
 
 /**
  * Spawn/lookup/orientation bookkeeping for free-standing placed objects — mirrors

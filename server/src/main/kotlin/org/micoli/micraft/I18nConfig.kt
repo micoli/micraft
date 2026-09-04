@@ -12,7 +12,7 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import org.slf4j.LoggerFactory
 
-private val i18nLog = LoggerFactory.getLogger("I18nConfig")
+private val i18nLog = LoggerFactory.getLogger(I18nConfig::class.java)
 
 private val NESTED_MAP_SERIALIZER =
     MapSerializer(

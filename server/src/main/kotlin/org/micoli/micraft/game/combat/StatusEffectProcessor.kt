@@ -10,7 +10,7 @@ import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("StatusEffectProcessor")
+private val log = LoggerFactory.getLogger(StatusEffectProcessor::class.java)
 
 class StatusEffectProcessor(
     @Volatile private var armorRegistry: Map<String, ArmorDefinition>,

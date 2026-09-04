@@ -131,7 +131,7 @@ import org.micoli.micraft.simulation.SimulationDeps
 import org.micoli.micraft.simulation.SimulationRegistry
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("Application")
+private val log = LoggerFactory.getLogger(Application::class.java)
 
 fun main() {
     val port = System.getenv("MICRAFT_PORT")?.toIntOrNull() ?: 8080

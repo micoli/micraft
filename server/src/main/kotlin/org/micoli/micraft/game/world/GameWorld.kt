@@ -61,7 +61,7 @@ import org.micoli.micraft.plugin.TickHandler
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("GameWorld")
+private val log = LoggerFactory.getLogger(GameWorld::class.java)
 
 private const val TARGET_DISTANCE_REFRESH_TICKS = 5
 

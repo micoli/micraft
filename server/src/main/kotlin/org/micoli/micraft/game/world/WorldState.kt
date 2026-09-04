@@ -17,7 +17,7 @@ class WorldState(
 ) : BlockStore, RailWorldView {
     private val chunks = ConcurrentHashMap<ChunkPos, Chunk>()
     private val dirtyChunks: MutableSet<ChunkPos> = Collections.newSetFromMap(ConcurrentHashMap())
-    private val log = LoggerFactory.getLogger("WorldState")
+    private val log = LoggerFactory.getLogger(WorldState::class.java)
 
     fun getOrGenerate(pos: ChunkPos): Chunk =
         chunks.getOrPut(pos) {

@@ -9,7 +9,7 @@ import kotlin.io.path.writeText
 import kotlinx.serialization.Serializable
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("GameTimePersistence")
+private val log = LoggerFactory.getLogger(GameTimePersistence::class.java)
 
 @Serializable private data class GameTimeData(val gameTimeSeconds: Double)
 

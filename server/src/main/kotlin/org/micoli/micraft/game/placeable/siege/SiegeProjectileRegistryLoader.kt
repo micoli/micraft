@@ -17,7 +17,7 @@ import org.micoli.micraft.game.world.EntityType
 import org.micoli.micraft.placeable.siege.SiegeProjectileDefinition
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("SiegeProjectileRegistryLoader")
+private val log = LoggerFactory.getLogger(SiegeProjectileRegistryLoader::class.java)
 
 private val ENTRY_PROPERTIES =
     SiegeProjectileYamlEntry::class

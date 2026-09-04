@@ -22,7 +22,7 @@ import org.micoli.micraft.game.world.scene.Scene
 import org.micoli.micraft.player.PlayerState
 import org.slf4j.LoggerFactory
 
-private val worldPersistenceLog = LoggerFactory.getLogger("WorldPersistence")
+private val worldPersistenceLog = LoggerFactory.getLogger(WorldPersistence::class.java)
 
 private val entityJson = Json { encodeDefaults = true }
 

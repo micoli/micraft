@@ -21,7 +21,7 @@ import org.micoli.micraft.vehicle.VehicleRegistry
 import org.micoli.micraft.vehicle.VehicleState
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("VehicleManager")
+private val log = LoggerFactory.getLogger(VehicleManager::class.java)
 
 /** Matches NpcConfig's default updateRange — vehicles have no tuning config of their own yet. */
 private const val UPDATE_RANGE = 96f

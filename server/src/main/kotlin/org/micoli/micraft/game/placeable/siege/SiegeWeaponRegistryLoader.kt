@@ -18,7 +18,7 @@ import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.placeable.siege.SiegeWeaponDefinition
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("SiegeWeaponRegistryLoader")
+private val log = LoggerFactory.getLogger(SiegeWeaponRegistryLoader::class.java)
 
 private val ENTRY_PROPERTIES =
     SiegeWeaponYamlEntry::class

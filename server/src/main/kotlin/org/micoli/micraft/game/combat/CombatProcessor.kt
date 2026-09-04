@@ -25,7 +25,7 @@ import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("CombatProcessor")
+private val log = LoggerFactory.getLogger(CombatProcessor::class.java)
 
 private fun rollDice(spec: String): Int {
     val parts = spec.lowercase().split("d")

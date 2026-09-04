@@ -11,7 +11,7 @@ import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.protocol.ClientMessage
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("IntentCollector")
+private val log = LoggerFactory.getLogger(IntentCollector::class.java)
 
 class IntentCollector(
     private val blockBreaker: BlockBreaker,

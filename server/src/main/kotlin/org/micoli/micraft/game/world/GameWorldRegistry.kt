@@ -3,7 +3,7 @@ package org.micoli.micraft.game.world
 import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("GameWorldRegistry")
+private val log = LoggerFactory.getLogger(GameWorldRegistry::class.java)
 
 /**
  * Holds the one production [GameWorld] plus, when E2E mode is on, a dynamic map of memory-only

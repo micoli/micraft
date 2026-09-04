@@ -7,7 +7,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("PluginLoader")
+private val log = LoggerFactory.getLogger(PluginLoader::class.java)
 
 object PluginLoader {
     fun load(jarPluginsDir: Path = Path.of("jar-plugins")): List<PluginEntrypoint> {

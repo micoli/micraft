@@ -10,7 +10,7 @@ import kotlinx.serialization.builtins.ListSerializer
 import org.micoli.micraft.protocol.AuctionListing
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("AuctionPersistence")
+private val log = LoggerFactory.getLogger(AuctionPersistence::class.java)
 
 private val yaml =
     Yaml(configuration = YamlConfiguration(strictMode = false, encodeDefaults = true))

@@ -157,7 +157,7 @@ import org.micoli.micraft.ui.validateLayouts
 import org.micoli.micraft.vehicle.VehicleRegistry
 import org.slf4j.LoggerFactory
 
-private val log = LoggerFactory.getLogger("GameLoop")
+private val log = LoggerFactory.getLogger(GameLoop::class.java)
 
 private class ClasspathDiscovery(
     val commandHandlers: Map<String, CommandHandler>,
