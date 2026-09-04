@@ -19,7 +19,12 @@ class TradeConfigLoader(private val path: Path) {
         }
     }
 
+    @Volatile private var cached: TradeConfig? = null
+
     fun load(): TradeConfig =
+        cached ?: synchronized(this) { cached ?: computeLoad().also { cached = it } }
+
+    private fun computeLoad(): TradeConfig =
         runCatching { Yaml.default.decodeFromString(TradeConfig.serializer(), path.readText()) }
             .getOrElse { e ->
                 log.warn("Failed to load trade.yaml ({}), using defaults", e.message)

@@ -67,4 +67,19 @@ class NpcConfigLoaderTest {
         val second = loader.reload()
         assertEquals(99, second.wanderPauseTicksMin)
     }
+
+    @Test
+    fun load_isMemoized_ignoresFileChangesUntilReload() {
+        val dir = Files.createTempDirectory("npc-config-test5")
+        val path = dir.resolve("npc.yaml")
+        path.writeText(
+            "wanderPauseTicksMin: 5\nwanderPauseTicksMax: 15\nwanderStepTicksMax: 10\ninteractionRange: 2.0\nupdateRange: 50.0\nmaxSpawnAttemptsPerTick: 2\njumpVelocity: 5.0\n")
+        val loader = NpcConfigLoader(path)
+        val first = loader.load()
+
+        path.writeText(
+            "wanderPauseTicksMin: 99\nwanderPauseTicksMax: 200\nwanderStepTicksMax: 80\ninteractionRange: 2.0\nupdateRange: 50.0\nmaxSpawnAttemptsPerTick: 2\njumpVelocity: 5.0\n")
+        val second = loader.load()
+        assertEquals(first, second, "load() should return the cached value, not re-read disk")
+    }
 }

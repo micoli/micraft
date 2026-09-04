@@ -21,7 +21,12 @@ class NpcConfigLoader(private val path: Path) {
         }
     }
 
-    fun load(): NpcConfig {
+    @Volatile private var cached: NpcConfig? = null
+
+    fun load(): NpcConfig = cached ?: synchronized(this) { cached ?: reload() }
+
+    /** Bypasses the cache and re-reads disk — used by `/reload`. */
+    fun reload(): NpcConfig {
         val config =
             runCatching { Yaml.default.decodeFromString(NpcConfig.serializer(), path.readText()) }
                 .getOrElse { e ->
@@ -30,10 +35,9 @@ class NpcConfigLoader(private val path: Path) {
                 }
         applyConfig(config)
         log.info("NPC config loaded: {}", config)
+        cached = config
         return config
     }
-
-    fun reload(): NpcConfig = load()
 
     private fun applyConfig(config: NpcConfig) {
         NpcConstants.live =

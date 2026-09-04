@@ -19,7 +19,12 @@ class ClaimConfigLoader(private val path: Path) {
         }
     }
 
+    @Volatile private var cached: ClaimConfig? = null
+
     fun load(): ClaimConfig =
+        cached ?: synchronized(this) { cached ?: computeLoad().also { cached = it } }
+
+    private fun computeLoad(): ClaimConfig =
         runCatching { Yaml.default.decodeFromString(ClaimConfig.serializer(), path.readText()) }
             .getOrElse { e ->
                 log.warn("Failed to load claims.yaml ({}), using defaults", e.message)

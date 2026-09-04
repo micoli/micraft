@@ -8,6 +8,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNotSame
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import org.micoli.micraft.game.npc.animal.AnimalYamlEntry
 import org.micoli.micraft.game.npc.animal.AnimalYamlOverride
@@ -511,6 +513,28 @@ class NpcRegistryLoaderTest {
         val fox = assertNotNull(loader.load()["fox"])
         assertTrue(fox.tameable)
         assertEquals(0.9f, fox.tameBaseChance)
+    }
+
+    @Test
+    fun load_isMemoized_ignoresFileChangesUntilReload() {
+        val (loader) =
+            loaderWithNpcs(
+                mapOf(
+                    "npc_goat" to
+                        """
+                        behavior: random_movable
+                        width: 0.5
+                        height: 0.9
+                        wanderSpeed: 2.0
+                        wanderRadius: 12.0
+                        """
+                            .trimIndent()))
+        val first = loader.load()
+        assertSame(first, loader.load(), "second load() must return the cached instance")
+
+        val second = loader.reload()
+        assertNotSame(first, second, "reload() must bypass the cache")
+        assertEquals(first.keys, second.keys)
     }
 }
 

@@ -1,7 +1,9 @@
 package org.micoli.micraft.di
 
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.writeText
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
@@ -9,6 +11,8 @@ import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
+import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
@@ -32,6 +36,8 @@ class ReloadCoordinatorTest {
         reloadEquipmentCategories: (() -> Unit)? = null,
         reloadRecipeRegistry: (() -> Unit)? = null,
         sessionRegistry: SessionRegistry = SessionRegistry(),
+        questManager: QuestManager? = null,
+        questRegistryLoader: QuestRegistryLoader? = null,
     ): ReloadCoordinator {
         val emptyResources = createTempDirectory("reload-resources")
         val emptyData = createTempDirectory("reload-data")
@@ -58,6 +64,8 @@ class ReloadCoordinatorTest {
             reloadArmorRegistry = reloadArmorRegistry,
             reloadEquipmentCategories = reloadEquipmentCategories,
             reloadRecipeRegistry = reloadRecipeRegistry,
+            questManager = questManager,
+            questRegistryLoader = questRegistryLoader,
         )
     }
 
@@ -178,5 +186,36 @@ class ReloadCoordinatorTest {
         val coordinator = buildCoordinator(reloadRecipeRegistry = { invoked = true })
         coordinator.reload("en")
         assertTrue(invoked)
+    }
+
+    /**
+     * `QuestRegistryLoader.load()` is memoized (built once per `SharedGameServices`, shared across
+     * every E2E `GameWorld`) — `/reload` must call `reload()` instead, or an edited quest YAML
+     * would never be picked up by a running server.
+     */
+    @Test
+    fun reload_questRegistryLoader_bypassesMemoizationAndPicksUpFileChanges() = runBlocking {
+        val questsDir = createTempDirectory("reload-quests")
+        questsDir
+            .resolve("quest_a.yaml")
+            .writeText("title: Original\ndescription: desc\ntype: KILL\n")
+        val questRegistryLoader = QuestRegistryLoader(questsDir)
+        val questManager =
+            QuestManager(getSessions = { emptyList() }, savePlayer = {}).also {
+                it.reloadDefinitions(questRegistryLoader.load())
+            }
+        assertEquals("Original", questManager.getDefinitions().getValue("quest_a.yaml").title)
+
+        questsDir
+            .resolve("quest_a.yaml")
+            .writeText("title: Updated\ndescription: desc\ntype: KILL\n")
+        val coordinator =
+            buildCoordinator(questManager = questManager, questRegistryLoader = questRegistryLoader)
+        coordinator.reload("en")
+
+        assertEquals(
+            "Updated",
+            questManager.getDefinitions().getValue("quest_a.yaml").title,
+            "/reload must bypass the loader cache and pick up the edited quest file")
     }
 }

@@ -103,7 +103,15 @@ class NpcRegistryLoader(
     private val resourcesEntityPath: Path,
     private val dataEntityPath: Path,
 ) {
-    fun load(): Map<String, NpcDefinition> {
+    @Volatile private var cached: Map<String, NpcDefinition>? = null
+
+    fun load(): Map<String, NpcDefinition> =
+        cached ?: synchronized(this) { cached ?: computeLoad().also { cached = it } }
+
+    /** Bypasses the cache and re-reads disk — used by `/reload`. */
+    fun reload(): Map<String, NpcDefinition> = computeLoad().also { cached = it }
+
+    private fun computeLoad(): Map<String, NpcDefinition> {
         val entries = mutableMapOf<String, NpcYamlEntry>()
         resourcesEntityPath
             .listDirectoryEntries()
@@ -210,6 +218,4 @@ class NpcRegistryLoader(
             })
         return result
     }
-
-    fun reload(): Map<String, NpcDefinition> = load()
 }

@@ -17,7 +17,15 @@ fun findRecursive(path: Path, mask: String): List<Path> {
 private val log = LoggerFactory.getLogger(QuestRegistryLoader::class.java)
 
 class QuestRegistryLoader(private val questsPath: Path) {
-    fun load(): Map<String, QuestDefinition> {
+    @Volatile private var cached: Map<String, QuestDefinition>? = null
+
+    fun load(): Map<String, QuestDefinition> =
+        cached ?: synchronized(this) { cached ?: computeLoad().also { cached = it } }
+
+    /** Bypasses the cache and re-reads disk — used by `/reload`. */
+    fun reload(): Map<String, QuestDefinition> = computeLoad().also { cached = it }
+
+    private fun computeLoad(): Map<String, QuestDefinition> {
         if (!questsPath.exists()) return emptyMap()
         val result =
             findRecursive(questsPath, "*.yaml")

@@ -75,7 +75,7 @@ class ReloadCoordinator(
         npcConfigLoader.reload()
         npcManager.reloadDefinitions(npcRegistryLoader.reload())
         lines += i18n.t(lang, "reload:server:npc")
-        questRegistryLoader?.load()?.let { questManager?.reloadDefinitions(it) }
+        questRegistryLoader?.reload()?.let { questManager?.reloadDefinitions(it) }
         i18n.reload()
         lines += i18n.t(lang, "reload:server:i18n", i18n.locales.size)
         val newWeatherConfig = WeatherConfig()
