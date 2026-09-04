@@ -68,6 +68,15 @@ class BuildGameWorldTest {
     }
 
     @Test
+    fun e2eWorlds_neverAutoSpawnNpcs() = runBlocking {
+        val world = buildE2eGameWorld("e2e-nospawn", gen(), shared)
+        repeat(5) { world.tick() }
+        assertTrue(
+            world.getNpcInstances().isEmpty(),
+            "buildE2eGameWorld sets npcAutoSpawn=false — the spawner must stay quiet ")
+    }
+
+    @Test
     fun initialGameTicks_overridesTheDefaultClockStart() {
         val fresh =
             buildGameWorld("clock-test", gen(), shared, GameWorldOptions(initialGameTicks = 0L))

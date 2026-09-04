@@ -80,6 +80,10 @@ data class GameWorldOptions(
     val broadcastWorldChange: suspend (ServerMessage) -> Unit = {},
     /** Gate on the slow NPC lane. */
     val npcLifecycleGate: () -> Boolean = { true },
+    /**
+     * When false the auto-spawner never populates the world; `/spawn` still works. E2E sets this.
+     */
+    val npcAutoSpawn: Boolean = true,
 )
 
 /**
@@ -187,6 +191,7 @@ fun buildGameWorld(
             grantNpcKillXp = { predator, prey ->
                 experienceProcessor.grantXpToNpcForKill(predator, prey)
             },
+            canSpawn = { opts.npcAutoSpawn },
         )
     val hooks = opts.npcHooksDecorator(baseHooks)
     val npcSubsystemFactory =
@@ -452,5 +457,6 @@ fun buildE2eGameWorld(
             tickSections = TickSection.E2E,
             spawnEditMode = EditMode.GAME,
             onCommand = onCommand,
+            npcAutoSpawn = false,
         ),
     )
