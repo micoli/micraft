@@ -56,6 +56,11 @@ private const val DEFAULT_IMPOSTOR_FOV_BONUS_CHUNKS = 2
 // while still tracking mouse-look rotation, not just chunk-boundary crossings.
 private const val IMPOSTOR_YAW_REEVAL_THRESHOLD = 0.05
 
+// After a long backgrounded tab, Firefox keeps buffering incoming WS frames at the
+// network layer while throttling JS timers — on foreground, this yields the JS thread
+// every ~8ms instead of draining a huge backlog synchronously in one blocking burst.
+private const val INCOMING_FRAME_BUDGET_MS = 8.0
+
 class GameClient
 @OptIn(ExperimentalWasmJsInterop::class)
 constructor(private val scene: JsAny, private val camera: JsAny, private val uiState: McUiState) {
@@ -412,6 +417,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                             }
 
                             var frameCount = 0
+                            var batchDeadline = jsNow() + INCOMING_FRAME_BUDGET_MS
                             for (frame in incoming) {
                                 if (frame is Frame.Binary) {
                                     val data = frame.readBytes()
@@ -432,6 +438,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                         }
                                 } else {
                                     jsLog("WS non-binary frame: ${frame::class.simpleName}")
+                                }
+                                if (jsNow() >= batchDeadline) {
+                                    yield()
+                                    batchDeadline = jsNow() + INCOMING_FRAME_BUDGET_MS
                                 }
                             }
                             val reason = closeReason.await()
