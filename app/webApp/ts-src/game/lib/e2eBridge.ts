@@ -58,6 +58,15 @@ export interface E2eSnapshot {
   character: { character: unknown; derived: { maxHp?: number } & Record<string, unknown> } | null;
   /** Latest XP / level payload, mirrored from XpGained. `null` before the first kill. */
   xp: { level?: number; currentXp?: number; xpForNextLevel?: number } | null;
+  /** Current guild, mirrored from GuildSync. `null` when not in a guild. */
+  guild: {
+    id: string;
+    name: string;
+    tag: string;
+    ownerId: string;
+    members: { playerId: string; playerName: string; rank: string; online: boolean }[];
+    bank: Record<string, number>;
+  } | null;
   /** Current party, mirrored from the GroupSync message. `null` when not in a group. */
   group: {
     id: string;

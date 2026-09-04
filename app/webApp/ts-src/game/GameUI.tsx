@@ -1003,7 +1003,9 @@ export function GameUI() {
     };
     window.mc.guildSync = (json: string) => {
       try {
-        dispatch("guild_sync", { guild: JSON.parse(json).guild ?? null });
+        const guild = JSON.parse(json).guild ?? null;
+        if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), guild };
+        dispatch("guild_sync", { guild });
       } catch (e) {
         console.error("[social] guildSync parse error:", e, json);
       }
