@@ -8,6 +8,8 @@ export interface E2eActions {
   placeTargeted(): void;
   /** Hold / release the primary (left) mouse button — drives the real survival break/place path. */
   setBreaking(down: boolean): void;
+  /** Fire an attack at the current combat target — same event the AttackPanel button pushes. */
+  attack(attackId: string): void;
   selectHotbar(i: number): void;
   /** Run a slash command ("/give …") or send chat, via the in-game console path. */
   runCommand(cmd: string): void;

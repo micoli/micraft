@@ -549,6 +549,7 @@ export function GameUI() {
           window.mcState.mouseLeft = down;
           if (down) window.mcState.mouseDownAt = Date.now() - 200;
         },
+        attack: (attackId) => window.mcState.events.push(`attack:${attackId}`),
         runCommand: (cmd) => {
           // Same path as the in-game console: the wasm loop polls consumeConsoleInput() and
           // dispatches a "/..." string as ClientMessage.Command, anything else as ChatSend.
