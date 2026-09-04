@@ -52,6 +52,14 @@ class BuildGameWorldTest {
     }
 
     @Test
+    fun questDefinitions_areLoadedIntoEachWorld() {
+        val world = buildGameWorld("quest-test", gen(), shared)
+        assertTrue(
+            world.questManager!!.getDefinitions().isNotEmpty(),
+            "a per-world QuestManager must have its definitions loaded (FETCH/KILL quests)")
+    }
+
+    @Test
     fun initialGameTicks_overridesTheDefaultClockStart() {
         val fresh =
             buildGameWorld("clock-test", gen(), shared, GameWorldOptions(initialGameTicks = 0L))

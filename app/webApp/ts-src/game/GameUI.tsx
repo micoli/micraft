@@ -903,6 +903,7 @@ export function GameUI() {
     window.mc.questSync = (json: string) => {
       try {
         const msg = JSON.parse(json) as { quests: Record<string, QuestProgress> };
+        if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), quests: msg.quests };
         dispatch("quest_sync", { quests: msg.quests });
         if (Object.keys(questDefsRef.current).length === 0) {
           getApiQuests({ throwOnError: true })
@@ -920,6 +921,12 @@ export function GameUI() {
     window.mc.questUpdate = (json: string) => {
       try {
         const msg = JSON.parse(json) as { questId: string; progress: QuestProgress };
+        if (window.__mcE2E) {
+          window.mcE2E = {
+            ...(window.mcE2E ?? {}),
+            quests: { ...(window.mcE2E?.quests ?? {}), [msg.questId]: msg.progress },
+          };
+        }
         dispatch("quest_update", { questId: msg.questId, progress: msg.progress });
         if (msg.progress.status === "COMPLETED") {
           const title = questDefsRef.current[msg.questId]?.title ?? msg.questId;
