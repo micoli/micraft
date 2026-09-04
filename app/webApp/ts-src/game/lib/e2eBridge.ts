@@ -62,6 +62,11 @@ export interface E2eSnapshot {
   xp: { level?: number; currentXp?: number; xpForNextLevel?: number } | null;
   /** Currency wallet in copper, mirrored from WalletUpdate. */
   wallet: number;
+  /** Pet roster, mirrored from PetRosterUpdate. */
+  petRoster: {
+    pets: { id: string; name: string; currentHp: number; spawned: boolean; dead: boolean }[];
+    activePetId: string | null;
+  };
   /** Quest progress by id, mirrored from QuestSync / QuestUpdate. */
   quests: Record<string, { status: string; progress: Record<string, number>; completedAt: number | null }>;
   /** Active P2P trade, mirrored from Open/Update/Close trade messages. `null` when no trade. */

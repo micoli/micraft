@@ -1038,7 +1038,9 @@ export function GameUI() {
     };
     window.mc.petRosterUpdate = (json: string) => {
       try {
-        dispatch("pet_roster_update", { data: JSON.parse(json) });
+        const data = JSON.parse(json);
+        if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), petRoster: data };
+        dispatch("pet_roster_update", { data });
       } catch (e) {
         console.error("[pet] petRosterUpdate parse error:", e, json);
       }
