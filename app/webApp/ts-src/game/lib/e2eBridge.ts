@@ -36,6 +36,28 @@ export interface E2eSnapshot {
   /** The action block currently Tab-targeted, or null. */
   actionBlockTarget: { x: number; y: number; z: number } | null;
   lastWorldUpdate: { x: number; y: number; z: number; block: string }[] | null;
+  /** Player vitals, mirrored from PlayerStatusUpdate. `null` before the first update. */
+  playerStatus: {
+    currentHp: number;
+    maxHp: number;
+    currentMana: number;
+    maxMana: number;
+    godMode: boolean;
+  } | null;
+  /** Set once the player has been downed (HP reached 0); cleared on respawn. */
+  playerDowned: boolean;
+  /** Current combat target, mirrored from CombatTargetUpdate. `null` when nothing targeted. */
+  combatTarget: {
+    targetId: string | null;
+    displayName: string | null;
+    currentHp: number;
+    maxHp: number;
+    level?: number;
+  } | null;
+  /** RPG character + derived stats, mirrored from CharacterSync. `null` for non-RPG players. */
+  character: { character: unknown; derived: { maxHp?: number } & Record<string, unknown> } | null;
+  /** Latest XP / level payload, mirrored from XpGained. `null` before the first kill. */
+  xp: { level?: number; currentXp?: number; xpForNextLevel?: number } | null;
   /** Current party, mirrored from the GroupSync message. `null` when not in a group. */
   group: {
     id: string;

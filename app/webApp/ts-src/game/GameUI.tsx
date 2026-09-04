@@ -801,7 +801,11 @@ export function GameUI() {
     };
     window.mc.openCharacter = () => dispatch("character_open");
     window.mc.showCharacterCreation = () => navigateRef.current?.("/char-rpg-create");
-    window.mc.characterSync = (json: string) => dispatch("character_sync", { data: JSON.parse(json) });
+    window.mc.characterSync = (json: string) => {
+      const data = JSON.parse(json);
+      if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), character: data };
+      dispatch("character_sync", { data });
+    };
     window.mc.openTrade = (tradeId: string, otherPlayer: string, _role: string) =>
       dispatch("trade_open", {
         data: { tradeId, otherPlayer, myOffer: {}, theirOffer: {}, myAccepted: false, theirAccepted: false },
@@ -846,14 +850,39 @@ export function GameUI() {
       setChunkDebugData({ ...(JSON.parse(json) as ChunkDebugData), ...chunkLoadStatsRef.current });
     };
 
-    window.mc.combatTargetUpdate = (json: string) => dispatch("combat_target_update", { data: JSON.parse(json) });
+    window.mc.combatTargetUpdate = (json: string) => {
+      const data = JSON.parse(json);
+      if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), combatTarget: data?.targetId ? data : null };
+      dispatch("combat_target_update", { data });
+    };
     window.mc.healthUpdate = (json: string) => dispatch("health_update", { data: JSON.parse(json) });
-    window.mc.playerStatusUpdate = (json: string) => dispatch("player_status_update", { data: JSON.parse(json) });
+    window.mc.playerStatusUpdate = (json: string) => {
+      const data = JSON.parse(json);
+      if (window.__mcE2E) {
+        window.mcE2E = {
+          ...(window.mcE2E ?? {}),
+          playerStatus: data,
+          playerDowned: data ? data.currentHp <= 0 : (window.mcE2E?.playerDowned ?? false),
+        };
+      }
+      dispatch("player_status_update", { data });
+    };
     window.mc.updateNpcProximity = (json: string) => dispatch("npc_proximity_update", { data: JSON.parse(json) });
     window.mc.statusEffectUpdate = (json: string) => dispatch("status_effect_update", { data: JSON.parse(json) });
-    window.mc.playerDowned = (playerId: string) => dispatch("player_downed", { playerId });
-    window.mc.playerRespawned = (json: string) => dispatch("player_respawned", { data: JSON.parse(json) });
-    window.mc.xpGained = (json: string) => dispatch("xp_gained", { data: JSON.parse(json) });
+    window.mc.playerDowned = (playerId: string) => {
+      if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), playerDowned: true };
+      dispatch("player_downed", { playerId });
+    };
+    window.mc.playerRespawned = (json: string) => {
+      const data = JSON.parse(json);
+      if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), playerDowned: false };
+      dispatch("player_respawned", { data });
+    };
+    window.mc.xpGained = (json: string) => {
+      const data = JSON.parse(json);
+      if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), xp: data };
+      dispatch("xp_gained", { data });
+    };
     window.mc.godModeUpdate = (enabled: boolean) => dispatch("god_mode_update", { enabled });
     window.mc.editModeUpdate = (mode: "game" | "creative") => {
       window.mcState.editMode = mode;
