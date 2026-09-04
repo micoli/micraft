@@ -6,6 +6,8 @@ export interface E2eActions {
   setLook(yaw: number, pitch: number): void;
   breakTargeted(): void;
   placeTargeted(): void;
+  /** Hold / release the primary (left) mouse button — drives the real survival break/place path. */
+  setBreaking(down: boolean): void;
   selectHotbar(i: number): void;
   /** Run a slash command ("/give …") or send chat, via the in-game console path. */
   runCommand(cmd: string): void;

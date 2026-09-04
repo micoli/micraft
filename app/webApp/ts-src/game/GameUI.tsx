@@ -545,6 +545,10 @@ export function GameUI() {
           if (t) window.mcState.events.push(`creative_place:${t.x},${t.y + 1},${t.z},cobblestone,0`);
         },
         selectHotbar: (i) => window.mcState.events.push(`slot_${i + 1}`),
+        setBreaking: (down) => {
+          window.mcState.mouseLeft = down;
+          if (down) window.mcState.mouseDownAt = Date.now() - 200;
+        },
         runCommand: (cmd) => {
           // Same path as the in-game console: the wasm loop polls consumeConsoleInput() and
           // dispatches a "/..." string as ClientMessage.Command, anything else as ChatSend.
