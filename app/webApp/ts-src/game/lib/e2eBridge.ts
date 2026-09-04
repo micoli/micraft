@@ -58,6 +58,15 @@ export interface E2eSnapshot {
   character: { character: unknown; derived: { maxHp?: number } & Record<string, unknown> } | null;
   /** Latest XP / level payload, mirrored from XpGained. `null` before the first kill. */
   xp: { level?: number; currentXp?: number; xpForNextLevel?: number } | null;
+  /** Active P2P trade, mirrored from Open/Update/Close trade messages. `null` when no trade. */
+  trade: {
+    tradeId: string;
+    otherPlayer: string;
+    myOffer: Record<string, number>;
+    theirOffer: Record<string, number>;
+    myAccepted: boolean;
+    theirAccepted: boolean;
+  } | null;
   /** Current guild, mirrored from GuildSync. `null` when not in a guild. */
   guild: {
     id: string;
