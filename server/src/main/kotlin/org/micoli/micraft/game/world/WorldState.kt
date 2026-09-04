@@ -77,6 +77,9 @@ class WorldState(
 
     fun discoveredChunks(): Set<ChunkPos> = chunks.keys.toSet()
 
+    /** Chunks generated, loaded or edited since the last [flushDirty] — a peek, doesn't clear. */
+    fun dirtyChunksSnapshot(): Set<ChunkPos> = dirtyChunks.toSet()
+
     /** Returns a chunk only if it was already generated — never triggers generation. */
     fun getChunkIfDiscovered(pos: ChunkPos): Chunk? = chunks[pos]
 

@@ -101,6 +101,43 @@ class TerrainCacheTest {
     }
 
     @Test
+    fun save_withNothingDirty_doesNotTouchDisk() {
+        val cache = TerrainCache()
+        val world = testWorld()
+        val dir = Files.createTempDirectory("terrain-cache")
+        cache.update(world.getOrGenerate(ChunkPos(0, 0)))
+        cache.save(dir)
+        assertTrue(dir.resolve("0_0.png").toFile().exists())
+
+        dir.resolve("0_0.png").toFile().delete()
+        cache.save(dir) // no update() since the previous save -> nothing dirty
+        assertFalse(
+            dir.resolve("0_0.png").toFile().exists(),
+            "save() must not rewrite chunks that weren't updated since the last save")
+    }
+
+    @Test
+    fun save_onlyRewritesChunksUpdatedSinceLastSave() {
+        val cache = TerrainCache()
+        val world = testWorld()
+        val dir = Files.createTempDirectory("terrain-cache")
+        val chunkA = world.getOrGenerate(ChunkPos(0, 0))
+        val chunkB = world.getOrGenerate(ChunkPos(1, 0))
+        cache.update(chunkA)
+        cache.update(chunkB)
+        cache.save(dir)
+        dir.resolve("0_0.png").toFile().delete()
+        dir.resolve("1_0.png").toFile().delete()
+
+        cache.update(chunkB) // only B changed
+        cache.save(dir)
+
+        assertFalse(
+            dir.resolve("0_0.png").toFile().exists(), "untouched chunk must not be rewritten")
+        assertTrue(dir.resolve("1_0.png").toFile().exists(), "updated chunk must be rewritten")
+    }
+
+    @Test
     fun rebuild_multipleChunks_cachedJsonContainsAll() {
         val cache = TerrainCache()
         val world = testWorld()

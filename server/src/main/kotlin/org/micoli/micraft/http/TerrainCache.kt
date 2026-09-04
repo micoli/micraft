@@ -3,6 +3,7 @@ package org.micoli.micraft.http
 import com.charleskorn.kaml.Yaml
 import java.awt.image.BufferedImage
 import java.nio.file.Path
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.GZIPInputStream
 import javax.imageio.ImageIO
@@ -23,6 +24,7 @@ private val log = LoggerFactory.getLogger(TerrainCache::class.java)
 
 class TerrainCache {
     private val cache = ConcurrentHashMap<ChunkPos, Pair<List<String?>, Int?>>()
+    private val dirtySaves = Collections.newSetFromMap(ConcurrentHashMap<ChunkPos, Boolean>())
     @Volatile
     var cachedJson: String = "[]"
         private set
@@ -93,19 +95,28 @@ class TerrainCache {
         cachedJson = Json.encodeToString(getAll())
     }
 
+    /**
+     * Writes only the PNGs for chunks touched since the last save — not the whole cache, which
+     * would re-encode every discovered chunk's PNG on every periodic flush regardless of whether it
+     * changed. `heights.yaml` aggregates every chunk in one file, so it's cheap enough to rewrite
+     * in full whenever there's anything dirty to save.
+     */
     fun save(cacheDir: Path) {
+        val toSave = dirtySaves.toSet()
+        if (toSave.isEmpty()) return
         try {
             cacheDir.createDirectories()
-            val heights = mutableListOf<ChunkHeightInfo>()
-            for ((pos, pair) in cache) {
-                val (colors, avgHeight) = pair
+            for (pos in toSave) {
+                val (colors, _) = cache[pos] ?: continue
                 val img = BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB)
                 for (lx in 0..15) for (lz in 0..15) {
                     img.setRGB(lx, lz, colorToArgb(colors[lx * 16 + lz]))
                 }
                 ImageIO.write(img, "PNG", cacheDir.resolve("${pos.cx}_${pos.cz}.png").toFile())
-                heights += ChunkHeightInfo(pos.cx, pos.cz, avgHeight)
             }
+            dirtySaves.removeAll(toSave)
+            val heights =
+                cache.entries.map { (pos, pair) -> ChunkHeightInfo(pos.cx, pos.cz, pair.second) }
             cacheDir
                 .resolve("heights.yaml")
                 .toFile()
@@ -127,6 +138,7 @@ class TerrainCache {
         for (lx in 0 until 16) for (lz in 0 until 16) colors += topBlockColor(chunk, lx, lz)
         val centerHeight = topBlockY(chunk, 8, 8)
         cache[chunk.pos] = Pair(colors, centerHeight)
+        dirtySaves.add(chunk.pos)
     }
 
     fun getAll(): List<ChunkTerrainInfo> =

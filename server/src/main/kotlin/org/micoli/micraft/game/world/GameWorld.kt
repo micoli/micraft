@@ -425,9 +425,16 @@ class GameWorld(
         worldMeta?.let { persistence?.saveMetadata(it.copy(gameTicks = gameTicks)) }
     }
 
+    /**
+     * Rebuilds+saves the terrain (minimap) cache for chunks touched since the last call — not the
+     * whole discovered world, which would redo unchanged chunks every periodic flush (30s) and
+     * scale with total world size instead of actual activity. [rebuildTerrainSync] covers full
+     * accuracy at shutdown.
+     */
     fun launchTerrainRebuild() {
         val scope = appScope() ?: return
-        val chunks = world.discoveredChunks().mapNotNull { world.getChunkIfDiscovered(it) }
+        val chunks = world.dirtyChunksSnapshot().mapNotNull { world.getChunkIfDiscovered(it) }
+        if (chunks.isEmpty()) return
         scope.launch(Dispatchers.IO) {
             terrainCache.rebuild(chunks)
             persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache")) }

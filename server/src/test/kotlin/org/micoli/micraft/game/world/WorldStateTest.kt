@@ -98,4 +98,24 @@ class WorldStateTest {
         world.flushDirty()
         assertNotNull(persistence.loadChunk(ChunkPos(0, 0)))
     }
+
+    @Test
+    fun dirtyChunksSnapshot_reflectsGeneratedAndEditedChunks_untouchedByFlushDirty() {
+        val world = testWorld()
+        world.getOrGenerate(ChunkPos(0, 0))
+        assertEquals(setOf(ChunkPos(0, 0)), world.dirtyChunksSnapshot())
+
+        // a peek, not a drain — flushDirty (persistence) shouldn't be required to observe it, and
+        // repeated reads must be stable.
+        assertEquals(setOf(ChunkPos(0, 0)), world.dirtyChunksSnapshot())
+    }
+
+    @Test
+    fun dirtyChunksSnapshot_clearedByFlushDirty() {
+        val dir = Files.createTempDirectory("world-state-dirty-snapshot")
+        val world = WorldState(MapChunkGenerator(), WorldPersistence(dir))
+        world.getOrGenerate(ChunkPos(0, 0))
+        world.flushDirty()
+        assertEquals(emptySet(), world.dirtyChunksSnapshot())
+    }
 }
