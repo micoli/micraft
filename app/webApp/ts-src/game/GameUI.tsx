@@ -806,10 +806,11 @@ export function GameUI() {
       if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), character: data };
       dispatch("character_sync", { data });
     };
-    window.mc.openTrade = (tradeId: string, otherPlayer: string, _role: string) =>
-      dispatch("trade_open", {
-        data: { tradeId, otherPlayer, myOffer: {}, theirOffer: {}, myAccepted: false, theirAccepted: false },
-      });
+    window.mc.openTrade = (tradeId: string, otherPlayer: string, _role: string) => {
+      const data = { tradeId, otherPlayer, myOffer: {}, theirOffer: {}, myAccepted: false, theirAccepted: false };
+      if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), trade: data };
+      dispatch("trade_open", { data });
+    };
     window.mc.tradeUpdate = (json: string) => {
       try {
         const partial = JSON.parse(json) as {
@@ -820,12 +821,16 @@ export function GameUI() {
           theirAccepted: boolean;
         };
         const data = { ...partial, otherPlayer: tradeRef.current?.otherPlayer ?? "" };
+        if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), trade: data };
         dispatch("trade_update", { data });
       } catch {
         /* ignore */
       }
     };
-    window.mc.tradeClosed = (_tradeId: string, _reason: string) => dispatch("trade_close");
+    window.mc.tradeClosed = (_tradeId: string, _reason: string) => {
+      if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), trade: null };
+      dispatch("trade_close");
+    };
     window.mc.IngameMap = () => dispatch("ingame_map_toggle");
     window.mc.dumpStats = () => {
       const h = hudDataRef.current;
