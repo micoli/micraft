@@ -75,7 +75,7 @@
   },
   "devDependencies": {
     "@7nohe/openapi-react-query-codegen": "^3.0.2",
-    "@babylonjs/core": "7.48.0",
+    "@babylonjs/core": "9.23.0",
     "@eslint/js": "^9.0.0",
     "@playwright/test": "1.61.1",
     "@storybook/addon-essentials": "^8.6.12",
