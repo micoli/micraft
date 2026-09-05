@@ -92,7 +92,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.2.0",
     "@vitest/ui": "^4.1.10",
-    "babylonjs": "7.48.0",
+    "babylonjs": "9.23.0",
     "babylonjs-loaders": "7.48.0",
     "esbuild": "0.25.12",
     "eslint": "^9.39.4",
