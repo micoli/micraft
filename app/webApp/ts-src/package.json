@@ -77,7 +77,7 @@
     "@7nohe/openapi-react-query-codegen": "^3.0.2",
     "@babylonjs/core": "7.48.0",
     "@eslint/js": "^9.0.0",
-    "@playwright/test": "1.61.1",
+    "@playwright/test": "1.62.1",
     "@storybook/addon-essentials": "^8.6.12",
     "@storybook/react": "^8.6.12",
     "@storybook/react-vite": "^8.6.12",
