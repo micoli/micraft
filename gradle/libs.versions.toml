@@ -18,7 +18,7 @@ commons-jexl3 = "3.2.1"
 java-jwt = "4.4.0"
 ktor-openapi = "5.7.0"
 qodana = "2024.3.4"
-spotless = "7.2.1"
+spotless = "8.10.1"
 cyclonedx = "3.4.1"
 
 [libraries]
