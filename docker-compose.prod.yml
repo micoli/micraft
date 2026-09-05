@@ -4,22 +4,11 @@ services:
       context: .
       dockerfile: .docker/prod/Dockerfile
       target: server
+    ports:
+      - "8080:8080"
     volumes:
       - ./data:/app/data
       - world-data:/app/data/world
-    restart: unless-stopped
-    networks:
-      - internal
-
-  web:
-    build:
-      context: .
-      dockerfile: .docker/prod/Dockerfile
-      target: web
-    ports:
-      - "8080:8080"
-    depends_on:
-      - server
     restart: unless-stopped
     networks:
       - internal

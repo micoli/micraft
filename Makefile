@@ -276,7 +276,7 @@ docs-site-serve: ## Serve the docs site with live-reload (http://localhost:8000)
 docs-site-stop: ## Stop the docs daemon
 	$(PITCHFORK) stop docs
 
-##@ Prod (port 8080 via nginx)
+##@ Prod (port 8080)
 
 prod-build: ## Build prod images
 	DOCKER_BUILDKIT=1 $(DC_PROD) build
