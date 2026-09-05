@@ -64,7 +64,7 @@
     "codemirror": "^6.0.2",
     "codemirror-json-schema": "^0.8.1",
     "core-js": "^3.13.1",
-    "mobx": "^6.10.2",
+    "mobx": "^7.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router": "^7.18.1",
