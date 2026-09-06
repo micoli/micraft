@@ -206,6 +206,11 @@ SIEGE_TREBUCHET:
   spawnsEntity: TREBUCHET
   label: TRB
   bg: "#5A4A2A"
+SIEGE_CANON:
+  buildable: true
+  spawnsEntity: CANON
+  label: CNN
+  bg: "#5A4A2A"
 BOULDER:
   buildable: false
   label: BLD
