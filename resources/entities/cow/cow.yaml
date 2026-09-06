@@ -1,0 +1,74 @@
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+behavior: animal
+width: 0.9
+height: 1.4
+wanderSpeed: 1.2
+wanderRadius: 16.0
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes:
+    - plains
+    - dry_plains
+    - forest
+  # world-wide ceiling; the floor below is what the spawner restocks up to
+  maxTotal: 90
+  minTotal: 65
+hp: 14
+tameable: true
+tameBaseChance: 0.35
+aggroMode: PASSIVE
+aggroRange: 5
+deaggroTimeSec: 2
+characterClass: WARRIOR
+baseStats:
+  str: 12
+  dex: 6
+  intel: 6
+  wis: 9
+  con: 14
+  cha: 6
+attacks:
+  - attackId: charge
+    level: 1
+animal:
+  diet: HERBIVORE
+  lifespanDays: 30.0
+  # no dedicated baby model yet — disable breeding rather than reference a missing offspring type
+  canReproduce: false
+  gestationDays: 2.0
+  offspringMinCount: 1
+  offspringMaxCount: 1
+  reproductionCooldownDays: 6.0
+  matingRange: 8.0
+  scale: 1.0
+  baseStats:
+    str: 12
+    dex: 6
+    intel: 6
+    wis: 9
+    con: 14
+    cha: 6
+  statsVariance: 2
+  hpRegenPerSec: 0.7
+  hungerRatePerDay: 0.07
+  hungerThresholdToHunt: 0.4
+  hungerThresholdToMate: 0.5
+  # stops breeding where the herd is already dense, not world-wide
+  maxLocalDensity: 10
+  densityRadius: 24.0
+  # runs from whatever eats it, at this distance
+  fleeRadius: 12.0
+  # ── Starvation ──
+  starvationThreshold: 1.0
+  starvationAttackMultiplier: 0.5
+  starvationSpeedMultiplier: 0.2
+  starvationSterile: true
+  starvationDeathDays: 3.0
+  # ── Gestation ──
+  gestationAttackMultiplier: 0.6
+  gestationSpeedMultiplier: 0.7
