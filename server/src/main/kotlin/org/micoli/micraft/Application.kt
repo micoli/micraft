@@ -59,6 +59,7 @@ import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.placeable.PlaceableManager
+import org.micoli.micraft.game.placeable.furniture.FurnitureRegistryLoader
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileManager
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileRegistryLoader
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
@@ -103,6 +104,7 @@ import org.micoli.micraft.http.BiomesController
 import org.micoli.micraft.http.CharacterController
 import org.micoli.micraft.http.ChunkController
 import org.micoli.micraft.http.DocsController
+import org.micoli.micraft.http.FurnitureController
 import org.micoli.micraft.http.GameAssetsController
 import org.micoli.micraft.http.I18nController
 import org.micoli.micraft.http.ItemsController
@@ -196,6 +198,7 @@ fun Application.module() {
     val vehicleRegistryLoader = get<VehicleRegistryLoader>()
     val siegeWeaponRegistryLoader = get<SiegeWeaponRegistryLoader>()
     val siegeProjectileRegistryLoader = get<SiegeProjectileRegistryLoader>()
+    val furnitureRegistryLoader = get<FurnitureRegistryLoader>()
 
     val biomeFile = Path.of(dataPath + "/config/biomes.yaml")
     val biomeResourcesFile = resourcesConfigDir.resolve("biomes.yaml")
@@ -220,7 +223,8 @@ fun Application.module() {
             plainColorRegistryLoader,
             vehicleRegistryLoader,
             siegeWeaponRegistryLoader,
-            siegeProjectileRegistryLoader)
+            siegeProjectileRegistryLoader,
+            furnitureRegistryLoader)
     }
 
     val reloadGameConfigLambda: () -> Unit = {
@@ -403,6 +407,7 @@ fun Application.module() {
         WeaponsController(dataPath).register(this)
         ToolsController(dataPath).register(this)
         SiegeWeaponsController(dataPath).register(this)
+        FurnitureController(dataPath).register(this)
         AuctionsController(gameLoop, tokenStore).register(this)
         GameAssetsController().register(this)
         QuestsController(questManager).register(this)

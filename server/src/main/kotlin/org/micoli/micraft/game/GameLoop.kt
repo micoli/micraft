@@ -1345,7 +1345,7 @@ class GameLoop(
             }
         val placeables =
             PlaceableRegistry.keys().associate { type ->
-                type.id to PlaceableRegistry.get(type)!!.bbmodelFile
+                type.id to PlaceableRegistry.get(type)!!.bbmodelPath
             }
         val placeableDefinitions =
             SiegeWeaponRegistry.keys().associate { type ->

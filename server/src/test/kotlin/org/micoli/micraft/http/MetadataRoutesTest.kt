@@ -43,4 +43,15 @@ class MetadataRoutesTest {
         assertEquals(ContentType.Application.Json, r.contentType()?.withoutParameters())
         assertTrue(r.bodyAsText().trim().startsWith("["), "skins payload must be a JSON array")
     }
+
+    @Test
+    fun testFurnituresReturnsDefinitionMap() = testApplication {
+        application { module() }
+        val r = client.get("/api/furnitures")
+        assertEquals(HttpStatusCode.OK, r.status)
+        assertEquals(ContentType.Application.Json, r.contentType()?.withoutParameters())
+        val body = Json.parseToJsonElement(r.bodyAsText()).jsonObject
+        assertTrue(body.containsKey("TABLE"), "bundled TABLE furniture must be listed")
+        assertTrue(body.getValue("TABLE").jsonObject.containsKey("rotatable"))
+    }
 }

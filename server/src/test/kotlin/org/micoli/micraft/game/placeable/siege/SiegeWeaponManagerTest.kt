@@ -13,6 +13,8 @@ import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.EntityType
 import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.placeable.PlaceableDefinition
+import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.placeable.siege.SiegeWeaponDefinition
 import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.player.Vec3
@@ -26,12 +28,16 @@ class SiegeWeaponManagerTest {
     private val ammo = ItemType("TEST_BOULDER")
 
     private lateinit var savedSiegeWeapons: Map<EntityType, SiegeWeaponDefinition>
+    private lateinit var savedPlaceables: Map<EntityType, PlaceableDefinition>
 
     @BeforeTest
     fun setUp() {
         testWorld()
         savedSiegeWeapons =
             SiegeWeaponRegistry.keys().associateWith { SiegeWeaponRegistry.get(it)!! }
+        savedPlaceables = PlaceableRegistry.keys().associateWith { PlaceableRegistry.get(it)!! }
+        PlaceableRegistry.load(
+            savedPlaceables + mapOf(catapult to PlaceableDefinition("siege/weapons/TEST_CATAPULT")))
         SiegeWeaponRegistry.load(
             savedSiegeWeapons +
                 mapOf(
@@ -53,6 +59,7 @@ class SiegeWeaponManagerTest {
     @AfterTest
     fun tearDown() {
         SiegeWeaponRegistry.load(savedSiegeWeapons)
+        PlaceableRegistry.load(savedPlaceables)
     }
 
     @Test
@@ -72,7 +79,7 @@ class SiegeWeaponManagerTest {
     @Test
     fun spawnFor_nonSiegeType_isNoOp() = runBlocking {
         // Not registered in SiegeWeaponRegistry — built directly (bypassing
-        // PlaceableManager.spawn, which itself now gates on SiegeWeaponRegistry) to prove
+        // PlaceableManager.spawn, which itself gates on PlaceableRegistry) to prove
         // spawnFor's own registry check independently.
         val nonSiegeType = EntityType("TEST_NON_SIEGE")
         val placeable = PlaceableInstance("p-non-siege", nonSiegeType, Vec3(10f, 5f, 10f))

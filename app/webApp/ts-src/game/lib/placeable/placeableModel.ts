@@ -45,17 +45,20 @@ export function registerPlaceableModel(): Pick<
       }
 
       Promise.all(
-        entries.map(([type, file]) =>
-          // /api/models is a staticFiles mount (Application.kt), not an OpenAPI route.
-          fetch(`/api/models/siege/weapons/${file}/${file}.bbmodel`)
+        entries.map(([type, path]) => {
+          // `path` is the model location relative to resources/, without extension — e.g.
+          // "siege/weapons/CANON" or "furnitures/TABLE". /api/models is a staticFiles mount
+          // (Application.kt), not an OpenAPI route.
+          const base = path.split("/").pop();
+          return fetch(`/api/models/${path}/${base}.bbmodel`)
             .then((r) => r.json())
             .then((data: BbModel) => {
               (window.mcState.placeableBbmodels as PlaceableBbmodels)[type] = data;
             })
             .catch((e) => {
-              console.error(`[MiCraft] Failed to load placeable model ${file}`, e);
-            }),
-        ),
+              console.error(`[MiCraft] Failed to load placeable model ${path}`, e);
+            });
+        }),
       ).then(() => {
         window.mcState.placeableModelsReady = true;
       });

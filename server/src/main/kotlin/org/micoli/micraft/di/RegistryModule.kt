@@ -6,6 +6,7 @@ import org.koin.core.annotation.Single
 import org.micoli.micraft.dataPath
 import org.micoli.micraft.game.item.ItemRegistryLoader
 import org.micoli.micraft.game.item.expandPlainColorItems
+import org.micoli.micraft.game.placeable.furniture.FurnitureRegistryLoader
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileRegistryLoader
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponRegistryLoader
 import org.micoli.micraft.game.plaincolor.PlainColorRegistryLoader
@@ -17,6 +18,7 @@ import org.micoli.micraft.game.world.block.BlockIdRegistryLoader
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
 import org.micoli.micraft.placeable.PlaceableDefinition
 import org.micoli.micraft.placeable.PlaceableRegistry
+import org.micoli.micraft.placeable.furniture.FurnitureRegistry
 import org.micoli.micraft.placeable.siege.SiegeProjectileRegistry
 import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.vehicle.VehicleRegistry
@@ -33,6 +35,7 @@ fun loadRegistries(
     vehicleRegistryLoader: VehicleRegistryLoader,
     siegeWeaponRegistryLoader: SiegeWeaponRegistryLoader,
     siegeProjectileRegistryLoader: SiegeProjectileRegistryLoader,
+    furnitureRegistryLoader: FurnitureRegistryLoader,
 ) {
     PlainColorRegistry.load(plainColorRegistryLoader.load())
     val blocks = blockRegistryLoader.load()
@@ -42,12 +45,17 @@ fun loadRegistries(
     VehicleRegistry.load(vehicleRegistryLoader.load())
     SiegeWeaponRegistry.load(siegeWeaponRegistryLoader.load())
     SiegeProjectileRegistry.load(siegeProjectileRegistryLoader.load())
-    // Merge each kind-specific placeable registry into the generic one — currently siege weapons
-    // only, more kinds append here as they're added.
+    FurnitureRegistry.load(furnitureRegistryLoader.load())
+    // Merge each kind-specific placeable registry into the generic one — the bbmodelPath is the
+    // model location relative to `resources/`, prefixed per kind; more kinds append here.
     PlaceableRegistry.load(
         SiegeWeaponRegistry.keys().associateWith { type ->
-            PlaceableDefinition(bbmodelFile = SiegeWeaponRegistry.get(type)!!.bbmodelFile)
-        })
+            PlaceableDefinition("siege/weapons/${SiegeWeaponRegistry.get(type)!!.bbmodelFile}")
+        } +
+            FurnitureRegistry.keys().associateWith { type ->
+                val def = FurnitureRegistry.get(type)!!
+                PlaceableDefinition("furnitures/${def.bbmodelFile}", def.rotatable)
+            })
 }
 
 @Module
@@ -96,6 +104,13 @@ class RegistryModule {
             dataProjectilesPath = Path.of("$dataPath/resources/siege/projectiles"),
         )
 
+    @Single
+    fun furnitureRegistryLoader(): FurnitureRegistryLoader =
+        FurnitureRegistryLoader(
+            resourcesFurnituresPath = Path.of("resources/furnitures"),
+            dataFurnituresPath = Path.of("$dataPath/resources/furnitures"),
+        )
+
     @Single(createdAtStart = true)
     fun registryBootstrap(
         blockRegistryLoader: BlockRegistryLoader,
@@ -104,6 +119,7 @@ class RegistryModule {
         vehicleRegistryLoader: VehicleRegistryLoader,
         siegeWeaponRegistryLoader: SiegeWeaponRegistryLoader,
         siegeProjectileRegistryLoader: SiegeProjectileRegistryLoader,
+        furnitureRegistryLoader: FurnitureRegistryLoader,
     ): RegistryBootstrapResult {
         loadRegistries(
             blockRegistryLoader,
@@ -111,7 +127,8 @@ class RegistryModule {
             plainColorRegistryLoader,
             vehicleRegistryLoader,
             siegeWeaponRegistryLoader,
-            siegeProjectileRegistryLoader)
+            siegeProjectileRegistryLoader,
+            furnitureRegistryLoader)
         return RegistryBootstrapResult()
     }
 }

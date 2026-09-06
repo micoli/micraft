@@ -211,6 +211,16 @@ SIEGE_CANON:
   spawnsEntity: CANON
   label: CNN
   bg: "#5A4A2A"
+FURNITURE_TABLE:
+  buildable: true
+  spawnsEntity: TABLE
+  label: TBL
+  bg: "#8B5A2B"
+FURNITURE_CHAIR:
+  buildable: true
+  spawnsEntity: CHAIR
+  label: CHR
+  bg: "#8B5A2B"
 BOULDER:
   buildable: false
   label: BLD

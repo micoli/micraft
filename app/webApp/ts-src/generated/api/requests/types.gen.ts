@@ -617,6 +617,28 @@ export type OrgMicoliMicraftPlayerVec3 = {
 };
 
 /**
+ * FurnitureDefinition
+ */
+export type OrgMicoliMicraftPlaceableFurnitureFurnitureDefinition = {
+    /**
+     * String
+     */
+    bbmodelFile: string;
+    /**
+     * Float
+     */
+    height: number;
+    /**
+     * Boolean
+     */
+    rotatable: boolean;
+    /**
+     * Float
+     */
+    width: number;
+};
+
+/**
  * AuctionListing
  */
 export type OrgMicoliMicraftProtocolAuctionListing = {
@@ -3755,6 +3777,24 @@ export type GetApiSiegeWeaponsResponses = {
 };
 
 export type GetApiSiegeWeaponsResponse = GetApiSiegeWeaponsResponses[keyof GetApiSiegeWeaponsResponses];
+
+export type GetApiFurnituresData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/furnitures';
+};
+
+export type GetApiFurnituresResponses = {
+    /**
+     * Map<String,FurnitureDefinition>
+     */
+    200: {
+        [key: string]: OrgMicoliMicraftPlaceableFurnitureFurnitureDefinition;
+    };
+};
+
+export type GetApiFurnituresResponse = GetApiFurnituresResponses[keyof GetApiFurnituresResponses];
 
 export type GetApiAdminAuctionsData = {
     body?: never;

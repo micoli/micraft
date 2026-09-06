@@ -17,8 +17,8 @@ import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.rail.RailConnection
+import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.placeable.PlaceableState
-import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
@@ -31,10 +31,8 @@ private val log = LoggerFactory.getLogger(PlaceableManager::class.java)
  * placeable never moves once spawned; [org.micoli.micraft.game.placeable.siege.SiegeWeaponManager]
  * composes on top of this for anything siege-specific).
  *
- * There is no longer a generic placeable-definition registry: [SiegeWeaponRegistry] is the only
- * concrete placeable sub-system today, so type validation here is sourced directly from it. If a
- * second sub-system (e.g. furniture) is added later, this should become an injected lookup rather
- * than a second hardcoded registry reference.
+ * Type validation is sourced from the generic [PlaceableRegistry], which each kind-specific
+ * registry (siege weapons, furniture, …) is merged into at load time — see `RegistryModule.kt`.
  */
 class PlaceableManager(private val broadcast: suspend (ServerMessage) -> Unit) {
     private val placeables = ConcurrentHashMap<String, PlaceableInstance>()
@@ -53,7 +51,7 @@ class PlaceableManager(private val broadcast: suspend (ServerMessage) -> Unit) {
         groundPos: BlockPos,
         world: WorldState
     ): PlaceableInstance? {
-        if (SiegeWeaponRegistry.get(type) == null) {
+        if (PlaceableRegistry.get(type) == null) {
             log.debug("spawn rejected: unknown placeable type {}", type)
             return null
         }
@@ -99,6 +97,7 @@ class PlaceableManager(private val broadcast: suspend (ServerMessage) -> Unit) {
     /** Generic R-key rotation — advances rotationStep by one 30° step, wraps 11 -> 0. */
     suspend fun handleRotate(id: String) {
         val instance = placeables[id] ?: return
+        if (PlaceableRegistry.get(instance.type)?.rotatable != true) return
         instance.rotate()
         broadcast(ServerMessage.PlaceableUpdate(instance.toState()))
     }
@@ -130,7 +129,7 @@ class PlaceableManager(private val broadcast: suspend (ServerMessage) -> Unit) {
                         ListSerializer(PlaceableState.serializer()), savePath.readText())
                 var loaded = 0
                 for (state in states) {
-                    if (SiegeWeaponRegistry.get(state.placeableType) == null) {
+                    if (PlaceableRegistry.get(state.placeableType) == null) {
                         log.warn(
                             "Unknown placeable type '{}' in save file — skipped",
                             state.placeableType)

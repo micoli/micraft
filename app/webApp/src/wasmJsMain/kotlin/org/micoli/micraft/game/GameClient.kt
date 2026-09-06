@@ -887,8 +887,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     if (msg.placeables.isNotEmpty()) {
                         jsInitPlaceableModels(Json.encodeToString(msg.placeables))
                         PlaceableRegistry.load(
-                            msg.placeables.entries.associate { (type, bbmodelFile) ->
-                                EntityType(type) to PlaceableDefinition(bbmodelFile)
+                            msg.placeables.entries.associate { (type, bbmodelPath) ->
+                                EntityType(type) to PlaceableDefinition(bbmodelPath)
                             })
                     }
                     if (msg.siegeProjectiles.isNotEmpty())

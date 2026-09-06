@@ -493,7 +493,7 @@ class BlockPlacerTest {
                 savedSiegeWeapons + mapOf(entityType to SiegeWeaponDefinition()))
             PlaceableRegistry.load(
                 savedPlaceables +
-                    mapOf(entityType to PlaceableDefinition(bbmodelFile = "TEST_CATAPULT")))
+                    mapOf(entityType to PlaceableDefinition("siege/weapons/TEST_CATAPULT")))
 
             val world = testWorld(Triple(8, 6, 8))
             val broadcasts = mutableListOf<ServerMessage>()

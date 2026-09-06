@@ -37,7 +37,8 @@ SNOWBALL:
 - `buildable` + `placesBlock` — makes the item placeable.
 - `healthRestore` / `manaRestore` — non-zero marks the item consumable via `/drink`.
 - `label` / `bg` — hotbar rendering.
-- `spawnsEntity` — throwing the item spawns an entity.
+- `spawnsEntity` — placing the item spawns a free-standing entity (vehicle, siege
+  weapon, [furniture](../entities/vehicles.md)) instead of a block.
 
 Schema: `items.schema.json`. Reload with `/reload`.
 

@@ -6,8 +6,9 @@ import { BestiaryTab } from "./BestiaryTab";
 import { ModelsTab } from "./ModelsTab";
 import { EquipmentTab } from "./EquipmentTab";
 import { SiegeWeaponsTab } from "./SiegeWeaponsTab";
+import { FurnituresTab } from "./FurnituresTab";
 
-type AdminTab = "blocks" | "items" | "bestiary" | "models" | "equipment" | "siegeWeapons";
+type AdminTab = "blocks" | "items" | "bestiary" | "models" | "equipment" | "siegeWeapons" | "furnitures";
 
 const TAB_LABEL_KEYS: Record<AdminTab, TranslationKey> = {
   models: "administration.tabModels",
@@ -16,6 +17,7 @@ const TAB_LABEL_KEYS: Record<AdminTab, TranslationKey> = {
   bestiary: "administration.tabBestiary",
   equipment: "administration.tabEquipment",
   siegeWeapons: "administration.tabSiegeWeapons",
+  furnitures: "administration.tabFurnitures",
 };
 
 const DEFAULT_TAB: AdminTab = "models";
@@ -69,6 +71,9 @@ export function CodexPage() {
         )}
         {activeTab === "siegeWeapons" && (
           <SiegeWeaponsTab selectedKey={itemKey ? decodeURIComponent(itemKey) : null} onSelectKey={selectItem} />
+        )}
+        {activeTab === "furnitures" && (
+          <FurnituresTab selectedKey={itemKey ? decodeURIComponent(itemKey) : null} onSelectKey={selectItem} />
         )}
       </div>
     </div>

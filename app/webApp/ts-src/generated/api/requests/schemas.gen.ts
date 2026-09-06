@@ -960,6 +960,37 @@ export const org_micoli_micraft_player_Vec3Schema = {
     title: 'Vec3'
 } as const;
 
+export const org_micoli_micraft_placeable_furniture_FurnitureDefinitionSchema = {
+    type: 'object',
+    properties: {
+        bbmodelFile: {
+            type: 'string',
+            title: 'String'
+        },
+        height: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        rotatable: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        width: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        }
+    },
+    required: [
+        'bbmodelFile',
+        'height',
+        'rotatable',
+        'width'
+    ],
+    title: 'FurnitureDefinition'
+} as const;
+
 export const org_micoli_micraft_protocol_AuctionListingSchema = {
     type: 'object',
     properties: {

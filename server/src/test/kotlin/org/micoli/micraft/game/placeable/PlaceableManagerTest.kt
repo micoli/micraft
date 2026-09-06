@@ -14,6 +14,8 @@ import org.micoli.micraft.game.world.EntityType
 import org.micoli.micraft.game.world.ItemDefinition
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.placeable.PlaceableDefinition
+import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.placeable.siege.SiegeWeaponDefinition
 import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.protocol.ServerMessage
@@ -24,8 +26,10 @@ class PlaceableManagerTest {
 
     private val catapult = EntityType("TEST_CATAPULT")
     private val catapultItem = ItemType("TEST_SIEGE_CATAPULT")
+    private val fixedTable = EntityType("TEST_FIXED_TABLE")
 
     private lateinit var savedSiegeWeapons: Map<EntityType, SiegeWeaponDefinition>
+    private lateinit var savedPlaceables: Map<EntityType, PlaceableDefinition>
     private lateinit var savedItems: Map<ItemType, ItemDefinition>
 
     @BeforeTest
@@ -33,8 +37,15 @@ class PlaceableManagerTest {
         testWorld() // warm up TestFixtures static init before snapshotting the registries
         savedSiegeWeapons =
             SiegeWeaponRegistry.keys().associateWith { SiegeWeaponRegistry.get(it)!! }
+        savedPlaceables = PlaceableRegistry.keys().associateWith { PlaceableRegistry.get(it)!! }
         savedItems = ItemRegistry.keys().associateWith { ItemRegistry.get(it) }
         SiegeWeaponRegistry.load(savedSiegeWeapons + mapOf(catapult to SiegeWeaponDefinition()))
+        PlaceableRegistry.load(
+            savedPlaceables +
+                mapOf(
+                    catapult to PlaceableDefinition("siege/weapons/TEST_CATAPULT"),
+                    fixedTable to
+                        PlaceableDefinition("furnitures/TEST_FIXED_TABLE", rotatable = false)))
         ItemRegistry.load(
             savedItems + mapOf(catapultItem to ItemDefinition(spawnsEntity = catapult)))
     }
@@ -42,6 +53,7 @@ class PlaceableManagerTest {
     @AfterTest
     fun tearDown() {
         SiegeWeaponRegistry.load(savedSiegeWeapons)
+        PlaceableRegistry.load(savedPlaceables)
         ItemRegistry.load(savedItems)
     }
 
@@ -89,6 +101,17 @@ class PlaceableManagerTest {
         val manager = PlaceableManager({})
         val instance = manager.spawn(catapult, BlockPos(8, 7, 8), world)!!
         instance.rotationStep = 11
+
+        manager.handleRotate(instance.id)
+
+        assertEquals(0, manager.get(instance.id)?.rotationStep)
+    }
+
+    @Test
+    fun handleRotate_onNonRotatablePlaceable_isNoOp() = runBlocking {
+        val world = testWorld(Triple(8, 6, 8))
+        val manager = PlaceableManager({})
+        val instance = manager.spawn(fixedTable, BlockPos(8, 7, 8), world)!!
 
         manager.handleRotate(instance.id)
 

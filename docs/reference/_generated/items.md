@@ -48,5 +48,8 @@ Defined in `data/config/items.yaml` (bundled defaults in `resources/config/items
 | `VEHICLE_CART` | false | — | CRT | #8B5A2B | — | — | CART |
 | `SIEGE_CATAPULT` | true | — | CAT | #6E5230 | — | — | CATAPULT |
 | `SIEGE_TREBUCHET` | true | — | TRB | #5A4A2A | — | — | TREBUCHET |
+| `SIEGE_CANON` | true | — | CNN | #5A4A2A | — | — | CANON |
+| `FURNITURE_TABLE` | true | — | TBL | #8B5A2B | — | — | TABLE |
+| `FURNITURE_CHAIR` | true | — | CHR | #8B5A2B | — | — | CHAIR |
 | `BOULDER` | false | — | BLD | #767668 | — | — | — |
 | `FLAMING_BOULDER` | false | — | FBL | #C24A1E | — | — | — |
