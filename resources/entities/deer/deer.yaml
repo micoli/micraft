@@ -1,0 +1,35 @@
+behavior: animal
+width: 0.7
+height: 1.6
+wanderSpeed: 1.6
+wanderRadius: 24.0
+hp: 12
+aggroMode: PASSIVE
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes:
+    - plains
+    - forest
+    - pine_forest
+  maxTotal: 120
+  minTotal: 60
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: HERBIVORE
+  starvationDeathDays: 3.0
+  lifespanDays: 60.0
+  canReproduce: true
+  gestationDays: 6.0
+  offspringType: deer_baby
+  offspringMinCount: 1
+  offspringMaxCount: 2
+  reproductionCooldownDays: 8.0
+  scale: 1.0
+  fleeRadius: 14.0
+  maxLocalDensity: 8
+  densityRadius: 24.0

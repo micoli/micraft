@@ -1,19 +1,28 @@
 behavior: seller
 width: 0.6
-height: 1.8
+height: 1.85
 wanderSpeed: 0.0
 wanderRadius: 0.0
+hp: 25
 spawn:
   autoSpawn: false
   maxPerChunk: 1
   spawnBiomes: []
+  maxTotal: 0
+  minTotal: 0
 shopItems:
+  - itemType: HEALTH_POTION
+    buyPrice: 12
+    sellPrice: 4
+  - itemType: MANA_POTION
+    buyPrice: 12
+    sellPrice: 4
   - itemType: COBBLESTONE
-    buyPrice: 5
-    sellPrice: 2
-  - itemType: DIRT
+    buyPrice: 2
+    sellPrice: 1
+  - itemType: OAK_LOG
     buyPrice: 3
     sellPrice: 1
   - itemType: FLINT
-    buyPrice: 8
-    sellPrice: 4
+    buyPrice: 5
+    sellPrice: 2

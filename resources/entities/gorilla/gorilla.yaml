@@ -1,0 +1,35 @@
+behavior: animal
+width: 1.3
+height: 1.7
+wanderSpeed: 1.2
+wanderRadius: 18.0
+hp: 60
+aggroMode: PASSIVE_COOPERATIVE
+aggroRange: 8.0
+deaggroTimeSec: 12.0
+minLevel: 11
+maxLevel: 20
+characterClass: WARRIOR
+xpReward: 45
+attacks:
+  - attackId: heavy_slash
+    level: 2
+  - attackId: charge
+    level: 2
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes:
+    - forest
+  maxTotal: 24
+  minTotal: 8
+animal:
+  diet: HERBIVORE
+  starvationDeathDays: 4.0
+  canReproduce: false
+  scale: 1.0
+loot:
+  - item: FLINT
+    dropRate: 15
+    minCount: 1
+    maxCount: 1

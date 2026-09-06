@@ -1,0 +1,31 @@
+behavior: random_movable
+width: 0.6
+height: 1.9
+wanderSpeed: 3.0
+wanderRadius: 16.0
+hp: 45
+aggroMode: AGGRESSIVE
+aggroRange: 12.0
+deaggroTimeSec: 10.0
+attacks:
+  - attackId: slash
+    level: 2
+characterClass: WARRIOR
+baseStats:
+  str: 14
+  dex: 9
+  con: 13
+xpReward: 35
+minLevel: 3
+maxLevel: 12
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: []
+  maxTotal: 40
+  minTotal: 15
+loot:
+  - item: FLINT
+    dropRate: 30
+    minCount: 1
+    maxCount: 2

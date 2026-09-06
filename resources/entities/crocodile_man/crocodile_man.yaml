@@ -1,0 +1,66 @@
+behavior: animal
+width: 0.8
+height: 2.4
+wanderSpeed: 2.0
+wanderRadius: 35.0
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes:
+    - plains
+    - forest
+  maxTotal: 18
+  minTotal: 10
+hp: 42
+aggroMode: AGGRESSIVE
+aggroRange: 9.0
+deaggroTimeSec: 12.0
+minLevel: 2
+maxLevel: 4
+characterClass: WARRIOR
+baseStats:
+  str: 17
+  dex: 11
+  intel: 8
+  wis: 9
+  con: 16
+  cha: 6
+attacks:
+  - attackId: poison_bite
+    level: 3
+  - attackId: heavy_slash
+    level: 2
+  - attackId: charge
+    level: 2
+loot:
+  - item: FLINT
+    dropRate: 60
+    minCount: 1
+    maxCount: 3
+animal:
+  diet: CARNIVORE
+  lifespanDays: 70.0
+  preyTypes:
+    - deer
+    - pig
+    - duck
+  canReproduce: false
+  scale: 1.0
+  baseStats:
+    str: 17
+    dex: 11
+    intel: 8
+    wis: 9
+    con: 16
+    cha: 6
+  statsVariance: 2
+  hpRegenPerSec: 1.0
+  hungerRatePerDay: 0.09
+  hungerThresholdToHunt: 0.4
+  maxLocalDensity: 3
+  densityRadius: 24.0
+  starvationThreshold: 1.0
+  starvationAttackMultiplier: 0.5
+  starvationSpeedMultiplier: 0.2
+  starvationSterile: true
+  starvationDeathDays: 5.0

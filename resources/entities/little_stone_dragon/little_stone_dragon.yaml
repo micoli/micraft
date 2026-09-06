@@ -1,0 +1,38 @@
+behavior: random_movable
+width: 1.1
+height: 1.3
+wanderSpeed: 2.4
+wanderRadius: 18.0
+hp: 70
+aggroMode: AGGRESSIVE
+aggroRange: 14.0
+deaggroTimeSec: 12.0
+attacks:
+  - attackId: dragon_fire_breath
+    level: 1
+  - attackId: slash
+    level: 2
+characterClass: WARRIOR
+baseStats:
+  str: 15
+  dex: 11
+  con: 14
+xpReward: 60
+minLevel: 6
+maxLevel: 16
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: []
+  maxTotal: 20
+  minTotal: 6
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+loot:
+  - item: FLINT
+    dropRate: 40
+    minCount: 1
+    maxCount: 3

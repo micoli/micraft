@@ -1,0 +1,38 @@
+{
+  "body": {
+    "skin": "fur_white",
+    "part": "body"
+  },
+  "head": {
+    "skin": "fur_white",
+    "part": "head"
+  },
+  "snout": {
+    "skin": "fur_cream",
+    "part": "snout"
+  },
+  "earR": {
+    "skin": "fur_white",
+    "part": "ear"
+  },
+  "earL": {
+    "skin": "fur_white",
+    "part": "ear"
+  },
+  "frontLegL": {
+    "skin": "fur_white",
+    "part": "leg"
+  },
+  "frontLegR": {
+    "skin": "fur_white",
+    "part": "leg"
+  },
+  "backLegL": {
+    "skin": "fur_white",
+    "part": "leg"
+  },
+  "backLegR": {
+    "skin": "fur_white",
+    "part": "leg"
+  }
+}

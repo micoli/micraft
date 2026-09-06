@@ -1,8 +1,8 @@
 walkBoneAliases:
-  rightArm: right_front_leg
-  leftArm: left_front_leg
-  rightLeg: right_hind_leg
-  leftLeg: left_hind_leg
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
 behavior: random_movable
 width: 0.8
 height: 1.9

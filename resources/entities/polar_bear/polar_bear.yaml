@@ -1,11 +1,11 @@
 walkBoneAliases:
-  rightArm: leg0
-  leftArm: leg1
-  rightLeg: leg2
-  leftLeg: leg3
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
 behavior: animal
-width: 0.5
-height: 0.9
+width: 1.2
+height: 1.4
 wanderSpeed: 2.0
 wanderRadius: 32.0
 spawn:

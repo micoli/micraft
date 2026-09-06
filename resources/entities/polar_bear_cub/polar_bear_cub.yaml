@@ -2,10 +2,10 @@
 # No new art asset is needed for a species to have young.
 bbmodelFile: polar_bear
 walkBoneAliases:
-  rightArm: leg0
-  leftArm: leg1
-  rightLeg: leg2
-  leftLeg: leg3
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
 behavior: animal
 width: 0.35
 height: 0.65

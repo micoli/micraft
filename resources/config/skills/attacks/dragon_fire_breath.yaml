@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../../schemas/skill-attack.schema.json
+damageType: FIRE
+enabled: true
+levels:
+  1:
+    power: 7
+    weaponDice: 2d6
+    cooldownMs: 3000
+    rangeOverride: 7.0
+    statusEffect: Burning
+    durationSec: 3
+  2:
+    power: 12
+    weaponDice: 3d6
+    cooldownMs: 2800
+    rangeOverride: 8.0
+    statusEffect: Burning
+    durationSec: 4
+  3:
+    power: 18
+    weaponDice: 4d6
+    cooldownMs: 2600
+    rangeOverride: 9.0
+    statusEffect: Burning
+    durationSec: 5

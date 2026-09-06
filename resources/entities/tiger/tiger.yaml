@@ -1,0 +1,73 @@
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+behavior: animal
+width: 0.9
+height: 1.3
+wanderSpeed: 2.4
+wanderRadius: 45.0
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes:
+    - plains
+    - pine_forest
+  maxTotal: 16
+  minTotal: 9
+hp: 40
+aggroMode: AGGRESSIVE
+aggroRange: 12.0
+deaggroTimeSec: 12.0
+minLevel: 3
+maxLevel: 5
+characterClass: WARRIOR
+baseStats:
+  str: 17
+  dex: 15
+  intel: 8
+  wis: 10
+  con: 14
+  cha: 7
+attacks:
+  - attackId: wolf_pounce
+    level: 3
+  - attackId: shadow_claw
+    level: 3
+  - attackId: heavy_slash
+    level: 2
+loot:
+  - item: FLINT
+    dropRate: 55
+    minCount: 1
+    maxCount: 3
+animal:
+  diet: CARNIVORE
+  lifespanDays: 80.0
+  preyTypes:
+    - deer
+    - pig
+    - mountain_goat
+    - duck
+  canReproduce: false
+  scale: 1.0
+  baseStats:
+    str: 17
+    dex: 15
+    intel: 8
+    wis: 10
+    con: 14
+    cha: 7
+  statsVariance: 2
+  hpRegenPerSec: 1.0
+  hungerRatePerDay: 0.09
+  hungerThresholdToHunt: 0.4
+  maxLocalDensity: 2
+  densityRadius: 28.0
+  fleeRadius: 0.0
+  starvationThreshold: 1.0
+  starvationAttackMultiplier: 0.5
+  starvationSpeedMultiplier: 0.2
+  starvationSterile: true
+  starvationDeathDays: 5.0

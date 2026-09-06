@@ -1,8 +1,3 @@
-walkBoneAliases:
-  rightArm: leg0
-  leftArm: leg1
-  rightLeg: leg2
-  leftLeg: leg3
 behavior: animal
 width: 0.5
 height: 0.9
@@ -11,7 +6,10 @@ wanderRadius: 55.0
 spawn:
   autoSpawn: true
   maxPerChunk: 3
-  spawnBiomes: []
+  spawnBiomes:
+    - forest
+    - pine_forest
+    - snow_peaks
   # world-wide ceiling; the floor below is what the spawner restocks up to
   maxTotal: 60
   minTotal: 45
