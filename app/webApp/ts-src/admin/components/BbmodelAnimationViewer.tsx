@@ -89,7 +89,7 @@ function buildModel(
   standaloneItem = false,
 ): {
   root: any;
-  pivotNodes: Record<string, { node: any; origin: [number, number, number] }>;
+  pivotNodes: Record<string, { node: any; origin: [number, number, number]; restRotation: [number, number, number] }>;
   equippedWeapons: { LEFT: any; RIGHT: any };
   equippedArmors: Record<string, any>;
 } {
@@ -435,10 +435,11 @@ export function BbmodelAnimationViewer({
 
           for (const boneName of Object.keys(model.pivotNodes)) {
             const entry = model.pivotNodes[boneName];
+            const rest = entry.restRotation ?? [0, 0, 0];
             entry.node.rotationQuaternion = null;
-            entry.node.rotation.x = 0;
-            entry.node.rotation.y = 0;
-            entry.node.rotation.z = 0;
+            entry.node.rotation.x = rest[0];
+            entry.node.rotation.y = rest[1];
+            entry.node.rotation.z = rest[2];
           }
 
           if (animRef.current === NPC_WALK_ANIM_NAME) {
@@ -458,6 +459,7 @@ export function BbmodelAnimationViewer({
               if (!pivot) continue;
               pivot.node.rotationQuaternion = null;
               pivot.node.rotation.x =
+                (pivot.restRotation?.[0] ?? 0) +
                 NPC_WALK_AMP_DEG * DEG * Math.sin(phase * 2 * Math.PI + (NPC_WALK_PHASE[std] ?? 0));
             }
             return;
@@ -486,10 +488,11 @@ export function BbmodelAnimationViewer({
             const kfs: BbModelKeyframe[] = animator.keyframes?.filter((k: any) => k.channel === "rotation") ?? [];
             if (!kfs.length) continue;
 
+            const rest = pivot.restRotation ?? [0, 0, 0];
             pivot.node.rotationQuaternion = eulerXYZToQuat(
-              interpAxis(kfs, tSec, "x") * DEG,
-              interpAxis(kfs, tSec, "y") * DEG,
-              interpAxis(kfs, tSec, "z") * DEG,
+              rest[0] + interpAxis(kfs, tSec, "x") * DEG,
+              rest[1] + interpAxis(kfs, tSec, "y") * DEG,
+              rest[2] + interpAxis(kfs, tSec, "z") * DEG,
             );
           }
         });

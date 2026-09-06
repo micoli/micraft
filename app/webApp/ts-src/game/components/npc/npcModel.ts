@@ -143,14 +143,17 @@ export function registerNpcModel(): Pick<
         const phase = tSec / animLen;
         for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
           if (!pn[bname]) continue;
-          pn[bname].node.rotation.x = wa[bname]
-            ? interpAxis(wa[bname].keyframes, tSec, "x") * DEG
-            : PROC_AMP * DEG * Math.sin(phase * 2 * Math.PI + (PROC_PHASE[bname] ?? 0));
+          const restX = pn[bname].restRotation?.[0] ?? 0;
+          pn[bname].node.rotation.x =
+            restX +
+            (wa[bname]
+              ? interpAxis(wa[bname].keyframes, tSec, "x") * DEG
+              : PROC_AMP * DEG * Math.sin(phase * 2 * Math.PI + (PROC_PHASE[bname] ?? 0)));
         }
         return;
       }
       for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
-        if (pn[bname]) pn[bname].node.rotation.x = 0;
+        if (pn[bname]) pn[bname].node.rotation.x = pn[bname].restRotation?.[0] ?? 0;
       }
     },
 

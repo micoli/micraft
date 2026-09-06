@@ -203,6 +203,7 @@ declare global {
       {
         node: InstanceType<typeof BABYLON.TransformNode>;
         origin: [number, number, number];
+        restRotation: [number, number, number];
       }
     >;
     animations: Partial<Record<PlayerAnimClip, Record<string, { keyframes: BbModelKeyframe[]; length: number }>>>;

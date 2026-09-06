@@ -119,6 +119,9 @@ export function skinFaceUV(el: BbModelElement, W: number, H: number): Vector4[] 
 export interface RigGroupNode {
   node: TransformNode;
   origin: [number, number, number];
+  // Authored rest rotation (radians, from the bbmodel group). Animation code adds its offsets on
+  // top of this instead of overwriting to zero, so a bone posed at rest keeps its pose when idle.
+  restRotation: [number, number, number];
 }
 
 export interface RigGroupHierarchy {
@@ -169,11 +172,14 @@ export function buildGroupHierarchy(
     const node = new BABYLON.TransformNode(`grp_${g.name}`, scene);
     node.parent = topParent;
     node.position = new BABYLON.Vector3(g.origin[0] * SCALE, g.origin[1] * SCALE, g.origin[2] * SCALE);
-    if (g.rotation) node.rotation = new BABYLON.Vector3(g.rotation[0] * DEG, g.rotation[1] * DEG, g.rotation[2] * DEG);
-    allGroupNodes[g.uuid] = { node, origin: g.origin };
-    pivotNodes[g.name] = { node, origin: g.origin };
+    const restRotation: [number, number, number] = g.rotation
+      ? [g.rotation[0] * DEG, g.rotation[1] * DEG, g.rotation[2] * DEG]
+      : [0, 0, 0];
+    node.rotation = new BABYLON.Vector3(restRotation[0], restRotation[1], restRotation[2]);
+    allGroupNodes[g.uuid] = { node, origin: g.origin, restRotation };
+    pivotNodes[g.name] = { node, origin: g.origin, restRotation };
     const aliasName = reverseAliases[g.name];
-    if (aliasName) pivotNodes[aliasName] = { node, origin: g.origin };
+    if (aliasName) pivotNodes[aliasName] = { node, origin: g.origin, restRotation };
   });
 
   bbmodel.groups.forEach((g) => {

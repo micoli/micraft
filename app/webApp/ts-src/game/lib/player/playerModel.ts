@@ -245,32 +245,35 @@ export function registerPlayerModel(): Pick<
       const headPivot = pn["head"]?.node ?? null;
       const anim = clip !== "idle" ? model.animations?.[clip] : undefined;
 
+      const headRest = pn["head"]?.restRotation ?? [0, 0, 0];
       if (anim) {
         const animLen = Math.max(anim["rightArm"]?.length ?? 1, 1e-3);
         const tSec = (Date.now() % (animLen * 1000)) / 1000;
         for (const bname of LIMB_BONES) {
           if (!pn[bname]) continue;
-          pn[bname].node.rotation.x = (anim[bname] ? interpAxis(anim[bname].keyframes, tSec, "x") : 0) * DEG;
+          pn[bname].node.rotation.x =
+            (pn[bname].restRotation?.[0] ?? 0) + (anim[bname] ? interpAxis(anim[bname].keyframes, tSec, "x") : 0) * DEG;
         }
         for (const bname of TORSO_BONES) {
           if (!pn[bname]) continue;
-          pn[bname].node.rotation.z = (anim[bname] ? interpAxis(anim[bname].keyframes, tSec, "z") : 0) * DEG;
+          pn[bname].node.rotation.z =
+            (pn[bname].restRotation?.[2] ?? 0) + (anim[bname] ? interpAxis(anim[bname].keyframes, tSec, "z") : 0) * DEG;
         }
         if (headPivot) {
           const hb = anim["head"];
-          headPivot.rotation.x = -headPitch + (hb ? interpAxis(hb.keyframes, tSec, "x") : 0) * DEG;
-          headPivot.rotation.y = (hb ? interpAxis(hb.keyframes, tSec, "y") : 0) * DEG;
+          headPivot.rotation.x = headRest[0] - headPitch + (hb ? interpAxis(hb.keyframes, tSec, "x") : 0) * DEG;
+          headPivot.rotation.y = headRest[1] + (hb ? interpAxis(hb.keyframes, tSec, "y") : 0) * DEG;
         }
       } else {
         for (const bname of LIMB_BONES) {
-          if (pn[bname]) pn[bname].node.rotation.x = 0;
+          if (pn[bname]) pn[bname].node.rotation.x = pn[bname].restRotation?.[0] ?? 0;
         }
         for (const bname of TORSO_BONES) {
-          if (pn[bname]) pn[bname].node.rotation.z = 0;
+          if (pn[bname]) pn[bname].node.rotation.z = pn[bname].restRotation?.[2] ?? 0;
         }
         if (headPivot) {
-          headPivot.rotation.x = -headPitch;
-          headPivot.rotation.y = 0;
+          headPivot.rotation.x = headRest[0] - headPitch;
+          headPivot.rotation.y = headRest[1];
         }
       }
     },
