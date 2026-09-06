@@ -10,6 +10,16 @@ import {
   resolveTextureDims,
 } from "../../game/lib/player/bbmodelMesh";
 import { ORTHO_YAW, OrthoView, OrthoViewButton } from "./OrthoViewButton";
+import { NPC_WALK_ANIM_NAME } from "../../lib/animationHelpers";
+
+// Mirrors the procedural walk in game/components/npc/npcModel.ts (setNpcTransform).
+const NPC_WALK_AMP_DEG = 30;
+const NPC_WALK_PHASE: Record<string, number> = {
+  rightArm: 0,
+  leftArm: Math.PI,
+  rightLeg: Math.PI,
+  leftLeg: 0,
+};
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -192,12 +202,15 @@ export function BbmodelAnimationViewer({
   leftHandRotate = null,
   armors = [],
   standaloneItem = false,
+  npcWalkAliases,
   width = 200,
   height = 280,
 }: {
   bbmodel: BbModel | null;
   animFullName: string;
   paused?: boolean;
+  // Standard walk bone -> real bbmodel bone, for the synthetic "npc_walk" animation.
+  npcWalkAliases?: Record<string, string>;
   // Camera radius (zoom) and model spin angle (radians) to restore on mount.
   initialZoom?: number;
   initialAngle?: number;
@@ -263,6 +276,10 @@ export function BbmodelAnimationViewer({
   const angleRef = useRef(initialAngle ?? 0);
   const animRef = useRef(animFullName);
   const pausedRef = useRef(paused);
+  const npcWalkAliasesRef = useRef(npcWalkAliases);
+  useLayoutEffect(() => {
+    npcWalkAliasesRef.current = npcWalkAliases;
+  }, [npcWalkAliases]);
   // The playhead is real-time (Date.now()) based rather than accumulated per-frame, so pausing
   // needs to freeze a captured time rather than merely skip advancing it.
   const frozenTSecRef = useRef<number | null>(null);
@@ -422,6 +439,28 @@ export function BbmodelAnimationViewer({
             entry.node.rotation.x = 0;
             entry.node.rotation.y = 0;
             entry.node.rotation.z = 0;
+          }
+
+          if (animRef.current === NPC_WALK_ANIM_NAME) {
+            const len = 1;
+            let tSec: number;
+            if (pausedRef.current) {
+              if (frozenTSecRef.current === null) frozenTSecRef.current = (Date.now() % (len * 1000)) / 1000;
+              tSec = frozenTSecRef.current;
+            } else {
+              frozenTSecRef.current = null;
+              tSec = (Date.now() % (len * 1000)) / 1000;
+            }
+            const phase = tSec / len;
+            const aliases = npcWalkAliasesRef.current ?? {};
+            for (const std of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
+              const pivot = model.pivotNodes[aliases[std] ?? std];
+              if (!pivot) continue;
+              pivot.node.rotationQuaternion = null;
+              pivot.node.rotation.x =
+                NPC_WALK_AMP_DEG * DEG * Math.sin(phase * 2 * Math.PI + (NPC_WALK_PHASE[std] ?? 0));
+            }
+            return;
           }
 
           const animDef = bbmodel.animations?.find((a: any) => a.name === animRef.current);

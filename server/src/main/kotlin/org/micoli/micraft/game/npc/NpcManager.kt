@@ -355,6 +355,16 @@ class NpcManager(
         }
     }
 
+    /**
+     * Despawn every live instance — the spawner restocks them from the current definitions on the
+     * next pass, so callers use this after a definition reload.
+     */
+    suspend fun despawnAll() {
+        val ids = npcs.keys.toList()
+        ids.forEach { despawnNpc(it) }
+        log.info("Despawned all {} NPCs", ids.size)
+    }
+
     suspend fun tick(world: WorldState) {
         tickEffects()
         val sessions = getSessions()

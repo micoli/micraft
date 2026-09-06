@@ -1370,6 +1370,74 @@ export type OrgMicoliMicraftHttpUpdateUserRequest = {
 };
 
 /**
+ * CreatePlayerRequest
+ */
+export type OrgMicoliMicraftHttpCreatePlayerRequest = {
+    /**
+     * Int
+     */
+    cha: number;
+    /**
+     * String
+     */
+    characterClass?: null | string;
+    /**
+     * Int
+     */
+    con: number;
+    /**
+     * Int
+     */
+    dex: number;
+    /**
+     * String
+     */
+    email?: null | string;
+    /**
+     * Int
+     */
+    intel: number;
+    /**
+     * String
+     */
+    name: string;
+    /**
+     * Int
+     */
+    str: number;
+    /**
+     * Int
+     */
+    wis: number;
+};
+
+/**
+ * CreatePlayerResponse
+ */
+export type OrgMicoliMicraftHttpCreatePlayerResponse = {
+    /**
+     * String
+     */
+    characterClass?: null | string;
+    /**
+     * String
+     */
+    email: string;
+    /**
+     * Int
+     */
+    level?: null | number;
+    /**
+     * String
+     */
+    name: string;
+    /**
+     * String
+     */
+    playerId: string;
+};
+
+/**
  * PlayerState
  */
 export type OrgMicoliMicraftPlayerPlayerState = {
@@ -2836,6 +2904,12 @@ export type OrgMicoliMicraftProtocolNpcCodexInfo = {
      */
     height: number;
     /**
+     * Map<String,String>
+     */
+    walkBoneAliases: {
+        [key: string]: string;
+    };
+    /**
      * Float
      */
     wanderSpeed: number;
@@ -2843,6 +2917,20 @@ export type OrgMicoliMicraftProtocolNpcCodexInfo = {
      * Float
      */
     width: number;
+};
+
+/**
+ * NpcReloadResultDto
+ */
+export type OrgMicoliMicraftHttpNpcReloadResultDto = {
+    /**
+     * Int
+     */
+    count: number;
+    /**
+     * List<String>
+     */
+    types: Array<string>;
 };
 
 /**
@@ -4559,6 +4647,34 @@ export type GetApiAdminPlayersResponses = {
 
 export type GetApiAdminPlayersResponse = GetApiAdminPlayersResponses[keyof GetApiAdminPlayersResponses];
 
+export type PostApiAdminPlayersData = {
+    body?: OrgMicoliMicraftHttpCreatePlayerRequest;
+    path?: never;
+    query?: never;
+    url: '/api/admin/players';
+};
+
+export type PostApiAdminPlayersErrors = {
+    /**
+     * Missing name, unknown class, or invalid point-buy stats
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PostApiAdminPlayersResponses = {
+    200: OrgMicoliMicraftHttpCreatePlayerResponse;
+};
+
+export type PostApiAdminPlayersResponse = PostApiAdminPlayersResponses[keyof PostApiAdminPlayersResponses];
+
 export type GetApiAdminPlayersByNameData = {
     body?: never;
     path: {
@@ -6076,6 +6192,30 @@ export type GetApiAdminNpcTypesResponses = {
 };
 
 export type GetApiAdminNpcTypesResponse = GetApiAdminNpcTypesResponses[keyof GetApiAdminNpcTypesResponses];
+
+export type PostApiAdminNpcTypesReloadData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/npc-types/reload';
+};
+
+export type PostApiAdminNpcTypesReloadErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PostApiAdminNpcTypesReloadResponses = {
+    200: OrgMicoliMicraftHttpNpcReloadResultDto;
+};
+
+export type PostApiAdminNpcTypesReloadResponse = PostApiAdminNpcTypesReloadResponses[keyof PostApiAdminNpcTypesReloadResponses];
 
 export type GetApiAdminItemsData = {
     body?: never;

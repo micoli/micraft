@@ -174,6 +174,7 @@ never hand-edit either.
 | PUT | `/api/admin/instances/{id}/layout` | Update an instance zone's clip planes and shortcut bar layout |
 | GET | `/api/admin/items` | Item definitions, keyed by item type id |
 | GET | `/api/admin/npc-types` | NPC type definitions (codex info), keyed by type id |
+| POST | `/api/admin/npc-types/reload` | Reload NPC type definitions from resources/entities and despawn live instances so the spawner recreates them with the new model. Use after editing an entity bbmodel/yaml. |
 | GET | `/api/admin/npcs` | Live NPC instances with full animal/combat state |
 | GET | `/api/admin/plain-colors` | All registered plain paint colors |
 | GET | `/api/admin/players` | All player names |

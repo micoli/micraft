@@ -1319,6 +1319,7 @@ class GameLoop(
                             height = def.height,
                             wanderSpeed = def.wanderSpeed,
                             autoSpawn = def.spawn.autoSpawn,
+                            walkBoneAliases = def.walkBoneAliases,
                         )
                 }
                 .toMap()
@@ -1446,6 +1447,17 @@ class GameLoop(
         )
 
     suspend fun reload(lang: String): String = reloadCoordinator.reload(lang)
+
+    /**
+     * Reload NPC type definitions from resources and despawn live instances so the spawner
+     * recreates them with the new definition and model. Backs the admin bestiary "reload" button.
+     */
+    suspend fun reloadNpcTypes(): List<String> {
+        val defs = npcRegistryLoader.reload()
+        npcManager.reloadDefinitions(defs)
+        npcManager.despawnAll()
+        return defs.keys.sorted()
+    }
 
     fun start(app: Application) {
         appScope = app

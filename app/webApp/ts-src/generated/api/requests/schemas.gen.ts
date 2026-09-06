@@ -2113,6 +2113,109 @@ export const org_micoli_micraft_http_UpdateUserRequestSchema = {
     title: 'UpdateUserRequest'
 } as const;
 
+export const org_micoli_micraft_http_CreatePlayerRequestSchema = {
+    type: 'object',
+    properties: {
+        cha: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        characterClass: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        con: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        dex: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        email: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        intel: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        },
+        str: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        wis: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        }
+    },
+    required: [
+        'cha',
+        'con',
+        'dex',
+        'intel',
+        'name',
+        'str',
+        'wis'
+    ],
+    title: 'CreatePlayerRequest'
+} as const;
+
+export const org_micoli_micraft_http_CreatePlayerResponseSchema = {
+    type: 'object',
+    properties: {
+        characterClass: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        email: {
+            type: 'string',
+            title: 'String'
+        },
+        level: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int32',
+            title: 'Int'
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        },
+        playerId: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'email',
+        'name',
+        'playerId'
+    ],
+    title: 'CreatePlayerResponse'
+} as const;
+
 export const org_micoli_micraft_player_PlayerStateSchema = {
     type: 'object',
     properties: {
@@ -4527,6 +4630,14 @@ export const org_micoli_micraft_protocol_NpcCodexInfoSchema = {
             format: 'float',
             title: 'Float'
         },
+        walkBoneAliases: {
+            type: 'object',
+            additionalProperties: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'Map<String,String>'
+        },
         wanderSpeed: {
             type: 'number',
             format: 'float',
@@ -4543,10 +4654,35 @@ export const org_micoli_micraft_protocol_NpcCodexInfoSchema = {
         'bbmodelFile',
         'behaviorKey',
         'height',
+        'walkBoneAliases',
         'wanderSpeed',
         'width'
     ],
     title: 'NpcCodexInfo'
+} as const;
+
+export const org_micoli_micraft_http_NpcReloadResultDtoSchema = {
+    type: 'object',
+    properties: {
+        count: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        types: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        }
+    },
+    required: [
+        'count',
+        'types'
+    ],
+    title: 'NpcReloadResultDto'
 } as const;
 
 export const org_micoli_micraft_protocol_ItemInfoSchema = {

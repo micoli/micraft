@@ -679,6 +679,8 @@ data class NpcCodexInfo(
     val height: Float,
     val wanderSpeed: Float,
     val autoSpawn: Boolean,
+    /** Standard walk bone -> real bbmodel bone, so the codex can reproduce the in-game walk. */
+    val walkBoneAliases: Map<String, String> = emptyMap(),
 )
 
 @Serializable

@@ -226,6 +226,8 @@ private fun Scene.toDto() =
 
 @Serializable private data class ReloadResultDto(val result: String)
 
+@Serializable private data class NpcReloadResultDto(val count: Int, val types: List<String>)
+
 @Serializable
 private data class CreateUserRequest(
     val email: String,
@@ -2647,11 +2649,30 @@ class AdminController(
                                 height = def.height,
                                 wanderSpeed = def.wanderSpeed,
                                 autoSpawn = def.spawn.autoSpawn,
+                                walkBoneAliases = def.walkBoneAliases,
                             )
                         }
                     call.respondText(
                         Json.encodeToString(
                             MapSerializer(String.serializer(), NpcCodexInfo.serializer()), types),
+                        ContentType.Application.Json)
+                }
+
+            post(
+                "/api/admin/npc-types/reload",
+                {
+                    description =
+                        "Reload NPC type definitions from resources/entities and despawn live " +
+                            "instances so the spawner recreates them with the new model. Use " +
+                            "after editing an entity bbmodel/yaml."
+                    response { code(HttpStatusCode.OK) { body<NpcReloadResultDto>() } }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val types = gameLoop.reloadNpcTypes()
+                    call.respondText(
+                        adminJson.encodeToString(
+                            NpcReloadResultDto.serializer(), NpcReloadResultDto(types.size, types)),
                         ContentType.Application.Json)
                 }
 

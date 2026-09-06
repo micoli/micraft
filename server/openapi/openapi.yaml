@@ -3005,6 +3005,27 @@ paths:
           description: Missing admin permission
           headers: {}
       deprecated: false
+  /api/admin/npc-types/reload:
+    post:
+      tags: []
+      description: Reload NPC type definitions from resources/entities and despawn
+        live instances so the spawner recreates them with the new model. Use after
+        editing an entity bbmodel/yaml.
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.NpcReloadResultDto"
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/admin/items:
     get:
       tags: []
@@ -6584,6 +6605,12 @@ components:
           type: number
           format: float
           title: Float
+        walkBoneAliases:
+          type: object
+          additionalProperties:
+            type: string
+            title: String
+          title: "Map<String,String>"
         wanderSpeed:
           type: number
           format: float
@@ -6597,9 +6624,27 @@ components:
       - bbmodelFile
       - behaviorKey
       - height
+      - walkBoneAliases
       - wanderSpeed
       - width
       title: NpcCodexInfo
+    org.micoli.micraft.http.NpcReloadResultDto:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int32
+          title: Int
+        types:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+      required:
+      - count
+      - types
+      title: NpcReloadResultDto
     org.micoli.micraft.protocol.ItemInfo:
       type: object
       properties:

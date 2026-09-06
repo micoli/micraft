@@ -1,6 +1,6 @@
 import { useT } from "../../i18n";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { getApiAdminNpcTypes } from "../../../generated/api/requests";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getApiAdminNpcTypes, postApiAdminNpcTypesReload } from "../../../generated/api/requests";
 import { NpcTypeDto } from "../../apiTypes";
 import { animationsFromBbmodel, animDisplayName, animEmoji } from "../../../lib/animationHelpers";
 import { BbmodelAnimationViewer } from "../../components/BbmodelAnimationViewer";
@@ -18,17 +18,43 @@ export function BestiaryTab({ selectedKey, onSelectKey }: BestiaryTabProps) {
   const [types, setTypes] = useState<Record<string, NpcTypeDto>>({});
   const [filter, setFilter] = useState("");
   const [bbmodel, setBbmodel] = useState<BbModel | null>(null);
+  const [reloading, setReloading] = useState(false);
+  const [reloadMsg, setReloadMsg] = useState<string | null>(null);
+  // Bumped on reload to bust the static bbmodel fetch cache after an edit.
+  const [modelNonce, setModelNonce] = useState(0);
 
   const selected = useMemo(
     () => (selectedKey && types[selectedKey] ? { name: selectedKey, dto: types[selectedKey] } : null),
     [selectedKey, types],
   );
 
+  const loadTypes = useCallback(
+    () =>
+      getApiAdminNpcTypes({ throwOnError: true })
+        .then((r) => setTypes(r.data))
+        .catch(console.error),
+    [],
+  );
+
   useEffect(() => {
-    getApiAdminNpcTypes({ throwOnError: true })
-      .then((r) => setTypes(r.data))
-      .catch(console.error);
-  }, []);
+    loadTypes();
+  }, [loadTypes]);
+
+  const handleReload = useCallback(async () => {
+    setReloading(true);
+    setReloadMsg(null);
+    try {
+      const r = await postApiAdminNpcTypesReload({ throwOnError: true });
+      await loadTypes();
+      setModelNonce((n) => n + 1);
+      setReloadMsg(t("administration.reloadNpcTypesDone", r.data.count));
+    } catch (e) {
+      console.error(e);
+      setReloadMsg(t("administration.reloadNpcTypesFailed"));
+    } finally {
+      setReloading(false);
+    }
+  }, [loadTypes, t]);
 
   useEffect(() => {
     if (!selected) {
@@ -37,11 +63,13 @@ export function BestiaryTab({ selectedKey, onSelectKey }: BestiaryTabProps) {
     }
     const skinName = selected.dto.bbmodelFile.replace(".bbmodel", "");
     // Not an OpenAPI route (staticFiles mount) — kept as a manual fetch.
-    fetch(`/api/models/entities/${encodeURIComponent(skinName)}/${encodeURIComponent(skinName)}.bbmodel`)
+    fetch(
+      `/api/models/entities/${encodeURIComponent(skinName)}/${encodeURIComponent(skinName)}.bbmodel?v=${modelNonce}`,
+    )
       .then((r) => r.json() as Promise<BbModel>)
       .then(setBbmodel)
       .catch(() => setBbmodel(null));
-  }, [selected]);
+  }, [selected, modelNonce]);
 
   const entries = Object.entries(types)
     .filter(([name]) => name.toLowerCase().includes(filter.toLowerCase()))
@@ -66,13 +94,22 @@ export function BestiaryTab({ selectedKey, onSelectKey }: BestiaryTabProps) {
   return (
     <div className="flex h-full overflow-hidden">
       <aside className="w-56 shrink-0 flex flex-col border-r border-[#2E3A4E] overflow-hidden">
-        <div className="px-3 py-2 border-b border-[#2E3A4E]">
+        <div className="px-3 py-2 border-b border-[#2E3A4E] flex flex-col gap-2">
           <input
             className="w-full bg-[#1A222C] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white placeholder-[#8A99AF] outline-none"
             placeholder={t("administration.filter")}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
+          <button
+            type="button"
+            className="w-full bg-[#243040] hover:bg-[#2E3A4E] border border-[#2E3A4E] rounded px-2 py-1 text-xs text-white disabled:opacity-50"
+            onClick={handleReload}
+            disabled={reloading}
+          >
+            {reloading ? "…" : `↻ ${t("administration.reloadNpcTypes")}`}
+          </button>
+          {reloadMsg && <div className="text-[10px] text-[#8A99AF]">{reloadMsg}</div>}
         </div>
         <SidebarList
           items={entries}
@@ -86,7 +123,13 @@ export function BestiaryTab({ selectedKey, onSelectKey }: BestiaryTabProps) {
         {selected ? (
           <div className="flex gap-6">
             <div>
-              <BbmodelAnimationViewer bbmodel={bbmodel} animFullName={selectedAnim ?? ""} width={360} height={460} />
+              <BbmodelAnimationViewer
+                bbmodel={bbmodel}
+                animFullName={selectedAnim ?? ""}
+                npcWalkAliases={selected.dto.walkBoneAliases}
+                width={360}
+                height={460}
+              />
               {anims.length > 0 && (
                 <select
                   className="mt-2 w-full bg-[#1A222C] border border-[#2E3A4E] text-[#8A99AF] text-xs rounded px-2 py-1 outline-none"

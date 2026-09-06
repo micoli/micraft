@@ -44,6 +44,24 @@ class AdminContentRoutesTest {
     }
 
     @Test
+    fun `api_admin_npc_types_reload_returns_200_with_count_and_types`() = testApplication {
+        application { routing { controller().register(this) } }
+        val r = client.post("/api/admin/npc-types/reload")
+        assertEquals(HttpStatusCode.OK, r.status)
+        val body = r.bodyAsText()
+        assertTrue(body.contains("\"count\""), "Expected count field, got: ${body.take(60)}")
+        assertTrue(body.contains("\"types\""), "Expected types field, got: ${body.take(60)}")
+    }
+
+    @Test
+    fun `api_admin_npc_types_reload_requires_auth_when_token_store_enabled`() = testApplication {
+        val store = TokenStore(scope)
+        application { routing { controller(store).register(this) } }
+        val r = client.post("/api/admin/npc-types/reload")
+        assertEquals(HttpStatusCode.Unauthorized, r.status)
+    }
+
+    @Test
     fun `api_admin_items_returns_200_with_json_object`() = testApplication {
         application { routing { controller().register(this) } }
         val r = client.get("/api/admin/items")
