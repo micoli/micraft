@@ -1,0 +1,28 @@
+behavior: animal
+width: 2.0
+height: 2.6
+wanderSpeed: 1.1
+wanderRadius: 28.0
+hp: 120
+aggroMode: PASSIVE_COOPERATIVE
+aggroRange: 10.0
+deaggroTimeSec: 8.0
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes:
+    - dry_plains
+    - plains
+  maxTotal: 24
+  minTotal: 8
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: HERBIVORE
+  starvationDeathDays: 6.0
+  canReproduce: false
+  scale: 1.0
+  fleeRadius: 6.0
