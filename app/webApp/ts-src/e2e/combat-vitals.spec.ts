@@ -17,10 +17,9 @@ test("player vitals are reported and /buff hp raises max HP", async ({ page }, i
   expect(before.currentHp, "starts alive").toBeGreaterThan(0);
 
   await actions(page).runCommand("/buff hp");
-  await page.waitForFunction(
-    (m) => (window.mcE2E?.playerStatus?.maxHp ?? 0) > m,
-    before.maxHp,
-    { timeout: 10_000, polling: 100 },
-  );
+  await page.waitForFunction((m) => (window.mcE2E?.playerStatus?.maxHp ?? 0) > m, before.maxHp, {
+    timeout: 10_000,
+    polling: 100,
+  });
   expect((await e2e(page)).playerStatus!.maxHp, "+20 max HP from the buff").toBe(before.maxHp + 20);
 });

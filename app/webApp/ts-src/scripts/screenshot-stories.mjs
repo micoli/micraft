@@ -130,7 +130,10 @@ async function fetchIndex() {
 
 async function shoot(targets, outDir) {
   await mkdir(outDir, { recursive: true });
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({
+    // SwiftShader so BabylonJS block previews (blockPreviewCache) render in headless Chromium.
+    args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+  });
   const context = await browser.newContext({
     viewport: VIEWPORT,
     deviceScaleFactor: 2,
@@ -157,7 +160,13 @@ async function shoot(targets, outDir) {
         );
         await page.waitForLoadState("networkidle").catch(() => {});
         await page.evaluate(() => document.fonts?.ready).catch(() => {});
-        await page.waitForTimeout(1200); // let an async play() run (interactions, and it may throw)
+        // Block-def registry (see _support/blockRegistry) loads async — wait before shooting.
+        await page
+          .waitForFunction(() => !window.mc?.isBlockDefsReady || window.mc.isBlockDefsReady() === true, {
+            timeout: 15_000,
+          })
+          .catch(() => {});
+        await page.waitForTimeout(2000); // let an async play() run + block previews render/settle
         const errText = await page.evaluate(() => {
           if (document.querySelector(".sb-show-errordisplay")) return "render error";
           const t = (document.querySelector("#storybook-root")?.innerText || "") + (document.body.innerText || "");

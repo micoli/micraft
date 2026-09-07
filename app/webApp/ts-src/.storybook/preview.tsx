@@ -1,7 +1,9 @@
 import type { Preview } from "@storybook/react";
+import { withBlockRegistry } from "../.stories/_support/blockRegistry";
 import "../styles/main.css";
 
 const preview: Preview = {
+  decorators: [withBlockRegistry()],
   parameters: {
     backgrounds: {
       default: "dark",

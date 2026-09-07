@@ -49,11 +49,10 @@ test("a KILL quest counter advances when the player kills a matching NPC", async
   await actions(page).setLook(0, 0);
   await actions(page).moveForward(400);
   await page.keyboard.press("Tab");
-  await page.waitForFunction(
-    (id) => window.mcE2E?.combatTarget?.targetId === id,
-    goatId,
-    { timeout: 10_000, polling: 100 },
-  );
+  await page.waitForFunction((id) => window.mcE2E?.combatTarget?.targetId === id, goatId, {
+    timeout: 10_000,
+    polling: 100,
+  });
 
   await expect
     .poll(

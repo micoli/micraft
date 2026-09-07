@@ -16,7 +16,10 @@ test("a player targets and kills a spawned NPC", async ({ page }, info) => {
   const runAndSettle = async (cmd: string) => {
     const n = (await e2e(page)).notifications.length;
     await actions(page).runCommand(cmd);
-    await page.waitForFunction((b) => (window.mcE2E?.notifications ?? []).length > b, n, { timeout: 10_000, polling: 100 });
+    await page.waitForFunction((b) => (window.mcE2E?.notifications ?? []).length > b, n, {
+      timeout: 10_000,
+      polling: 100,
+    });
   };
   await runAndSettle("/god:off");
   await runAndSettle("/buff hp");

@@ -9,17 +9,6 @@ const meta: Meta<typeof MailboxOverlay> = {
   title: "Game/Windows/MailboxOverlay",
   component: MailboxOverlay,
   parameters: { layout: "fullscreen" },
-  decorators: [
-    (Story) => {
-      if (!window.mcState) {
-        (window as unknown as { mcState: unknown }).mcState = {
-          events: [],
-          playerName: "alice",
-        };
-      }
-      return <Story />;
-    },
-  ],
 };
 export default meta;
 

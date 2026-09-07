@@ -46,7 +46,10 @@ test("a player tames a wild NPC and can dismiss the pet", async ({ page }, info)
     .toBeGreaterThanOrEqual(1);
 
   // A successful tame auto-summons the pet.
-  await page.waitForFunction(() => window.mcE2E?.petRoster.activePetId != null, undefined, { timeout: 10_000, polling: 100 });
+  await page.waitForFunction(() => window.mcE2E?.petRoster.activePetId != null, undefined, {
+    timeout: 10_000,
+    polling: 100,
+  });
 
   await actions(page).runCommand("/pet dismiss");
   await page.waitForFunction(() => window.mcE2E?.petRoster.pets[0]?.spawned === false, undefined, {

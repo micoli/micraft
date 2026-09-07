@@ -40,7 +40,13 @@ test("a player founds a guild and another joins it (command)", async ({ browser 
     await page.waitForFunction(
       (names) => {
         const g = window.mcE2E?.guild;
-        return g != null && g.members.map((m) => m.playerName).sort().join() === names.join();
+        return (
+          g != null &&
+          g.members
+            .map((m) => m.playerName)
+            .sort()
+            .join() === names.join()
+        );
       },
       roster,
       { timeout: 20_000, polling: 200 },

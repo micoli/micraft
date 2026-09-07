@@ -6,15 +6,6 @@ const meta: Meta<typeof Inventory> = {
   title: "Game/Layout/Inventory",
   component: Inventory,
   parameters: { layout: "fullscreen" },
-  decorators: [
-    (Story) => {
-      // @ts-expect-error mcState not declared on window in stories context
-      if (!window.mcState) {
-        (window as unknown as { mcState: unknown }).mcState = { events: [], playerName: "alice" };
-      }
-      return <Story />;
-    },
-  ],
 };
 export default meta;
 

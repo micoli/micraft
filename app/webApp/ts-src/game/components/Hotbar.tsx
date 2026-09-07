@@ -1,3 +1,5 @@
+import { ItemIcon } from "../shared/ItemIcon";
+
 const ITEM_META: Record<string, { label: string; bg: string }> = {
   COBBLESTONE: { label: "COB", bg: "#7A7A7A" },
   DIRT: { label: "DRT", bg: "#8B5A2B" },
@@ -31,13 +33,7 @@ export function Hotbar({ inventory, visible }: Props) {
             key={type}
             className="w-[52px] h-[52px] bg-black/72 border-2 border-white/45 rounded flex flex-col items-center justify-center relative"
           >
-            <div
-              className="w-[26px] h-[26px] rounded-sm"
-              style={{
-                background: meta.bg,
-                boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.15)",
-              }}
-            />
+            <ItemIcon itemId={type} fallbackBg={meta.bg} size={26} />
             <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px]">{meta.label}</div>
             <div className="absolute bottom-0.5 right-1 text-white font-mono font-bold text-[10px] [text-shadow:1px_1px_0_#000]">
               {count}

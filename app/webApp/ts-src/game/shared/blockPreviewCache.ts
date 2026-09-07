@@ -122,20 +122,36 @@ export function subscribe(fn: () => void): () => void {
   return () => _listeners.delete(fn);
 }
 
-function ensureEngine(): { canvas: HTMLCanvasElement; engine: Engine } {
+let _engineFailed = false;
+
+// Returns null when WebGL is unavailable (e.g. headless without SwiftShader) — callers then
+// yield no preview and consumers keep the CssBlockCube fallback.
+function ensureEngine(): { canvas: HTMLCanvasElement; engine: Engine } | null {
+  if (_engineFailed) return null;
   if (!_canvas) {
-    const B = window.BABYLON!;
-    _canvas = document.createElement("canvas");
-    _canvas.width = PREVIEW_SIZE;
-    _canvas.height = PREVIEW_SIZE;
-    Object.assign(_canvas.style, {
-      position: "fixed",
-      top: "-9999px",
-      left: "-9999px",
-      pointerEvents: "none",
-    });
-    document.body.appendChild(_canvas);
-    _engine = new B.Engine(_canvas, true, { preserveDrawingBuffer: true, antialias: false, premultipliedAlpha: false });
+    try {
+      const B = window.BABYLON!;
+      _canvas = document.createElement("canvas");
+      _canvas.width = PREVIEW_SIZE;
+      _canvas.height = PREVIEW_SIZE;
+      Object.assign(_canvas.style, {
+        position: "fixed",
+        top: "-9999px",
+        left: "-9999px",
+        pointerEvents: "none",
+      });
+      document.body.appendChild(_canvas);
+      _engine = new B.Engine(_canvas, true, {
+        preserveDrawingBuffer: true,
+        antialias: false,
+        premultipliedAlpha: false,
+      });
+    } catch (e) {
+      _engineFailed = true;
+      _canvas = null;
+      console.warn("blockPreviewCache: WebGL unavailable, falling back to CSS cubes", e);
+      return null;
+    }
   }
   return { canvas: _canvas!, engine: _engine! };
 }
@@ -147,7 +163,9 @@ function renderBlockToDataUrl(ordinal: number, colorHex?: string): Promise<strin
   const blockDef = window.mc?.getBlockDef?.(ordinal) as McBlockDef | null;
   if (!blockDef?.elements?.length) return Promise.resolve(null);
 
-  const { engine } = ensureEngine();
+  const eng = ensureEngine();
+  if (!eng) return Promise.resolve(null);
+  const { engine } = eng;
 
   const scene = new B.Scene(engine);
   scene.clearColor = new B.Color4(0, 0, 0, 0);

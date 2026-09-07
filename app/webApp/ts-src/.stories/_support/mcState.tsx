@@ -16,6 +16,7 @@ export function stubMcState(extra: Record<string, unknown> = {}): Decorator {
       codexBlocks: [],
       codexItems: {},
       scenes: [],
+      ...w.mcState,
       ...extra,
     };
     w.mcT = (k: string) => k;

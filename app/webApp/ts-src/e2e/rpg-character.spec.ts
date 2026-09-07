@@ -13,10 +13,14 @@ test("CharacterSync exposes class bonuses and derived stats consistent with vita
   const acct = accountFor(info);
   await connectClient(page, acct);
 
-  await page.waitForFunction(() => window.mcE2E?.character != null && (window.mcE2E?.playerStatus?.maxHp ?? 0) > 0, undefined, {
-    timeout: 10_000,
-    polling: 100,
-  });
+  await page.waitForFunction(
+    () => window.mcE2E?.character != null && (window.mcE2E?.playerStatus?.maxHp ?? 0) > 0,
+    undefined,
+    {
+      timeout: 10_000,
+      polling: 100,
+    },
+  );
 
   const s = await e2e(page);
   const c = s.character as unknown as CharSync;
