@@ -6,7 +6,9 @@ Shared between client and server (`core`). Values marked `var` can be overridden
 
 | Constant | Default |
 |---|---|
+| `CHUNK_KEEP_MARGIN` | `2` |
 | `CHUNK_SIZE` | `16` |
+| `CHUNK_UNLOAD_GRACE_SECONDS` | `120` |
 | `FORWARD_VIEW_RADIUS` | `7` |
 | `IMPOSTOR_SKIRT_DEPTH` | `12` |
 | `RPG_LEVEL_MAX` | `60` |

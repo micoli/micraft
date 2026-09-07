@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger(GameWorld::class.java)
 
 private const val TARGET_DISTANCE_REFRESH_TICKS = 5
+private const val CHUNK_RETENTION_INTERVAL_TICKS = 200
 
 internal fun String.toPlayerAdminJson() = "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
@@ -155,6 +156,7 @@ class GameWorld(
     private var timeBroadcastCounter = 0
     private var targetDistanceTickCounter = 0
     private var npcLifecycleTickCounter = 0
+    private var chunkRetentionTickCounter = 0
 
     private val npcSavePath: Path
         get() = persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
@@ -311,6 +313,14 @@ class GameWorld(
                 }
             }
         }
+        if (TickSection.PLAYERS in tickSections) {
+            chunkRetentionTickCounter++
+            if (chunkRetentionTickCounter >= CHUNK_RETENTION_INTERVAL_TICKS) {
+                chunkRetentionTickCounter = 0
+                tickProfiler.measure("chunkRetention") { retainChunks() }
+            }
+        }
+
         if (TickSection.WORLD_ITEMS in tickSections) {
             tickProfiler.measure("worldItems") { worldItems.tickCollection(sessions.all()) }
         }
@@ -343,6 +353,34 @@ class GameWorld(
     private suspend fun broadcastWorldChangeAndSessions(msg: ServerMessage) {
         broadcastWorldChange(msg)
         sessions.all().forEach { it.send(msg) }
+    }
+
+    /**
+     * Keep in memory only the chunks near a connected player (streaming radius + margin) plus a
+     * grace window after the last player left, so a reconnecting player finds their surroundings
+     * still loaded. Everything else is flushed and dropped.
+     */
+    private fun retainChunks() {
+        val cs = WorldConstants.CHUNK_SIZE
+        val centers =
+            sessions.all().map { s ->
+                ChunkPos(
+                    Math.floorDiv(s.state.pos.x.toInt(), cs),
+                    Math.floorDiv(s.state.pos.z.toInt(), cs))
+            }
+        val maxForward =
+            sessions.all().maxOfOrNull {
+                it.state.overrideForwardViewRadius ?: WorldConstants.FORWARD_VIEW_RADIUS
+            } ?: WorldConstants.FORWARD_VIEW_RADIUS
+        val flushed =
+            world.retainChunks(
+                centers,
+                maxForward + WorldConstants.CHUNK_KEEP_MARGIN,
+                WorldConstants.CHUNK_UNLOAD_GRACE_SECONDS * 1000L)
+        if (flushed.isEmpty()) return
+        // Refresh the minimap cache for edited-then-abandoned chunks before they leave memory.
+        terrainCache.rebuild(flushed)
+        persistence?.let { terrainCache.save(it.worldDir.resolve("terrain_cache")) }
     }
 
     private suspend fun fullSimulationTick() {

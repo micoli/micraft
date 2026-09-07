@@ -33,6 +33,10 @@ data class WorldSection(
     @EncodeDefault(ALWAYS) val waterLevel: Int = 65,
     /** See WorldConstants.IMPOSTOR_SKIRT_DEPTH. */
     @EncodeDefault(ALWAYS) val impostorSkirtDepth: Int = 12,
+    /** Extra chunk radius kept in memory beyond the streaming radius. */
+    @EncodeDefault(ALWAYS) val chunkKeepMargin: Int = 2,
+    /** Grace period before an out-of-range chunk is unloaded (covers a reconnect). */
+    @EncodeDefault(ALWAYS) val chunkUnloadGraceSeconds: Int = 120,
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -151,6 +155,8 @@ fun applyServerConfig(config: ServerConfig) {
         WorldConstants.FORWARD_VIEW_RADIUS = forwardViewRadius
         WorldConstants.WATER_LEVEL = waterLevel
         WorldConstants.IMPOSTOR_SKIRT_DEPTH = impostorSkirtDepth
+        WorldConstants.CHUNK_KEEP_MARGIN = chunkKeepMargin
+        WorldConstants.CHUNK_UNLOAD_GRACE_SECONDS = chunkUnloadGraceSeconds
     }
     with(config.player) {
         PlayerConstants.HEIGHT_STANDING = heightStanding

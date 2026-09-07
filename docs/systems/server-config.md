@@ -23,6 +23,8 @@ world:
   forwardViewRadius: 7
   waterLevel: 65
   impostorSkirtDepth: 12
+  chunkKeepMargin: 2            # chunk radius kept in memory past the streaming radius
+  chunkUnloadGraceSeconds: 120  # grace before an out-of-range chunk is unloaded
 player:
   heightStanding: 1.8
   heightSneaking: 1.5
@@ -87,6 +89,13 @@ spawn on their **first** affiliation; later faction changes do not teleport, and
 returning player always resumes at their last saved position. A new player with no
 faction spawns at the neutral point resolved the same way (nearest low-level,
 tree-free zone to `game.spawnX/Z`).
+
+**Chunk retention.** The server keeps a chunk in memory only while a player is
+within `forwardViewRadius + chunkKeepMargin` chunks of it, plus
+`chunkUnloadGraceSeconds` after the last player leaves that range (so a quick
+reconnect finds the area still loaded). Idle chunks are flushed to disk and
+dropped; a returning player re-streams them from disk transparently. Worlds
+without persistence (E2E, dynamic `MICRAFT_E2E` worlds) never unload.
 
 See [Auth & RBAC](auth-rbac.md) for the `auth:` block, and
 [Chunk transport](../architecture/chunk-transport.md) for `chunks.transport`.

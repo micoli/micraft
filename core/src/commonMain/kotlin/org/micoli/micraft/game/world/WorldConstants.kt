@@ -13,6 +13,15 @@ object WorldConstants {
     var WATER_LEVEL = 65
 
     /**
+     * Server-side chunk retention. A chunk is kept in memory while any player is within
+     * [FORWARD_VIEW_RADIUS] + [CHUNK_KEEP_MARGIN] chunks of it, and for
+     * [CHUNK_UNLOAD_GRACE_SECONDS] afterwards (covers a quick reconnect). Beyond that it is flushed
+     * to disk and dropped. Disabled for worlds without persistence.
+     */
+    var CHUNK_KEEP_MARGIN = 2
+    var CHUNK_UNLOAD_GRACE_SECONDS = 120
+
+    /**
      * Fixed depth (blocks) each far-chunk impostor column's perimeter walls extend below its own
      * top height — see buildChunkImpostorMesh (chunkBuilder.ts). Guarantees a fully skirted,
      * gap-free silhouette from any nearby angle without needing per-neighbor height comparisons.

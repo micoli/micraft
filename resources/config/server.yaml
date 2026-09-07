@@ -6,6 +6,8 @@ world:
   forwardViewRadius: 7
   waterLevel: 65
   impostorSkirtDepth: 12
+  chunkKeepMargin: 2            # extra chunk radius kept in memory beyond the streaming radius
+  chunkUnloadGraceSeconds: 120  # keep an out-of-range chunk this long before unloading (reconnect)
 player:
   heightStanding: 1.8
   heightSneaking: 1.5

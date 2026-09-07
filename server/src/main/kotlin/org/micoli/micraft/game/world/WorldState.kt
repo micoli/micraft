@@ -17,22 +17,66 @@ class WorldState(
 ) : BlockStore, RailWorldView {
     private val chunks = ConcurrentHashMap<ChunkPos, Chunk>()
     private val dirtyChunks: MutableSet<ChunkPos> = Collections.newSetFromMap(ConcurrentHashMap())
+    /** Wall-clock ms a chunk was last within a player's keep range — drives [retainChunks]. */
+    private val chunkActiveAtMs = ConcurrentHashMap<ChunkPos, Long>()
     private val log = LoggerFactory.getLogger(WorldState::class.java)
 
     fun getOrGenerate(pos: ChunkPos): Chunk =
-        chunks.getOrPut(pos) {
-            val loaded = persistence?.loadChunk(pos)
-            if (loaded != null) {
-                    log.debug("Loaded chunk {} from disk", pos)
-                    loaded
-                } else {
-                    val t0 = System.currentTimeMillis()
-                    val chunk = generator.generate(pos)
-                    log.debug("Generated chunk {} in {}ms", pos, System.currentTimeMillis() - t0)
-                    chunk
-                }
-                .also { dirtyChunks.add(pos) }
+        chunks
+            .getOrPut(pos) {
+                val loaded = persistence?.loadChunk(pos)
+                if (loaded != null) {
+                        log.debug("Loaded chunk {} from disk", pos)
+                        loaded
+                    } else {
+                        val t0 = System.currentTimeMillis()
+                        val chunk = generator.generate(pos)
+                        log.debug(
+                            "Generated chunk {} in {}ms", pos, System.currentTimeMillis() - t0)
+                        chunk
+                    }
+                    .also { dirtyChunks.add(pos) }
+            }
+            .also { chunkActiveAtMs[pos] = System.currentTimeMillis() }
+
+    /**
+     * Drops every loaded chunk that has been out of range of all [playerChunks] (square radius
+     * [keepRadius]) for more than [graceMs]. Dirty chunks are flushed to disk first. No-op for a
+     * world without persistence (dropping would lose data irrecoverably). Returns the chunks that
+     * were dirty when dropped, so the caller can refresh derived caches (e.g. the minimap terrain
+     * cache) before they are gone.
+     */
+    fun retainChunks(
+        playerChunks: Collection<ChunkPos>,
+        keepRadius: Int,
+        graceMs: Long,
+        now: Long = System.currentTimeMillis(),
+    ): List<Chunk> {
+        if (persistence == null) return emptyList()
+        val keep = HashSet<ChunkPos>()
+        for (c in playerChunks) for (dx in -keepRadius..keepRadius) for (dz in
+            -keepRadius..keepRadius) keep.add(ChunkPos(c.cx + dx, c.cz + dz))
+        var evicted = 0
+        val flushed = mutableListOf<Chunk>()
+        for (pos in chunks.keys) {
+            if (pos in keep) {
+                chunkActiveAtMs[pos] = now
+                continue
+            }
+            val lastActive = chunkActiveAtMs.getOrPut(pos) { now }
+            if (now - lastActive < graceMs) continue
+            val chunk = chunks[pos] ?: continue
+            if (dirtyChunks.remove(pos)) {
+                persistence.saveChunk(pos, chunk)
+                flushed.add(chunk)
+            }
+            chunks.remove(pos, chunk)
+            chunkActiveAtMs.remove(pos)
+            evicted++
         }
+        if (evicted > 0) log.info("Unloaded {} idle chunks ({} still loaded)", evicted, chunks.size)
+        return flushed
+    }
 
     fun biomeAt(wx: Int, wz: Int): String = generator.biomeAt(wx, wz)
 

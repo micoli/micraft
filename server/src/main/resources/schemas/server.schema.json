@@ -27,6 +27,12 @@
         },
         "impostorSkirtDepth": {
           "type": "integer"
+        },
+        "chunkKeepMargin": {
+          "type": "integer"
+        },
+        "chunkUnloadGraceSeconds": {
+          "type": "integer"
         }
       }
     },

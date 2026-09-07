@@ -118,4 +118,54 @@ class WorldStateTest {
         world.flushDirty()
         assertEquals(emptySet(), world.dirtyChunksSnapshot())
     }
+
+    @Test
+    fun retainChunks_dropsIdleFarChunks_keepsNearAndWithinGrace() {
+        val dir = Files.createTempDirectory("world-state-retain")
+        val world = WorldState(MapChunkGenerator(), WorldPersistence(dir))
+        world.getOrGenerate(ChunkPos(0, 0)) // near player
+        world.getOrGenerate(ChunkPos(50, 50)) // far
+        val now = System.currentTimeMillis()
+
+        // far chunk just left range — still inside the 60s grace
+        assertEquals(
+            emptyList(),
+            world.retainChunks(listOf(ChunkPos(0, 0)), keepRadius = 2, graceMs = 60_000, now = now))
+        assertEquals(2, world.loadedChunkCount())
+
+        // 61s later: far chunk evicted, near chunk kept (its timestamp was refreshed)
+        world.retainChunks(
+            listOf(ChunkPos(0, 0)), keepRadius = 2, graceMs = 60_000, now = now + 61_000)
+        assertEquals(1, world.loadedChunkCount())
+        assertNotNull(world.getChunkIfDiscovered(ChunkPos(0, 0)))
+        assertEquals(null, world.getChunkIfDiscovered(ChunkPos(50, 50)))
+    }
+
+    @Test
+    fun retainChunks_flushesEditedChunkBeforeDropping() {
+        val dir = Files.createTempDirectory("world-state-retain-flush")
+        val persistence = WorldPersistence(dir)
+        val world = WorldState(MapChunkGenerator(), persistence)
+        world.applyChange(BlockChange(BlockPos(800, 10, 800), BlockType.STONE))
+        val cp = ChunkPos(50, 50)
+
+        val flushed =
+            world.retainChunks(
+                emptyList(), keepRadius = 2, graceMs = 0, now = System.currentTimeMillis() + 1)
+
+        assertEquals(listOf(cp), flushed.map { it.pos })
+        assertEquals(null, world.getChunkIfDiscovered(cp))
+        assertEquals(BlockType.STONE, persistence.loadChunk(cp)?.getBlock(0, 10, 0))
+    }
+
+    @Test
+    fun retainChunks_noPersistence_isNoOp() {
+        val world = WorldState(MapChunkGenerator())
+        world.getOrGenerate(ChunkPos(50, 50))
+        assertEquals(
+            emptyList(),
+            world.retainChunks(
+                emptyList(), keepRadius = 2, graceMs = 0, now = System.currentTimeMillis() + 1))
+        assertEquals(1, world.loadedChunkCount())
+    }
 }
