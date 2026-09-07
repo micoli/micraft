@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import javax.imageio.ImageIO
+import kotlin.math.roundToInt
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.auth.TokenStore
@@ -17,7 +18,19 @@ import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WeatherZoneInfo
+import org.micoli.micraft.game.world.biome.BiomeDefinition
 import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
+
+/**
+ * Minimap colour for a biome: its `grassColor` tint when defined (so the grass biomes are told
+ * apart), otherwise the surface block's `minimapColor`.
+ */
+internal fun biomeMapColor(biome: BiomeDefinition): String {
+    val rgb =
+        biome.grassColor?.takeIf { it.size >= 3 }?.map { (it * 255).roundToInt().coerceIn(0, 255) }
+            ?: BlockRegistry.get(biome.surface).minimapColor
+    return "#%02x%02x%02x".format(rgb[0], rgb[1], rgb[2])
+}
 
 @Serializable
 data class PlayerMapInfo(
@@ -195,10 +208,13 @@ class MapController(private val gameLoop: GameLoop, private val tokenStore: Toke
                     val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
                     val cells =
                         gen?.voronoi?.cells(cx, cz, radius)?.map { cell ->
-                            val rgb = BlockRegistry.get(cell.biome.surface).minimapColor
-                            val color = "#%02x%02x%02x".format(rgb[0], rgb[1], rgb[2])
                             VoronoiCellInfo(
-                                cell.seedX, cell.seedZ, cell.biome.id, color, cell.name, cell.level)
+                                cell.seedX,
+                                cell.seedZ,
+                                cell.biome.id,
+                                biomeMapColor(cell.biome),
+                                cell.name,
+                                cell.level)
                         } ?: emptyList()
                     call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
                     call.respondText(Json.encodeToString(cells), ContentType.Application.Json)
