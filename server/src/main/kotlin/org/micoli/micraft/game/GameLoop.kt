@@ -247,6 +247,8 @@ class GameLoop(
             i18n = i18n,
             broadcast = sessionRegistry::broadcast,
             persistence = persistence,
+            zoneLevelAt = { x, z -> world.zoneLevelAt(x, z) },
+            lowLevelSpawnSlots = { count, radius -> world.distinctLowLevelSpawns(count, radius) },
         ),
     private val dropConfig: DropConfig =
         DropConfig(
@@ -1636,6 +1638,30 @@ class GameLoop(
     private fun worldFor(gameSessionId: String?): GameWorld =
         gameWorldRegistry.resolve(gameSessionId)
 
+    /**
+     * New-player spawn: the configured point when it already sits in a low-level, treeless zone,
+     * otherwise the nearest ring position that does. Y is left high so the player drops to the
+     * surface. A generator with no biome info (flat / test worlds) does not restrict on trees.
+     */
+    private fun resolveNeutralSpawn(gw: GameWorld): Vec3 {
+        val step = 24
+        val maxRadius = 1024
+        fun ok(x: Int, z: Int) =
+            gw.world.zoneLevelAt(x, z) < 5 && (gw.world.biomeDefinitionAt(x, z)?.treeless ?: true)
+        if (ok(SPAWN_X.toInt(), SPAWN_Z.toInt())) return Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z)
+        var radius = step
+        while (radius <= maxRadius) {
+            for (a in 0 until 8) {
+                val angle = a * Math.PI / 4
+                val x = SPAWN_X + (kotlin.math.cos(angle) * radius).toFloat()
+                val z = SPAWN_Z + (kotlin.math.sin(angle) * radius).toFloat()
+                if (ok(x.toInt(), z.toInt())) return Vec3(x, SPAWN_Y, z)
+            }
+            radius += step
+        }
+        return Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z)
+    }
+
     suspend fun onConnect(socket: DefaultWebSocketSession, gameSessionId: String? = null) {
         val gw = worldFor(gameSessionId)
         val connectMsg =
@@ -1689,7 +1715,7 @@ class GameLoop(
             socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "forbidden"))
             return
         }
-        val spawn = saved?.pos ?: Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z)
+        val spawn = saved?.pos ?: resolveNeutralSpawn(gw)
         val language =
             saved?.language?.let { if (it in i18n.locales) it else "en" } ?: preferredLanguage
         val shadersEnabled = saved?.shadersEnabled ?: true

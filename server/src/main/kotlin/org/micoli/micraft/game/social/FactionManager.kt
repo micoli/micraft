@@ -3,13 +3,16 @@ package org.micoli.micraft.game.social
 import java.util.concurrent.ConcurrentHashMap
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.game.FactionsSection
+import org.micoli.micraft.game.SPAWN_Y
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.WorldPersistence
+import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.social.FactionDefinition
 import org.micoli.micraft.social.FactionState
+import org.slf4j.LoggerFactory
 
 class FactionManager(
     private val getSessions: () -> Collection<PlayerSession>,
@@ -19,11 +22,16 @@ class FactionManager(
     private val i18n: I18nConfig,
     private val broadcast: suspend (ServerMessage) -> Unit,
     private val persistence: WorldPersistence? = null,
+    private val zoneLevelAt: (Int, Int) -> Int = { _, _ -> 0 },
+    private val lowLevelSpawnSlots: (Int, Double) -> List<Pair<Int, Int>> = { _, _ -> emptyList() },
 ) {
+    private val log = LoggerFactory.getLogger(FactionManager::class.java)
+
     @Volatile private var enabled = false
     @Volatile private var friendlyFire = false
     @Volatile private var changeCooldownMs = 0L
     @Volatile private var defs: List<FactionDefinition> = emptyList()
+    @Volatile private var factionSpawns: Map<String, Vec3> = emptyMap()
     private val counts = ConcurrentHashMap<String, Int>()
 
     fun applyConfig(section: FactionsSection) {
@@ -31,6 +39,7 @@ class FactionManager(
         friendlyFire = section.friendlyFire
         changeCooldownMs = section.changeCooldownSeconds * 1000L
         defs = section.list
+        factionSpawns = computeSpawns(section)
         counts.clear()
         section.list.forEach { counts[it.id] = 0 }
         persistence?.allPlayerStates()?.forEach { st ->
@@ -56,6 +65,29 @@ class FactionManager(
         }
         broadcastStates()
     }
+
+    private fun computeSpawns(section: FactionsSection): Map<String, Vec3> {
+        if (section.list.isEmpty()) return emptyMap()
+        val autoCount = section.list.count { it.spawnX == null || it.spawnZ == null }
+        val autoSlots = ArrayDeque(lowLevelSpawnSlots(autoCount, section.spawnRingRadius))
+        return section.list.associate { def ->
+            val (x, z) =
+                if (def.spawnX != null && def.spawnZ != null) {
+                    if (zoneLevelAt(def.spawnX!!, def.spawnZ!!) >= 5)
+                        log.warn(
+                            "Faction '{}' spawn ({},{}) is in zone level >= 5",
+                            def.id,
+                            def.spawnX,
+                            def.spawnZ)
+                    def.spawnX!! to def.spawnZ!!
+                } else {
+                    autoSlots.removeFirstOrNull() ?: (0 to 0)
+                }
+            def.id to Vec3(x + 0.5f, SPAWN_Y, z + 0.5f)
+        }
+    }
+
+    fun spawnFor(factionId: String?): Vec3? = factionId?.let { factionSpawns[it] }
 
     fun isEnabled() = enabled
 
@@ -101,9 +133,13 @@ class FactionManager(
             channelManager.registerChannel("faction:$it")
             chatService.subscribe(session, "faction:$it")
         }
+        val firstJoinSpawn =
+            if (previous == null && factionId != null) factionSpawns[factionId] else null
         session.state =
             session.state.copy(
-                factionId = factionId, factionChangedAtMs = System.currentTimeMillis())
+                factionId = factionId,
+                factionChangedAtMs = System.currentTimeMillis(),
+                pos = firstJoinSpawn ?: session.state.pos)
         savePlayer(session)
         chatService.syncChannels(session)
         sendSync(session)

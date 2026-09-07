@@ -105,5 +105,7 @@ class BiomeConfigLoaderTest {
         assertTrue(path.toFile().exists(), "resources/config/biomes.yaml should exist")
         val config = Yaml.default.decodeFromString(BiomeConfig.serializer(), path.readText())
         assertTrue(config.biomes.isNotEmpty())
+        assertEquals(768.0, config.zoneLevelSafeDist)
+        assertEquals(4096.0, config.zoneLevelMaxDist)
     }
 }

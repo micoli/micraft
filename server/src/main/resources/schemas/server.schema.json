@@ -203,6 +203,9 @@
         "changeCooldownSeconds": {
           "type": "integer"
         },
+        "spawnRingRadius": {
+          "type": "number"
+        },
         "list": {
           "type": "array",
           "items": {
@@ -224,6 +227,18 @@
               },
               "description": {
                 "type": "string"
+              },
+              "spawnX": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "spawnZ": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
               }
             }
           },

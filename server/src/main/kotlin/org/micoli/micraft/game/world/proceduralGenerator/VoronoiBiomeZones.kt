@@ -16,7 +16,8 @@ class VoronoiBiomeZones(
 ) {
     private val cellSize = registry.voronoiCellSize
     private val blendRadius = registry.voronoiBlendRadius
-    private val LEVEL_MAX_DIST = 4096.0
+    private val levelSafeDist = registry.zoneLevelSafeDist
+    private val levelMaxDist = registry.zoneLevelMaxDist
 
     private fun seedPoint(cellX: Int, cellZ: Int): Pair<Int, Int> {
         var h =
@@ -89,13 +90,14 @@ class VoronoiBiomeZones(
 
     private fun cellLevel(seedX: Int, seedZ: Int): Int {
         val dist = sqrt((seedX.toLong() * seedX + seedZ.toLong() * seedZ).toDouble())
-        val distFraction = (dist / LEVEL_MAX_DIST).coerceIn(0.0, 1.0)
+        val span = (levelMaxDist - levelSafeDist).coerceAtLeast(1.0)
+        val distFraction = ((dist - levelSafeDist) / span).coerceIn(0.0, 1.0)
         return (distFraction * (WorldConstants.RPG_LEVEL_MAX - 1) + 1)
             .roundToInt()
             .coerceIn(1, WorldConstants.RPG_LEVEL_MAX)
     }
 
-    fun zoneLevelAt(wx: Int, wz: Int): Int {
+    fun nearestSeed(wx: Int, wz: Int): Pair<Int, Int> {
         val cx = floor(wx.toDouble() / cellSize).toInt()
         val cz = floor(wz.toDouble() / cellSize).toInt()
         var minDist = Double.MAX_VALUE
@@ -112,7 +114,66 @@ class VoronoiBiomeZones(
                 nearestSz = sz
             }
         }
-        return cellLevel(nearestSx, nearestSz)
+        return Pair(nearestSx, nearestSz)
+    }
+
+    fun zoneLevelAt(wx: Int, wz: Int): Int {
+        val (sx, sz) = nearestSeed(wx, wz)
+        return cellLevel(sx, sz)
+    }
+
+    /**
+     * One spawn point per faction: spread around origin at [ringRadius], each pushed outward until
+     * it sits in a distinct Voronoi cell whose level is below [maxLevel] and whose biome grows no
+     * trees. Deterministic per seed.
+     */
+    fun distinctLowLevelSpawns(
+        count: Int,
+        ringRadius: Double,
+        maxLevel: Int = 5
+    ): List<Pair<Int, Int>> {
+        if (count <= 0) return emptyList()
+        val used = HashSet<Long>()
+        val result = ArrayList<Pair<Int, Int>>(count)
+        val step = (cellSize / 4).coerceAtLeast(8)
+        for (i in 0 until count) {
+            val angle = 2.0 * Math.PI * i / count
+            val dirX = kotlin.math.cos(angle)
+            val dirZ = kotlin.math.sin(angle)
+            var radius = ringRadius
+            var chosen: Pair<Int, Int>? = null
+            // Treeless is mandatory; low level is preferred. Keep the first
+            // treeless-but-higher-level
+            // hit as a fallback in case no low-level treeless cell exists on this ray.
+            var treelessFallback: Pair<Int, Int>? = null
+            var fallbackKey = 0L
+            var guard = 0
+            while (guard++ < 4096) {
+                val x = (dirX * radius).roundToInt()
+                val z = (dirZ * radius).roundToInt()
+                val (sx, sz) = nearestSeed(x, z)
+                val key = sx.toLong() shl 32 or (sz.toLong() and 0xFFFFFFFFL)
+                if (key !in used && sample(x, z).primary.treeless) {
+                    if (cellLevel(sx, sz) < maxLevel) {
+                        chosen = Pair(x, z)
+                        fallbackKey = key
+                        break
+                    }
+                    if (treelessFallback == null) {
+                        treelessFallback = Pair(x, z)
+                        fallbackKey = key
+                    }
+                }
+                radius += step
+            }
+            val pick =
+                chosen
+                    ?: treelessFallback
+                    ?: Pair((dirX * radius).roundToInt(), (dirZ * radius).roundToInt())
+            used.add(fallbackKey)
+            result.add(pick)
+        }
+        return result
     }
 
     fun cells(centerX: Int, centerZ: Int, radiusBlocks: Int): List<VoronoiCell> {

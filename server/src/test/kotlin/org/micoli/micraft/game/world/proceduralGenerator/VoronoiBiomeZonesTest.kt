@@ -67,6 +67,37 @@ class VoronoiBiomeZonesTest {
     }
 
     @Test
+    fun zoneLevelAt_nearOrigin_isLowLevel() {
+        for (seed in listOf(1L, 7L, 42L, 99L)) {
+            val z = zones(seed)
+            for (wx in -400..400 step 80) {
+                for (wz in -400..400 step 80) {
+                    assertTrue(
+                        z.zoneLevelAt(wx, wz) < 5,
+                        "seed=$seed ($wx,$wz) level=${z.zoneLevelAt(wx, wz)}")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun zoneLevelAt_farField_scalesUp() {
+        val z = zones(1L)
+        assertTrue(z.zoneLevelAt(5000, 5000) >= 55)
+    }
+
+    @Test
+    fun distinctLowLevelSpawns_areDistinctAndTreeless() {
+        val z = zones(3L)
+        val spawns = z.distinctLowLevelSpawns(count = 4, ringRadius = 384.0)
+        assertEquals(4, spawns.size)
+        for ((x, zc) in spawns) assertTrue(
+            z.sample(x, zc).primary.treeless, "spawn ($x,$zc) must be a treeless biome")
+        val cells = spawns.map { z.nearestSeed(it.first, it.second) }.toSet()
+        assertEquals(4, cells.size, "each faction spawn in a distinct Voronoi cell")
+    }
+
+    @Test
     fun selectColumn_returnsPrimarySubsurface() {
         val z = zones()
         val sample = z.sample(10, 10)

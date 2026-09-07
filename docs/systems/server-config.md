@@ -63,18 +63,30 @@ factions:
   enabled: false
   friendlyFire: false          # allow attacking same-faction members
   changeCooldownSeconds: 0     # delay before a player may re-affiliate
+  spawnRingRadius: 384         # auto faction-spawn ring radius (blocks) around origin
   list: []                     # 1 to 5 faction definitions when enabled
   # list:
   #   - id: red
   #     name: "Scarlet Order"
   #     color: "#c0392b"
   #     description: "Defenders of the North."
+  #     # spawnX: -300           # optional explicit spawn; must sit in a zone level < 5
+  #     # spawnZ: 120
 ```
 
 The `factions:` block **is** hot-reloaded by `/reload` (unlike the rest of this
 file): editing the list and reloading re-applies it, and players affiliated to a
 faction that no longer exists are un-affiliated. See
 [Groups, guilds & factions](../social/groups-guilds-factions.md).
+
+**Faction spawns.** With no `spawnX`/`spawnZ`, each faction is auto-assigned a
+spawn spread evenly on a ring of `spawnRingRadius` around the world origin, pushed
+outward until it lands in a **distinct Voronoi cell** whose [zone level](../world/biomes.md#zone-levels)
+is below 5 and whose biome grows **no trees**. A player is moved to their faction
+spawn on their **first** affiliation; later faction changes do not teleport, and a
+returning player always resumes at their last saved position. A new player with no
+faction spawns at the neutral point resolved the same way (nearest low-level,
+tree-free zone to `game.spawnX/Z`).
 
 See [Auth & RBAC](auth-rbac.md) for the `auth:` block, and
 [Chunk transport](../architecture/chunk-transport.md) for `chunks.transport`.

@@ -9,6 +9,7 @@ import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGen
 class MapChunkGenerator(
     private val blocks: Map<Triple<Int, Int, Int>, BlockType> = emptyMap(),
     private val defaultBlock: BlockType = BlockType.AIR,
+    private val zoneLevel: (Int, Int) -> Int = { _, _ -> 0 },
 ) : ChunkGenerator {
     override fun generate(pos: ChunkPos): Chunk =
         Chunk.build(pos) { lx, y, lz ->
@@ -16,4 +17,6 @@ class MapChunkGenerator(
             val wz = pos.cz * WorldConstants.CHUNK_SIZE + lz
             blocks[Triple(wx, y, wz)] ?: defaultBlock
         }
+
+    override fun zoneLevelAt(wx: Int, wz: Int): Int = zoneLevel(wx, wz)
 }

@@ -49,6 +49,10 @@ data class BiomeDefinition(
     val caverns: CavernConfig? = null,
     val maxNpcs: Int = 0,
 ) {
+    /** No tree vegetation — a valid player/faction spawn biome. */
+    val treeless: Boolean
+        get() = vegetation.none { it.type.isTree }
+
     fun selectFiller(hash: Double): BlockType {
         val total = fillers.sumOf { it.density }
         var cumulative = 0.0
@@ -66,4 +70,6 @@ data class BiomeConfig(
     val biomes: List<BiomeDefinition>,
     val voronoiCellSize: Int = 256,
     val voronoiBlendRadius: Int = 16,
+    val zoneLevelSafeDist: Double = 768.0,
+    val zoneLevelMaxDist: Double = 4096.0,
 )

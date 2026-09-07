@@ -1,5 +1,7 @@
 voronoiCellSize: 256
 voronoiBlendRadius: 20
+zoneLevelSafeDist: 768
+zoneLevelMaxDist: 4096
 biomes:
   - id: snow_peaks
     zones:
@@ -40,7 +42,7 @@ biomes:
   - id: desert
     zones:
       - moistureMin: 0.0
-        moistureMax: 0.25
+        moistureMax: 0.35
     surface: SAND
     subsurface: SANDSTONE
     maxNpcs: 10
@@ -56,8 +58,8 @@ biomes:
       - type: AIR
         density: 0.05
     subsurfaceDepth: 4
-    elevationMin: 40
-    elevationMax: 70
+    elevationMin: 45
+    elevationMax: 65
     caverns:
       cavernMinHeight: 5
       cavernMaxHeight: 45
@@ -71,10 +73,10 @@ biomes:
   - id: dry_plains
     maxNpcs: 30
     zones:
-      - moistureMin: 0.25
-        moistureMax: 0.30
+      - moistureMin: 0.35
+        moistureMax: 0.46
     surface: GRASS
-    subsurface: DIRT
+    subsurface: SANDSTONE
     fillers:
       - type: STONE
         density: 0.4
@@ -87,7 +89,8 @@ biomes:
       - type: AIR
         density: 0.05
     elevationMin: 55
-    elevationMax: 90
+    elevationMax: 80
+    grassColor: [0.62, 0.58, 0.3]
     vegetation:
       - type: weed
         density: 0.08
@@ -103,8 +106,8 @@ biomes:
       staircaseEnabled: true
   - id: plains
     zones:
-      - moistureMin: 0.30
-        moistureMax: 0.62
+      - moistureMin: 0.46
+        moistureMax: 0.56
     surface: GRASS
     subsurface: DIRT
     maxNpcs: 40
@@ -120,7 +123,8 @@ biomes:
       - type: AIR
         density: 0.05
     elevationMin: 60
-    elevationMax: 100
+    elevationMax: 95
+    grassColor: [0.42, 0.66, 0.3]
     vegetation:
       - type: flower
         density: 0.06
@@ -140,8 +144,8 @@ biomes:
       staircaseEnabled: true
   - id: forest
     zones:
-      - moistureMin: 0.62
-        moistureMax: 0.82
+      - moistureMin: 0.56
+        moistureMax: 0.68
     surface: GRASS
     subsurface: DIRT
     maxNpcs: 50
@@ -156,12 +160,12 @@ biomes:
         density: 0.15
       - type: AIR
         density: 0.05
-    elevationMin: 60
-    elevationMax: 110
+    elevationMin: 65
+    elevationMax: 115
     grassColor: [0.3, 0.55, 0.2]
     vegetation:
       - type: oak_tree
-        density: 0.12
+        density: 0.045
       - type: flower
         density: 0.04
       - type: weed
@@ -178,7 +182,7 @@ biomes:
       staircaseEnabled: true
   - id: pine_forest
     zones:
-      - moistureMin: 0.82
+      - moistureMin: 0.68
         moistureMax: 1.0
     surface: GRASS
     subsurface: DIRT
@@ -194,12 +198,12 @@ biomes:
         density: 0.15
       - type: AIR
         density: 0.05
-    elevationMin: 70
-    elevationMax: 130
+    elevationMin: 75
+    elevationMax: 140
     grassColor: [0.25, 0.45, 0.22]
     vegetation:
       - type: pine_tree
-        density: 0.15
+        density: 0.05
       - type: weed
         density: 0.03
     caverns:

@@ -155,6 +155,9 @@ class ProceduralChunkGenerator(
 
     override fun zoneLevelAt(wx: Int, wz: Int): Int = voronoi.zoneLevelAt(wx, wz)
 
+    override fun distinctLowLevelSpawns(count: Int, ringRadius: Double, maxLevel: Int) =
+        voronoi.distinctLowLevelSpawns(count, ringRadius, maxLevel)
+
     fun namedCavernPoints(cellRadius: Int = 5): Map<String, Vec3> {
         val cellSize = biomeRegistry.voronoiCellSize
         val result = mutableMapOf<String, Vec3>()

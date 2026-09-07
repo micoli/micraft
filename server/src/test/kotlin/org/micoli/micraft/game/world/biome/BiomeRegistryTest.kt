@@ -17,10 +17,30 @@ class BiomeRegistryTest {
     }
 
     @Test
+    fun selectByMoisture_everyMoistureBiomeIsReachable() {
+        val registry = BiomeRegistry.default()
+        assertEquals("desert", registry.selectByMoisture(0.2).id)
+        assertEquals("dry_plains", registry.selectByMoisture(0.4).id)
+        assertEquals("plains", registry.selectByMoisture(0.5).id)
+        assertEquals("forest", registry.selectByMoisture(0.6).id)
+        assertEquals("pine_forest", registry.selectByMoisture(0.8).id)
+    }
+
+    @Test
+    fun treeless_isTrueOnlyForBiomesWithoutTrees() {
+        val byId = BiomeRegistry.default().biomes.associateBy { it.id }
+        assertEquals(true, byId["desert"]!!.treeless)
+        assertEquals(true, byId["dry_plains"]!!.treeless)
+        assertEquals(false, byId["plains"]!!.treeless)
+        assertEquals(false, byId["forest"]!!.treeless)
+        assertEquals(false, byId["pine_forest"]!!.treeless)
+    }
+
+    @Test
     fun selectByMoisture_boundaryIsExclusiveOnUpperEnd() {
         val registry = BiomeRegistry.default()
-        // desert zone is [0.0, 0.12), dry_plains starts at 0.12
-        assertEquals("dry_plains", registry.selectByMoisture(0.12).id)
+        // desert zone is [0.0, 0.35), dry_plains starts at 0.35
+        assertEquals("dry_plains", registry.selectByMoisture(0.35).id)
     }
 
     @Test

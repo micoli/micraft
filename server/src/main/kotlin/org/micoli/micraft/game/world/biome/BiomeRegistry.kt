@@ -7,10 +7,18 @@ class BiomeRegistry(
     val biomes: List<BiomeDefinition>,
     val voronoiCellSize: Int = 256,
     val voronoiBlendRadius: Int = 16,
+    val zoneLevelSafeDist: Double = 768.0,
+    val zoneLevelMaxDist: Double = 4096.0,
 ) {
     companion object {
         fun from(config: BiomeConfig) =
-            BiomeRegistry(config.biomes, config.voronoiCellSize, config.voronoiBlendRadius)
+            BiomeRegistry(
+                config.biomes,
+                config.voronoiCellSize,
+                config.voronoiBlendRadius,
+                config.zoneLevelSafeDist,
+                config.zoneLevelMaxDist,
+            )
 
         fun default() =
             BiomeRegistry(
@@ -31,22 +39,23 @@ class BiomeRegistry(
                         ),
                         BiomeDefinition(
                             id = "desert",
-                            zones = listOf(BiomeZone(0.0, 0.12)),
+                            zones = listOf(BiomeZone(0.0, 0.35)),
                             surface = BlockType.SAND,
                             subsurface = BlockType.SANDSTONE,
                             fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
                             subsurfaceDepth = 4,
-                            elevationMin = 40,
-                            elevationMax = 70,
+                            elevationMin = 45,
+                            elevationMax = 65,
                         ),
                         BiomeDefinition(
                             id = "dry_plains",
-                            zones = listOf(BiomeZone(0.12, 0.30)),
+                            zones = listOf(BiomeZone(0.35, 0.46)),
                             surface = BlockType.GRASS,
-                            subsurface = BlockType.DIRT,
+                            subsurface = BlockType.SANDSTONE,
                             fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
                             elevationMin = 55,
-                            elevationMax = 90,
+                            elevationMax = 80,
+                            grassColor = listOf(0.62, 0.58, 0.3),
                             vegetation = listOf(VegetationEntry(VegetationType.WEED, 0.08)),
                             caverns =
                                 CavernConfig(
@@ -61,12 +70,13 @@ class BiomeRegistry(
                         ),
                         BiomeDefinition(
                             id = "plains",
-                            zones = listOf(BiomeZone(0.30, 0.62)),
+                            zones = listOf(BiomeZone(0.46, 0.56)),
                             surface = BlockType.GRASS,
                             subsurface = BlockType.DIRT,
                             fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
                             elevationMin = 60,
-                            elevationMax = 100,
+                            elevationMax = 95,
+                            grassColor = listOf(0.42, 0.66, 0.3),
                             vegetation =
                                 listOf(
                                     VegetationEntry(VegetationType.FLOWER, 0.06),
@@ -86,16 +96,16 @@ class BiomeRegistry(
                         ),
                         BiomeDefinition(
                             id = "forest",
-                            zones = listOf(BiomeZone(0.62, 0.82)),
+                            zones = listOf(BiomeZone(0.56, 0.68)),
                             surface = BlockType.GRASS,
                             subsurface = BlockType.DIRT,
                             fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
-                            elevationMin = 60,
-                            elevationMax = 110,
+                            elevationMin = 65,
+                            elevationMax = 115,
                             grassColor = listOf(0.3, 0.55, 0.2),
                             vegetation =
                                 listOf(
-                                    VegetationEntry(VegetationType.OAK_TREE, 0.12),
+                                    VegetationEntry(VegetationType.OAK_TREE, 0.045),
                                     VegetationEntry(VegetationType.FLOWER, 0.04),
                                     VegetationEntry(VegetationType.WEED, 0.04),
                                 ),
@@ -114,22 +124,24 @@ class BiomeRegistry(
                         ),
                         BiomeDefinition(
                             id = "pine_forest",
-                            zones = listOf(BiomeZone(0.82, 1.0)),
+                            zones = listOf(BiomeZone(0.68, 1.0)),
                             surface = BlockType.GRASS,
                             subsurface = BlockType.DIRT,
                             fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
-                            elevationMin = 70,
-                            elevationMax = 130,
+                            elevationMin = 75,
+                            elevationMax = 140,
                             grassColor = listOf(0.25, 0.45, 0.22),
                             vegetation =
                                 listOf(
-                                    VegetationEntry(VegetationType.PINE_TREE, 0.15),
+                                    VegetationEntry(VegetationType.PINE_TREE, 0.05),
                                     VegetationEntry(VegetationType.WEED, 0.03),
                                 ),
                         ),
                     ),
                 voronoiCellSize = 256,
                 voronoiBlendRadius = 20,
+                zoneLevelSafeDist = 768.0,
+                zoneLevelMaxDist = 4096.0,
             )
     }
 

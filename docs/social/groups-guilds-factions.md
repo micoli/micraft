@@ -69,7 +69,8 @@ Every movement is recorded in a bounded log (last 100 entries) shown in the pane
 
 Server-wide sides, configured in `server.yaml` (see
 [server configuration](../systems/server-config.md)). Between 1 and 5 factions,
-defined by `id`, `name`, `color`, `description`. Disabled by default.
+defined by `id`, `name`, `color`, `description`, and an optional explicit
+`spawnX`/`spawnZ`. Disabled by default.
 
 - **`/faction list`** — list factions and member counts.
 - **`/faction join <id>`** — affiliate (subject to `changeCooldownSeconds`).
@@ -80,6 +81,10 @@ defined by `id`, `name`, `color`, `description`. Disabled by default.
 
 Effects when enabled:
 
+- Each faction gets a **starting area**: auto-placed on a ring around the world
+  origin (`spawnRingRadius`) in a distinct low-level, tree-free zone, or a fixed
+  `spawnX`/`spawnZ`. A player is teleported there on their **first** `/faction
+  join`; later switches do not move them.
 - Members of the same faction cannot damage each other unless
   `factions.friendlyFire: true`.
 - A player can build in and interact with land claims owned by a same-faction

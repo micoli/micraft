@@ -9,5 +9,8 @@ enum class VegetationType {
     @SerialName("pine_tree") PINE_TREE,
     @SerialName("pine_tree_snow") PINE_TREE_SNOW,
     @SerialName("flower") FLOWER,
-    @SerialName("weed") WEED,
+    @SerialName("weed") WEED;
+
+    val isTree: Boolean
+        get() = this == OAK_TREE || this == PINE_TREE || this == PINE_TREE_SNOW
 }

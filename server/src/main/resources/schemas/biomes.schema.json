@@ -171,6 +171,12 @@
     },
     "voronoiBlendRadius": {
       "type": "integer"
+    },
+    "zoneLevelSafeDist": {
+      "type": "number"
+    },
+    "zoneLevelMaxDist": {
+      "type": "number"
     }
   }
 }

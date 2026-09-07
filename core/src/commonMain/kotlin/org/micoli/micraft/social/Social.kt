@@ -109,6 +109,8 @@ data class FactionDefinition(
     val name: String,
     @EncodeDefault(ALWAYS) val color: String = "#888888",
     @EncodeDefault(ALWAYS) val description: String = "",
+    val spawnX: Int? = null,
+    val spawnZ: Int? = null,
 )
 
 @Serializable data class FactionState(val id: String, val memberCount: Int)

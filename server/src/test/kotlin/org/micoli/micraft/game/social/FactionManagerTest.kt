@@ -16,12 +16,27 @@ import org.micoli.micraft.support.testSession
 
 class FactionManagerTest {
 
-    private fun mgr(sessions: List<FakePlayerSession>, section: FactionsSection): FactionManager {
+    private fun mgr(
+        sessions: List<FakePlayerSession>,
+        section: FactionsSection,
+        zoneLevelAt: (Int, Int) -> Int = { _, _ -> 1 },
+        spawnSlots: (Int, Double) -> List<Pair<Int, Int>> = { count, _ ->
+            List(count) { i -> (100 + i * 50) to (200 + i * 50) }
+        },
+    ): FactionManager {
         val cm = ChatChannelManager()
         val chat = ChatService(cm, {}, { sessions })
-        return FactionManager({ sessions }, {}, chat, cm, testI18n(), {}).also {
-            it.applyConfig(section)
-        }
+        return FactionManager(
+                { sessions },
+                {},
+                chat,
+                cm,
+                testI18n(),
+                {},
+                zoneLevelAt = zoneLevelAt,
+                lowLevelSpawnSlots = spawnSlots,
+            )
+            .also { it.applyConfig(section) }
     }
 
     private val twoFactions =
@@ -70,6 +85,39 @@ class FactionManagerTest {
             FactionsSection(enabled = true, list = listOf(FactionDefinition("blue", "Blue"))))
         fm.reconcile()
         assertNull(a.state.factionId)
+    }
+
+    private fun org.micoli.micraft.player.Vec3.block() =
+        kotlin.math.floor(x).toInt() to kotlin.math.floor(z).toInt()
+
+    @Test
+    fun `spawn map uses auto ring for factions without explicit coords`() {
+        val fm = mgr(emptyList(), twoFactions)
+        assertEquals(100 to 200, fm.spawnFor("red")?.block())
+        assertEquals(150 to 250, fm.spawnFor("blue")?.block())
+    }
+
+    @Test
+    fun `explicit faction spawn coords win over auto ring`() {
+        val section =
+            FactionsSection(
+                enabled = true,
+                list =
+                    listOf(
+                        FactionDefinition("red", "Red", spawnX = -300, spawnZ = 40),
+                        FactionDefinition("blue", "Blue"),
+                    ))
+        val fm = mgr(emptyList(), section)
+        assertEquals(-300 to 40, fm.spawnFor("red")?.block())
+        assertEquals(100 to 200, fm.spawnFor("blue")?.block())
+    }
+
+    @Test
+    fun `first affiliation teleports player to faction spawn`() = runBlocking {
+        val a = testSession(id = "a", name = "A")
+        val fm = mgr(listOf(a), twoFactions)
+        fm.setAffiliation(a, "red")
+        assertEquals(100 to 200, a.state.pos.block())
     }
 
     @Test

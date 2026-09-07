@@ -94,6 +94,7 @@ data class FactionsSection(
     @EncodeDefault(ALWAYS) val enabled: Boolean = false,
     @EncodeDefault(ALWAYS) val friendlyFire: Boolean = false,
     @EncodeDefault(ALWAYS) val changeCooldownSeconds: Long = 0,
+    @EncodeDefault(ALWAYS) val spawnRingRadius: Double = 384.0,
     @EncodeDefault(ALWAYS)
     @org.micoli.micraft.schema.JsonSchemaConstraint(minItems = 0, maxItems = 5)
     val list: List<org.micoli.micraft.social.FactionDefinition> = emptyList(),

@@ -46,6 +46,9 @@ factions:
   enabled: false
   friendlyFire: false
   changeCooldownSeconds: 0
+  # Auto faction spawns are spread on a ring of this radius (blocks) around the origin,
+  # each pushed outward to a distinct Voronoi cell of zone level < 5.
+  spawnRingRadius: 384
   list: []
   # Example (1 to 5 factions), set enabled: true to activate:
   # list:
@@ -53,6 +56,9 @@ factions:
   #     name: "Ordre Écarlate"
   #     color: "#c0392b"
   #     description: "Les défenseurs du Nord."
+  #     # optional explicit spawn (must sit in a zone level < 5); omit for auto ring placement
+  #     # spawnX: -300
+  #     # spawnZ: 120
   #   - id: blue
   #     name: "Pacte d'Azur"
   #     color: "#2980b9"

@@ -19,11 +19,13 @@ import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.command.Plugin
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.WorldPersistence
+import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
 import org.micoli.micraft.support.FakeWebSocketSession
+import org.micoli.micraft.support.MapChunkGenerator
 import org.micoli.micraft.support.testWorld
 
 private class FakeCommandHandler(override val id: UUID, override val name: String) :
@@ -106,6 +108,31 @@ class GameLoopTest {
         assertTrue(received.any { it is ServerMessage.PreferencesSync })
         // player is removed again once the incoming channel closes and the session ends
         assertTrue(gameLoop.getPlayerStates().isEmpty())
+    }
+
+    @Test
+    fun onConnect_newPlayer_spawnsInZoneBelowLevel5() = runTest {
+        // Origin is a high-level zone; only points far out drop below level 5.
+        val world =
+            WorldState(
+                MapChunkGenerator(
+                    zoneLevel = { x, z ->
+                        if (kotlin.math.hypot(x.toDouble(), z.toDouble()) < 300) 40 else 1
+                    }))
+        val gameLoop = GameLoop(world)
+        val socket = FakeWebSocketSession()
+        val connect = ClientMessage.Connect(playerName = "Pio", userName = "pio@example.com")
+        socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        socket.incomingChannel.close()
+
+        gameLoop.onConnect(socket)
+
+        val welcome =
+            generateSequence { socket.outgoingChannel.tryReceive().getOrNull() }
+                .map { ServerMessageCodec.decode((it as Frame.Binary).readBytes()) }
+                .filterIsInstance<ServerMessage.Welcome>()
+                .first()
+        assertTrue(world.zoneLevelAt(welcome.spawnPos.x.toInt(), welcome.spawnPos.z.toInt()) < 5)
     }
 
     @Test

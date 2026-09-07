@@ -40,6 +40,9 @@ class WorldState(
 
     fun zoneLevelAt(wx: Int, wz: Int): Int = generator.zoneLevelAt(wx, wz)
 
+    fun distinctLowLevelSpawns(count: Int, ringRadius: Double, maxLevel: Int = 5) =
+        generator.distinctLowLevelSpawns(count, ringRadius, maxLevel)
+
     fun getBlockBelow(pos: Vec3): BlockType {
         return getBlockBelow(pos.x.toInt(), pos.y.toInt(), pos.z.toInt())
     }
