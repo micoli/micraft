@@ -1,8 +1,8 @@
 ---
-title: Vehicles & siege weapons
+title: Vehicles, Siege weapons & Furnitures
 ---
 
-# Vehicles & siege weapons
+# Vehicles, Siege weapons & Furnitures
 
 ## How to play
 

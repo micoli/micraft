@@ -21,5 +21,5 @@ The codex has no config of its own. Its content is derived from:
 
 The admin panel exposes the same data at `GET /api/admin/blocks`,
 `GET /api/admin/items` and `GET /api/admin/npc-types`. Its codex view adds tabs
-for models, equipment, siege weapons and [furniture](../entities/vehicles.md)
+for models, equipment, siege weapons and [furniture](../entities/placeable.md)
 (`GET /api/siege-weapons`, `GET /api/furnitures`).
