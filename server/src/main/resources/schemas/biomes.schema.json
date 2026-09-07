@@ -172,6 +172,9 @@
     "voronoiBlendRadius": {
       "type": "integer"
     },
+    "elevationBlendRadius": {
+      "type": "integer"
+    },
     "zoneLevelSafeDist": {
       "type": "number"
     },

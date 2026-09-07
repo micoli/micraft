@@ -16,6 +16,7 @@ class VoronoiBiomeZones(
 ) {
     private val cellSize = registry.voronoiCellSize
     private val blendRadius = registry.voronoiBlendRadius
+    private val elevationBlendRadius = registry.elevationBlendRadius
     private val levelSafeDist = registry.zoneLevelSafeDist
     private val levelMaxDist = registry.zoneLevelMaxDist
 
@@ -44,6 +45,13 @@ class VoronoiBiomeZones(
         val primary: BiomeDefinition,
         val secondary: BiomeDefinition,
         val blendFactor: Double,
+        /**
+         * Surface elevation band, distance-weighted across the whole cell neighbourhood — a
+         * continuous field with no primary/secondary discontinuity, so biome borders slope instead
+         * of forming cliffs.
+         */
+        val elevationMin: Double,
+        val elevationMax: Double,
         val primarySeedX: Int = 0,
         val primarySeedZ: Int = 0,
     )
@@ -57,25 +65,38 @@ class VoronoiBiomeZones(
         var b2: BiomeDefinition? = null
         var sx1 = 0
         var sz1 = 0
-        for (dcx in -1..1) for (dcz in -1..1) {
+        var wSum = 0.0
+        var eMinSum = 0.0
+        var eMaxSum = 0.0
+        val falloff2 = (elevationBlendRadius.toDouble()).let { it * it }
+        // -2..2 (not -1..1): the elevation weights must stay continuous where `cx`/`cz` step at a
+        // cell boundary, so the seed window has to overlap across it. Primary/secondary detection
+        // stays on the inner 3×3 — the nearest seeds are always there.
+        for (dcx in -2..2) for (dcz in -2..2) {
             val (sx, sz) = seedPoint(cx + dcx, cz + dcz)
             val dx = (wx - sx).toDouble()
             val dz = (wz - sz).toDouble()
             val dist = dx * dx + dz * dz
+            val biome = seedBiome(sx, sz)
+            val w = 1.0 / (1.0 + dist / falloff2)
+            wSum += w
+            eMinSum += w * biome.elevationMin
+            eMaxSum += w * biome.elevationMax
+            if (dcx < -1 || dcx > 1 || dcz < -1 || dcz > 1) continue
             if (dist < d1) {
                 d2 = d1
                 b2 = b1
                 d1 = dist
-                b1 = seedBiome(sx, sz)
+                b1 = biome
                 sx1 = sx
                 sz1 = sz
             } else if (dist < d2) {
                 d2 = dist
-                b2 = seedBiome(sx, sz)
+                b2 = biome
             }
         }
         val blend = ((sqrt(d2) - sqrt(d1)) / (2.0 * blendRadius)).coerceIn(0.0, 1.0)
-        return ColumnSample(b1!!, b2 ?: b1, blend, sx1, sz1)
+        return ColumnSample(b1!!, b2 ?: b1, blend, eMinSum / wSum, eMaxSum / wSum, sx1, sz1)
     }
 
     data class VoronoiCell(

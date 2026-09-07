@@ -70,6 +70,8 @@ data class BiomeConfig(
     val biomes: List<BiomeDefinition>,
     val voronoiCellSize: Int = 256,
     val voronoiBlendRadius: Int = 16,
+    /** Wide blend applied to surface elevation only — smooths cliffs at biome borders. */
+    val elevationBlendRadius: Int = 96,
     val zoneLevelSafeDist: Double = 768.0,
     val zoneLevelMaxDist: Double = 4096.0,
 )

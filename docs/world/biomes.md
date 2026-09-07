@@ -17,6 +17,12 @@ noise clusters around the middle): `desert` and `dry_plains` — the only
 tree-free biomes — take the drier half, `plains`/`forest`/`pine_forest` the
 wetter half. `snow_peaks` overrides any biome above altitude 150.
 
+Each biome's `elevationMin`/`elevationMax` differ. The surface-height band used
+for a column is a **distance-weighted average of every nearby cell's** band
+(weight falls off over `elevationBlendRadius`), a continuous field with no
+sudden primary/secondary switch — so biome borders slope instead of forming
+cliffs.
+
 ## Configuration
 
 `data/config/biomes.yaml` (optional — falls back to `BiomeRegistry.default()` if
@@ -24,7 +30,8 @@ missing; bundled default in `resources/config/biomes.yaml`):
 
 ```yaml
 voronoiCellSize: 256
-voronoiBlendRadius: 20
+voronoiBlendRadius: 20     # surface-block dithering width at a border
+elevationBlendRadius: 96   # distance falloff for the blended elevation field (anti-cliff)
 zoneLevelSafeDist: 768     # cells within this many blocks of origin are zone level 1
 zoneLevelMaxDist: 4096     # cells at/beyond this distance are RPG_LEVEL_MAX
 biomes:

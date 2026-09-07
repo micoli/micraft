@@ -1,5 +1,6 @@
 voronoiCellSize: 256
 voronoiBlendRadius: 20
+elevationBlendRadius: 96
 zoneLevelSafeDist: 768
 zoneLevelMaxDist: 4096
 biomes:
@@ -58,8 +59,8 @@ biomes:
       - type: AIR
         density: 0.05
     subsurfaceDepth: 4
-    elevationMin: 45
-    elevationMax: 65
+    elevationMin: 50
+    elevationMax: 70
     caverns:
       cavernMinHeight: 5
       cavernMaxHeight: 45
@@ -88,8 +89,8 @@ biomes:
         density: 0.15
       - type: AIR
         density: 0.05
-    elevationMin: 55
-    elevationMax: 80
+    elevationMin: 56
+    elevationMax: 82
     grassColor: [0.62, 0.58, 0.3]
     vegetation:
       - type: weed
@@ -123,7 +124,7 @@ biomes:
       - type: AIR
         density: 0.05
     elevationMin: 60
-    elevationMax: 95
+    elevationMax: 96
     grassColor: [0.42, 0.66, 0.3]
     vegetation:
       - type: flower
@@ -160,8 +161,8 @@ biomes:
         density: 0.15
       - type: AIR
         density: 0.05
-    elevationMin: 65
-    elevationMax: 115
+    elevationMin: 64
+    elevationMax: 110
     grassColor: [0.3, 0.55, 0.2]
     vegetation:
       - type: oak_tree
@@ -198,8 +199,8 @@ biomes:
         density: 0.15
       - type: AIR
         density: 0.05
-    elevationMin: 75
-    elevationMax: 140
+    elevationMin: 70
+    elevationMax: 124
     grassColor: [0.25, 0.45, 0.22]
     vegetation:
       - type: pine_tree

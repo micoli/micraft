@@ -32,6 +32,22 @@ class VoronoiBiomeZonesTest {
     }
 
     @Test
+    fun sample_blendedElevation_isContinuousAcrossBiomeBorders() {
+        val z = zones()
+        var prev = z.sample(0, 0)
+        // Step 1 block at a time along a transect crossing several Voronoi cells; the weighted
+        // elevation band must never jump (no cliff), unlike a raw primary/secondary switch.
+        for (wx in 1..1500) {
+            val s = z.sample(wx, 300)
+            assertTrue(
+                kotlin.math.abs(s.elevationMin - prev.elevationMin) <= 3.0 &&
+                    kotlin.math.abs(s.elevationMax - prev.elevationMax) <= 3.0,
+                "elevation jumped at wx=$wx: ${prev.elevationMin}/${prev.elevationMax} -> ${s.elevationMin}/${s.elevationMax}")
+            prev = s
+        }
+    }
+
+    @Test
     fun sample_atCellSeedPoint_hasZeroBlend() {
         val z = zones()
         // Near the center of a cell, primary/secondary distances diverge -> blend closer to bounds.

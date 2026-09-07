@@ -46,14 +46,7 @@ class ProceduralChunkGenerator(
     fun surfaceHeight(wx: Int, wz: Int, sample: VoronoiBiomeZones.ColumnSample): Int {
         val n = elevationNoise.octaveNoise(wx / 64.0, wz / 64.0, octaves = 6, persistence = 0.5)
         val t = (n + 1.0) / 2.0
-        val s = sample.blendFactor.let { it * it * (3 - 2 * it) }
-        val eMin =
-            sample.secondary.elevationMin +
-                s * (sample.primary.elevationMin - sample.secondary.elevationMin)
-        val eMax =
-            sample.secondary.elevationMax +
-                s * (sample.primary.elevationMax - sample.secondary.elevationMax)
-        val baseY = eMin + t * (eMax - eMin)
+        val baseY = sample.elevationMin + t * (sample.elevationMax - sample.elevationMin)
 
         // Independent large-scale ridge noise (~400-block ranges) that lifts terrain
         // beyond the moisture biome's elevationMax, enabling altitude-constrained biomes
