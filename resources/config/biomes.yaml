@@ -40,9 +40,47 @@ biomes:
       cavernMaxRadius: 22
       wallBlock: STONE
       staircaseEnabled: true
-  - id: desert
+  - id: sea
     zones:
       - moistureMin: 0.0
+        moistureMax: 0.06
+    surface: SAND
+    subsurface: SANDSTONE
+    maxNpcs: 0
+    fillers:
+      - type: STONE
+        density: 1.0
+    subsurfaceDepth: 3
+    elevationMin: 60
+    elevationMax: 60
+    grassColor: [0.12, 0.3, 0.55]
+    liquid: true
+    waterLevel: 60
+    waterMaxDepth: 8
+    tintColor: [0.09, 0.26, 0.5]
+    vegetation: []
+  - id: lake
+    zones:
+      - moistureMin: 0.68
+        moistureMax: 0.74
+    surface: GRAVEL
+    subsurface: DIRT
+    maxNpcs: 0
+    fillers:
+      - type: STONE
+        density: 1.0
+    subsurfaceDepth: 3
+    elevationMin: 72
+    elevationMax: 72
+    grassColor: [0.22, 0.44, 0.62]
+    liquid: true
+    waterLevel: 72
+    waterMaxDepth: 8
+    tintColor: [0.16, 0.38, 0.55]
+    vegetation: []
+  - id: desert
+    zones:
+      - moistureMin: 0.06
         moistureMax: 0.35
     surface: SAND
     subsurface: SANDSTONE
@@ -59,8 +97,8 @@ biomes:
       - type: AIR
         density: 0.05
     subsurfaceDepth: 4
-    elevationMin: 50
-    elevationMax: 70
+    elevationMin: 72
+    elevationMax: 92
     caverns:
       cavernMinHeight: 5
       cavernMaxHeight: 45
@@ -89,8 +127,8 @@ biomes:
         density: 0.15
       - type: AIR
         density: 0.05
-    elevationMin: 56
-    elevationMax: 82
+    elevationMin: 72
+    elevationMax: 98
     grassColor: [0.62, 0.58, 0.3]
     vegetation:
       - type: weed
@@ -123,8 +161,8 @@ biomes:
         density: 0.15
       - type: AIR
         density: 0.05
-    elevationMin: 60
-    elevationMax: 96
+    elevationMin: 72
+    elevationMax: 108
     grassColor: [0.42, 0.66, 0.3]
     vegetation:
       - type: flower
@@ -161,8 +199,8 @@ biomes:
         density: 0.15
       - type: AIR
         density: 0.05
-    elevationMin: 64
-    elevationMax: 110
+    elevationMin: 72
+    elevationMax: 118
     grassColor: [0.3, 0.55, 0.2]
     vegetation:
       - type: oak_tree
@@ -183,7 +221,7 @@ biomes:
       staircaseEnabled: true
   - id: pine_forest
     zones:
-      - moistureMin: 0.68
+      - moistureMin: 0.74
         moistureMax: 1.0
     surface: GRASS
     subsurface: DIRT
@@ -199,8 +237,8 @@ biomes:
         density: 0.15
       - type: AIR
         density: 0.05
-    elevationMin: 70
-    elevationMax: 124
+    elevationMin: 72
+    elevationMax: 126
     grassColor: [0.25, 0.45, 0.22]
     vegetation:
       - type: pine_tree

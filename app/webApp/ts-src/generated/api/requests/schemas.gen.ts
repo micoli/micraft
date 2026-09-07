@@ -2384,6 +2384,10 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             ],
             title: 'String'
         },
+        headInLiquid: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
         id: {
             type: 'string',
             title: 'String'
@@ -2631,6 +2635,7 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'fieldOfView',
         'flying',
         'godMode',
+        'headInLiquid',
         'id',
         'inventory',
         'inventorySortA',

@@ -104,8 +104,10 @@ class CavernConfigTest {
         assertTrue(resourcesPath.toFile().exists())
         val config =
             Yaml.default.decodeFromString(BiomeConfig.serializer(), resourcesPath.readText())
-        val missing = config.biomes.filter { it.caverns == null }.map { it.id }
-        assertTrue(missing.isEmpty(), "All biomes in production yaml should have caverns: $missing")
+        val missing = config.biomes.filter { !it.liquid && it.caverns == null }.map { it.id }
+        assertTrue(
+            missing.isEmpty(),
+            "All non-liquid biomes in production yaml should have caverns: $missing")
     }
 
     @Test

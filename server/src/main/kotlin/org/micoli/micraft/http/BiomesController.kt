@@ -28,5 +28,20 @@ class BiomesController(private val biomeRegistry: BiomeRegistry) {
                     call.respondText(
                         Json.encodeToString(serializer, colors), ContentType.Application.Json)
                 }
+            get(
+                "/api/biomes/tints",
+                {
+                    description = "Screen tint color per liquid biome id, as [r, g, b] in 0..1"
+                    response { code(HttpStatusCode.OK) { body<Map<String, List<Double>>>() } }
+                }) {
+                    val tints =
+                        biomeRegistry.biomes
+                            .filter { it.liquid && it.tintColor != null }
+                            .associate { it.id to it.tintColor!! }
+                    val serializer =
+                        MapSerializer(String.serializer(), ListSerializer(Double.serializer()))
+                    call.respondText(
+                        Json.encodeToString(serializer, tints), ContentType.Application.Json)
+                }
         }
 }

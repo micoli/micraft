@@ -174,7 +174,8 @@ class VoronoiBiomeZones(
                 val z = (dirZ * radius).roundToInt()
                 val (sx, sz) = nearestSeed(x, z)
                 val key = sx.toLong() shl 32 or (sz.toLong() and 0xFFFFFFFFL)
-                if (key !in used && sample(x, z).primary.treeless) {
+                val primary = sample(x, z).primary
+                if (key !in used && primary.treeless && !primary.liquid) {
                     if (cellLevel(sx, sz) < maxLevel) {
                         chosen = Pair(x, z)
                         fallbackKey = key

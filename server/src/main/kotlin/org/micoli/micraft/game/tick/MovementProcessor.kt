@@ -15,6 +15,7 @@ import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.player.height
 import org.micoli.micraft.player.speed
 import org.slf4j.LoggerFactory
@@ -112,6 +113,14 @@ class MovementProcessor(private val world: WorldState) {
             flying = newFlying,
             speedMultiplier = newSpeedMult,
             biome = world.biomeAt(newX.toInt(), newZ.toInt()),
+            headInLiquid =
+                world
+                    .getBlock(
+                        Math.floor(newX.toDouble()).toInt(),
+                        Math.floor((newY + newStance.eyeOffset).toDouble()).toInt(),
+                        Math.floor(newZ.toDouble()).toInt(),
+                    )
+                    .isLiquid,
             zoneLevel = world.zoneLevelAt(newX.toInt(), newZ.toInt()),
         )
     }

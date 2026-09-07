@@ -120,6 +120,28 @@
           "waterSourceRate": {
             "type": "number"
           },
+          "liquid": {
+            "type": "boolean"
+          },
+          "waterLevel": {
+            "type": "integer"
+          },
+          "waterMaxDepth": {
+            "type": "integer"
+          },
+          "tintColor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            ]
+          },
           "caverns": {
             "oneOf": [
               {

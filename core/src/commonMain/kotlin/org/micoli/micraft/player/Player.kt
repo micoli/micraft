@@ -30,6 +30,7 @@ data class PlayerState(
     val flying: Boolean = false,
     val speedMultiplier: Float = 1f,
     val biome: String = "",
+    val headInLiquid: Boolean = false,
     val inventory: Map<ItemType, Int> = emptyMap(),
     val language: String = "en",
     val shadersEnabled: Boolean = true,

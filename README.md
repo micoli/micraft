@@ -219,6 +219,7 @@ never hand-edit either.
 | GET | `/api/auth/config` | Active auth provider, used by the client to pick the right login UI |
 | GET | `/api/autocomplete/{commandId}/{argIndex}` | Autocomplete suggestions for a slash command argument |
 | GET | `/api/biomes` | Grass color per biome id, as [r, g, b] in 0..1 |
+| GET | `/api/biomes/tints` | Screen tint color per liquid biome id, as [r, g, b] in 0..1 |
 | POST | `/api/character/create` | Create a new (non-RPG) character |
 | POST | `/api/character/rpgcreate` | Create a new RPG character (point-buy base stats + class) |
 | GET | `/api/chunks/{cx}/{cz}` | Binary-encoded chunk data (protocol.ServerMessage.ChunkData wire format). Not a JSON API — used by the game client, not by TanStack Query hooks. |

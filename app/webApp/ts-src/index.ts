@@ -168,6 +168,7 @@ let _i18nTable: Record<string, string> = {};
 // ── Biome colors ──────────────────────────────────────────────────────────────
 
 let _biomeColors: Record<string, [number, number, number]> = {};
+let _biomeTints: Record<string, [number, number, number]> = {};
 
 // ── Assemble window.mc from all registered modules ────────────────────────────
 
@@ -255,11 +256,31 @@ window.mc = {
         _biomeColors = r.data as unknown as Record<string, [number, number, number]>;
       })
       .catch(() => {});
+    fetch("/api/biomes/tints")
+      .then((r) => r.json())
+      .then((data) => {
+        _biomeTints = data as Record<string, [number, number, number]>;
+      })
+      .catch(() => {});
   },
 
   applyBiomeGrassTint: (biome: string) => {
     const [r, g, b] = _biomeColors[biome] ?? [0.47, 0.75, 0.35];
     window.mc.setGrassTint(r, g, b);
+  },
+
+  applyBiomeEnvTint: (biome: string, submerged: boolean) => {
+    if (!submerged) {
+      window.mc.setEnvironmentTint(0, 0, 0, 0);
+      return;
+    }
+    const t = _biomeTints[biome] ?? [0.09, 0.26, 0.5];
+    window.mc.setEnvironmentTint(t[0], t[1], t[2], 1);
+  },
+
+  setEnvironmentTint: (r: number, g: number, b: number, strength: number) => {
+    const cur = window.mcState.envTint;
+    window.mcState.envTint = { r, g, b, strength: cur?.strength ?? 0, target: strength };
   },
 
   // ── i18n ──────────────────────────────────────────────────────────────────────

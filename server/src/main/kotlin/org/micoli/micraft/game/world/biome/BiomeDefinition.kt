@@ -46,12 +46,20 @@ data class BiomeDefinition(
     val elevationMax: Int = 120,
     val grassColor: List<Double>? = null,
     val waterSourceRate: Double = 0.0,
+    val liquid: Boolean = false,
+    val waterLevel: Int = 0,
+    val waterMaxDepth: Int = 8,
+    val tintColor: List<Double>? = null,
     val caverns: CavernConfig? = null,
     val maxNpcs: Int = 0,
 ) {
     /** No tree vegetation — a valid player/faction spawn biome. */
     val treeless: Boolean
         get() = vegetation.none { it.type.isTree }
+
+    /** A water-filled biome with an enclosed basin. */
+    val isAquatic: Boolean
+        get() = liquid && waterLevel > 0
 
     fun selectFiller(hash: Double): BlockType {
         val total = fillers.sumOf { it.density }

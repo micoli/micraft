@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.world.proceduralGenerator
 
+import kotlin.math.roundToInt
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
@@ -43,7 +44,23 @@ class ProceduralChunkGenerator(
             )
         }
 
+    /** 1.0 in the interior of a Voronoi cell, tapering to 0.0 at any foreign biome border. */
+    private fun basinEdge(sample: VoronoiBiomeZones.ColumnSample): Double =
+        if (sample.primary.id == sample.secondary.id) 1.0 else sample.blendFactor
+
+    /**
+     * Water surface Y for an aquatic column — flat at the biome's waterLevel. The basin is closed
+     * purely by the floor rising to waterLevel at borders (see [surfaceHeight]); keeping the
+     * surface flat guarantees no water block is ever left exposed next to a lower neighbour.
+     */
+    fun waterTopAt(sample: VoronoiBiomeZones.ColumnSample): Int =
+        if (sample.primary.liquid) sample.primary.waterLevel else 0
+
     fun surfaceHeight(wx: Int, wz: Int, sample: VoronoiBiomeZones.ColumnSample): Int {
+        if (sample.primary.liquid) {
+            val depth = (sample.primary.waterMaxDepth * basinEdge(sample)).roundToInt()
+            return (sample.primary.waterLevel - depth).coerceIn(4, WorldConstants.WORLD_MAX_Y - 1)
+        }
         val n = elevationNoise.octaveNoise(wx / 64.0, wz / 64.0, octaves = 6, persistence = 0.5)
         val t = (n + 1.0) / 2.0
         val baseY = sample.elevationMin + t * (sample.elevationMax - sample.elevationMin)
@@ -53,8 +70,19 @@ class ProceduralChunkGenerator(
         // (mountains, tundra) to trigger in any moisture zone.
         val m = mountainNoise.octaveNoise(wx / 400.0, wz / 400.0, octaves = 4, persistence = 0.5)
         val mountainBoost = maxOf(0.0, m) * 60.0
+        var h = baseY + mountainBoost
 
-        return (baseY + mountainBoost).toInt().coerceIn(4, WorldConstants.WORLD_MAX_Y - 1)
+        // Shore taper: a land column bordering a lake/sea eases down to the water level so the
+        // basin is ringed by a beach slope, not a cliff. `blendFactor` is 1 at the cell interior
+        // and 0 at the biome border; smoothstep keeps the ramp gentle at both the waterline and
+        // where it rejoins normal terrain.
+        if (sample.secondary.liquid && !sample.primary.liquid) {
+            val bf = sample.blendFactor
+            val shore = 1.0 - bf * bf * (3.0 - 2.0 * bf)
+            h += (sample.secondary.waterLevel - h) * shore
+        }
+
+        return h.toInt().coerceIn(4, WorldConstants.WORLD_MAX_Y - 1)
     }
 
     private fun terrainBlock(wx: Int, wy: Int, wz: Int, col: ColumnData): BlockType {
@@ -65,6 +93,7 @@ class ProceduralChunkGenerator(
             wy == h -> col.roadSurface ?: b.surface
             wy > h - b.subsurfaceDepth && wy < h -> b.subsurface
             wy < h -> b.fillers.selectFillerCompetitive(wx, wy, wz)
+            col.waterTop > h && wy > h && wy <= col.waterTop -> BlockType.WATER
             wy > h && wy <= WorldConstants.WATER_LEVEL && col.isWaterColumn -> BlockType.WATER
             else -> BlockType.AIR
         }
@@ -96,6 +125,7 @@ class ProceduralChunkGenerator(
                         voronoi.selectColumn(wx, wz, h, sample),
                         if (onRoad) roadConfig!!.surfaceFor(sample.primary.id) else null,
                         isWater,
+                        if (sample.primary.liquid) waterTopAt(sample) else 0,
                     )
                 }
             }
@@ -232,5 +262,6 @@ class ProceduralChunkGenerator(
         val blocks: VoronoiBiomeZones.ColumnBlocks,
         val roadSurface: BlockType? = null,
         val isWaterColumn: Boolean = false,
+        val waterTop: Int = 0,
     )
 }

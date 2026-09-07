@@ -237,6 +237,10 @@ class ChunkManager(private val scene: JsAny) {
         if (blockMaterials != null) jsApplyBiomeGrassTint(biome)
     }
 
+    fun applyBiomeEnvTint(biome: String, submerged: Boolean) {
+        if (blockMaterials != null) jsApplyBiomeEnvTint(biome, submerged)
+    }
+
     val pendingRenderCount: Int
         get() = pendingChunks.size + if (activeRender != null) 1 else 0
 
@@ -821,10 +825,14 @@ class ChunkManager(private val scene: JsAny) {
                 // south (+Z) — normal is ±Z, so not mergeable along Z (that's this face's own
                 // fixed depth), but mergeable along X: consecutive x at the same z/y form one
                 // contiguous wall segment. Run tracked per-z since x is the outer loop.
-                val southOrd = if (z == s - 1) 0 else blocks[idx + 1].toInt() and 0xFF
+                // At a chunk boundary the neighbour chunk's blocks aren't visible here; for a
+                // liquid, assume the body continues so the shared face is culled — otherwise
+                // every chunk edge draws a transparent wall and the water shows a 16-block grid.
+                val southOrd =
+                    if (z == s - 1) (if (liquid) ord else 0) else blocks[idx + 1].toInt() and 0xFF
                 val emitSouth =
                     bypassCulling ||
-                        z == s - 1 ||
+                        (z == s - 1 && !liquid) ||
                         (occludesByOrd[southOrd].toInt() == 0 &&
                             !(liquid && liquidByOrd[southOrd].toInt() != 0))
                 if (emitSouth) {
@@ -880,10 +888,11 @@ class ChunkManager(private val scene: JsAny) {
                         oz)
                 }
                 // north (-Z)
-                val northOrd = if (z == 0) 0 else blocks[idx - 1].toInt() and 0xFF
+                val northOrd =
+                    if (z == 0) (if (liquid) ord else 0) else blocks[idx - 1].toInt() and 0xFF
                 val emitNorth =
                     bypassCulling ||
-                        z == 0 ||
+                        (z == 0 && !liquid) ||
                         (occludesByOrd[northOrd].toInt() == 0 &&
                             !(liquid && liquidByOrd[northOrd].toInt() != 0))
                 if (emitNorth) {
@@ -939,10 +948,12 @@ class ChunkManager(private val scene: JsAny) {
                         oz)
                 }
                 // east (+X)
-                val eastOrd = if (x == s - 1) 0 else blocks[idx + strideX].toInt() and 0xFF
+                val eastOrd =
+                    if (x == s - 1) (if (liquid) ord else 0)
+                    else blocks[idx + strideX].toInt() and 0xFF
                 val emitEast =
                     bypassCulling ||
-                        x == s - 1 ||
+                        (x == s - 1 && !liquid) ||
                         (occludesByOrd[eastOrd].toInt() == 0 &&
                             !(liquid && liquidByOrd[eastOrd].toInt() != 0))
                 if (emitEast) {
@@ -982,10 +993,11 @@ class ChunkManager(private val scene: JsAny) {
                         0, mergeActive, mergeStartZ, mergeLen, mergeFaceMat, mergeAo, wx, y, oz)
                 }
                 // west (-X)
-                val westOrd = if (x == 0) 0 else blocks[idx - strideX].toInt() and 0xFF
+                val westOrd =
+                    if (x == 0) (if (liquid) ord else 0) else blocks[idx - strideX].toInt() and 0xFF
                 val emitWest =
                     bypassCulling ||
-                        x == 0 ||
+                        (x == 0 && !liquid) ||
                         (occludesByOrd[westOrd].toInt() == 0 &&
                             !(liquid && liquidByOrd[westOrd].toInt() != 0))
                 if (emitWest) {

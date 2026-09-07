@@ -544,6 +544,7 @@ class LocalPlayerController(
         hudBiome = state.biome
         hudZoneLevel = state.zoneLevel
         chunkManager.applyBiomeGrassTint(state.biome)
+        chunkManager.applyBiomeEnvTint(state.biome, state.headInLiquid)
     }
 
     fun cyclePage(direction: Int) {

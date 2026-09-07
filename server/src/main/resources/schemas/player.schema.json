@@ -75,6 +75,9 @@
         "biome": {
           "type": "string"
         },
+        "headInLiquid": {
+          "type": "boolean"
+        },
         "inventory": {
           "type": "object",
           "additionalProperties": {

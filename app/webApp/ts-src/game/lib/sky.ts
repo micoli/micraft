@@ -66,9 +66,30 @@ export function registerSky(): Pick<McBindings, "updateSkyTime"> {
       moon.position = new BABYLON.Vector3(cx - Math.cos(sunAngle) * DIST, cy - Math.sin(sunAngle) * DIST, cz);
 
       // Sky and fog color
-      const [r, g, b] = lerpSky(t);
+      let [r, g, b] = lerpSky(t);
+
+      // Environment tint: strong blue grade + tighter fog while the player is in a liquid biome.
+      const et = window.mcState.envTint;
+      if (et) {
+        const k = 0.06; // ~1.5 s ease in/out
+        et.strength += (et.target - et.strength) * k;
+        if (et.strength < 0.001 && et.target === 0) {
+          window.mcState.envTint = undefined;
+        } else {
+          const s = et.strength;
+          r += (et.r - r) * s;
+          g += (et.g - g) * s;
+          b += (et.b - b) * s;
+          scene.fogStart = 24 + (8 - 24) * s;
+          scene.fogEnd = 40 + (20 - 40) * s;
+        }
+      } else if (scene.fogStart !== 24) {
+        scene.fogStart = 24;
+        scene.fogEnd = 40;
+      }
+
       scene.clearColor = new BABYLON.Color4(r, g, b, 1);
-      if (window.mcState.dynamicFogEnabled !== false) {
+      if (window.mcState.dynamicFogEnabled !== false || et) {
         scene.fogColor = new BABYLON.Color3(r, g, b);
         const _mats = window.mcState.blockMaterials;
         if (_mats) {

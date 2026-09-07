@@ -7,7 +7,8 @@ title: Biomes
 ## Overview
 
 Biome types: `snow_peaks`, `desert`, `dry_plains`, `plains`, `forest`,
-`pine_forest`. They are distributed across the world by **Voronoi zones** keyed on
+`pine_forest`, plus the aquatic biomes `sea` and `lake`. They are distributed
+across the world by **Voronoi zones** keyed on
 a moisture value (0→1) and an altitude band, with blend zones between neighbours.
 Each biome sets surface/subsurface/filler blocks, elevation range, grass colour,
 NPC cap, vegetation entries and cavern parameters.
@@ -22,6 +23,29 @@ for a column is a **distance-weighted average of every nearby cell's** band
 (weight falls off over `elevationBlendRadius`), a continuous field with no
 sudden primary/secondary switch — so biome borders slope instead of forming
 cliffs.
+
+## Aquatic biomes
+
+`sea` and `lake` are flat-band biomes: `elevationMin == elevationMax == waterLevel`
+(`sea` at 60, `lake` at the `pine_forest` terrain floor, 72). Extra fields:
+
+- `liquid: true` — marks the biome as water-filled.
+- `waterLevel` — the flat water surface Y.
+- `waterMaxDepth` (default 8) — deepest the carved basin floor drops below `waterLevel`.
+- `tintColor` — `[r, g, b]` 0..1, applied as a full-screen colour + tighter fog only while
+  the player's **head is underwater** (`PlayerState.headInLiquid`), fading in/out. Out of
+  the water the view is unchanged.
+
+**No overflow.** Every land biome shares an `elevationMin` floor `L = 72` (≥ the highest
+`waterLevel`). The basin floor is carved down by `waterMaxDepth × basinEdge`, where
+`basinEdge` tapers to 0 at any biome border, so the floor rises back to `waterLevel`
+exactly at the shore. The water surface stays flat at `waterLevel`, so a water block is
+never left exposed next to a lower neighbour — the shore is always solid terrain at or
+above `waterLevel`. `sea` beside `lake` closes both basins symmetrically at the shared
+border.
+
+Aquatic biomes carry no vegetation and no caverns, and are excluded from faction
+spawn placement. Minimap colour comes from their blue `grassColor`.
 
 ## Configuration
 

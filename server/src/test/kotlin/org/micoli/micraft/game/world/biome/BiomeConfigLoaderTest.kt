@@ -107,5 +107,10 @@ class BiomeConfigLoaderTest {
         assertTrue(config.biomes.isNotEmpty())
         assertEquals(768.0, config.zoneLevelSafeDist)
         assertEquals(4096.0, config.zoneLevelMaxDist)
+        val sea = config.biomes.first { it.id == "sea" }
+        val lake = config.biomes.first { it.id == "lake" }
+        assertTrue(sea.liquid && lake.liquid)
+        assertEquals(60, sea.waterLevel)
+        assertEquals(72, lake.waterLevel)
     }
 }

@@ -27,6 +27,36 @@ class BiomeRegistry(
                 biomes =
                     listOf(
                         BiomeDefinition(
+                            id = "sea",
+                            zones = listOf(BiomeZone(0.0, 0.06)),
+                            surface = BlockType.SAND,
+                            subsurface = BlockType.SANDSTONE,
+                            fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
+                            subsurfaceDepth = 3,
+                            elevationMin = 60,
+                            elevationMax = 60,
+                            grassColor = listOf(0.12, 0.3, 0.55),
+                            liquid = true,
+                            waterLevel = 60,
+                            waterMaxDepth = 8,
+                            tintColor = listOf(0.09, 0.26, 0.5),
+                        ),
+                        BiomeDefinition(
+                            id = "lake",
+                            zones = listOf(BiomeZone(0.68, 0.74)),
+                            surface = BlockType.GRAVEL,
+                            subsurface = BlockType.DIRT,
+                            fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
+                            subsurfaceDepth = 3,
+                            elevationMin = 72,
+                            elevationMax = 72,
+                            grassColor = listOf(0.22, 0.44, 0.62),
+                            liquid = true,
+                            waterLevel = 72,
+                            waterMaxDepth = 8,
+                            tintColor = listOf(0.16, 0.38, 0.55),
+                        ),
+                        BiomeDefinition(
                             id = "snow_peaks",
                             zones =
                                 listOf(BiomeZone(0.0, 1.0, altitudeMin = 150, altitudeMax = 1024)),
@@ -41,13 +71,13 @@ class BiomeRegistry(
                         ),
                         BiomeDefinition(
                             id = "desert",
-                            zones = listOf(BiomeZone(0.0, 0.35)),
+                            zones = listOf(BiomeZone(0.06, 0.35)),
                             surface = BlockType.SAND,
                             subsurface = BlockType.SANDSTONE,
                             fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
                             subsurfaceDepth = 4,
-                            elevationMin = 50,
-                            elevationMax = 70,
+                            elevationMin = 72,
+                            elevationMax = 92,
                         ),
                         BiomeDefinition(
                             id = "dry_plains",
@@ -55,8 +85,8 @@ class BiomeRegistry(
                             surface = BlockType.GRASS,
                             subsurface = BlockType.SANDSTONE,
                             fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
-                            elevationMin = 56,
-                            elevationMax = 82,
+                            elevationMin = 72,
+                            elevationMax = 98,
                             grassColor = listOf(0.62, 0.58, 0.3),
                             vegetation = listOf(VegetationEntry(VegetationType.WEED, 0.08)),
                             caverns =
@@ -76,8 +106,8 @@ class BiomeRegistry(
                             surface = BlockType.GRASS,
                             subsurface = BlockType.DIRT,
                             fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
-                            elevationMin = 60,
-                            elevationMax = 96,
+                            elevationMin = 72,
+                            elevationMax = 108,
                             grassColor = listOf(0.42, 0.66, 0.3),
                             vegetation =
                                 listOf(
@@ -102,8 +132,8 @@ class BiomeRegistry(
                             surface = BlockType.GRASS,
                             subsurface = BlockType.DIRT,
                             fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
-                            elevationMin = 64,
-                            elevationMax = 110,
+                            elevationMin = 72,
+                            elevationMax = 118,
                             grassColor = listOf(0.3, 0.55, 0.2),
                             vegetation =
                                 listOf(
@@ -126,12 +156,12 @@ class BiomeRegistry(
                         ),
                         BiomeDefinition(
                             id = "pine_forest",
-                            zones = listOf(BiomeZone(0.68, 1.0)),
+                            zones = listOf(BiomeZone(0.74, 1.0)),
                             surface = BlockType.GRASS,
                             subsurface = BlockType.DIRT,
                             fillers = listOf(FillerEntry(BlockType.STONE, 1.0)),
-                            elevationMin = 70,
-                            elevationMax = 124,
+                            elevationMin = 72,
+                            elevationMax = 126,
                             grassColor = listOf(0.25, 0.45, 0.22),
                             vegetation =
                                 listOf(

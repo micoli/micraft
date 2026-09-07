@@ -319,6 +319,108 @@ class ProceduralChunkGeneratorTest {
         assertEquals(a.generate(ChunkPos(1, -2)), b.generate(ChunkPos(1, -2)))
     }
 
+    // ── Aquatic biomes ────────────────────────────────────────────────────────
+
+    private val seaBiome =
+        BiomeDefinition(
+            id = "sea",
+            zones = listOf(BiomeZone(0.0, 0.5)),
+            surface = BlockType.SAND,
+            subsurface = BlockType.SANDSTONE,
+            subsurfaceDepth = 3,
+            elevationMin = 60,
+            elevationMax = 60,
+            liquid = true,
+            waterLevel = 60,
+            waterMaxDepth = 8,
+            tintColor = listOf(0.1, 0.3, 0.5),
+        )
+
+    private val aquaticRegistry =
+        BiomeRegistry.from(
+            BiomeConfig(
+                biomes =
+                    listOf(
+                        seaBiome,
+                        BiomeDefinition(
+                            id = "plains",
+                            zones = listOf(BiomeZone(0.5, 1.0)),
+                            surface = BlockType.GRASS,
+                            subsurface = BlockType.DIRT,
+                            elevationMin = 72,
+                            elevationMax = 96,
+                        )),
+                voronoiCellSize = 48,
+                voronoiBlendRadius = 6,
+            ))
+
+    private fun aquaticWorld(): Map<Triple<Int, Int, Int>, BlockType> {
+        val gen = ProceduralChunkGenerator(seed = 3L, biomeRegistry = aquaticRegistry)
+        val world = HashMap<Triple<Int, Int, Int>, BlockType>()
+        for (cx in -2..2) for (cz in -2..2) {
+            val chunk = gen.generate(ChunkPos(cx, cz))
+            val ox = cx * WorldConstants.CHUNK_SIZE
+            val oz = cz * WorldConstants.CHUNK_SIZE
+            for (lx in 0 until WorldConstants.CHUNK_SIZE) for (lz in
+                0 until WorldConstants.CHUNK_SIZE) for (y in 0 until WorldConstants.WORLD_MAX_Y) {
+                val b = chunk.getBlock(lx, y, lz)
+                if (b != BlockType.AIR) world[Triple(ox + lx, y, oz + lz)] = b
+            }
+        }
+        return world
+    }
+
+    @Test
+    fun generate_aquaticBiome_producesEnclosedWater() {
+        val gen = ProceduralChunkGenerator(seed = 3L, biomeRegistry = aquaticRegistry)
+        assertTrue(
+            (-32..32 step 4).any { wx ->
+                (-32..32 step 4).any { wz -> gen.biomeAt(wx, wz) == "sea" }
+            },
+            "test region must contain a sea cell")
+
+        val world = aquaticWorld()
+        val water = world.filterValues { it == BlockType.WATER }.keys
+        assertTrue(water.isNotEmpty(), "aquatic biome must generate WATER")
+
+        for ((x, y, z) in water) {
+            assertTrue(y <= 60, "water top never above waterLevel at ($x,$y,$z)")
+            for ((nx, nz) in listOf(x - 1 to z, x + 1 to z, x to z - 1, x to z + 1)) {
+                // ignore columns at the outer edge of the generated area
+                if (nx < -30 || nx > 30 || nz < -30 || nz > 30) continue
+                val n = world[Triple(nx, y, nz)]
+                assertTrue(
+                    n != null,
+                    "WATER at ($x,$y,$z) has AIR neighbour at ($nx,$y,$nz) — basin leaks")
+            }
+        }
+    }
+
+    @Test
+    fun generate_aquaticBiome_depthAndFloorRespected() {
+        val world = aquaticWorld()
+        val columns =
+            world.keys.filter { world[it] == BlockType.WATER }.groupBy { it.first to it.third }
+        assertTrue(columns.isNotEmpty())
+        for ((col, cells) in columns) {
+            val (x, z) = col
+            assertTrue(cells.size <= 8, "water column ($x,$z) deeper than 8: ${cells.size}")
+            val lowest = cells.minOf { it.second }
+            val below = world[Triple(x, lowest - 1, z)]
+            assertTrue(
+                below != null && below != BlockType.WATER,
+                "basin floor under ($x,$z) must be solid, was $below")
+            assertTrue(lowest - 1 >= 52, "floor never below waterLevel - waterMaxDepth")
+        }
+    }
+
+    @Test
+    fun generate_aquaticBiome_sameSeedIdentical() {
+        val a = ProceduralChunkGenerator(seed = 3L, biomeRegistry = aquaticRegistry)
+        val b = ProceduralChunkGenerator(seed = 3L, biomeRegistry = aquaticRegistry)
+        assertEquals(a.generate(ChunkPos(0, 0)), b.generate(ChunkPos(0, 0)))
+    }
+
     @Test
     fun namedStaircasePoints_defaultRegistry_returnsNonEmpty() {
         val gen = ProceduralChunkGenerator(seed = 42L, biomeRegistry = BiomeRegistry.default())

@@ -1551,6 +1551,10 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      */
     guildTag?: null | string;
     /**
+     * Boolean
+     */
+    headInLiquid: boolean;
+    /**
      * String
      */
     id: string;
@@ -3404,6 +3408,24 @@ export type GetApiBiomesResponses = {
 };
 
 export type GetApiBiomesResponse = GetApiBiomesResponses[keyof GetApiBiomesResponses];
+
+export type GetApiBiomesTintsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/biomes/tints';
+};
+
+export type GetApiBiomesTintsResponses = {
+    /**
+     * Map<String,List<Double>>
+     */
+    200: {
+        [key: string]: Array<number>;
+    };
+};
+
+export type GetApiBiomesTintsResponse = GetApiBiomesTintsResponses[keyof GetApiBiomesTintsResponses];
 
 export type GetApiPlayerByIdSkinData = {
     body?: never;

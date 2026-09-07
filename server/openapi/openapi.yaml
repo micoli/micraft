@@ -342,6 +342,27 @@ paths:
                   title: List<Double>
                 title: "Map<String,List<Double>>"
       deprecated: false
+  /api/biomes/tints:
+    get:
+      tags: []
+      description: "Screen tint color per liquid biome id, as [r, g, b] in 0..1"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: number
+                    format: double
+                    title: Double
+                  title: List<Double>
+                title: "Map<String,List<Double>>"
+      deprecated: false
   /api/player/{id}/skin:
     get:
       tags: []
@@ -4958,6 +4979,9 @@ components:
           - "null"
           - string
           title: String
+        headInLiquid:
+          type: boolean
+          title: Boolean
         id:
           type: string
           title: String
@@ -5146,6 +5170,7 @@ components:
       - fieldOfView
       - flying
       - godMode
+      - headInLiquid
       - id
       - inventory
       - inventorySortA

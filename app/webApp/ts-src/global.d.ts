@@ -289,6 +289,7 @@ declare global {
     camState: { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; t: number } | null;
     editMode?: "game" | "creative";
     dynamicFogEnabled?: boolean;
+    envTint?: { r: number; g: number; b: number; strength: number; target: number };
     continuousBreak: boolean;
     caveFactor?: number;
     shadowAngleDeg?: number;
@@ -566,6 +567,8 @@ declare global {
     t(key: string, ...args: (string | number)[]): string;
     fetchBiomeColors(): void;
     applyBiomeGrassTint(biome: string): void;
+    applyBiomeEnvTint(biome: string, submerged: boolean): void;
+    setEnvironmentTint(r: number, g: number, b: number, strength: number): void;
     applyFaviconPref(animated: boolean): void;
     // UI (set by GameUI React component)
     updateHUD(

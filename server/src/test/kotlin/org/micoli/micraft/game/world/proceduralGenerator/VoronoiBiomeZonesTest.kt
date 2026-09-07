@@ -114,6 +114,17 @@ class VoronoiBiomeZonesTest {
     }
 
     @Test
+    fun distinctLowLevelSpawns_neverLandsOnLiquidBiome() {
+        for (seed in listOf(1L, 3L, 7L, 42L)) {
+            val z = zones(seed)
+            for ((x, zc) in z.distinctLowLevelSpawns(count = 4, ringRadius = 384.0)) {
+                assertTrue(
+                    !z.sample(x, zc).primary.liquid, "spawn ($x,$zc) must not be a liquid biome")
+            }
+        }
+    }
+
+    @Test
     fun selectColumn_returnsPrimarySubsurface() {
         val z = zones()
         val sample = z.sample(10, 10)
