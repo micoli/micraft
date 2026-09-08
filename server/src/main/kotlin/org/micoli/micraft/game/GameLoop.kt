@@ -1886,6 +1886,13 @@ class GameLoop(
         if (session.state.editMode == EditMode.CREATIVE) {
             session.send(ServerMessage.EditModeUpdate(session.state.editMode))
         }
+        // Groups are ephemeral; drop any persisted `group:` channel that is not the
+        // player's current group so reconnects never accumulate stale "groupe" tabs.
+        val activeGroupChannel = gw.groupManager.groupOf(session.id)?.channel
+        session.state.subscribedChannels
+            .map { it.name }
+            .filter { it.startsWith("group:") && it != activeGroupChannel }
+            .forEach { gw.chatService.forceUnsubscribe(session, it) }
         gw.chatService.onPlayerConnect(session)
         session.state.guildId?.let { gw.chatService.subscribe(session, "guild:$it") }
         session.state.factionId?.let { gw.chatService.subscribe(session, "faction:$it") }

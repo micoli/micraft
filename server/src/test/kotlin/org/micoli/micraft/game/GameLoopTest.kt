@@ -309,6 +309,46 @@ class GameLoopTest {
         assertEquals(listOf("iron_pickaxe"), reloaded?.ownedTools)
     }
 
+    @Test
+    fun onConnect_dropsStaleEphemeralGroupChannel() = runTest {
+        val persistence = WorldPersistence(Files.createTempDirectory("gameloop-stale-group-test"))
+        persistence.savePlayerState(
+            "Erin",
+            org.micoli.micraft.player.PlayerState(
+                id = UUID.randomUUID().toString(),
+                name = "Erin",
+                pos = org.micoli.micraft.player.Vec3(0f, 0f, 0f),
+                orientation = org.micoli.micraft.player.Orientation(0f, 0f),
+                subscribedChannels =
+                    listOf(
+                        org.micoli.micraft.player.ChannelSubscription("world"),
+                        org.micoli.micraft.player.ChannelSubscription("group:dead-group-id"),
+                    ),
+            ),
+        )
+        val gameLoop = GameLoop(testWorld(), persistence)
+        val socket = FakeWebSocketSession()
+        val connect = ClientMessage.Connect(playerName = "Erin", userName = "erin@example.com")
+        socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        socket.incomingChannel.close()
+
+        gameLoop.onConnect(socket)
+
+        val sync =
+            generateSequence { socket.outgoingChannel.tryReceive().getOrNull() }
+                .map { ServerMessageCodec.decode((it as Frame.Binary).readBytes()) }
+                .filterIsInstance<ServerMessage.ChannelsSync>()
+                .last()
+        assertTrue(sync.subscribedChannels.none { it.name.startsWith("group:") })
+        assertEquals(
+            emptyList<String>(),
+            persistence
+                .loadPlayerState("Erin")
+                ?.subscribedChannels
+                ?.map { it.name }
+                ?.filter { it.startsWith("group:") })
+    }
+
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     @Test
     fun onConnect_concurrentSameName_evictsStaleSessionInsteadOfBlockingIt() = runTest {
