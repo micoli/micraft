@@ -632,6 +632,25 @@ class CombatProcessor(
     }
 
     /**
+     * Adds or clears the [StatusEffect.Drowning] DoT on a session as its breath meter empties or
+     * refills. Refreshed each tick while drowning so [StatusEffectProcessor] keeps it alive.
+     */
+    suspend fun updateDrowning(session: PlayerSession, drowning: Boolean) {
+        val effects = session.combatState.activeEffects
+        val has = effects.any { it.effect is StatusEffect.Drowning }
+        if (drowning) {
+            applyStatusEffectTo(
+                session,
+                StatusEffect.Drowning,
+                StatusEffect.Drowning.durationSec,
+                System.currentTimeMillis())
+        } else if (has) {
+            effects.removeAll { it.effect is StatusEffect.Drowning }
+            session.send(ServerMessage.StatusEffectUpdate(session.id, effects.toList()))
+        }
+    }
+
+    /**
      * Direct-damage path for a guaranteed hit with no to-hit roll — e.g. a siege projectile's AoE
      * blast (see [org.micoli.micraft.game.placeable.siege.SiegeProjectileManager]). Mirrors the
      * HP-mutation/broadcast/downed-check tail of [attackPlayer], minus target resolution, range

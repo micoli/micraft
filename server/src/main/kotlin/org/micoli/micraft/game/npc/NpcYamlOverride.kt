@@ -39,4 +39,5 @@ data class NpcYamlOverride(
     val loot: List<DropEntry>? = null,
     val tameable: Boolean? = null,
     val tameBaseChance: Float? = null,
+    val aquatic: Boolean? = null,
 )

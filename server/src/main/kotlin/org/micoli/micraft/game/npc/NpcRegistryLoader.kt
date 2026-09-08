@@ -53,6 +53,7 @@ private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
         loot = o.loot ?: loot,
         tameable = o.tameable ?: tameable,
         tameBaseChance = o.tameBaseChance ?: tameBaseChance,
+        aquatic = o.aquatic ?: aquatic,
     )
 
 /**
@@ -97,6 +98,7 @@ fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition =
         loot = o.loot ?: loot,
         tameable = o.tameable ?: tameable,
         tameBaseChance = o.tameBaseChance ?: tameBaseChance,
+        aquatic = o.aquatic ?: aquatic,
     )
 
 class NpcRegistryLoader(
@@ -200,6 +202,7 @@ class NpcRegistryLoader(
                                     loot = entry.loot,
                                     tameable = entry.tameable,
                                     tameBaseChance = entry.tameBaseChance,
+                                    aquatic = entry.aquatic,
                                 )
                         }
                         .onFailure { e -> npcLog.warn("Skipping entity '{}': {}", key, e.message) }

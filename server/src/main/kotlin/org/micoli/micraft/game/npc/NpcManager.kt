@@ -217,6 +217,52 @@ class NpcManager(
         markNpcDead(npcId, instance, now)
     }
 
+    suspend fun killNpcByDrowning(npcId: String, instance: NpcInstance, now: Long) {
+        if (instance.isDead) return
+        broadcastCombatLog("[m:${instance.state.name}] has drowned.")
+        onNpcKilled(instance, NpcDeathCause.DROWNING, null)
+        markNpcDead(npcId, instance, now)
+    }
+
+    /**
+     * Non-aquatic NPCs breathe like players: breath drains while the head is submerged, refills
+     * fast in air, and once empty deals periodic damage until the NPC drowns.
+     */
+    private suspend fun tickBreath(instance: NpcInstance, world: WorldState, now: Long) {
+        if (instance.definition.aquatic) return
+        val pos = instance.state.pos
+        val headBlock =
+            world.getBlock(
+                Math.floor(pos.x.toDouble()).toInt(),
+                Math.floor((pos.y + instance.definition.height - 0.1).toDouble()).toInt(),
+                Math.floor(pos.z.toDouble()).toInt(),
+            )
+        if (!headBlock.isLiquid) {
+            instance.currentBreath =
+                (instance.currentBreath +
+                        org.micoli.micraft.game.world.BreathConstants.REFILL_PER_TICK)
+                    .coerceAtMost(org.micoli.micraft.game.world.BreathConstants.MAX_BREATH_TICKS)
+            instance.drowningDamageAccumTicks = 0
+            return
+        }
+        instance.currentBreath =
+            (instance.currentBreath - org.micoli.micraft.game.world.BreathConstants.DRAIN_PER_TICK)
+                .coerceAtLeast(0)
+        if (instance.currentBreath > 0) return
+        instance.drowningDamageAccumTicks++
+        if (instance.drowningDamageAccumTicks <
+            org.micoli.micraft.game.world.BreathConstants.DAMAGE_INTERVAL_TICKS)
+            return
+        instance.drowningDamageAccumTicks = 0
+        instance.currentHp =
+            (instance.currentHp - org.micoli.micraft.game.world.BreathConstants.DAMAGE_PER_INTERVAL)
+                .coerceAtLeast(0)
+        instance.state = instance.state.copy(currentHp = instance.currentHp, maxHp = instance.maxHp)
+        broadcast(
+            ServerMessage.HealthUpdate(instance.state.id, true, instance.currentHp, instance.maxHp))
+        if (instance.currentHp <= 0) killNpcByDrowning(instance.state.id, instance, now)
+    }
+
     suspend fun evolveAnimal(
         instance: NpcInstance,
         adultType: String,
@@ -383,6 +429,8 @@ class NpcManager(
                     Math.floorDiv(pos.z.toInt(), WorldConstants.CHUNK_SIZE),
                 )
             if (world.getChunkIfDiscovered(chunkPos) == null) continue
+            tickBreath(instance, world, now)
+            if (instance.isDead) continue
             // Player target wins; an NPC target (pack hunt, retaliation) is the fallback. Left null
             // otherwise so the animal behaviour can install its prey/mate target.
             // A pet's chase target is owned entirely by PetCoordinator — never touch it here.

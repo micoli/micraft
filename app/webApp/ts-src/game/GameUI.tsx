@@ -82,6 +82,7 @@ const initial: UiState = {
   ingameMapVisible: false,
   combatTarget: null,
   playerStatus: null,
+  breath: null,
   playerDowned: false,
   xpState: null,
   trade: null,
@@ -875,6 +876,16 @@ export function GameUI() {
     };
     window.mc.updateNpcProximity = (json: string) => dispatch("npc_proximity_update", { data: JSON.parse(json) });
     window.mc.statusEffectUpdate = (json: string) => dispatch("status_effect_update", { data: JSON.parse(json) });
+    window.mc.breathUpdate = (json: string) => {
+      const data = JSON.parse(json);
+      if (window.__mcE2E) {
+        window.mcE2E = {
+          ...(window.mcE2E ?? {}),
+          breath: { current: data.currentBreath, max: data.maxBreath, submerged: data.submerged },
+        };
+      }
+      dispatch("breath_update", { data });
+    };
     window.mc.playerDowned = (playerId: string) => {
       if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), playerDowned: true };
       dispatch("player_downed", { playerId });

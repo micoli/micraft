@@ -280,7 +280,19 @@ class GameWorld(
                 sessions.all().forEach { session ->
                     val input = intentCollector.collect(session)
                     blockBreaker.tick(session)
+                    val prevBreath = session.state.currentBreath
+                    val prevHeadInLiquid = session.state.headInLiquid
                     val newState = movementProcessor.process(session, input)
+                    if (newState.currentBreath != prevBreath ||
+                        newState.headInLiquid != prevHeadInLiquid) {
+                        session.send(
+                            ServerMessage.BreathUpdate(
+                                session.id,
+                                newState.currentBreath,
+                                newState.maxBreath,
+                                newState.headInLiquid))
+                        combatProcessor.updateDrowning(session, newState.currentBreath <= 0)
+                    }
                     if (newState != session.state) {
                         session.state = newState
                         val update = ServerMessage.PlayerUpdate(newState, session.lastProcessedSeq)

@@ -218,6 +218,12 @@ class WorldSimulator(
                     instance,
                     value = animal?.hunger,
                 )
+            NpcDeathCause.DROWNING ->
+                logEvent(
+                    SimEventType.DEATH,
+                    "${instance.state.name} meurt noyé",
+                    instance,
+                )
         }
     }
 

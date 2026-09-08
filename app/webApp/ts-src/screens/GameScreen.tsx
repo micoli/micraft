@@ -356,6 +356,7 @@ export function GameScreen() {
           {state.healthBarVisible && state.playerStatus && (
             <PlayerStatusBar
               status={state.playerStatus}
+              breath={state.breath}
               godMode={state.godMode}
               npcProximity={state.npcProximity}
               layoutStyle={widgetStyle(activeLayout, "PLAYER_STATUS")}

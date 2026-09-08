@@ -73,6 +73,12 @@ sealed class StatusEffect {
         override val damageEffectName = "wither"
     }
 
+    data object Drowning : StatusEffect() {
+        override val durationSec = 3f
+        override val damage = 4f
+        override val damageEffectName = "drown"
+    }
+
     data object HpBoost : StatusEffect() {
         override val durationSec = 60f
         override val damage = 0f
@@ -113,6 +119,7 @@ object StatusEffectSerializer : KSerializer<StatusEffect> {
                 StatusEffect.FrozenInTime,
                 StatusEffect.Pyre,
                 StatusEffect.Withering,
+                StatusEffect.Drowning,
                 StatusEffect.HpBoost,
                 StatusEffect.ManaBoost,
                 StatusEffect.HpRegenBoost,

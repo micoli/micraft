@@ -34,4 +34,6 @@ Stances and movement (`core`).
 | `SPEED_CRAWLING` | `1.0` |
 | `SPEED_SNEAKING` | `1.3` |
 | `SPEED_STANDING` | `4.5` |
+| `SWIM_DOWN_SPEED` | `4.0` |
+| `SWIM_UP_SPEED` | `4.0` |
 | `WIDTH` | `0.6` |

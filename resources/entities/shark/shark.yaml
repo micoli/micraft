@@ -1,0 +1,27 @@
+behavior: animal
+width: 1.0
+height: 1.1
+wanderSpeed: 2.5
+wanderRadius: 40.0
+hp: 45
+aggroMode: AGGRESSIVE
+aggroRange: 16.0
+deaggroTimeSec: 12.0
+aquatic: true
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes:
+    - sea
+  maxTotal: 12
+  minTotal: 4
+animal:
+  diet: CARNIVORE
+  canReproduce: false
+  fleeRadius: 0.0
+  starvationDeathDays: 5.0
+walkBoneAliases:
+  rightArm: pectoralFinR
+  leftArm: pectoralFinL
+  rightLeg: peduncle
+  leftLeg: caudalUpper

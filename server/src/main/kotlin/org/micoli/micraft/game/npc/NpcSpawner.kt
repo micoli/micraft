@@ -63,7 +63,16 @@ class NpcSpawner {
                 if (maxNpcs > 0 && density.countInZone(zk) >= maxNpcs) continue
 
                 val surfaceY = findSurfaceY(world, wx, wz) ?: continue
-                val spawnPos = Vec3(wx + 0.5f, surfaceY.toFloat(), wz + 0.5f)
+
+                val spawnY =
+                    if (def.aquatic) {
+                        val bd = biomeDef ?: continue
+                        if (!bd.liquid || bd.waterLevel <= surfaceY) continue
+                        val y = ctx.random.nextInt(surfaceY, bd.waterLevel)
+                        if (!world.getBlockIfLoaded(wx, y, wz).isLiquid) continue
+                        y
+                    } else surfaceY
+                val spawnPos = Vec3(wx + 0.5f, spawnY.toFloat(), wz + 0.5f)
 
                 val solid = { bx: Int, by: Int, bz: Int ->
                     world.getBlockIfLoaded(bx, by, bz).isSolid
@@ -88,7 +97,7 @@ class NpcSpawner {
                 density.recordSpawn(chunkPos, type, zk)
                 val nowAlive = (counts[type] ?: 0) + 1
                 counts[type] = nowAlive
-                log.debug("Auto-spawned {} at ({},{},{})", type, wx, surfaceY, wz)
+                log.debug("Auto-spawned {} at ({},{},{})", type, wx, spawnY, wz)
                 attempts++
                 // re-checked inside the loop: several chunks are tried per type per pass, and the
                 // quota must hold across them, not only on entry

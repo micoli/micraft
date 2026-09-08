@@ -1,5 +1,7 @@
 package org.micoli.micraft.game.tick
 
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -8,6 +10,7 @@ import org.micoli.micraft.game.world.BlockDefinition
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.BlockChange
@@ -219,6 +222,78 @@ class MovementProcessorTest {
         assertTrue(result.pos.y < 20f, "Gravity should pull player down, got ${result.pos.y}")
         assertTrue(
             result.pos.y > 10f, "Player too high to snap to slope at y=5, got ${result.pos.y}")
+    }
+
+    private var savedBlocks: Map<BlockType, BlockDefinition> = emptyMap()
+
+    @BeforeTest
+    fun registerWater() {
+        savedBlocks = BlockRegistry.all().associateWith { BlockRegistry.get(it) }
+        BlockRegistry.load(
+            savedBlocks +
+                mapOf(
+                    BlockType.WATER to
+                        BlockDefinition(
+                            hardness = -1f, solid = false, liquid = true, viscosity = 3)))
+    }
+
+    @AfterTest
+    fun restoreBlocks() {
+        BlockRegistry.load(savedBlocks)
+    }
+
+    private fun submergedWorld(): WorldState {
+        val world = testWorld(Triple(8, 3, 8))
+        for (y in 4..8) world.applyChange(BlockChange(BlockPos(8, y, 8), BlockType.WATER, 0))
+        return world
+    }
+
+    @Test
+    fun submerged_forcesCrawlingStance() {
+        val processor = MovementProcessor(submergedWorld())
+        val session = testSession(pos = Vec3(8.5f, 5f, 8.5f))
+        val result = processor.process(session, noInput(stance = PlayerStance.STANDING))
+        assertEquals(PlayerStance.CRAWLING, result.stance)
+    }
+
+    @Test
+    fun submerged_ascend_swimsUp() {
+        val processor = MovementProcessor(submergedWorld())
+        val session = testSession(pos = Vec3(8.5f, 5f, 8.5f))
+        session.vy = 0f
+        val result = processor.process(session, noInput(jump = true))
+        assertTrue(session.vy > 0f, "Expected upward swim velocity, got ${session.vy}")
+        assertTrue(result.pos.y > 5f, "Expected to rise, got ${result.pos.y}")
+    }
+
+    @Test
+    fun breath_drains_whenHeadSubmerged() {
+        val processor = MovementProcessor(submergedWorld())
+        val session = testSession(pos = Vec3(8.5f, 5f, 8.5f))
+        val result = processor.process(session, noInput())
+        assertTrue(result.headInLiquid)
+        assertTrue(result.currentBreath < session.state.maxBreath)
+    }
+
+    @Test
+    fun breath_frozen_inGodMode() {
+        val processor = MovementProcessor(submergedWorld())
+        val session = testSession(pos = Vec3(8.5f, 5f, 8.5f))
+        session.state = session.state.copy(godMode = true)
+        val result = processor.process(session, noInput())
+        assertTrue(result.headInLiquid)
+        assertEquals(session.state.maxBreath, result.currentBreath)
+    }
+
+    @Test
+    fun breath_refills_inAir() {
+        val world = testWorld(Triple(8, 4, 8))
+        val processor = MovementProcessor(world)
+        val session = testSession(pos = Vec3(8.5f, 5f, 8.5f))
+        session.state = session.state.copy(currentBreath = 10)
+        val result = processor.process(session, noInput())
+        assertFalse(result.headInLiquid)
+        assertTrue(result.currentBreath > 10)
     }
 
     @Test

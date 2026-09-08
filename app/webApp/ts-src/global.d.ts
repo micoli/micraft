@@ -671,6 +671,7 @@ declare global {
     healthUpdate(json: string): void;
     playerStatusUpdate(json: string): void;
     statusEffectUpdate(json: string): void;
+    breathUpdate(json: string): void;
     playerDowned(playerId: string): void;
     playerRespawned(json: string): void;
     xpGained(json: string): void;

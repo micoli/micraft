@@ -5,12 +5,14 @@ import { GcdBar } from "./GcdBar";
 
 interface Props {
   status: NonNullable<UiState["playerStatus"]>;
+  breath?: UiState["breath"];
   godMode?: boolean;
   npcProximity?: NpcProximityEntry[];
   layoutStyle?: React.CSSProperties;
 }
 
-export function PlayerStatusBar({ status, godMode, layoutStyle }: Props) {
+export function PlayerStatusBar({ status, breath, godMode, layoutStyle }: Props) {
+  const showBreath = breath != null && (breath.submerged || breath.current < breath.max);
   const playerName = window.mcState?.playerName ?? "";
   return (
     <div
@@ -45,6 +47,7 @@ export function PlayerStatusBar({ status, godMode, layoutStyle }: Props) {
       <Bar value={status.currentHp} max={status.maxHp} color="#c0392b" label="HP" />
       {status.maxMana > 0 && <Bar value={status.currentMana} max={status.maxMana} color="#2980b9" label="MP" />}
       {status.maxRage > 0 && <Bar value={status.currentRage} max={status.maxRage} color="#e67e22" label="RP" />}
+      {showBreath && <Bar value={breath!.current} max={breath!.max} color="#5dade2" label="AIR" />}
     </div>
   );
 }

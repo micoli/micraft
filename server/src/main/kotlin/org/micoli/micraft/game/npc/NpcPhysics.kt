@@ -8,13 +8,16 @@ import org.micoli.micraft.player.Vec3
 
 internal object NpcPhysics {
     fun applyGravity(instance: NpcInstance, world: WorldState): Boolean {
-        if (instance.weightless) {
+        val def = instance.definition
+        val pos = instance.state.pos
+        // Aquatic NPCs float in the water column: hold depth while submerged, sink only in air.
+        if (instance.weightless ||
+            (def.aquatic &&
+                world.getBlockIfLoaded(pos.x.toInt(), pos.y.toInt(), pos.z.toInt()).isLiquid)) {
             instance.vy = 0f
             instance.velocity = Vec3(instance.velocity.x, 0f, instance.velocity.z)
             return false
         }
-        val def = instance.definition
-        val pos = instance.state.pos
         val solid = { bx: Int, by: Int, bz: Int -> world.getBlockIfLoaded(bx, by, bz).isSolid }
 
         return if (instance.vy <= 0f &&

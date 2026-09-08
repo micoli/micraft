@@ -46,6 +46,8 @@ export interface E2eSnapshot {
     maxMana: number;
     godMode: boolean;
   } | null;
+  /** Breath meter, mirrored from BreathUpdate. `null` before the first update. */
+  breath: { current: number; max: number; submerged: boolean } | null;
   /** Set once the player has been downed (HP reached 0); cleared on respawn. */
   playerDowned: boolean;
   /** Current combat target, mirrored from CombatTargetUpdate. `null` when nothing targeted. */

@@ -65,7 +65,7 @@ make test                     # all test suites
 | `/explode` | `/explode <radius>` | Destroy all blocks in a sphere around the player. | — |
 | `/faction` | `/faction list\|join <id>\|leave\|info` | View and change your faction affiliation. | list, join, leave, info |
 | `/give` | `/give <name> [N]` | Give an item, or grant an armor/weapon/tool, to yourself. | dynamic |
-| `/give:money` | `/give:money <amount> [playerName]` | Give copper to a player (or yourself if name omitted). | — |
+| `/give:money` | `/give:money <amount> [playerName]` | Give copper to a player (or yourself if name omitted). | dynamic |
 | `/god:off` | `/god:off` | Disable god mode. | — |
 | `/god:on` | `/god:on` | Enable god mode (immune to damage). | — |
 | `/group` | `/group create\|invite <player>\|accept\|leave\|kick <player>\|transfer <player>\|disband\|who` | Manage your temporary party (max 5). | create, invite, accept, leave, kick, transfer, disband, who |

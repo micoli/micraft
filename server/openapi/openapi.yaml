@@ -5541,6 +5541,10 @@ components:
         continuousBreak:
           type: boolean
           title: Boolean
+        currentBreath:
+          type: integer
+          format: int32
+          title: Int
         disabledCommands:
           type: array
           items:
@@ -5643,6 +5647,10 @@ components:
         lightBoostEnabled:
           type: boolean
           title: Boolean
+        maxBreath:
+          type: integer
+          format: int32
+          title: Int
         mounted:
           type: boolean
           title: Boolean
@@ -5783,6 +5791,7 @@ components:
       - biome
       - chunkDebugVisible
       - continuousBreak
+      - currentBreath
       - disabledCommands
       - disabledViewModes
       - dominantHand
@@ -5801,6 +5810,7 @@ components:
       - language
       - layouts
       - lightBoostEnabled
+      - maxBreath
       - mounted
       - name
       - orientation

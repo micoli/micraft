@@ -15,6 +15,7 @@ import {
   LogEntry,
   MailData,
   NpcDialogData,
+  BreathData,
   NpcProximityEntry,
   PlayerStatusData,
   PreferencesData,
@@ -75,6 +76,7 @@ export interface UiState {
   ingameMapVisible: boolean;
   combatTarget: CombatTargetData | null;
   playerStatus: PlayerStatusData | null;
+  breath: { current: number; max: number; submerged: boolean } | null;
   playerDowned: boolean;
   xpState: { xpGained: number; totalXp: number; level: number; leveledUp: boolean; nextLevelXp: number } | null;
   trade: TradeData | null;
@@ -305,6 +307,14 @@ const gameRegistry = {
       healthBarVisible: state.healthBarVisible || damaged,
     };
   },
+  breath_update: (state: UiState, payload: { data: BreathData }) => ({
+    ...state,
+    breath: {
+      current: payload.data.currentBreath,
+      max: payload.data.maxBreath,
+      submerged: payload.data.submerged,
+    },
+  }),
   npc_proximity_update: (state: UiState, payload: { data: NpcProximityEntry[] }) => ({
     ...state,
     npcProximity: payload.data,

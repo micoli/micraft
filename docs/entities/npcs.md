@@ -22,6 +22,12 @@ animations with configurable walk-bone aliases.
 `NpcSpawner.trySpawn` runs every 200 ticks, capped per biome by the biome's
 `maxNpcs`.
 
+**Aquatic NPCs** (`shark`, `dolphin`, `squid`) carry `aquatic: true`: they never
+run out of breath, float in place while submerged, and only spawn in the water
+column of a `liquid` biome (`sea`, `lake`). Every other NPC breathes like a
+player and drowns (`NpcDeathCause.DROWNING`) if its head stays underwater — see
+[Liquids → Swimming & breath](../world/liquids.md).
+
 {{ story "story/game-windows-npcshopdialog--basic" caption="SELLER NPC shop — buy and sell prices" }}
 
 ## Configuration
@@ -42,7 +48,8 @@ gameDayDurationSeconds: 1200.0
 **Per-type definitions** — loaded by `NpcRegistryLoader`; codex info served at
 `GET /api/admin/npc-types`. Live instances with full state:
 `GET /api/admin/npcs`, `GET /api/admin/ws/npcs`. A definition may also set
-`tameable: true` / `tameBaseChance` to allow taming — see [Pets](pets.md).
+`tameable: true` / `tameBaseChance` to allow taming — see [Pets](pets.md), or
+`aquatic: true` for a water-dwelling creature (no breathing, water-column spawn).
 
 **Models** — `resources/models/<name>/<name>.bbmodel` with an optional
 `<name>.yaml` skin config.

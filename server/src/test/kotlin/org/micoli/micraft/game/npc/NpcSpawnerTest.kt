@@ -1,10 +1,15 @@
 package org.micoli.micraft.game.npc
 
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.StaticNpcBehavior
+import org.micoli.micraft.game.world.BlockDefinition
+import org.micoli.micraft.game.world.BlockRegistry
+import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
@@ -17,6 +22,7 @@ private fun wanderDef(
     spawnBiomes: List<String> = emptyList(),
     maxTotal: Int = 0,
     minTotal: Int = 0,
+    aquatic: Boolean = false,
 ): NpcDefinition =
     NpcDefinition(
         type = type,
@@ -34,6 +40,7 @@ private fun wanderDef(
                 maxTotal = maxTotal,
                 minTotal = minTotal,
             ),
+        aquatic = aquatic,
     )
 
 private fun staticDef(
@@ -66,6 +73,24 @@ private fun solidFloorWorld(): WorldState {
 }
 
 class NpcSpawnerTest {
+    private var savedBlocks: Map<BlockType, BlockDefinition> = emptyMap()
+
+    @BeforeTest
+    fun registerWater() {
+        savedBlocks = BlockRegistry.all().associateWith { BlockRegistry.get(it) }
+        BlockRegistry.load(
+            savedBlocks +
+                mapOf(
+                    BlockType.WATER to
+                        BlockDefinition(
+                            hardness = -1f, solid = false, liquid = true, viscosity = 3)))
+    }
+
+    @AfterTest
+    fun restoreBlocks() {
+        BlockRegistry.load(savedBlocks)
+    }
+
     @Test
     fun trySpawn_autoSpawnTrue_spawnsNpc() = runBlocking {
         val world = solidFloorWorld()
@@ -221,6 +246,72 @@ class NpcSpawnerTest {
 
         // unquotaed, the spawner still fills up to the per-chunk cap as it always did
         assertTrue(m.countByType("GOAT") > 3, "was ${m.countByType("GOAT")}")
+    }
+
+    @Test
+    fun trySpawn_aquaticNpc_spawnsInsideWaterColumn() = runBlocking {
+        val chunkSize = WorldConstants.CHUNK_SIZE
+        val blocks = buildList {
+            for (x in 0 until chunkSize * 5) for (z in 0 until chunkSize * 5) add(Triple(x, 3, z))
+        }
+        val liquidBiome =
+            org.micoli.micraft.game.world.biome.BiomeDefinition(
+                id = "sea",
+                zones =
+                    listOf(
+                        org.micoli.micraft.game.world.biome.BiomeZone(
+                            moistureMin = 0.0, moistureMax = 1.0)),
+                surface = org.micoli.micraft.game.world.BlockType.SAND,
+                subsurface = org.micoli.micraft.game.world.BlockType.SANDSTONE,
+                maxNpcs = 20,
+                liquid = true,
+                waterLevel = 10,
+            )
+        val baseWorld = testWorld(*blocks.toTypedArray())
+        val world =
+            WorldState(
+                object :
+                    org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator {
+                    override fun generate(pos: ChunkPos) = baseWorld.getOrGenerate(pos)
+
+                    override fun biomeDefinitionAt(wx: Int, wz: Int) = liquidBiome
+                })
+        blocks
+            .map { (x, _, z) ->
+                ChunkPos(
+                    Math.floorDiv(x, WorldConstants.CHUNK_SIZE),
+                    Math.floorDiv(z, WorldConstants.CHUNK_SIZE))
+            }
+            .toSet()
+            .forEach { world.getOrGenerate(it) }
+        // Fill the column with water between the floor and the water level.
+        for (x in 0 until chunkSize * 5) for (z in 0 until chunkSize * 5) for (y in 4..9) {
+            world.applyChange(
+                org.micoli.micraft.protocol.BlockChange(
+                    org.micoli.micraft.game.world.BlockPos(x, y, z),
+                    org.micoli.micraft.game.world.BlockType.WATER,
+                    0))
+        }
+
+        val m = testManager(mapOf("FISH" to wanderDef(spawnBiomes = listOf("sea"), aquatic = true)))
+        repeat(10) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
+
+        assertTrue(m.getAll().isNotEmpty(), "aquatic NPC should spawn in a liquid biome")
+        m.getAll().forEach {
+            val y = it.state.pos.y.toInt()
+            assertTrue(y in 4..9, "spawn Y $y should be inside the water column")
+            assertTrue(
+                world.getBlock(it.state.pos.x.toInt(), y, it.state.pos.z.toInt()).isLiquid,
+                "aquatic NPC must stand in water")
+        }
+    }
+
+    @Test
+    fun trySpawn_aquaticNpc_notInLiquidBiome_doesNotSpawn() = runBlocking {
+        val world = solidFloorWorld()
+        val m = testManager(mapOf("FISH" to wanderDef(aquatic = true)))
+        repeat(5) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
+        assertTrue(m.getAll().isEmpty())
     }
 
     @Test

@@ -1,0 +1,24 @@
+behavior: animal
+width: 0.9
+height: 0.7
+wanderSpeed: 2.0
+wanderRadius: 30.0
+hp: 12
+aquatic: true
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes:
+    - sea
+    - lake
+  maxTotal: 24
+  minTotal: 8
+animal:
+  diet: CARNIVORE
+  canReproduce: false
+  starvationDeathDays: 5.0
+walkBoneAliases:
+  rightArm: pectoralFinR
+  leftArm: pectoralFinL
+  rightLeg: peduncle
+  leftLeg: tailFluke

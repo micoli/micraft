@@ -781,12 +781,24 @@ class LocalPlayerController(
                     else -> PlayerStance.STANDING
                 }
 
+            val swimming =
+                !localFlying &&
+                    chunkManager
+                        .getBlockAtWorld(
+                            kotlin.math.floor(predX).toInt(),
+                            kotlin.math.floor(predY + stance.eyeOffset).toInt(),
+                            kotlin.math.floor(predZ).toInt())
+                        .isLiquid
+            // Submerged: crawl pose for rendering/hitbox, but horizontal speed keeps the
+            // player's land stance (matches MovementProcessor on the server).
+            val effStance = if (swimming) PlayerStance.CRAWLING else stance
+
             // Priority: flying > crawling > sneaking > backward > forward > strafe > idle.
             animClip =
                 when {
                     localFlying -> "jump_idle"
-                    stance == PlayerStance.CRAWLING -> "crawling"
-                    stance == PlayerStance.SNEAKING -> "sneaking"
+                    effStance == PlayerStance.CRAWLING -> "crawling"
+                    effStance == PlayerStance.SNEAKING -> "sneaking"
                     !isMovingXZ -> "idle"
                     jsIsActionDown("backward") -> "walking_backward"
                     jsIsActionDown("forward") || autoAdvance -> "walking_forward"
@@ -799,7 +811,7 @@ class LocalPlayerController(
             val solid = { bx: Int, by: Int, bz: Int ->
                 chunkManager.getBlockAtWorld(bx, by, bz).isSolid
             }
-            val h = stance.height
+            val h = effStance.height
             val startX = predX
             val startZ = predZ
             val midDx =
@@ -872,7 +884,28 @@ class LocalPlayerController(
                         predY.toFloat(),
                         predZ.toFloat(),
                         PlayerConstants.WIDTH)
-                if (grounded && predVy <= 0.0) {
+                if (swimming) {
+                    predVy =
+                        when {
+                            jsIsActionDown("ascend") -> PlayerConstants.SWIM_UP_SPEED.toDouble()
+                            jsIsActionDown("descend") -> -PlayerConstants.SWIM_DOWN_SPEED.toDouble()
+                            else ->
+                                (predVy + CLIENT_GRAVITY * 0.2 * actualDt).coerceIn(
+                                    -2.0, PlayerConstants.SWIM_UP_SPEED.toDouble())
+                        }
+                    val dy = (predVy * actualDt).toFloat()
+                    val resolvedDy =
+                        AabbCollider.resolveY(
+                            solid2,
+                            predX.toFloat(),
+                            predY.toFloat(),
+                            predZ.toFloat(),
+                            PlayerConstants.WIDTH,
+                            h2,
+                            dy)
+                    if (resolvedDy != dy) predVy = 0.0
+                    predY = (predY + resolvedDy).coerceAtLeast(0.0)
+                } else if (grounded && predVy <= 0.0) {
                     predVy = if (jsIsActionDown("ascend")) CLIENT_JUMP_SPEED else 0.0
                 } else {
                     predVy += CLIENT_GRAVITY * actualDt
@@ -2053,9 +2086,18 @@ class LocalPlayerController(
                     jsIsActionDown("sneak") -> PlayerStance.SNEAKING
                     else -> PlayerStance.STANDING
                 }
+            // dy carries the swim dive/rise intent when submerged (see MovementProcessor);
+            // ignored for normal ground movement.
+            val swimDy =
+                when {
+                    jsIsActionDown("ascend") -> 1f
+                    jsIsActionDown("descend") -> -1f
+                    else -> 0f
+                }
             ClientMessage.MoveIntent(
                 dx = dx,
                 dz = dz,
+                dy = swimDy,
                 yaw = sentYaw,
                 pitch = jsGetCameraRotationX(camera).toFloat(),
                 stance = stance,

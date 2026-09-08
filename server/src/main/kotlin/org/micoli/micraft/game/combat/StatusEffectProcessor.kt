@@ -56,6 +56,7 @@ class StatusEffectProcessor(
                     }
                     is StatusEffect.Pyre -> hpDelta -= active.effect.damage * dtSec
                     is StatusEffect.Withering -> hpDelta -= active.effect.damage * dtSec
+                    is StatusEffect.Drowning -> hpDelta -= active.effect.damage * dtSec
                     else -> {}
                 }
             }

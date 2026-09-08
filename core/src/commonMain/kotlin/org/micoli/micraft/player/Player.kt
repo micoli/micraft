@@ -31,6 +31,8 @@ data class PlayerState(
     val speedMultiplier: Float = 1f,
     val biome: String = "",
     val headInLiquid: Boolean = false,
+    val currentBreath: Int = org.micoli.micraft.game.world.BreathConstants.MAX_BREATH_TICKS,
+    val maxBreath: Int = org.micoli.micraft.game.world.BreathConstants.MAX_BREATH_TICKS,
     val inventory: Map<ItemType, Int> = emptyMap(),
     val language: String = "en",
     val shadersEnabled: Boolean = true,

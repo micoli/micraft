@@ -385,6 +385,7 @@ window.mc = {
   playerStatusUpdate: () => {},
   updateNpcProximity: () => {},
   statusEffectUpdate: () => {},
+  breathUpdate: () => {},
   playerDowned: () => {},
   playerRespawned: () => {},
   xpGained: () => {},

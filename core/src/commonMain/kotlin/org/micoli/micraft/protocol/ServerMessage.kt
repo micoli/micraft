@@ -560,6 +560,16 @@ sealed class ServerMessage {
         val variables: Map<String, String> = emptyMap(),
         val error: String? = null,
     ) : ServerMessage()
+
+    /** Player breath meter. Sent on immersion, on each notable change, and when back to full. */
+    @ProtoId(87)
+    @Serializable
+    data class BreathUpdate(
+        val playerId: String,
+        val currentBreath: Int,
+        val maxBreath: Int,
+        val submerged: Boolean,
+    ) : ServerMessage()
 }
 
 @Serializable

@@ -395,6 +395,13 @@ export type CombatTargetData = {
   level?: number;
 };
 
+export type BreathData = {
+  playerId: string;
+  currentBreath: number;
+  maxBreath: number;
+  submerged: boolean;
+};
+
 export type PlayerStatusData = {
   currentHp: number;
   maxHp: number;

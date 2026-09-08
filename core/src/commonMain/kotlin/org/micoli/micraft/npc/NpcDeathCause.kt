@@ -17,4 +17,6 @@ enum class NpcDeathCause {
     OLD_AGE,
     /** Stayed at maximum hunger for `animal.starvationDeathDays`. */
     STARVATION,
+    /** Non-aquatic NPC ran out of breath while submerged. */
+    DROWNING,
 }

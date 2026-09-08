@@ -40,4 +40,23 @@ object PlayerConstants {
     var SPEED_STANDING = 4.5f
     var SPEED_SNEAKING = 1.3f
     var SPEED_CRAWLING = 1.0f
+
+    /** Vertical speed (blocks/s) when actively swimming up (ascend/jump held while submerged). */
+    var SWIM_UP_SPEED = 4f
+    /** Vertical speed (blocks/s) when actively diving (descend held while submerged). */
+    var SWIM_DOWN_SPEED = 4f
+}
+
+/**
+ * Breathing / drowning. Values are in ticks; the game loop runs at a fixed tick rate so a duration
+ * in seconds is `MAX_BREATH_TICKS / tickRate`. Applies identically to players and to non-aquatic
+ * NPCs.
+ */
+object BreathConstants {
+    var MAX_BREATH_TICKS = 300
+    var DRAIN_PER_TICK = 1
+    var REFILL_PER_TICK = 15
+    /** HP removed per damage interval once breath is exhausted. */
+    var DAMAGE_PER_INTERVAL = 2
+    var DAMAGE_INTERVAL_TICKS = 20
 }

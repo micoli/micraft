@@ -7,6 +7,7 @@ import org.micoli.micraft.game.GRAVITY
 import org.micoli.micraft.game.JUMP_SPEED
 import org.micoli.micraft.game.TICK_SECONDS
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.world.BreathConstants
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
@@ -61,28 +62,51 @@ class MovementProcessor(private val world: WorldState) {
         val newFlying = if (input.flyToggleRequested) !old.flying else old.flying
         if (input.flyToggleRequested && newFlying) session.vy = 0f
 
-        var newStance =
-            if (!newFlying &&
-                AabbCollider.canAdoptStance(
-                    solid, pos.x, pos.y, pos.z, w, input.stance.height, old.stance.height))
-                input.stance
-            else old.stance
-
-        val h = newStance.height
         val feetBlock =
             world.getBlock(
                 Math.floor(pos.x.toDouble()).toInt(),
                 Math.floor(pos.y.toDouble()).toInt(),
                 Math.floor(pos.z.toDouble()).toInt(),
             )
+        val eyeBlock =
+            world.getBlock(
+                Math.floor(pos.x.toDouble()).toInt(),
+                Math.floor((pos.y + old.stance.eyeOffset).toDouble()).toInt(),
+                Math.floor(pos.z.toDouble()).toInt(),
+            )
+        // Submerged => swim: stance is forced to CRAWLING for hitbox/rendering, but horizontal
+        // speed keeps using the stance the player actually requested on land (input.stance).
+        val submerged = !newFlying && (feetBlock.isLiquid || eyeBlock.isLiquid)
+
+        var newStance =
+            when {
+                submerged &&
+                    AabbCollider.canAdoptStance(
+                        solid,
+                        pos.x,
+                        pos.y,
+                        pos.z,
+                        w,
+                        PlayerStance.CRAWLING.height,
+                        old.stance.height) -> PlayerStance.CRAWLING
+                !newFlying &&
+                    AabbCollider.canAdoptStance(
+                        solid, pos.x, pos.y, pos.z, w, input.stance.height, old.stance.height) ->
+                    input.stance
+                else -> old.stance
+            }
+
+        val h = newStance.height
         val liquidSlowdown = if (feetBlock.isLiquid) 1f / (1f + feetBlock.viscosity * 0.15f) else 1f
-        val speed = newStance.speed * newSpeedMult * TICK_SECONDS * liquidSlowdown
+        val speedStance = if (submerged) input.stance else newStance
+        val speed = speedStance.speed * newSpeedMult * TICK_SECONDS * liquidSlowdown
 
         val len = sqrt((input.dx * input.dx + input.dz * input.dz).toDouble()).toFloat()
         val nx = if (len > 0f) input.dx / len else 0f
         val nz = if (len > 0f) input.dz / len else 0f
 
         if (!newFlying &&
+            !submerged &&
             input.jumpRequested &&
             session.vy == 0f &&
             AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, w)) {
@@ -102,8 +126,30 @@ class MovementProcessor(private val world: WorldState) {
                 val resolvedDy = AabbCollider.resolveY(solid, newX, pos.y, newZ, w, h, flyDy)
                 (pos.y + resolvedDy).coerceIn(0f, WorldConstants.WORLD_MAX_Y.toFloat())
             } else {
-                val gravityY = applyGravity(session, newX, pos.y, newZ, h, feetBlock.isLiquid)
+                val swimUp = submerged && (input.jumpRequested || input.dy > 0f)
+                val swimDown = submerged && input.dy < 0f
+                val gravityY =
+                    applyGravity(session, newX, pos.y, newZ, h, submerged, swimUp, swimDown)
                 snapToSlope(session, newX, gravityY, newZ)
+            }
+
+        val newHeadInLiquid =
+            world
+                .getBlock(
+                    Math.floor(newX.toDouble()).toInt(),
+                    Math.floor((newY + newStance.eyeOffset).toDouble()).toInt(),
+                    Math.floor(newZ.toDouble()).toInt(),
+                )
+                .isLiquid
+
+        val newBreath =
+            when {
+                old.godMode -> old.maxBreath
+                newHeadInLiquid ->
+                    (old.currentBreath - BreathConstants.DRAIN_PER_TICK).coerceAtLeast(0)
+                else ->
+                    (old.currentBreath + BreathConstants.REFILL_PER_TICK).coerceAtMost(
+                        old.maxBreath)
             }
 
         return old.copy(
@@ -113,14 +159,8 @@ class MovementProcessor(private val world: WorldState) {
             flying = newFlying,
             speedMultiplier = newSpeedMult,
             biome = world.biomeAt(newX.toInt(), newZ.toInt()),
-            headInLiquid =
-                world
-                    .getBlock(
-                        Math.floor(newX.toDouble()).toInt(),
-                        Math.floor((newY + newStance.eyeOffset).toDouble()).toInt(),
-                        Math.floor(newZ.toDouble()).toInt(),
-                    )
-                    .isLiquid,
+            headInLiquid = newHeadInLiquid,
+            currentBreath = newBreath,
             zoneLevel = world.zoneLevelAt(newX.toInt(), newZ.toInt()),
         )
     }
@@ -160,6 +200,8 @@ class MovementProcessor(private val world: WorldState) {
         cz: Float,
         h: Float,
         inLiquid: Boolean = false,
+        swimUp: Boolean = false,
+        swimDown: Boolean = false,
     ): Float {
         val w = PlayerConstants.WIDTH
         val solid = { bx: Int, by: Int, bz: Int -> world.isSolidOrOccupied(bx, by, bz) }
@@ -169,9 +211,15 @@ class MovementProcessor(private val world: WorldState) {
             val snapDy = AabbCollider.resolveY(solid, cx, cy, cz, w, h, -1f)
             return (cy + snapDy).coerceAtLeast(0f)
         }
-        val effectiveGravity = if (inLiquid) GRAVITY * 0.2f else GRAVITY
-        session.vy += effectiveGravity * TICK_SECONDS
-        if (inLiquid) session.vy = session.vy.coerceAtLeast(-2f)
+        when {
+            swimUp -> session.vy = PlayerConstants.SWIM_UP_SPEED
+            swimDown -> session.vy = -PlayerConstants.SWIM_DOWN_SPEED
+            inLiquid -> {
+                session.vy += GRAVITY * 0.2f * TICK_SECONDS
+                session.vy = session.vy.coerceIn(-2f, PlayerConstants.SWIM_UP_SPEED)
+            }
+            else -> session.vy += GRAVITY * TICK_SECONDS
+        }
         val dy = session.vy * TICK_SECONDS
         val resolvedDy = AabbCollider.resolveY(solid, cx, cy, cz, w, h, dy)
         if (resolvedDy != dy) {

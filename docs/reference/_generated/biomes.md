@@ -7,8 +7,8 @@ Defined in `data/config/biomes.yaml`. Distributed via Voronoi zones (`voronoiCel
 | Biome | Surface | Subsurface | Altitude | Moisture | Max NPCs | Vegetation |
 |---|---|---|---|---|---|---|
 | `snow_peaks` | SNOW | STONE | 150–1024 | 0.0–1.0 | 40 | pine_tree_snow @0.04 |
-| `sea` | SAND | SANDSTONE | —–— | 0.0–0.06 | 0 |  |
-| `lake` | GRAVEL | DIRT | —–— | 0.68–0.74 | 0 |  |
+| `sea` | SAND | SANDSTONE | —–— | 0.0–0.06 | 12 |  |
+| `lake` | GRAVEL | DIRT | —–— | 0.68–0.74 | 8 |  |
 | `desert` | SAND | SANDSTONE | —–— | 0.06–0.35 | 10 | — |
 | `dry_plains` | GRASS | SANDSTONE | —–— | 0.35–0.46 | 30 | weed @0.08 |
 | `plains` | GRASS | DIRT | —–— | 0.46–0.56 | 40 | flower @0.06, weed @0.05, oak_tree @0.01 |

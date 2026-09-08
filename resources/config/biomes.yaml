@@ -46,7 +46,7 @@ biomes:
         moistureMax: 0.06
     surface: SAND
     subsurface: SANDSTONE
-    maxNpcs: 0
+    maxNpcs: 12
     fillers:
       - type: STONE
         density: 1.0
@@ -65,7 +65,7 @@ biomes:
         moistureMax: 0.74
     surface: GRAVEL
     subsurface: DIRT
-    maxNpcs: 0
+    maxNpcs: 8
     fillers:
       - type: STONE
         density: 1.0
