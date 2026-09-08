@@ -49,8 +49,8 @@ object PlayerConstants {
 
 /**
  * Breathing / drowning. Values are in ticks; the game loop runs at a fixed tick rate so a duration
- * in seconds is `MAX_BREATH_TICKS / tickRate`. Applies identically to players and to non-aquatic
- * NPCs.
+ * in seconds is `MAX_BREATH_TICKS / tickRate`. Applies identically to players and to NPCs that
+ * cannot swim.
  */
 object BreathConstants {
     var MAX_BREATH_TICKS = 300

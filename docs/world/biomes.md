@@ -46,8 +46,9 @@ border.
 
 Aquatic biomes carry no vegetation and no caverns, and are excluded from faction
 spawn placement. Minimap colour comes from their blue `grassColor`. Their
-`maxNpcs` cap only admits NPCs flagged `aquatic: true`, which spawn inside the
-water column rather than on the surface — see [NPCs](../entities/npcs.md).
+`maxNpcs` cap only admits NPCs that can swim (`movementMode` with `SWIMMING`);
+a `SWIMMING`-only NPC spawns inside the water column rather than on the surface
+— see [NPCs](../entities/npcs.md).
 Players and land NPCs breathe while submerged: see
 [Liquids → Swimming & breath](liquids.md).
 

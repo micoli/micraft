@@ -225,11 +225,11 @@ class NpcManager(
     }
 
     /**
-     * Non-aquatic NPCs breathe like players: breath drains while the head is submerged, refills
-     * fast in air, and once empty deals periodic damage until the NPC drowns.
+     * NPCs that cannot swim breathe like players: breath drains while the head is submerged,
+     * refills fast in air, and once empty deals periodic damage until the NPC drowns.
      */
     private suspend fun tickBreath(instance: NpcInstance, world: WorldState, now: Long) {
-        if (instance.definition.aquatic) return
+        if (instance.definition.canSwim) return
         val pos = instance.state.pos
         val headBlock =
             world.getBlock(

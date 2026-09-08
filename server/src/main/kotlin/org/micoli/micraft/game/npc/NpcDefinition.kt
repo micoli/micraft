@@ -36,9 +36,26 @@ data class NpcDefinition(
     val loot: List<DropEntry> = emptyList(),
     val tameable: Boolean = false,
     val tameBaseChance: Float = 0.5f,
-    /** Aquatic NPC: never drowns, spawns inside the water column of a liquid biome. */
-    val aquatic: Boolean = false,
+    /** How this NPC moves — see [MovementMode]. Defaults to a plain land walker. */
+    val movementMode: List<MovementMode> = listOf(MovementMode.WALKING),
 ) {
     fun computeMaxHp(level: Int): Int =
         (hp + (level - minLevel).coerceAtLeast(0) * hp / 10).coerceAtLeast(1)
+
+    val canWalk: Boolean
+        get() = MovementMode.WALKING in movementMode
+
+    val canSwim: Boolean
+        get() = MovementMode.SWIMMING in movementMode
+
+    val canFly: Boolean
+        get() = MovementMode.FLYING in movementMode
+
+    /** Pure water dweller: spawns in the water column instead of on land. */
+    val isAquatic: Boolean
+        get() = canSwim && !canWalk
+
+    /** Airborne with no land fallback: ignores gravity so it holds its spawn height. */
+    val isAirborne: Boolean
+        get() = canFly && !canWalk
 }

@@ -35,6 +35,6 @@ data class NpcYamlEntry(
     val loot: List<DropEntry> = emptyList(),
     val tameable: Boolean = false,
     val tameBaseChance: Float = 0.5f,
-    /** Aquatic NPC: never drowns, spawns inside the water column of a liquid biome. */
-    val aquatic: Boolean = false,
+    /** How this NPC moves — see [MovementMode]. Defaults to `[WALKING]`. */
+    val movementMode: List<MovementMode> = listOf(MovementMode.WALKING),
 )

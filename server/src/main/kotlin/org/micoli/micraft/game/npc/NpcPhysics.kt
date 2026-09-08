@@ -10,9 +10,11 @@ internal object NpcPhysics {
     fun applyGravity(instance: NpcInstance, world: WorldState): Boolean {
         val def = instance.definition
         val pos = instance.state.pos
-        // Aquatic NPCs float in the water column: hold depth while submerged, sink only in air.
+        // Swimmers hold depth while submerged; airborne NPCs ignore gravity entirely (no flight
+        // AI yet, so they simply keep their spawn height).
         if (instance.weightless ||
-            (def.aquatic &&
+            def.isAirborne ||
+            (def.canSwim &&
                 world.getBlockIfLoaded(pos.x.toInt(), pos.y.toInt(), pos.z.toInt()).isLiquid)) {
             instance.vy = 0f
             instance.velocity = Vec3(instance.velocity.x, 0f, instance.velocity.z)

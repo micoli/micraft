@@ -5,7 +5,8 @@ wanderSpeed: 1.8
 wanderRadius: 25.0
 hp: 14
 aggroMode: PASSIVE
-aquatic: true
+movementMode:
+  - SWIMMING
 spawn:
   autoSpawn: true
   maxPerChunk: 2

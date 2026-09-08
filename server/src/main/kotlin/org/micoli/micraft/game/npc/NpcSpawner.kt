@@ -57,6 +57,8 @@ class NpcSpawner {
 
                 val biomeDef = world.biomeDefinitionAt(wx, wz)
                 if (spawn.spawnBiomes.isNotEmpty() && biomeDef?.id !in spawn.spawnBiomes) continue
+                // A liquid biome is water top to bottom — only a swimmer can live there.
+                if (biomeDef?.liquid == true && !def.canSwim) continue
 
                 val zk = npcManager.zoneKey(wx.toFloat(), wz.toFloat())
                 val maxNpcs = biomeDef?.maxNpcs ?: 0
@@ -65,7 +67,7 @@ class NpcSpawner {
                 val surfaceY = findSurfaceY(world, wx, wz) ?: continue
 
                 val spawnY =
-                    if (def.aquatic) {
+                    if (def.isAquatic) {
                         val bd = biomeDef ?: continue
                         if (!bd.liquid || bd.waterLevel <= surfaceY) continue
                         val y = ctx.random.nextInt(surfaceY, bd.waterLevel)

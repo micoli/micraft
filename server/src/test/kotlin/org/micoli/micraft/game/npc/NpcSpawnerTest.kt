@@ -22,7 +22,7 @@ private fun wanderDef(
     spawnBiomes: List<String> = emptyList(),
     maxTotal: Int = 0,
     minTotal: Int = 0,
-    aquatic: Boolean = false,
+    movementMode: List<MovementMode> = listOf(MovementMode.WALKING),
 ): NpcDefinition =
     NpcDefinition(
         type = type,
@@ -40,7 +40,7 @@ private fun wanderDef(
                 maxTotal = maxTotal,
                 minTotal = minTotal,
             ),
-        aquatic = aquatic,
+        movementMode = movementMode,
     )
 
 private fun staticDef(
@@ -293,7 +293,13 @@ class NpcSpawnerTest {
                     0))
         }
 
-        val m = testManager(mapOf("FISH" to wanderDef(spawnBiomes = listOf("sea"), aquatic = true)))
+        val m =
+            testManager(
+                mapOf(
+                    "FISH" to
+                        wanderDef(
+                            spawnBiomes = listOf("sea"),
+                            movementMode = listOf(MovementMode.SWIMMING))))
         repeat(10) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
 
         assertTrue(m.getAll().isNotEmpty(), "aquatic NPC should spawn in a liquid biome")
@@ -309,7 +315,8 @@ class NpcSpawnerTest {
     @Test
     fun trySpawn_aquaticNpc_notInLiquidBiome_doesNotSpawn() = runBlocking {
         val world = solidFloorWorld()
-        val m = testManager(mapOf("FISH" to wanderDef(aquatic = true)))
+        val m =
+            testManager(mapOf("FISH" to wanderDef(movementMode = listOf(MovementMode.SWIMMING))))
         repeat(5) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
         assertTrue(m.getAll().isEmpty())
     }

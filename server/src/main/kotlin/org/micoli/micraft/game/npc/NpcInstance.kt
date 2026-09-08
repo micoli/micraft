@@ -54,7 +54,9 @@ class NpcInstance(
     @Volatile var pendingDotDamage: Float = 0f,
     @Volatile var isDead: Boolean = false,
     @Volatile var deathTimeMs: Long = 0L,
-    /** Remaining breath ticks. Only drained for non-aquatic NPCs (see [BreathProcessor]). */
+    /**
+     * Remaining breath ticks. Only drained for NPCs that cannot swim (see [NpcManager.tickBreath]).
+     */
     @Volatile
     var currentBreath: Int = org.micoli.micraft.game.world.BreathConstants.MAX_BREATH_TICKS,
     @Volatile var drowningDamageAccumTicks: Int = 0,

@@ -7,7 +7,8 @@ hp: 45
 aggroMode: AGGRESSIVE
 aggroRange: 16.0
 deaggroTimeSec: 12.0
-aquatic: true
+movementMode:
+  - SWIMMING
 spawn:
   autoSpawn: true
   maxPerChunk: 1

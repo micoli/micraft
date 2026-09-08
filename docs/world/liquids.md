@@ -33,9 +33,10 @@ hides once full. At zero breath a `Drowning` damage-over-time effect is applied
 until the player surfaces or is downed. God mode freezes the bar full and blocks
 the drowning damage.
 
-Non-aquatic NPCs breathe by the same rules (`NpcManager` breath tick →
-`NpcDeathCause.DROWNING`). NPCs flagged `aquatic: true` never drown and spawn
-inside the water column of a `liquid` biome — see [NPCs](../entities/npcs.md).
+NPCs that cannot swim breathe by the same rules (`NpcManager` breath tick →
+`NpcDeathCause.DROWNING`). NPCs whose `movementMode` includes `SWIMMING` never
+drown; a `SWIMMING`-only NPC also spawns inside the water column of a `liquid`
+biome — see [NPCs](../entities/npcs.md).
 
 Breath timing constants live in `BreathConstants` (`core`); swim speeds in
 `PlayerConstants` — see the [reference table](../reference/_generated/constants.md).

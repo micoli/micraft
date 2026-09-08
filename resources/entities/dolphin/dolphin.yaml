@@ -4,7 +4,8 @@ height: 0.7
 wanderSpeed: 2.0
 wanderRadius: 30.0
 hp: 12
-aquatic: true
+movementMode:
+  - SWIMMING
 spawn:
   autoSpawn: true
   maxPerChunk: 1
