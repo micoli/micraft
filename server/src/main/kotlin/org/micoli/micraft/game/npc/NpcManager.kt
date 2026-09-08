@@ -431,6 +431,12 @@ class NpcManager(
             if (world.getChunkIfDiscovered(chunkPos) == null) continue
             tickBreath(instance, world, now)
             if (instance.isDead) continue
+            if (instance.definition.canFly) {
+                instance.targetedByPlayer =
+                    sessions.any {
+                        it.combatState.targetIsNpc && it.combatState.targetId == instance.state.id
+                    }
+            }
             // Player target wins; an NPC target (pack hunt, retaliation) is the fallback. Left null
             // otherwise so the animal behaviour can install its prey/mate target.
             // A pet's chase target is owned entirely by PetCoordinator — never touch it here.

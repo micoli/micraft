@@ -516,6 +516,56 @@ class NpcRegistryLoaderTest {
     }
 
     @Test
+    fun movementMode_parsesAndDefaultsToWalking() {
+        val (loader) =
+            loaderWithNpcs(
+                mapOf(
+                    "pterodactyl" to
+                        """
+                        behavior: random_movable
+                        width: 0.8
+                        height: 0.8
+                        wanderSpeed: 3.0
+                        wanderRadius: 40.0
+                        movementMode:
+                          - FLYING
+                          - WALKING
+                        """
+                            .trimIndent(),
+                    "parrot" to
+                        """
+                        behavior: random_movable
+                        width: 0.5
+                        height: 0.8
+                        wanderSpeed: 1.8
+                        wanderRadius: 20.0
+                        movementMode: [FLYING]
+                        """
+                            .trimIndent(),
+                    "goat" to
+                        """
+                        behavior: random_movable
+                        width: 0.5
+                        height: 0.9
+                        wanderSpeed: 2.0
+                        wanderRadius: 12.0
+                        """
+                            .trimIndent()))
+
+        val ptero = assertNotNull(loader.load()["pterodactyl"])
+        assertEquals(listOf(MovementMode.FLYING, MovementMode.WALKING), ptero.movementMode)
+        assertTrue(ptero.canFly && ptero.canWalk)
+
+        val parrot = assertNotNull(loader.load()["parrot"])
+        assertEquals(listOf(MovementMode.FLYING), parrot.movementMode)
+        assertTrue(parrot.isAirborne)
+
+        val goat = assertNotNull(loader.load()["goat"])
+        assertEquals(listOf(MovementMode.WALKING), goat.movementMode)
+        assertTrue(!goat.canFly)
+    }
+
+    @Test
     fun load_isMemoized_ignoresFileChangesUntilReload() {
         val (loader) =
             loaderWithNpcs(

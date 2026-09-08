@@ -32,4 +32,8 @@ data class NpcTuning(
     val npcZoneSize: Int = 256,
     val npcVisibilityCheckIntervalTicks: Int = 20,
     val gameDayDurationSeconds: Double = 1200.0,
+    // Flight: a flying NPC cruises this many blocks above the ground below it,
+    // adjusting its altitude by at most flyVerticalStep blocks per tick.
+    val flyCruiseHeight: Float = 8f,
+    val flyVerticalStep: Float = 0.4f,
 )

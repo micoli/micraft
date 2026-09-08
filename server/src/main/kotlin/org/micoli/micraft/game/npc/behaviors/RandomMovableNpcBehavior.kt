@@ -22,6 +22,7 @@ private const val MAX_WALK_SAMPLES = 24
 class RandomMovableNpcBehavior : NpcBehavior {
 
     override fun tick(instance: NpcInstance, world: WorldState, ctx: NpcTickContext): Boolean {
+        updateFlightMode(instance)
         var changed = NpcPhysics.applyGravity(instance, world)
         if (instance.hibernating) return changed
         val now = System.currentTimeMillis()
@@ -35,7 +36,28 @@ class RandomMovableNpcBehavior : NpcBehavior {
         changed =
             if (chaseTarget != null) tickChase(instance, world, chaseTarget, ctx) || changed
             else tickWander(instance, world, ctx) || changed
+        if (instance.flying) {
+            changed =
+                NpcPhysics.cruise(
+                    instance, world, ctx.tuning.flyCruiseHeight, ctx.tuning.flyVerticalStep) ||
+                    changed
+        }
         return changed
+    }
+
+    /**
+     * A `[FLYING, WALKING]` NPC cruises until it is in combat — an aggro target of its own, or a
+     * player who has it targeted — then lands to fight on the ground. A `FLYING`-only NPC always
+     * flies.
+     */
+    private fun updateFlightMode(instance: NpcInstance) {
+        val def = instance.definition
+        if (!def.canFly) return
+        val engaged =
+            instance.aggroTarget != null ||
+                instance.npcAggroTarget != null ||
+                instance.targetedByPlayer
+        instance.flying = !(def.canWalk && engaged)
     }
 
     private fun tickChase(

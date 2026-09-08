@@ -1,0 +1,29 @@
+behavior: animal
+width: 0.7
+height: 0.7
+wanderSpeed: 3.0
+wanderRadius: 45.0
+hp: 16
+aggroMode: PASSIVE
+movementMode:
+  - FLYING
+  - WALKING
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes:
+    - plains
+    - forest
+    - pine_forest
+    - snow_peaks
+  maxTotal: 20
+  minTotal: 8
+animal:
+  diet: CARNIVORE
+  canReproduce: false
+  starvationDeathDays: 5.0
+walkBoneAliases:
+  rightArm: wing1
+  leftArm: wing0
+  rightLeg: leg1
+  leftLeg: leg0

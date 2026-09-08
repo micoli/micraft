@@ -30,7 +30,12 @@ animations with configurable walk-bone aliases.
 | `[WALKING]` | land creature, gravity applies |
 | `[SWIMMING]` | pure water dweller (`shark`, `dolphin`, `squid`): never drowns, holds depth while submerged, spawns in the water column of a `liquid` biome |
 | `[SWIMMING, WALKING]` | amphibious: never drowns, spawns and walks on land |
-| `[FLYING]` / `[FLYING, WALKING]` | airborne — flight AI not implemented yet; a `FLYING`-only NPC just ignores gravity and holds its spawn height |
+| `[FLYING]` | always airborne (`parrot`): gravity off, cruises `flyCruiseHeight` blocks above the ground and wanders in the air |
+| `[FLYING, WALKING]` | flies while free (`pterodactyl`, `eagle`), but **lands and fights on the ground** whenever it has an aggro target or a player has targeted it; climbs back to cruise altitude once the fight is over |
+
+Flight altitude is driven by `NpcPhysics.cruise` (config: `flyCruiseHeight`,
+`flyVerticalStep` in `npc.yaml`). There is no 3D pathfinder — flyers wander over
+open terrain by straight lines, they do not weave through obstacles or dive-attack.
 
 Any NPC that cannot swim breathes like a player and drowns
 (`NpcDeathCause.DROWNING`) if its head stays underwater — see
@@ -51,6 +56,8 @@ updateRange: 96.0
 maxSpawnAttemptsPerTick: 3
 jumpVelocity: 8.0
 gameDayDurationSeconds: 1200.0
+flyCruiseHeight: 8.0     # blocks a flying NPC holds above the ground
+flyVerticalStep: 0.4     # max altitude change per tick
 ```
 
 **Per-type definitions** — loaded by `NpcRegistryLoader`; codex info served at

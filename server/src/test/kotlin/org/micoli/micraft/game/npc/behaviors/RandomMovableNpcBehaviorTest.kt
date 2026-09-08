@@ -4,6 +4,7 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import org.micoli.micraft.game.npc.MovementMode
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
@@ -21,6 +22,7 @@ class RandomMovableNpcBehaviorTest {
         wanderSpeed: Float = 3f,
         aggroRange: Float = 12f,
         pack: PackConfig? = null,
+        movementMode: List<MovementMode> = listOf(MovementMode.WALKING),
     ): NpcInstance {
         val def =
             NpcDefinition(
@@ -33,6 +35,7 @@ class RandomMovableNpcBehaviorTest {
                 wanderRadius = wanderRadius,
                 aggroRange = aggroRange,
                 packConfig = pack,
+                movementMode = movementMode,
             )
         return NpcInstance(
             state = NpcState(id = "1", name = "Goat", type = "GOAT", pos = pos, yaw = 0f),
@@ -78,6 +81,53 @@ class RandomMovableNpcBehaviorTest {
         val instance = instanceAt(Vec3(8.5f, 30f, 8.5f))
         RandomMovableNpcBehavior().tick(instance, world)
         assertTrue(instance.state.pos.y < 30f)
+    }
+
+    @Test
+    fun flyingNpc_climbsToCruiseAltitudeAndStaysUp() {
+        val floorY = 4
+        val world =
+            testWorld(
+                *(4..17).flatMap { x -> (4..17).map { z -> Triple(x, floorY, z) } }.toTypedArray())
+        val spawn = Vec3(10.5f, (floorY + 1).toFloat(), 10.5f)
+        val instance =
+            instanceAt(spawn, wanderRadius = 5f, movementMode = listOf(MovementMode.FLYING))
+        repeat(200) { RandomMovableNpcBehavior().tick(instance, world) }
+        // ground top y=5, default cruise height 8 → ~y 13
+        assertTrue(
+            instance.state.pos.y > 11f,
+            "flyer should climb to cruise altitude, got ${instance.state.pos.y}")
+    }
+
+    @Test
+    fun flyWalkNpc_landsWhileEngaged_fliesWhenClear() {
+        val floorY = 4
+        val world =
+            testWorld(
+                *(4..17).flatMap { x -> (4..17).map { z -> Triple(x, floorY, z) } }.toTypedArray())
+        val spawn = Vec3(10.5f, (floorY + 1).toFloat(), 10.5f)
+        val instance =
+            instanceAt(
+                spawn,
+                wanderRadius = 5f,
+                movementMode = listOf(MovementMode.FLYING, MovementMode.WALKING))
+
+        repeat(120) { RandomMovableNpcBehavior().tick(instance, world) }
+        assertTrue(instance.flying, "clear of combat → flying")
+        val cruiseY = instance.state.pos.y
+
+        instance.targetedByPlayer = true
+        repeat(120) { RandomMovableNpcBehavior().tick(instance, world) }
+        assertTrue(!instance.flying, "targeted → lands")
+        assertTrue(
+            instance.state.pos.y < cruiseY - 3f,
+            "should descend when landing, got ${instance.state.pos.y} from $cruiseY")
+
+        instance.targetedByPlayer = false
+        instance.vy = 0f
+        repeat(120) { RandomMovableNpcBehavior().tick(instance, world) }
+        assertTrue(instance.flying, "combat over → back to flying")
+        assertTrue(instance.state.pos.y > cruiseY - 2f, "should climb back up")
     }
 
     @Test

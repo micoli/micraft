@@ -7702,6 +7702,14 @@ components:
     org.micoli.micraft.game.npc.NpcTuning:
       type: object
       properties:
+        flyCruiseHeight:
+          type: number
+          format: float
+          title: Float
+        flyVerticalStep:
+          type: number
+          format: float
+          title: Float
         gameDayDurationSeconds:
           type: number
           format: double
@@ -7775,6 +7783,8 @@ components:
           format: float
           title: Float
       required:
+      - flyCruiseHeight
+      - flyVerticalStep
       - gameDayDurationSeconds
       - interactionRange
       - jumpVelocity

@@ -68,6 +68,13 @@ class NpcInstance(
     @Volatile var petRecordId: String? = null,
     /** Gravity disabled — a pet mirrors its flying owner; its Y is driven by [PetCoordinator]. */
     @Volatile var weightless: Boolean = false,
+    /**
+     * Currently airborne: gravity off, altitude driven by [NpcPhysics.cruise]. A `FLYING`-only NPC
+     * is always flying; a `[FLYING, WALKING]` NPC lands (this goes false) while it is in combat.
+     */
+    @Volatile var flying: Boolean = false,
+    /** Scratch, recomputed each tick: a player has this NPC as their combat target. */
+    @Volatile var targetedByPlayer: Boolean = false,
     @Volatile var animalData: AnimalInstanceData? = null,
     /** Asleep for the current hibernation window: no movement, no aggro. */
     @Volatile var hibernating: Boolean = false,
@@ -95,5 +102,6 @@ class NpcInstance(
     init {
         if (currentHp < 0) currentHp = maxHp
         if (currentMana < 0) currentMana = maxMana
+        if (definition.canFly) flying = true
     }
 }

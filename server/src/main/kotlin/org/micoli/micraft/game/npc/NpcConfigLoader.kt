@@ -50,6 +50,8 @@ class NpcConfigLoader(private val path: Path) {
                 maxSpawnAttemptsPerTick = config.maxSpawnAttemptsPerTick,
                 jumpVelocity = config.jumpVelocity,
                 gameDayDurationSeconds = config.gameDayDurationSeconds,
+                flyCruiseHeight = config.flyCruiseHeight,
+                flyVerticalStep = config.flyVerticalStep,
             )
     }
 }

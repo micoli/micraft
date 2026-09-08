@@ -1,0 +1,30 @@
+behavior: animal
+width: 0.5
+height: 0.8
+wanderSpeed: 1.8
+wanderRadius: 24.0
+hp: 6
+aggroMode: PASSIVE
+tameable: true
+tameBaseChance: 0.35
+movementMode:
+  - FLYING
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes:
+    - forest
+    - plains
+  maxTotal: 80
+  minTotal: 40
+walkBoneAliases:
+  rightArm: wing0
+  leftArm: wing1
+  rightLeg: leg0
+  leftLeg: leg1
+animal:
+  diet: HERBIVORE
+  canReproduce: false
+  scale: 0.9
+  fleeRadius: 6.0
+  starvationDeathDays: 5.0
