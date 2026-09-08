@@ -589,6 +589,7 @@ class GameLoop(
                     attachments = items,
                 )
             },
+            persistence = persistence,
         )
 
     private val groupManager: org.micoli.micraft.game.social.GroupManager =

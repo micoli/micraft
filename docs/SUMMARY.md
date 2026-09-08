@@ -64,6 +64,7 @@
     - [Config editor](admin/config.md)
     - [Instances](admin/instances.md)
     - [Scenes](admin/scenes.md)
+    - [Social](admin/social.md)
 - Architecture
     - [Overview](architecture/index.md)
     - [World generation pipeline](architecture/world-generation.md)

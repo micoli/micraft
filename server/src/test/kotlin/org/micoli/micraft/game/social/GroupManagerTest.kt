@@ -60,6 +60,38 @@ class GroupManagerTest {
     }
 
     @Test
+    fun `admin create, add, remove, disband`() = runBlocking {
+        val a = testSession(id = "a", name = "A")
+        val b = testSession(id = "b", name = "B")
+        val gm = setup(a, b)
+
+        val info = gm.adminCreate("A")
+        assertEquals("a", info.leaderId)
+
+        gm.adminAddMember(info.id, "B")
+        assertEquals(2, gm.groupOf(a.id)!!.members.size)
+
+        gm.adminRemoveMember(info.id, "b")
+        assertNull(gm.groupOf(b.id))
+
+        gm.adminDisband(info.id)
+        assertNull(gm.groupOf(a.id))
+    }
+
+    @Test
+    fun `admin create rejects offline leader`() = runBlocking {
+        val a = testSession(id = "a", name = "A")
+        val gm = setup(a)
+        var failed = false
+        try {
+            gm.adminCreate("ghost")
+        } catch (e: GroupManager.AdminError) {
+            failed = true
+        }
+        assertTrue(failed)
+    }
+
+    @Test
     fun `group dissolves when last online member disconnects`() = runBlocking {
         val a = testSession(id = "a", name = "A")
         val b = testSession(id = "b", name = "B")

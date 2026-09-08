@@ -27,6 +27,7 @@ export const fr: Record<TranslationKey, string> = {
   "nav.worldSimulator": "Simulateur de monde",
   "nav.auctions": "Enchères",
   "nav.claims": "Claims",
+  "nav.social": "Social",
 
   "page.status": "État du serveur",
   "page.users": "Utilisateurs",
@@ -42,6 +43,10 @@ export const fr: Record<TranslationKey, string> = {
   "page.worldSimulator": "Simulateur de monde",
   "page.auctions": "Hôtel des ventes",
   "page.claims": "Claims de terrain",
+  "page.social": "Social",
+  "administration.tabGroups": "Groupes",
+  "administration.tabGuilds": "Guildes",
+  "administration.tabFactions": "Factions",
 
   // ── Shared ──────────────────────────────────────────────────────────────────
   "common.loading": "Chargement…",

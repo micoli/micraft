@@ -14,6 +14,7 @@ import { ScenesPage } from "./pages/scene/ScenesPage";
 import { WorldSimulatorPage } from "./pages/worldSimulator/WorldSimulatorPage";
 import { AuctionsPage } from "./pages/auctions/AuctionsPage";
 import { ClaimsPage } from "./pages/claim/ClaimsPage";
+import { SocialPage } from "./pages/social/SocialPage";
 
 export const ROUTES = [
   { path: "/admin", page: <StatusPage /> },
@@ -36,6 +37,9 @@ export const ROUTES = [
   { path: "/admin/world-simulator", page: <WorldSimulatorPage /> },
   { path: "/admin/auctions", page: <AuctionsPage /> },
   { path: "/admin/claims", page: <ClaimsPage /> },
+  { path: "/admin/social", page: <SocialPage /> },
+  { path: "/admin/social/:tab", page: <SocialPage /> },
+  { path: "/admin/social/:tab/:id", page: <SocialPage /> },
 ];
 export interface NavItem {
   path: string;
@@ -84,6 +88,12 @@ export const NAV: NavItem[] = [
     labelKey: "nav.claims",
     pageLabelKey: "page.claims",
     icon: ICONS.claims,
+  },
+  {
+    path: "/admin/social",
+    labelKey: "nav.social",
+    pageLabelKey: "page.social",
+    icon: ICONS.social,
   },
 ];
 

@@ -1,8 +1,8 @@
 // generated with @7nohe/openapi-react-query-codegen@3.0.2 
 
 import { type UseQueryResult } from "@tanstack/react-query";
-import { deleteApiAdminClaimsById, deleteApiAdminInstancesById, deleteApiAdminScenesById, deleteApiAdminUsersByEmail, deleteApiGameAssetsBlendCacheBy, getApiAdminAuctions, getApiAdminBlocks, getApiAdminChunksDiscovered, getApiAdminClaims, getApiAdminClaimsById, getApiAdminClasses, getApiAdminConfigs, getApiAdminConfigsBy, getApiAdminInstances, getApiAdminInstancesById, getApiAdminInstancesByIdBlocks, getApiAdminItems, getApiAdminNpcTypes, getApiAdminNpcs, getApiAdminPlainColors, getApiAdminPlayers, getApiAdminPlayersByName, getApiAdminScenes, getApiAdminScenesById, getApiAdminScenesByIdBlocksRaw, getApiAdminScenesByIdEntities, getApiAdminSchemasByFilename, getApiAdminSimulationDefaults, getApiAdminSkills, getApiAdminStatus, getApiAdminUsers, getApiAdminWorlds, getApiAdminWsInstancesById, getApiAdminWsNpcs, getApiAdminWsScenesById, getApiAdminWsSimulation, getApiArmors, getApiAssetsManifest, getApiAttacks, getApiAuthConfig, getApiAutocompleteByCommandIdByArgIndex, getApiBiomes, getApiBiomesTints, getApiChunksByCxByCz, getApiClasses, getApiFurnitures, getApiGameAssets, getApiGameAssetsBbmodelExportBy, getApiGameAssetsBlendPreviewBy, getApiGameAssetsBlendSceneBy, getApiGameAssetsFileBy, getApiI18nByLocale, getApiItemsMeta, getApiKeybindings, getApiLayoutRegistry, getApiMacrosContext, getApiMapHouses, getApiMapRoadRaster, getApiMapRoadRasterPng, getApiMapRoads, getApiMapStaircases, getApiMapState, getApiMapTerrain, getApiMapTerrainRasterPng, getApiMapVoronoi, getApiMapVoronoiBorders, getApiPlayerByIdArmors, getApiPlayerByIdHands, getApiPlayerByIdOwned, getApiPlayerByIdRpg, getApiPlayerByIdSkin, getApiPlayersByEmailByEmail, getApiPlayersNames, getApiQuests, getApiServerInfo, getApiSiegeWeapons, getApiSkins, getApiSkinsByNameConfig, getApiSpells, getApiTools, getApiVehiclesByNameConfig, getApiWeapons, postApiAdminAuctionsByIdForceCancel, postApiAdminInstances, postApiAdminNpcTypesReload, postApiAdminPlayers, postApiAdminPlayersByNameGive, postApiAdminPlayersByNameRename, postApiAdminReload, postApiAdminRestart, postApiAdminScenes, postApiAdminScenesByIdDuplicate, postApiAdminUsers, postApiAdminWorlds, postApiAssetsReload, postApiCharacterCreate, postApiCharacterRpgcreate, postApiPlayerByIdScreenshots, postAuthNoauthLogin, putApiAdminClaimsByIdBounds, putApiAdminClaimsByIdTrust, putApiAdminConfigsBy, putApiAdminGametime, putApiAdminInstancesById, putApiAdminInstancesByIdBounds, putApiAdminInstancesByIdChunks, putApiAdminInstancesByIdEnabled, putApiAdminInstancesByIdLayout, putApiAdminPlayersByNameEquipment, putApiAdminPlayersByNameKeybindings, putApiAdminPlayersByNamePreferences, putApiAdminPlayersByNameRpg, putApiAdminScenesById, putApiAdminScenesByIdDimensions, putApiAdminScenesByIdLayout, putApiAdminUsersByEmail, putApiPlayerByIdSkin, type Options } from "../requests/sdk.gen";
-import type { GetApiAdminAuctionsData, GetApiAdminBlocksData, GetApiAdminChunksDiscoveredData, GetApiAdminClaimsByIdData, GetApiAdminClaimsData, GetApiAdminClassesData, GetApiAdminConfigsByData, GetApiAdminConfigsData, GetApiAdminInstancesByIdBlocksData, GetApiAdminInstancesByIdData, GetApiAdminInstancesData, GetApiAdminItemsData, GetApiAdminNpcTypesData, GetApiAdminNpcsData, GetApiAdminPlainColorsData, GetApiAdminPlayersByNameData, GetApiAdminPlayersData, GetApiAdminScenesByIdBlocksRawData, GetApiAdminScenesByIdData, GetApiAdminScenesByIdEntitiesData, GetApiAdminScenesData, GetApiAdminSchemasByFilenameData, GetApiAdminSimulationDefaultsData, GetApiAdminSkillsData, GetApiAdminStatusData, GetApiAdminUsersData, GetApiAdminWorldsData, GetApiAdminWsInstancesByIdData, GetApiAdminWsNpcsData, GetApiAdminWsScenesByIdData, GetApiAdminWsSimulationData, GetApiArmorsData, GetApiAssetsManifestData, GetApiAttacksData, GetApiAuthConfigData, GetApiAutocompleteByCommandIdByArgIndexData, GetApiBiomesData, GetApiBiomesTintsData, GetApiChunksByCxByCzData, GetApiClassesData, GetApiFurnituresData, GetApiGameAssetsBbmodelExportByData, GetApiGameAssetsBlendPreviewByData, GetApiGameAssetsBlendSceneByData, GetApiGameAssetsData, GetApiGameAssetsFileByData, GetApiI18nByLocaleData, GetApiItemsMetaData, GetApiKeybindingsData, GetApiLayoutRegistryData, GetApiMacrosContextData, GetApiMapHousesData, GetApiMapRoadRasterData, GetApiMapRoadRasterPngData, GetApiMapRoadsData, GetApiMapStaircasesData, GetApiMapStateData, GetApiMapTerrainData, GetApiMapTerrainRasterPngData, GetApiMapVoronoiBordersData, GetApiMapVoronoiData, GetApiPlayerByIdArmorsData, GetApiPlayerByIdHandsData, GetApiPlayerByIdOwnedData, GetApiPlayerByIdRpgData, GetApiPlayerByIdSkinData, GetApiPlayersByEmailByEmailData, GetApiPlayersNamesData, GetApiQuestsData, GetApiServerInfoData, GetApiSiegeWeaponsData, GetApiSkinsByNameConfigData, GetApiSkinsData, GetApiSpellsData, GetApiToolsData, GetApiVehiclesByNameConfigData, GetApiWeaponsData } from "../requests/types.gen";
+import { deleteApiAdminClaimsById, deleteApiAdminInstancesById, deleteApiAdminScenesById, deleteApiAdminSocialFactionsById, deleteApiAdminSocialFactionsByIdMembersByPlayerId, deleteApiAdminSocialGroupsById, deleteApiAdminSocialGroupsByIdMembersByPlayerId, deleteApiAdminSocialGuildsById, deleteApiAdminSocialGuildsByIdMembersByPlayerId, deleteApiAdminUsersByEmail, deleteApiGameAssetsBlendCacheBy, getApiAdminAuctions, getApiAdminBlocks, getApiAdminChunksDiscovered, getApiAdminClaims, getApiAdminClaimsById, getApiAdminClasses, getApiAdminConfigs, getApiAdminConfigsBy, getApiAdminInstances, getApiAdminInstancesById, getApiAdminInstancesByIdBlocks, getApiAdminItems, getApiAdminNpcTypes, getApiAdminNpcs, getApiAdminPlainColors, getApiAdminPlayers, getApiAdminPlayersByName, getApiAdminScenes, getApiAdminScenesById, getApiAdminScenesByIdBlocksRaw, getApiAdminScenesByIdEntities, getApiAdminSchemasByFilename, getApiAdminSimulationDefaults, getApiAdminSkills, getApiAdminSocialFactions, getApiAdminSocialFactionsByIdMembers, getApiAdminSocialGroups, getApiAdminSocialGuilds, getApiAdminSocialOnlinePlayers, getApiAdminSocialPlayers, getApiAdminStatus, getApiAdminUsers, getApiAdminWorlds, getApiAdminWsInstancesById, getApiAdminWsNpcs, getApiAdminWsScenesById, getApiAdminWsSimulation, getApiArmors, getApiAssetsManifest, getApiAttacks, getApiAuthConfig, getApiAutocompleteByCommandIdByArgIndex, getApiBiomes, getApiBiomesTints, getApiChunksByCxByCz, getApiClasses, getApiFurnitures, getApiGameAssets, getApiGameAssetsBbmodelExportBy, getApiGameAssetsBlendPreviewBy, getApiGameAssetsBlendSceneBy, getApiGameAssetsFileBy, getApiI18nByLocale, getApiItemsMeta, getApiKeybindings, getApiLayoutRegistry, getApiMacrosContext, getApiMapHouses, getApiMapRoadRaster, getApiMapRoadRasterPng, getApiMapRoads, getApiMapStaircases, getApiMapState, getApiMapTerrain, getApiMapTerrainRasterPng, getApiMapVoronoi, getApiMapVoronoiBorders, getApiPlayerByIdArmors, getApiPlayerByIdHands, getApiPlayerByIdOwned, getApiPlayerByIdRpg, getApiPlayerByIdSkin, getApiPlayersByEmailByEmail, getApiPlayersNames, getApiQuests, getApiServerInfo, getApiSiegeWeapons, getApiSkins, getApiSkinsByNameConfig, getApiSpells, getApiTools, getApiVehiclesByNameConfig, getApiWeapons, postApiAdminAuctionsByIdForceCancel, postApiAdminInstances, postApiAdminNpcTypesReload, postApiAdminPlayers, postApiAdminPlayersByNameGive, postApiAdminPlayersByNameRename, postApiAdminReload, postApiAdminRestart, postApiAdminScenes, postApiAdminScenesByIdDuplicate, postApiAdminSocialFactions, postApiAdminSocialFactionsByIdMembers, postApiAdminSocialGroups, postApiAdminSocialGroupsByIdMembers, postApiAdminSocialGuilds, postApiAdminSocialGuildsByIdMembers, postApiAdminUsers, postApiAdminWorlds, postApiAssetsReload, postApiCharacterCreate, postApiCharacterRpgcreate, postApiPlayerByIdScreenshots, postAuthNoauthLogin, putApiAdminClaimsByIdBounds, putApiAdminClaimsByIdTrust, putApiAdminConfigsBy, putApiAdminGametime, putApiAdminInstancesById, putApiAdminInstancesByIdBounds, putApiAdminInstancesByIdChunks, putApiAdminInstancesByIdEnabled, putApiAdminInstancesByIdLayout, putApiAdminPlayersByNameEquipment, putApiAdminPlayersByNameKeybindings, putApiAdminPlayersByNamePreferences, putApiAdminPlayersByNameRpg, putApiAdminScenesById, putApiAdminScenesByIdDimensions, putApiAdminScenesByIdLayout, putApiAdminSocialFactionsSettings, putApiAdminSocialGuildsById, putApiAdminSocialGuildsByIdMembersByPlayerId, putApiAdminUsersByEmail, putApiPlayerByIdSkin, type Options } from "../requests/sdk.gen";
+import type { GetApiAdminAuctionsData, GetApiAdminBlocksData, GetApiAdminChunksDiscoveredData, GetApiAdminClaimsByIdData, GetApiAdminClaimsData, GetApiAdminClassesData, GetApiAdminConfigsByData, GetApiAdminConfigsData, GetApiAdminInstancesByIdBlocksData, GetApiAdminInstancesByIdData, GetApiAdminInstancesData, GetApiAdminItemsData, GetApiAdminNpcTypesData, GetApiAdminNpcsData, GetApiAdminPlainColorsData, GetApiAdminPlayersByNameData, GetApiAdminPlayersData, GetApiAdminScenesByIdBlocksRawData, GetApiAdminScenesByIdData, GetApiAdminScenesByIdEntitiesData, GetApiAdminScenesData, GetApiAdminSchemasByFilenameData, GetApiAdminSimulationDefaultsData, GetApiAdminSkillsData, GetApiAdminSocialFactionsByIdMembersData, GetApiAdminSocialFactionsData, GetApiAdminSocialGroupsData, GetApiAdminSocialGuildsData, GetApiAdminSocialOnlinePlayersData, GetApiAdminSocialPlayersData, GetApiAdminStatusData, GetApiAdminUsersData, GetApiAdminWorldsData, GetApiAdminWsInstancesByIdData, GetApiAdminWsNpcsData, GetApiAdminWsScenesByIdData, GetApiAdminWsSimulationData, GetApiArmorsData, GetApiAssetsManifestData, GetApiAttacksData, GetApiAuthConfigData, GetApiAutocompleteByCommandIdByArgIndexData, GetApiBiomesData, GetApiBiomesTintsData, GetApiChunksByCxByCzData, GetApiClassesData, GetApiFurnituresData, GetApiGameAssetsBbmodelExportByData, GetApiGameAssetsBlendPreviewByData, GetApiGameAssetsBlendSceneByData, GetApiGameAssetsData, GetApiGameAssetsFileByData, GetApiI18nByLocaleData, GetApiItemsMetaData, GetApiKeybindingsData, GetApiLayoutRegistryData, GetApiMacrosContextData, GetApiMapHousesData, GetApiMapRoadRasterData, GetApiMapRoadRasterPngData, GetApiMapRoadsData, GetApiMapStaircasesData, GetApiMapStateData, GetApiMapTerrainData, GetApiMapTerrainRasterPngData, GetApiMapVoronoiBordersData, GetApiMapVoronoiData, GetApiPlayerByIdArmorsData, GetApiPlayerByIdHandsData, GetApiPlayerByIdOwnedData, GetApiPlayerByIdRpgData, GetApiPlayerByIdSkinData, GetApiPlayersByEmailByEmailData, GetApiPlayersNamesData, GetApiQuestsData, GetApiServerInfoData, GetApiSiegeWeaponsData, GetApiSkinsByNameConfigData, GetApiSkinsData, GetApiSpellsData, GetApiToolsData, GetApiVehiclesByNameConfigData, GetApiWeaponsData } from "../requests/types.gen";
 
 export type GetApiAuthConfigDefaultResponse = Awaited<ReturnType<typeof getApiAuthConfig>>["data"];
 export type GetApiAuthConfigQueryResult<TData = GetApiAuthConfigDefaultResponse, TError = unknown> = UseQueryResult<TData, TError>;
@@ -430,6 +430,42 @@ export type GetApiAdminScenesByIdEntitiesQueryResult<TData = GetApiAdminScenesBy
 export const useGetApiAdminScenesByIdEntitiesKey = "GetApiAdminScenesByIdEntities";
 export const UseGetApiAdminScenesByIdEntitiesKeyFn = (clientOptions: Options<GetApiAdminScenesByIdEntitiesData, true>, queryKey?: Array<unknown>) => [useGetApiAdminScenesByIdEntitiesKey, ...(queryKey ?? [clientOptions])];
 
+export type GetApiAdminSocialOnlinePlayersDefaultResponse = Awaited<ReturnType<typeof getApiAdminSocialOnlinePlayers>>["data"];
+export type GetApiAdminSocialOnlinePlayersQueryResult<TData = GetApiAdminSocialOnlinePlayersDefaultResponse, TError = unknown> = UseQueryResult<TData, TError>;
+
+export const useGetApiAdminSocialOnlinePlayersKey = "GetApiAdminSocialOnlinePlayers";
+export const UseGetApiAdminSocialOnlinePlayersKeyFn = (clientOptions: Options<GetApiAdminSocialOnlinePlayersData, true> = {}, queryKey?: Array<unknown>) => [useGetApiAdminSocialOnlinePlayersKey, ...(queryKey ?? [clientOptions])];
+
+export type GetApiAdminSocialPlayersDefaultResponse = Awaited<ReturnType<typeof getApiAdminSocialPlayers>>["data"];
+export type GetApiAdminSocialPlayersQueryResult<TData = GetApiAdminSocialPlayersDefaultResponse, TError = unknown> = UseQueryResult<TData, TError>;
+
+export const useGetApiAdminSocialPlayersKey = "GetApiAdminSocialPlayers";
+export const UseGetApiAdminSocialPlayersKeyFn = (clientOptions: Options<GetApiAdminSocialPlayersData, true> = {}, queryKey?: Array<unknown>) => [useGetApiAdminSocialPlayersKey, ...(queryKey ?? [clientOptions])];
+
+export type GetApiAdminSocialGroupsDefaultResponse = Awaited<ReturnType<typeof getApiAdminSocialGroups>>["data"];
+export type GetApiAdminSocialGroupsQueryResult<TData = GetApiAdminSocialGroupsDefaultResponse, TError = unknown> = UseQueryResult<TData, TError>;
+
+export const useGetApiAdminSocialGroupsKey = "GetApiAdminSocialGroups";
+export const UseGetApiAdminSocialGroupsKeyFn = (clientOptions: Options<GetApiAdminSocialGroupsData, true> = {}, queryKey?: Array<unknown>) => [useGetApiAdminSocialGroupsKey, ...(queryKey ?? [clientOptions])];
+
+export type GetApiAdminSocialGuildsDefaultResponse = Awaited<ReturnType<typeof getApiAdminSocialGuilds>>["data"];
+export type GetApiAdminSocialGuildsQueryResult<TData = GetApiAdminSocialGuildsDefaultResponse, TError = unknown> = UseQueryResult<TData, TError>;
+
+export const useGetApiAdminSocialGuildsKey = "GetApiAdminSocialGuilds";
+export const UseGetApiAdminSocialGuildsKeyFn = (clientOptions: Options<GetApiAdminSocialGuildsData, true> = {}, queryKey?: Array<unknown>) => [useGetApiAdminSocialGuildsKey, ...(queryKey ?? [clientOptions])];
+
+export type GetApiAdminSocialFactionsDefaultResponse = Awaited<ReturnType<typeof getApiAdminSocialFactions>>["data"];
+export type GetApiAdminSocialFactionsQueryResult<TData = GetApiAdminSocialFactionsDefaultResponse, TError = unknown> = UseQueryResult<TData, TError>;
+
+export const useGetApiAdminSocialFactionsKey = "GetApiAdminSocialFactions";
+export const UseGetApiAdminSocialFactionsKeyFn = (clientOptions: Options<GetApiAdminSocialFactionsData, true> = {}, queryKey?: Array<unknown>) => [useGetApiAdminSocialFactionsKey, ...(queryKey ?? [clientOptions])];
+
+export type GetApiAdminSocialFactionsByIdMembersDefaultResponse = Awaited<ReturnType<typeof getApiAdminSocialFactionsByIdMembers>>["data"];
+export type GetApiAdminSocialFactionsByIdMembersQueryResult<TData = GetApiAdminSocialFactionsByIdMembersDefaultResponse, TError = unknown> = UseQueryResult<TData, TError>;
+
+export const useGetApiAdminSocialFactionsByIdMembersKey = "GetApiAdminSocialFactionsByIdMembers";
+export const UseGetApiAdminSocialFactionsByIdMembersKeyFn = (clientOptions: Options<GetApiAdminSocialFactionsByIdMembersData, true>, queryKey?: Array<unknown>) => [useGetApiAdminSocialFactionsByIdMembersKey, ...(queryKey ?? [clientOptions])];
+
 export type GetApiAdminNpcTypesDefaultResponse = Awaited<ReturnType<typeof getApiAdminNpcTypes>>["data"];
 export type GetApiAdminNpcTypesQueryResult<TData = GetApiAdminNpcTypesDefaultResponse, TError = unknown> = UseQueryResult<TData, TError>;
 
@@ -660,6 +696,81 @@ export type PutApiAdminScenesByIdLayoutMutationResult = Awaited<ReturnType<typeo
 
 export const usePutApiAdminScenesByIdLayoutKey = "PutApiAdminScenesByIdLayout";
 export const UsePutApiAdminScenesByIdLayoutKeyFn = (mutationKey?: Array<unknown>) => [usePutApiAdminScenesByIdLayoutKey, ...(mutationKey ?? [])];
+
+export type PostApiAdminSocialGroupsMutationResult = Awaited<ReturnType<typeof postApiAdminSocialGroups>>;
+
+export const usePostApiAdminSocialGroupsKey = "PostApiAdminSocialGroups";
+export const UsePostApiAdminSocialGroupsKeyFn = (mutationKey?: Array<unknown>) => [usePostApiAdminSocialGroupsKey, ...(mutationKey ?? [])];
+
+export type PostApiAdminSocialGroupsByIdMembersMutationResult = Awaited<ReturnType<typeof postApiAdminSocialGroupsByIdMembers>>;
+
+export const usePostApiAdminSocialGroupsByIdMembersKey = "PostApiAdminSocialGroupsByIdMembers";
+export const UsePostApiAdminSocialGroupsByIdMembersKeyFn = (mutationKey?: Array<unknown>) => [usePostApiAdminSocialGroupsByIdMembersKey, ...(mutationKey ?? [])];
+
+export type DeleteApiAdminSocialGroupsByIdMembersByPlayerIdMutationResult = Awaited<ReturnType<typeof deleteApiAdminSocialGroupsByIdMembersByPlayerId>>;
+
+export const useDeleteApiAdminSocialGroupsByIdMembersByPlayerIdKey = "DeleteApiAdminSocialGroupsByIdMembersByPlayerId";
+export const UseDeleteApiAdminSocialGroupsByIdMembersByPlayerIdKeyFn = (mutationKey?: Array<unknown>) => [useDeleteApiAdminSocialGroupsByIdMembersByPlayerIdKey, ...(mutationKey ?? [])];
+
+export type DeleteApiAdminSocialGroupsByIdMutationResult = Awaited<ReturnType<typeof deleteApiAdminSocialGroupsById>>;
+
+export const useDeleteApiAdminSocialGroupsByIdKey = "DeleteApiAdminSocialGroupsById";
+export const UseDeleteApiAdminSocialGroupsByIdKeyFn = (mutationKey?: Array<unknown>) => [useDeleteApiAdminSocialGroupsByIdKey, ...(mutationKey ?? [])];
+
+export type PostApiAdminSocialGuildsMutationResult = Awaited<ReturnType<typeof postApiAdminSocialGuilds>>;
+
+export const usePostApiAdminSocialGuildsKey = "PostApiAdminSocialGuilds";
+export const UsePostApiAdminSocialGuildsKeyFn = (mutationKey?: Array<unknown>) => [usePostApiAdminSocialGuildsKey, ...(mutationKey ?? [])];
+
+export type DeleteApiAdminSocialGuildsByIdMutationResult = Awaited<ReturnType<typeof deleteApiAdminSocialGuildsById>>;
+
+export const useDeleteApiAdminSocialGuildsByIdKey = "DeleteApiAdminSocialGuildsById";
+export const UseDeleteApiAdminSocialGuildsByIdKeyFn = (mutationKey?: Array<unknown>) => [useDeleteApiAdminSocialGuildsByIdKey, ...(mutationKey ?? [])];
+
+export type PutApiAdminSocialGuildsByIdMutationResult = Awaited<ReturnType<typeof putApiAdminSocialGuildsById>>;
+
+export const usePutApiAdminSocialGuildsByIdKey = "PutApiAdminSocialGuildsById";
+export const UsePutApiAdminSocialGuildsByIdKeyFn = (mutationKey?: Array<unknown>) => [usePutApiAdminSocialGuildsByIdKey, ...(mutationKey ?? [])];
+
+export type PostApiAdminSocialGuildsByIdMembersMutationResult = Awaited<ReturnType<typeof postApiAdminSocialGuildsByIdMembers>>;
+
+export const usePostApiAdminSocialGuildsByIdMembersKey = "PostApiAdminSocialGuildsByIdMembers";
+export const UsePostApiAdminSocialGuildsByIdMembersKeyFn = (mutationKey?: Array<unknown>) => [usePostApiAdminSocialGuildsByIdMembersKey, ...(mutationKey ?? [])];
+
+export type DeleteApiAdminSocialGuildsByIdMembersByPlayerIdMutationResult = Awaited<ReturnType<typeof deleteApiAdminSocialGuildsByIdMembersByPlayerId>>;
+
+export const useDeleteApiAdminSocialGuildsByIdMembersByPlayerIdKey = "DeleteApiAdminSocialGuildsByIdMembersByPlayerId";
+export const UseDeleteApiAdminSocialGuildsByIdMembersByPlayerIdKeyFn = (mutationKey?: Array<unknown>) => [useDeleteApiAdminSocialGuildsByIdMembersByPlayerIdKey, ...(mutationKey ?? [])];
+
+export type PutApiAdminSocialGuildsByIdMembersByPlayerIdMutationResult = Awaited<ReturnType<typeof putApiAdminSocialGuildsByIdMembersByPlayerId>>;
+
+export const usePutApiAdminSocialGuildsByIdMembersByPlayerIdKey = "PutApiAdminSocialGuildsByIdMembersByPlayerId";
+export const UsePutApiAdminSocialGuildsByIdMembersByPlayerIdKeyFn = (mutationKey?: Array<unknown>) => [usePutApiAdminSocialGuildsByIdMembersByPlayerIdKey, ...(mutationKey ?? [])];
+
+export type PostApiAdminSocialFactionsMutationResult = Awaited<ReturnType<typeof postApiAdminSocialFactions>>;
+
+export const usePostApiAdminSocialFactionsKey = "PostApiAdminSocialFactions";
+export const UsePostApiAdminSocialFactionsKeyFn = (mutationKey?: Array<unknown>) => [usePostApiAdminSocialFactionsKey, ...(mutationKey ?? [])];
+
+export type PutApiAdminSocialFactionsSettingsMutationResult = Awaited<ReturnType<typeof putApiAdminSocialFactionsSettings>>;
+
+export const usePutApiAdminSocialFactionsSettingsKey = "PutApiAdminSocialFactionsSettings";
+export const UsePutApiAdminSocialFactionsSettingsKeyFn = (mutationKey?: Array<unknown>) => [usePutApiAdminSocialFactionsSettingsKey, ...(mutationKey ?? [])];
+
+export type DeleteApiAdminSocialFactionsByIdMutationResult = Awaited<ReturnType<typeof deleteApiAdminSocialFactionsById>>;
+
+export const useDeleteApiAdminSocialFactionsByIdKey = "DeleteApiAdminSocialFactionsById";
+export const UseDeleteApiAdminSocialFactionsByIdKeyFn = (mutationKey?: Array<unknown>) => [useDeleteApiAdminSocialFactionsByIdKey, ...(mutationKey ?? [])];
+
+export type PostApiAdminSocialFactionsByIdMembersMutationResult = Awaited<ReturnType<typeof postApiAdminSocialFactionsByIdMembers>>;
+
+export const usePostApiAdminSocialFactionsByIdMembersKey = "PostApiAdminSocialFactionsByIdMembers";
+export const UsePostApiAdminSocialFactionsByIdMembersKeyFn = (mutationKey?: Array<unknown>) => [usePostApiAdminSocialFactionsByIdMembersKey, ...(mutationKey ?? [])];
+
+export type DeleteApiAdminSocialFactionsByIdMembersByPlayerIdMutationResult = Awaited<ReturnType<typeof deleteApiAdminSocialFactionsByIdMembersByPlayerId>>;
+
+export const useDeleteApiAdminSocialFactionsByIdMembersByPlayerIdKey = "DeleteApiAdminSocialFactionsByIdMembersByPlayerId";
+export const UseDeleteApiAdminSocialFactionsByIdMembersByPlayerIdKeyFn = (mutationKey?: Array<unknown>) => [useDeleteApiAdminSocialFactionsByIdMembersByPlayerIdKey, ...(mutationKey ?? [])];
 
 export type PostApiAdminNpcTypesReloadMutationResult = Awaited<ReturnType<typeof postApiAdminNpcTypesReload>>;
 

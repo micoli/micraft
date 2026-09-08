@@ -9,7 +9,9 @@ import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.addItems
 import org.micoli.micraft.game.session.removeItems
 import org.micoli.micraft.game.world.ItemType
+import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.social.GuildInfoDto
 import org.micoli.micraft.social.GuildPermission
 import org.micoli.micraft.social.GuildRank
 import org.micoli.micraft.social.SocialConstants
@@ -22,6 +24,8 @@ class GuildManager(
     private val chatService: ChatService,
     private val channelManager: ChatChannelManager,
     private val i18n: I18nConfig,
+    /** Player-file access so admin ops can resolve / update offline players. */
+    private val persistence: WorldPersistence? = null,
     /** Delivers leftover bank items to a (possibly offline) player, e.g. via system mail. */
     private val returnBankItems: suspend (playerName: String, items: Map<ItemType, Int>) -> Unit =
         { _, _ ->
@@ -335,5 +339,162 @@ class GuildManager(
         registry.update(guild.copy(bank = newBank, bankLog = log))
         session.addItems(mapOf(itemType to count))
         pushSync(registry.get(guild.id)!!)
+    }
+
+    // ── Admin CRUD ────────────────────────────────────────────────────────────
+
+    class AdminError(message: String) : Exception(message)
+
+    fun adminAll(): List<GuildInfoDto> {
+        val online = onlineIds()
+        return registry.all().map { it.toDto(it.ownerId, online) }
+    }
+
+    private fun setPlayerGuild(
+        playerId: String,
+        playerName: String,
+        guildId: String?,
+        rank: String?,
+        tag: String?,
+    ) {
+        sessionOf(playerId)?.let { s ->
+            s.state = s.state.copy(guildId = guildId, guildRank = rank, guildTag = tag)
+            savePlayer(s)
+            return
+        }
+        val p = persistence ?: return
+        val st = p.loadPlayerState(playerName) ?: return
+        p.savePlayerState(st.name, st.copy(guildId = guildId, guildRank = rank, guildTag = tag))
+    }
+
+    private fun resolvePlayer(name: String): Pair<String, String> {
+        getSessions()
+            .find { it.state.name.equals(name, ignoreCase = true) }
+            ?.let {
+                return it.id to it.state.name
+            }
+        val p = persistence ?: throw AdminError("Unknown player '$name'")
+        // Match on the file name or the stored display name (which may differ — spaces vs "_").
+        val st =
+            p.listPlayers()
+                .asSequence()
+                .mapNotNull { file -> p.loadPlayerState(file) }
+                .find {
+                    it.name.equals(name, ignoreCase = true) ||
+                        it.name.replace(" ", "_").equals(name, ignoreCase = true)
+                } ?: throw AdminError("Unknown player '$name'")
+        return st.id to st.name
+    }
+
+    suspend fun adminCreate(name: String, tag: String, ownerName: String): GuildInfoDto {
+        val cleanName = name.trim()
+        val cleanTag = tag.trim()
+        if (cleanName.length !in 3..SocialConstants.GUILD_NAME_MAX_LEN)
+            throw AdminError("Guild name must be 3..${SocialConstants.GUILD_NAME_MAX_LEN} chars")
+        if (cleanTag.length !in 1..SocialConstants.GUILD_TAG_MAX_LEN)
+            throw AdminError("Guild tag must be 1..${SocialConstants.GUILD_TAG_MAX_LEN} chars")
+        if (registry.byName(cleanName) != null) throw AdminError("Name already taken")
+        if (registry.byTag(cleanTag) != null) throw AdminError("Tag already taken")
+        val (ownerId, ownerCanonical) = resolvePlayer(ownerName)
+        if (registry.guildOf(ownerId) != null) throw AdminError("Owner already in a guild")
+        val ranks = defaultGuildRanks()
+        val topRank = ranks.maxByOrNull { it.order }!!
+        val now = System.currentTimeMillis()
+        val guild =
+            Guild(
+                id = UUID.randomUUID().toString(),
+                name = cleanName,
+                tag = cleanTag,
+                createdAtMs = now,
+                ownerId = ownerId,
+                ranks = ranks,
+                members = listOf(GuildMember(ownerId, ownerCanonical, topRank.name, now)),
+            )
+        registry.add(guild)
+        channelManager.registerChannel(guild.channel)
+        setPlayerGuild(ownerId, ownerCanonical, guild.id, topRank.name, guild.tag)
+        sessionOf(ownerId)?.let {
+            chatService.subscribe(it, guild.channel)
+            chatService.syncChannels(it)
+        }
+        pushSync(guild)
+        return guild.toDto(ownerId, onlineIds())
+    }
+
+    suspend fun adminUpdate(id: String, name: String?, tag: String?, motd: String?): GuildInfoDto {
+        val guild = registry.get(id) ?: throw AdminError("Guild not found")
+        val cleanName = name?.trim()?.takeIf { it.isNotEmpty() }
+        val cleanTag = tag?.trim()?.takeIf { it.isNotEmpty() }
+        if (cleanName != null && cleanName.length !in 3..SocialConstants.GUILD_NAME_MAX_LEN)
+            throw AdminError("Bad guild name")
+        if (cleanTag != null && cleanTag.length !in 1..SocialConstants.GUILD_TAG_MAX_LEN)
+            throw AdminError("Bad guild tag")
+        if (cleanName != null && registry.byName(cleanName)?.id?.let { it != id } == true)
+            throw AdminError("Name already taken")
+        if (cleanTag != null && registry.byTag(cleanTag)?.id?.let { it != id } == true)
+            throw AdminError("Tag already taken")
+        val updated =
+            guild.copy(
+                name = cleanName ?: guild.name,
+                tag = cleanTag ?: guild.tag,
+                motd = motd?.take(500) ?: guild.motd,
+            )
+        registry.update(updated)
+        if (cleanTag != null)
+            updated.members.forEach {
+                setPlayerGuild(it.playerId, it.playerName, updated.id, it.rank, updated.tag)
+            }
+        pushSync(updated)
+        return updated.toDto(updated.ownerId, onlineIds())
+    }
+
+    suspend fun adminDelete(id: String) {
+        val guild = registry.get(id) ?: throw AdminError("Guild not found")
+        dissolve(guild)
+    }
+
+    suspend fun adminAddMember(id: String, playerName: String): GuildInfoDto {
+        val guild = registry.get(id) ?: throw AdminError("Guild not found")
+        val (playerId, canonical) = resolvePlayer(playerName)
+        if (registry.guildOf(playerId) != null) throw AdminError("Player already in a guild")
+        val lowest = guild.ranks.minByOrNull { it.order }!!
+        val updated =
+            guild.copy(
+                members =
+                    guild.members +
+                        GuildMember(playerId, canonical, lowest.name, System.currentTimeMillis()))
+        registry.update(updated)
+        setPlayerGuild(playerId, canonical, updated.id, lowest.name, updated.tag)
+        sessionOf(playerId)?.let {
+            chatService.subscribe(it, updated.channel)
+            chatService.syncChannels(it)
+        }
+        pushSync(updated)
+        return updated.toDto(updated.ownerId, onlineIds())
+    }
+
+    suspend fun adminRemoveMember(id: String, playerId: String): GuildInfoDto {
+        val guild = registry.get(id) ?: throw AdminError("Guild not found")
+        val member = guild.member(playerId) ?: throw AdminError("Not a member")
+        if (playerId == guild.ownerId) throw AdminError("Cannot remove the owner; delete the guild")
+        removeMember(guild, playerId)
+        setPlayerGuild(playerId, member.playerName, null, null, null)
+        return (registry.get(id) ?: guild).toDto(guild.ownerId, onlineIds())
+    }
+
+    suspend fun adminSetRank(id: String, playerId: String, rankName: String): GuildInfoDto {
+        val guild = registry.get(id) ?: throw AdminError("Guild not found")
+        val member = guild.member(playerId) ?: throw AdminError("Not a member")
+        guild.ranks.find { it.name == rankName } ?: throw AdminError("Unknown rank '$rankName'")
+        val updated =
+            guild.copy(
+                members =
+                    guild.members.map {
+                        if (it.playerId == playerId) it.copy(rank = rankName) else it
+                    })
+        registry.update(updated)
+        setPlayerGuild(playerId, member.playerName, updated.id, rankName, updated.tag)
+        pushSync(updated)
+        return updated.toDto(updated.ownerId, onlineIds())
     }
 }

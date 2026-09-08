@@ -2910,6 +2910,310 @@ export type OrgMicoliMicraftProtocolBlockEntityProto = {
 };
 
 /**
+ * GroupInfo
+ */
+export type OrgMicoliMicraftSocialGroupInfo = {
+    /**
+     * String
+     */
+    id: string;
+    /**
+     * String
+     */
+    leaderId: string;
+    /**
+     * String
+     */
+    leaderName: string;
+    /**
+     * List<GroupMemberInfo>
+     */
+    members: Array<OrgMicoliMicraftSocialGroupMemberInfo>;
+};
+
+/**
+ * GroupMemberInfo
+ */
+export type OrgMicoliMicraftSocialGroupMemberInfo = {
+    /**
+     * Boolean
+     */
+    online: boolean;
+    /**
+     * String
+     */
+    playerId: string;
+    /**
+     * String
+     */
+    playerName: string;
+};
+
+/**
+ * SocialNameRequest
+ */
+export type OrgMicoliMicraftHttpSocialNameRequest = {
+    /**
+     * String
+     */
+    playerName: string;
+};
+
+/**
+ * GuildInfoDto
+ */
+export type OrgMicoliMicraftSocialGuildInfoDto = {
+    /**
+     * Map<ItemType,Int>
+     */
+    bank: {
+        [key: string]: number;
+    };
+    /**
+     * List<GuildBankEntryInfo>
+     */
+    bankLog: Array<OrgMicoliMicraftSocialGuildBankEntryInfo>;
+    /**
+     * Long
+     */
+    createdAtMs: number;
+    /**
+     * String
+     */
+    id: string;
+    /**
+     * List<GuildMemberInfo>
+     */
+    members: Array<OrgMicoliMicraftSocialGuildMemberInfo>;
+    /**
+     * String
+     */
+    motd: string;
+    /**
+     * Set<GuildPermission>
+     */
+    myFlags: Array<OrgMicoliMicraftSocialGuildPermission>;
+    /**
+     * String
+     */
+    myRank: string;
+    /**
+     * String
+     */
+    name: string;
+    /**
+     * String
+     */
+    ownerId: string;
+    /**
+     * List<GuildRank>
+     */
+    ranks: Array<OrgMicoliMicraftSocialGuildRank>;
+    /**
+     * String
+     */
+    tag: string;
+};
+
+/**
+ * GuildBankEntryInfo
+ */
+export type OrgMicoliMicraftSocialGuildBankEntryInfo = {
+    /**
+     * Long
+     */
+    atMs: number;
+    /**
+     * Int
+     */
+    delta: number;
+    /**
+     * String
+     */
+    itemId: string;
+    /**
+     * String
+     */
+    playerName: string;
+};
+
+/**
+ * GuildMemberInfo
+ */
+export type OrgMicoliMicraftSocialGuildMemberInfo = {
+    /**
+     * Long
+     */
+    joinedAtMs: number;
+    /**
+     * Boolean
+     */
+    online: boolean;
+    /**
+     * String
+     */
+    playerId: string;
+    /**
+     * String
+     */
+    playerName: string;
+    /**
+     * String
+     */
+    rank: string;
+};
+
+/**
+ * GuildPermission
+ */
+export type OrgMicoliMicraftSocialGuildPermission = 'INVITE' | 'KICK' | 'MANAGE_RANKS' | 'EDIT_MOTD' | 'BANK_DEPOSIT' | 'BANK_WITHDRAW' | 'DISBAND' | 'EDIT_INFO';
+
+/**
+ * GuildRank
+ */
+export type OrgMicoliMicraftSocialGuildRank = {
+    /**
+     * Set<GuildPermission>
+     */
+    flags: Array<OrgMicoliMicraftSocialGuildPermission>;
+    /**
+     * String
+     */
+    name: string;
+    /**
+     * Int
+     */
+    order: number;
+};
+
+/**
+ * GuildCreateRequest
+ */
+export type OrgMicoliMicraftHttpGuildCreateRequest = {
+    /**
+     * String
+     */
+    name: string;
+    /**
+     * String
+     */
+    ownerName: string;
+    /**
+     * String
+     */
+    tag: string;
+};
+
+/**
+ * GuildUpdateRequest
+ */
+export type OrgMicoliMicraftHttpGuildUpdateRequest = {
+    /**
+     * String
+     */
+    motd?: null | string;
+    /**
+     * String
+     */
+    name?: null | string;
+    /**
+     * String
+     */
+    tag?: null | string;
+};
+
+/**
+ * GuildRankRequest
+ */
+export type OrgMicoliMicraftHttpGuildRankRequest = {
+    /**
+     * String
+     */
+    rank: string;
+};
+
+/**
+ * FactionDefinition
+ */
+export type OrgMicoliMicraftSocialFactionDefinition = {
+    /**
+     * String
+     */
+    color: string;
+    /**
+     * String
+     */
+    description: string;
+    /**
+     * String
+     */
+    id: string;
+    /**
+     * String
+     */
+    name: string;
+    /**
+     * Int
+     */
+    spawnX?: null | number;
+    /**
+     * Int
+     */
+    spawnZ?: null | number;
+};
+
+/**
+ * FactionSettingsRequest
+ */
+export type OrgMicoliMicraftHttpFactionSettingsRequest = {
+    /**
+     * Long
+     */
+    changeCooldownSeconds: number;
+    /**
+     * Boolean
+     */
+    enabled: boolean;
+    /**
+     * Boolean
+     */
+    friendlyFire: boolean;
+    /**
+     * Double
+     */
+    spawnRingRadius: number;
+};
+
+/**
+ * FactionAdminView
+ */
+export type OrgMicoliMicraftHttpFactionAdminView = {
+    /**
+     * List<FactionDefinition>
+     */
+    list: Array<OrgMicoliMicraftSocialFactionDefinition>;
+    settings: OrgMicoliMicraftHttpFactionSettingsRequest;
+};
+
+/**
+ * SocialMemberDto
+ */
+export type OrgMicoliMicraftHttpSocialMemberDto = {
+    /**
+     * Boolean
+     */
+    online: boolean;
+    /**
+     * String
+     */
+    playerId: string;
+    /**
+     * String
+     */
+    playerName: string;
+};
+
+/**
  * NpcCodexInfo
  */
 export type OrgMicoliMicraftProtocolNpcCodexInfo = {
@@ -6225,6 +6529,677 @@ export type GetApiAdminScenesByIdEntitiesResponses = {
 };
 
 export type GetApiAdminScenesByIdEntitiesResponse = GetApiAdminScenesByIdEntitiesResponses[keyof GetApiAdminScenesByIdEntitiesResponses];
+
+export type GetApiAdminSocialOnlinePlayersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/social/online-players';
+};
+
+export type GetApiAdminSocialOnlinePlayersErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminSocialOnlinePlayersResponses = {
+    /**
+     * List<String>
+     */
+    200: Array<string>;
+};
+
+export type GetApiAdminSocialOnlinePlayersResponse = GetApiAdminSocialOnlinePlayersResponses[keyof GetApiAdminSocialOnlinePlayersResponses];
+
+export type GetApiAdminSocialPlayersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/social/players';
+};
+
+export type GetApiAdminSocialPlayersErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminSocialPlayersResponses = {
+    /**
+     * List<String>
+     */
+    200: Array<string>;
+};
+
+export type GetApiAdminSocialPlayersResponse = GetApiAdminSocialPlayersResponses[keyof GetApiAdminSocialPlayersResponses];
+
+export type GetApiAdminSocialGroupsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/social/groups';
+};
+
+export type GetApiAdminSocialGroupsErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminSocialGroupsResponses = {
+    /**
+     * List<GroupInfo>
+     */
+    200: Array<OrgMicoliMicraftSocialGroupInfo>;
+};
+
+export type GetApiAdminSocialGroupsResponse = GetApiAdminSocialGroupsResponses[keyof GetApiAdminSocialGroupsResponses];
+
+export type PostApiAdminSocialGroupsData = {
+    body?: OrgMicoliMicraftHttpSocialNameRequest;
+    path?: never;
+    query?: never;
+    url: '/api/admin/social/groups';
+};
+
+export type PostApiAdminSocialGroupsErrors = {
+    /**
+     * Leader offline / busy
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PostApiAdminSocialGroupsResponses = {
+    201: OrgMicoliMicraftSocialGroupInfo;
+};
+
+export type PostApiAdminSocialGroupsResponse = PostApiAdminSocialGroupsResponses[keyof PostApiAdminSocialGroupsResponses];
+
+export type PostApiAdminSocialGroupsByIdMembersData = {
+    body?: OrgMicoliMicraftHttpSocialNameRequest;
+    path: {
+        /**
+         * String
+         *
+         * Group id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/social/groups/{id}/members';
+};
+
+export type PostApiAdminSocialGroupsByIdMembersErrors = {
+    /**
+     * Offline / full / not found
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PostApiAdminSocialGroupsByIdMembersResponses = {
+    200: OrgMicoliMicraftSocialGroupInfo;
+};
+
+export type PostApiAdminSocialGroupsByIdMembersResponse = PostApiAdminSocialGroupsByIdMembersResponses[keyof PostApiAdminSocialGroupsByIdMembersResponses];
+
+export type DeleteApiAdminSocialGroupsByIdMembersByPlayerIdData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Group id
+         */
+        id: string;
+        /**
+         * String
+         *
+         * Member player id
+         */
+        playerId: string;
+    };
+    query?: never;
+    url: '/api/admin/social/groups/{id}/members/{playerId}';
+};
+
+export type DeleteApiAdminSocialGroupsByIdMembersByPlayerIdErrors = {
+    /**
+     * Not found
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type DeleteApiAdminSocialGroupsByIdMembersByPlayerIdResponses = {
+    204: void;
+};
+
+export type DeleteApiAdminSocialGroupsByIdMembersByPlayerIdResponse = DeleteApiAdminSocialGroupsByIdMembersByPlayerIdResponses[keyof DeleteApiAdminSocialGroupsByIdMembersByPlayerIdResponses];
+
+export type DeleteApiAdminSocialGroupsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Group id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/social/groups/{id}';
+};
+
+export type DeleteApiAdminSocialGroupsByIdErrors = {
+    /**
+     * Group not found
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type DeleteApiAdminSocialGroupsByIdResponses = {
+    204: void;
+};
+
+export type DeleteApiAdminSocialGroupsByIdResponse = DeleteApiAdminSocialGroupsByIdResponses[keyof DeleteApiAdminSocialGroupsByIdResponses];
+
+export type GetApiAdminSocialGuildsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/social/guilds';
+};
+
+export type GetApiAdminSocialGuildsErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminSocialGuildsResponses = {
+    /**
+     * List<GuildInfoDto>
+     */
+    200: Array<OrgMicoliMicraftSocialGuildInfoDto>;
+};
+
+export type GetApiAdminSocialGuildsResponse = GetApiAdminSocialGuildsResponses[keyof GetApiAdminSocialGuildsResponses];
+
+export type PostApiAdminSocialGuildsData = {
+    body?: OrgMicoliMicraftHttpGuildCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/admin/social/guilds';
+};
+
+export type PostApiAdminSocialGuildsErrors = {
+    /**
+     * Invalid name/tag/owner
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PostApiAdminSocialGuildsResponses = {
+    201: OrgMicoliMicraftSocialGuildInfoDto;
+};
+
+export type PostApiAdminSocialGuildsResponse = PostApiAdminSocialGuildsResponses[keyof PostApiAdminSocialGuildsResponses];
+
+export type DeleteApiAdminSocialGuildsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Guild id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/social/guilds/{id}';
+};
+
+export type DeleteApiAdminSocialGuildsByIdErrors = {
+    /**
+     * Guild not found
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type DeleteApiAdminSocialGuildsByIdResponses = {
+    204: void;
+};
+
+export type DeleteApiAdminSocialGuildsByIdResponse = DeleteApiAdminSocialGuildsByIdResponses[keyof DeleteApiAdminSocialGuildsByIdResponses];
+
+export type PutApiAdminSocialGuildsByIdData = {
+    body?: OrgMicoliMicraftHttpGuildUpdateRequest;
+    path: {
+        /**
+         * String
+         *
+         * Guild id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/social/guilds/{id}';
+};
+
+export type PutApiAdminSocialGuildsByIdErrors = {
+    /**
+     * Invalid / not found
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PutApiAdminSocialGuildsByIdResponses = {
+    200: OrgMicoliMicraftSocialGuildInfoDto;
+};
+
+export type PutApiAdminSocialGuildsByIdResponse = PutApiAdminSocialGuildsByIdResponses[keyof PutApiAdminSocialGuildsByIdResponses];
+
+export type PostApiAdminSocialGuildsByIdMembersData = {
+    body?: OrgMicoliMicraftHttpSocialNameRequest;
+    path: {
+        /**
+         * String
+         *
+         * Guild id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/social/guilds/{id}/members';
+};
+
+export type PostApiAdminSocialGuildsByIdMembersErrors = {
+    /**
+     * Unknown / busy player
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PostApiAdminSocialGuildsByIdMembersResponses = {
+    200: OrgMicoliMicraftSocialGuildInfoDto;
+};
+
+export type PostApiAdminSocialGuildsByIdMembersResponse = PostApiAdminSocialGuildsByIdMembersResponses[keyof PostApiAdminSocialGuildsByIdMembersResponses];
+
+export type DeleteApiAdminSocialGuildsByIdMembersByPlayerIdData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Guild id
+         */
+        id: string;
+        /**
+         * String
+         *
+         * Member player id
+         */
+        playerId: string;
+    };
+    query?: never;
+    url: '/api/admin/social/guilds/{id}/members/{playerId}';
+};
+
+export type DeleteApiAdminSocialGuildsByIdMembersByPlayerIdErrors = {
+    /**
+     * Owner / not a member
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type DeleteApiAdminSocialGuildsByIdMembersByPlayerIdResponses = {
+    200: OrgMicoliMicraftSocialGuildInfoDto;
+};
+
+export type DeleteApiAdminSocialGuildsByIdMembersByPlayerIdResponse = DeleteApiAdminSocialGuildsByIdMembersByPlayerIdResponses[keyof DeleteApiAdminSocialGuildsByIdMembersByPlayerIdResponses];
+
+export type PutApiAdminSocialGuildsByIdMembersByPlayerIdData = {
+    body?: OrgMicoliMicraftHttpGuildRankRequest;
+    path: {
+        /**
+         * String
+         *
+         * Guild id
+         */
+        id: string;
+        /**
+         * String
+         *
+         * Member player id
+         */
+        playerId: string;
+    };
+    query?: never;
+    url: '/api/admin/social/guilds/{id}/members/{playerId}';
+};
+
+export type PutApiAdminSocialGuildsByIdMembersByPlayerIdErrors = {
+    /**
+     * Unknown rank / member
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PutApiAdminSocialGuildsByIdMembersByPlayerIdResponses = {
+    200: OrgMicoliMicraftSocialGuildInfoDto;
+};
+
+export type PutApiAdminSocialGuildsByIdMembersByPlayerIdResponse = PutApiAdminSocialGuildsByIdMembersByPlayerIdResponses[keyof PutApiAdminSocialGuildsByIdMembersByPlayerIdResponses];
+
+export type GetApiAdminSocialFactionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/social/factions';
+};
+
+export type GetApiAdminSocialFactionsErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminSocialFactionsResponses = {
+    200: OrgMicoliMicraftHttpFactionAdminView;
+};
+
+export type GetApiAdminSocialFactionsResponse = GetApiAdminSocialFactionsResponses[keyof GetApiAdminSocialFactionsResponses];
+
+export type PostApiAdminSocialFactionsData = {
+    body?: OrgMicoliMicraftSocialFactionDefinition;
+    path?: never;
+    query?: never;
+    url: '/api/admin/social/factions';
+};
+
+export type PostApiAdminSocialFactionsErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PostApiAdminSocialFactionsResponses = {
+    204: void;
+};
+
+export type PostApiAdminSocialFactionsResponse = PostApiAdminSocialFactionsResponses[keyof PostApiAdminSocialFactionsResponses];
+
+export type PutApiAdminSocialFactionsSettingsData = {
+    body?: OrgMicoliMicraftHttpFactionSettingsRequest;
+    path?: never;
+    query?: never;
+    url: '/api/admin/social/factions/settings';
+};
+
+export type PutApiAdminSocialFactionsSettingsErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PutApiAdminSocialFactionsSettingsResponses = {
+    204: void;
+};
+
+export type PutApiAdminSocialFactionsSettingsResponse = PutApiAdminSocialFactionsSettingsResponses[keyof PutApiAdminSocialFactionsSettingsResponses];
+
+export type DeleteApiAdminSocialFactionsByIdData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Faction id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/social/factions/{id}';
+};
+
+export type DeleteApiAdminSocialFactionsByIdErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type DeleteApiAdminSocialFactionsByIdResponses = {
+    204: void;
+};
+
+export type DeleteApiAdminSocialFactionsByIdResponse = DeleteApiAdminSocialFactionsByIdResponses[keyof DeleteApiAdminSocialFactionsByIdResponses];
+
+export type GetApiAdminSocialFactionsByIdMembersData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Faction id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/social/factions/{id}/members';
+};
+
+export type GetApiAdminSocialFactionsByIdMembersErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminSocialFactionsByIdMembersResponses = {
+    /**
+     * List<SocialMemberDto>
+     */
+    200: Array<OrgMicoliMicraftHttpSocialMemberDto>;
+};
+
+export type GetApiAdminSocialFactionsByIdMembersResponse = GetApiAdminSocialFactionsByIdMembersResponses[keyof GetApiAdminSocialFactionsByIdMembersResponses];
+
+export type PostApiAdminSocialFactionsByIdMembersData = {
+    body?: OrgMicoliMicraftHttpSocialNameRequest;
+    path: {
+        /**
+         * String
+         *
+         * Faction id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/social/factions/{id}/members';
+};
+
+export type PostApiAdminSocialFactionsByIdMembersErrors = {
+    /**
+     * Unknown player / faction
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PostApiAdminSocialFactionsByIdMembersResponses = {
+    204: void;
+};
+
+export type PostApiAdminSocialFactionsByIdMembersResponse = PostApiAdminSocialFactionsByIdMembersResponses[keyof PostApiAdminSocialFactionsByIdMembersResponses];
+
+export type DeleteApiAdminSocialFactionsByIdMembersByPlayerIdData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Faction id
+         */
+        id: string;
+        /**
+         * String
+         *
+         * Member player id
+         */
+        playerId: string;
+    };
+    query?: never;
+    url: '/api/admin/social/factions/{id}/members/{playerId}';
+};
+
+export type DeleteApiAdminSocialFactionsByIdMembersByPlayerIdErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type DeleteApiAdminSocialFactionsByIdMembersByPlayerIdResponses = {
+    204: void;
+};
+
+export type DeleteApiAdminSocialFactionsByIdMembersByPlayerIdResponse = DeleteApiAdminSocialFactionsByIdMembersByPlayerIdResponses[keyof DeleteApiAdminSocialFactionsByIdMembersByPlayerIdResponses];
 
 export type GetApiAdminNpcTypesData = {
     body?: never;

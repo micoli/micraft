@@ -121,6 +121,67 @@ class FactionManagerTest {
     }
 
     @Test
+    fun `admin upsert and delete faction definitions`() = runBlocking {
+        val fm = mgr(emptyList(), twoFactions)
+        fm.adminUpsert(FactionDefinition("green", "Green", color = "#0f0"))
+        assertEquals(3, fm.adminList().size)
+        assertEquals("#0f0", fm.adminList().first { it.id == "green" }.color)
+
+        fm.adminUpsert(FactionDefinition("green", "Greener"))
+        assertEquals(3, fm.adminList().size)
+        assertEquals("Greener", fm.adminList().first { it.id == "green" }.name)
+
+        fm.adminDelete("green")
+        assertNull(fm.adminList().firstOrNull { it.id == "green" })
+    }
+
+    @Test
+    fun `admin join and leave online player, no cooldown`() = runBlocking {
+        val a = testSession(id = "a", name = "A")
+        val fm = mgr(listOf(a), twoFactions.copy(changeCooldownSeconds = 3600))
+
+        fm.adminJoin("A", "red")
+        assertEquals("red", a.state.factionId)
+        assertEquals(listOf("a"), fm.adminMembers("red").map { it.playerId })
+
+        // cooldown ignored by admin
+        fm.adminJoin("A", "blue")
+        assertEquals("blue", a.state.factionId)
+        assertTrue(fm.adminMembers("red").isEmpty())
+
+        fm.adminLeave("a")
+        assertNull(a.state.factionId)
+        assertTrue(fm.adminMembers("blue").isEmpty())
+    }
+
+    @Test
+    fun `admin join unknown faction rejected`() = runBlocking {
+        val a = testSession(id = "a", name = "A")
+        val fm = mgr(listOf(a), twoFactions)
+        var failed = false
+        try {
+            fm.adminJoin("A", "purple")
+        } catch (e: FactionManager.AdminError) {
+            failed = true
+        }
+        assertTrue(failed)
+    }
+
+    @Test
+    fun `admin set settings toggles enabled`() = runBlocking {
+        val a = testSession(id = "a", name = "A")
+        val fm = mgr(listOf(a), twoFactions)
+        fm.setAffiliation(a, "red")
+        fm.adminSetSettings(
+            enabled = false,
+            friendlyFire = false,
+            changeCooldownSeconds = 0,
+            spawnRingRadius = 384.0)
+        assertTrue(!fm.isEnabled())
+        assertNull(a.state.factionId)
+    }
+
+    @Test
     fun `sameFaction is false across different factions`() = runBlocking {
         val a = testSession(id = "a", name = "A")
         val b = testSession(id = "b", name = "B")

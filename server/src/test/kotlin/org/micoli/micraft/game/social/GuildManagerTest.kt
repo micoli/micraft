@@ -91,6 +91,44 @@ class GuildManagerTest {
     }
 
     @Test
+    fun `admin CRUD - create, add member, set rank, remove, delete`() = runBlocking {
+        val a = testSession(id = "a", name = "A")
+        val b = testSession(id = "b", name = "B")
+        val ctx = Ctx(listOf(a, b))
+
+        val dto = ctx.gm.adminCreate("Admins", "ADM", "A")
+        assertEquals("A", ctx.registry.guildOf(a.id)!!.member(a.id)!!.playerName)
+        assertEquals("Master", a.state.guildRank)
+
+        ctx.gm.adminAddMember(dto.id, "B")
+        assertEquals(ctx.registry.get(dto.id)!!.id, b.state.guildId)
+
+        ctx.gm.adminSetRank(dto.id, b.id, "Officer")
+        assertEquals("Officer", b.state.guildRank)
+
+        ctx.gm.adminRemoveMember(dto.id, b.id)
+        assertNull(b.state.guildId)
+
+        ctx.gm.adminDelete(dto.id)
+        assertNull(a.state.guildId)
+        assertTrue(ctx.registry.all().isEmpty())
+    }
+
+    @Test
+    fun `admin add member rejects unknown player`() = runBlocking {
+        val a = testSession(id = "a", name = "A")
+        val ctx = Ctx(listOf(a))
+        val dto = ctx.gm.adminCreate("Solo2", "SL2", "A")
+        var failed = false
+        try {
+            ctx.gm.adminAddMember(dto.id, "ghost")
+        } catch (e: GuildManager.AdminError) {
+            failed = true
+        }
+        assertTrue(failed)
+    }
+
+    @Test
     fun `owner cannot leave with members present`() = runBlocking {
         val a = testSession(id = "a", name = "A")
         val b = testSession(id = "b", name = "B")

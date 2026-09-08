@@ -32,6 +32,7 @@ export const en = {
   "nav.worldSimulator": "World simulator",
   "nav.auctions": "Auctions",
   "nav.claims": "Claims",
+  "nav.social": "Social",
 
   "page.status": "Server Status",
   "page.users": "Users",
@@ -47,6 +48,10 @@ export const en = {
   "page.worldSimulator": "World simulator",
   "page.auctions": "Auction House",
   "page.claims": "Land Claims",
+  "page.social": "Social",
+  "administration.tabGroups": "Groups",
+  "administration.tabGuilds": "Guilds",
+  "administration.tabFactions": "Factions",
 
   // ── Shared ──────────────────────────────────────────────────────────────────
   "common.loading": "Loading…",

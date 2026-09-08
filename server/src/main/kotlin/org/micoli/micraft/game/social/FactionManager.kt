@@ -32,9 +32,12 @@ class FactionManager(
     @Volatile private var changeCooldownMs = 0L
     @Volatile private var defs: List<FactionDefinition> = emptyList()
     @Volatile private var factionSpawns: Map<String, Vec3> = emptyMap()
+    @Volatile private var currentSection: FactionsSection = FactionsSection()
     private val counts = ConcurrentHashMap<String, Int>()
 
     fun applyConfig(section: FactionsSection) {
+        val section = persistence?.loadFactions() ?: section
+        currentSection = section
         enabled = section.enabled
         friendlyFire = section.friendlyFire
         changeCooldownMs = section.changeCooldownSeconds * 1000L
@@ -161,5 +164,124 @@ class FactionManager(
 
     private suspend fun broadcastStates() {
         getSessions().forEach { sendSync(it) }
+    }
+
+    // ── Admin CRUD ────────────────────────────────────────────────────────────
+
+    fun adminSettings(): FactionsSection = currentSection
+
+    fun adminList(): List<FactionDefinition> = currentSection.list
+
+    private suspend fun adminApply(section: FactionsSection) {
+        persistence?.saveFactions(section)
+        applyConfig(section)
+        reconcile()
+        broadcastStates()
+    }
+
+    suspend fun adminSetSettings(
+        enabled: Boolean,
+        friendlyFire: Boolean,
+        changeCooldownSeconds: Long,
+        spawnRingRadius: Double,
+    ) {
+        adminApply(
+            currentSection.copy(
+                enabled = enabled,
+                friendlyFire = friendlyFire,
+                changeCooldownSeconds = changeCooldownSeconds,
+                spawnRingRadius = spawnRingRadius,
+            ))
+    }
+
+    /** Create or replace a faction definition (matched by id). */
+    suspend fun adminUpsert(def: FactionDefinition) {
+        val list = currentSection.list.filterNot { it.id == def.id } + def
+        adminApply(currentSection.copy(list = list))
+    }
+
+    suspend fun adminDelete(id: String) {
+        adminApply(currentSection.copy(list = currentSection.list.filterNot { it.id == id }))
+    }
+
+    class AdminError(message: String) : Exception(message)
+
+    data class AdminMember(val playerId: String, val playerName: String, val online: Boolean)
+
+    fun adminMembers(factionId: String): List<AdminMember> {
+        val onlineIds = getSessions().map { it.id }.toSet()
+        val out = LinkedHashMap<String, AdminMember>()
+        getSessions()
+            .filter { it.state.factionId == factionId }
+            .forEach { out[it.id] = AdminMember(it.id, it.state.name, true) }
+        persistence
+            ?.allPlayerStates()
+            ?.filter { it.factionId == factionId }
+            ?.forEach { out.putIfAbsent(it.id, AdminMember(it.id, it.name, it.id in onlineIds)) }
+        return out.values.sortedBy { it.playerName.lowercase() }
+    }
+
+    private fun resolvePlayer(name: String): Pair<String, String> {
+        getSessions()
+            .find { it.state.name.equals(name, ignoreCase = true) }
+            ?.let {
+                return it.id to it.state.name
+            }
+        val p = persistence ?: throw AdminError("Unknown player '$name'")
+        val st =
+            p.listPlayers()
+                .asSequence()
+                .mapNotNull { p.loadPlayerState(it) }
+                .find {
+                    it.name.equals(name, ignoreCase = true) ||
+                        it.name.replace(" ", "_").equals(name, ignoreCase = true)
+                } ?: throw AdminError("Unknown player '$name'")
+        return st.id to st.name
+    }
+
+    suspend fun adminJoin(playerName: String, factionId: String) {
+        if (defs.none { it.id == factionId }) throw AdminError("Unknown faction '$factionId'")
+        val (id, name) = resolvePlayer(playerName)
+        applyFaction(id, name, factionId)
+    }
+
+    suspend fun adminLeave(playerId: String) {
+        val name =
+            getSessions().find { it.id == playerId }?.state?.name
+                ?: persistence?.allPlayerStates()?.find { it.id == playerId }?.name
+                ?: return
+        applyFaction(playerId, name, null)
+    }
+
+    private suspend fun applyFaction(playerId: String, playerName: String, factionId: String?) {
+        val session = getSessions().find { it.id == playerId }
+        val previous =
+            session?.state?.factionId
+                ?: persistence?.allPlayerStates()?.find { it.id == playerId }?.factionId
+        if (previous == factionId) return
+        previous?.let { counts.merge(it, -1) { a, b -> a + b } }
+        factionId?.let {
+            counts.merge(it, 1) { a, b -> a + b }
+            channelManager.registerChannel("faction:$it")
+        }
+        val now = System.currentTimeMillis()
+        if (session != null) {
+            previous?.let { chatService.forceUnsubscribe(session, "faction:$it") }
+            factionId?.let { chatService.subscribe(session, "faction:$it") }
+            val firstJoinSpawn =
+                if (previous == null && factionId != null) factionSpawns[factionId] else null
+            session.state =
+                session.state.copy(
+                    factionId = factionId,
+                    factionChangedAtMs = now,
+                    pos = firstJoinSpawn ?: session.state.pos)
+            savePlayer(session)
+            chatService.syncChannels(session)
+        } else {
+            val p = persistence ?: return
+            val st = p.allPlayerStates().find { it.id == playerId } ?: return
+            p.savePlayerState(st.name, st.copy(factionId = factionId, factionChangedAtMs = now))
+        }
+        broadcastStates()
     }
 }

@@ -226,4 +226,46 @@ class GroupManager(
 
     fun memberIds(groupId: String): Set<String> =
         groups[groupId]?.members?.map { it.playerId }?.toSet() ?: emptySet()
+
+    // ── Admin CRUD ────────────────────────────────────────────────────────────
+
+    fun adminAll(): List<GroupInfo> = groups.values.map { toInfo(it) }
+
+    class AdminError(message: String) : Exception(message)
+
+    /** Create a group led by an online player. */
+    suspend fun adminCreate(leaderName: String): GroupInfo {
+        val leader =
+            getSessions().find { it.state.name.equals(leaderName, ignoreCase = true) }
+                ?: throw AdminError("Player '$leaderName' is not online")
+        if (groupOf(leader.id) != null) throw AdminError("Player already in a group")
+        create(leader)
+        return toInfo(groupOf(leader.id)!!)
+    }
+
+    suspend fun adminAddMember(groupId: String, playerName: String): GroupInfo {
+        val group = groups[groupId] ?: throw AdminError("Group not found")
+        val target =
+            getSessions().find { it.state.name.equals(playerName, ignoreCase = true) }
+                ?: throw AdminError("Player '$playerName' is not online")
+        if (groupOf(target.id) != null) throw AdminError("Player already in a group")
+        if (group.members.size >= SocialConstants.GROUP_MAX_SIZE) throw AdminError("Group is full")
+        group.members.add(GroupMember(target.id, target.state.name))
+        channelManager.registerChannel(group.channel)
+        chatService.subscribe(target, group.channel)
+        chatService.syncChannels(target)
+        pushSync(group)
+        return toInfo(group)
+    }
+
+    suspend fun adminRemoveMember(groupId: String, playerId: String) {
+        val group = groups[groupId] ?: throw AdminError("Group not found")
+        if (group.members.none { it.playerId == playerId }) throw AdminError("Not a member")
+        removeMember(group, playerId)
+    }
+
+    suspend fun adminDisband(groupId: String) {
+        val group = groups[groupId] ?: throw AdminError("Group not found")
+        dissolve(group)
+    }
 }

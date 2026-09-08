@@ -4646,6 +4646,461 @@ export const org_micoli_micraft_protocol_BlockEntityProtoSchema = {
     title: 'BlockEntityProto'
 } as const;
 
+export const org_micoli_micraft_social_GroupInfoSchema = {
+    type: 'object',
+    properties: {
+        id: {
+            type: 'string',
+            title: 'String'
+        },
+        leaderId: {
+            type: 'string',
+            title: 'String'
+        },
+        leaderName: {
+            type: 'string',
+            title: 'String'
+        },
+        members: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.social.GroupMemberInfo'
+            },
+            title: 'List<GroupMemberInfo>'
+        }
+    },
+    required: [
+        'id',
+        'leaderId',
+        'leaderName',
+        'members'
+    ],
+    title: 'GroupInfo'
+} as const;
+
+export const org_micoli_micraft_social_GroupMemberInfoSchema = {
+    type: 'object',
+    properties: {
+        online: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        playerId: {
+            type: 'string',
+            title: 'String'
+        },
+        playerName: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'online',
+        'playerId',
+        'playerName'
+    ],
+    title: 'GroupMemberInfo'
+} as const;
+
+export const org_micoli_micraft_http_SocialNameRequestSchema = {
+    type: 'object',
+    properties: {
+        playerName: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'playerName'
+    ],
+    title: 'SocialNameRequest'
+} as const;
+
+export const org_micoli_micraft_social_GuildInfoDtoSchema = {
+    type: 'object',
+    properties: {
+        bank: {
+            type: 'object',
+            additionalProperties: {
+                type: 'integer',
+                format: 'int32',
+                title: 'Int'
+            },
+            title: 'Map<ItemType,Int>'
+        },
+        bankLog: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.social.GuildBankEntryInfo'
+            },
+            title: 'List<GuildBankEntryInfo>'
+        },
+        createdAtMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        id: {
+            type: 'string',
+            title: 'String'
+        },
+        members: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.social.GuildMemberInfo'
+            },
+            title: 'List<GuildMemberInfo>'
+        },
+        motd: {
+            type: 'string',
+            title: 'String'
+        },
+        myFlags: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.social.GuildPermission'
+            },
+            title: 'Set<GuildPermission>',
+            uniqueItems: true
+        },
+        myRank: {
+            type: 'string',
+            title: 'String'
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        },
+        ownerId: {
+            type: 'string',
+            title: 'String'
+        },
+        ranks: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.social.GuildRank'
+            },
+            title: 'List<GuildRank>'
+        },
+        tag: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'bank',
+        'bankLog',
+        'createdAtMs',
+        'id',
+        'members',
+        'motd',
+        'myFlags',
+        'myRank',
+        'name',
+        'ownerId',
+        'ranks',
+        'tag'
+    ],
+    title: 'GuildInfoDto'
+} as const;
+
+export const org_micoli_micraft_social_GuildBankEntryInfoSchema = {
+    type: 'object',
+    properties: {
+        atMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        delta: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        itemId: {
+            type: 'string',
+            title: 'String'
+        },
+        playerName: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'atMs',
+        'delta',
+        'itemId',
+        'playerName'
+    ],
+    title: 'GuildBankEntryInfo'
+} as const;
+
+export const org_micoli_micraft_social_GuildMemberInfoSchema = {
+    type: 'object',
+    properties: {
+        joinedAtMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        online: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        playerId: {
+            type: 'string',
+            title: 'String'
+        },
+        playerName: {
+            type: 'string',
+            title: 'String'
+        },
+        rank: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'joinedAtMs',
+        'online',
+        'playerId',
+        'playerName',
+        'rank'
+    ],
+    title: 'GuildMemberInfo'
+} as const;
+
+export const org_micoli_micraft_social_GuildPermissionSchema = {
+    type: 'string',
+    enum: [
+        'INVITE',
+        'KICK',
+        'MANAGE_RANKS',
+        'EDIT_MOTD',
+        'BANK_DEPOSIT',
+        'BANK_WITHDRAW',
+        'DISBAND',
+        'EDIT_INFO'
+    ],
+    title: 'GuildPermission'
+} as const;
+
+export const org_micoli_micraft_social_GuildRankSchema = {
+    type: 'object',
+    properties: {
+        flags: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.social.GuildPermission'
+            },
+            title: 'Set<GuildPermission>',
+            uniqueItems: true
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        },
+        order: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        }
+    },
+    required: [
+        'flags',
+        'name',
+        'order'
+    ],
+    title: 'GuildRank'
+} as const;
+
+export const org_micoli_micraft_http_GuildCreateRequestSchema = {
+    type: 'object',
+    properties: {
+        name: {
+            type: 'string',
+            title: 'String'
+        },
+        ownerName: {
+            type: 'string',
+            title: 'String'
+        },
+        tag: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'name',
+        'ownerName',
+        'tag'
+    ],
+    title: 'GuildCreateRequest'
+} as const;
+
+export const org_micoli_micraft_http_GuildUpdateRequestSchema = {
+    type: 'object',
+    properties: {
+        motd: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        name: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        tag: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        }
+    },
+    title: 'GuildUpdateRequest'
+} as const;
+
+export const org_micoli_micraft_http_GuildRankRequestSchema = {
+    type: 'object',
+    properties: {
+        rank: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'rank'
+    ],
+    title: 'GuildRankRequest'
+} as const;
+
+export const org_micoli_micraft_social_FactionDefinitionSchema = {
+    type: 'object',
+    properties: {
+        color: {
+            type: 'string',
+            title: 'String'
+        },
+        description: {
+            type: 'string',
+            title: 'String'
+        },
+        id: {
+            type: 'string',
+            title: 'String'
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        },
+        spawnX: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int32',
+            title: 'Int'
+        },
+        spawnZ: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int32',
+            title: 'Int'
+        }
+    },
+    required: [
+        'color',
+        'description',
+        'id',
+        'name'
+    ],
+    title: 'FactionDefinition'
+} as const;
+
+export const org_micoli_micraft_http_FactionSettingsRequestSchema = {
+    type: 'object',
+    properties: {
+        changeCooldownSeconds: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        enabled: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        friendlyFire: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        spawnRingRadius: {
+            type: 'number',
+            format: 'double',
+            title: 'Double'
+        }
+    },
+    required: [
+        'changeCooldownSeconds',
+        'enabled',
+        'friendlyFire',
+        'spawnRingRadius'
+    ],
+    title: 'FactionSettingsRequest'
+} as const;
+
+export const org_micoli_micraft_http_FactionAdminViewSchema = {
+    type: 'object',
+    properties: {
+        list: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.social.FactionDefinition'
+            },
+            title: 'List<FactionDefinition>'
+        },
+        settings: {
+            $ref: '#/components/schemas/org.micoli.micraft.http.FactionSettingsRequest'
+        }
+    },
+    required: [
+        'list',
+        'settings'
+    ],
+    title: 'FactionAdminView'
+} as const;
+
+export const org_micoli_micraft_http_SocialMemberDtoSchema = {
+    type: 'object',
+    properties: {
+        online: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        playerId: {
+            type: 'string',
+            title: 'String'
+        },
+        playerName: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'online',
+        'playerId',
+        'playerName'
+    ],
+    title: 'SocialMemberDto'
+} as const;
+
 export const org_micoli_micraft_protocol_NpcCodexInfoSchema = {
     type: 'object',
     properties: {

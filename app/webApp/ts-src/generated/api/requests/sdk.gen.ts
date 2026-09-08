@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteApiAdminClaimsByIdData, DeleteApiAdminClaimsByIdErrors, DeleteApiAdminClaimsByIdResponses, DeleteApiAdminInstancesByIdData, DeleteApiAdminInstancesByIdErrors, DeleteApiAdminInstancesByIdResponses, DeleteApiAdminScenesByIdData, DeleteApiAdminScenesByIdErrors, DeleteApiAdminScenesByIdResponses, DeleteApiAdminUsersByEmailData, DeleteApiAdminUsersByEmailErrors, DeleteApiAdminUsersByEmailResponses, DeleteApiGameAssetsBlendCacheByData, DeleteApiGameAssetsBlendCacheByErrors, DeleteApiGameAssetsBlendCacheByResponses, GetApiAdminAuctionsData, GetApiAdminAuctionsErrors, GetApiAdminAuctionsResponses, GetApiAdminBlocksData, GetApiAdminBlocksErrors, GetApiAdminBlocksResponses, GetApiAdminChunksDiscoveredData, GetApiAdminChunksDiscoveredErrors, GetApiAdminChunksDiscoveredResponses, GetApiAdminClaimsByIdData, GetApiAdminClaimsByIdErrors, GetApiAdminClaimsByIdResponses, GetApiAdminClaimsData, GetApiAdminClaimsErrors, GetApiAdminClaimsResponses, GetApiAdminClassesData, GetApiAdminClassesErrors, GetApiAdminClassesResponses, GetApiAdminConfigsByData, GetApiAdminConfigsByErrors, GetApiAdminConfigsByResponses, GetApiAdminConfigsData, GetApiAdminConfigsErrors, GetApiAdminConfigsResponses, GetApiAdminInstancesByIdBlocksData, GetApiAdminInstancesByIdBlocksErrors, GetApiAdminInstancesByIdBlocksResponses, GetApiAdminInstancesByIdData, GetApiAdminInstancesByIdErrors, GetApiAdminInstancesByIdResponses, GetApiAdminInstancesData, GetApiAdminInstancesErrors, GetApiAdminInstancesResponses, GetApiAdminItemsData, GetApiAdminItemsErrors, GetApiAdminItemsResponses, GetApiAdminNpcsData, GetApiAdminNpcsErrors, GetApiAdminNpcsResponses, GetApiAdminNpcTypesData, GetApiAdminNpcTypesErrors, GetApiAdminNpcTypesResponses, GetApiAdminPlainColorsData, GetApiAdminPlainColorsErrors, GetApiAdminPlainColorsResponses, GetApiAdminPlayersByNameData, GetApiAdminPlayersByNameErrors, GetApiAdminPlayersByNameResponses, GetApiAdminPlayersData, GetApiAdminPlayersErrors, GetApiAdminPlayersResponses, GetApiAdminScenesByIdBlocksRawData, GetApiAdminScenesByIdBlocksRawErrors, GetApiAdminScenesByIdBlocksRawResponses, GetApiAdminScenesByIdData, GetApiAdminScenesByIdEntitiesData, GetApiAdminScenesByIdEntitiesErrors, GetApiAdminScenesByIdEntitiesResponses, GetApiAdminScenesByIdErrors, GetApiAdminScenesByIdResponses, GetApiAdminScenesData, GetApiAdminScenesErrors, GetApiAdminScenesResponses, GetApiAdminSchemasByFilenameData, GetApiAdminSchemasByFilenameErrors, GetApiAdminSchemasByFilenameResponses, GetApiAdminSimulationDefaultsData, GetApiAdminSimulationDefaultsErrors, GetApiAdminSimulationDefaultsResponses, GetApiAdminSkillsData, GetApiAdminSkillsErrors, GetApiAdminSkillsResponses, GetApiAdminStatusData, GetApiAdminStatusErrors, GetApiAdminStatusResponses, GetApiAdminUsersData, GetApiAdminUsersErrors, GetApiAdminUsersResponses, GetApiAdminWorldsData, GetApiAdminWorldsErrors, GetApiAdminWorldsResponses, GetApiAdminWsInstancesByIdData, GetApiAdminWsNpcsData, GetApiAdminWsScenesByIdData, GetApiAdminWsSimulationData, GetApiArmorsData, GetApiArmorsResponses, GetApiAssetsManifestData, GetApiAttacksData, GetApiAttacksResponses, GetApiAuthConfigData, GetApiAuthConfigResponses, GetApiAutocompleteByCommandIdByArgIndexData, GetApiAutocompleteByCommandIdByArgIndexErrors, GetApiAutocompleteByCommandIdByArgIndexResponses, GetApiBiomesData, GetApiBiomesResponses, GetApiBiomesTintsData, GetApiBiomesTintsResponses, GetApiChunksByCxByCzData, GetApiChunksByCxByCzErrors, GetApiChunksByCxByCzResponses, GetApiClassesData, GetApiClassesResponses, GetApiFurnituresData, GetApiFurnituresResponses, GetApiGameAssetsBbmodelExportByData, GetApiGameAssetsBbmodelExportByErrors, GetApiGameAssetsBbmodelExportByResponses, GetApiGameAssetsBlendPreviewByData, GetApiGameAssetsBlendPreviewByErrors, GetApiGameAssetsBlendPreviewByResponses, GetApiGameAssetsBlendSceneByData, GetApiGameAssetsBlendSceneByErrors, GetApiGameAssetsBlendSceneByResponses, GetApiGameAssetsData, GetApiGameAssetsFileByData, GetApiGameAssetsFileByErrors, GetApiGameAssetsFileByResponses, GetApiGameAssetsResponses, GetApiI18nByLocaleData, GetApiI18nByLocaleResponses, GetApiItemsMetaData, GetApiItemsMetaResponses, GetApiKeybindingsData, GetApiKeybindingsResponses, GetApiLayoutRegistryData, GetApiLayoutRegistryResponses, GetApiMacrosContextData, GetApiMacrosContextResponses, GetApiMapHousesData, GetApiMapHousesErrors, GetApiMapHousesResponses, GetApiMapRoadRasterData, GetApiMapRoadRasterErrors, GetApiMapRoadRasterPngData, GetApiMapRoadRasterPngErrors, GetApiMapRoadRasterPngResponses, GetApiMapRoadRasterResponses, GetApiMapRoadsData, GetApiMapRoadsErrors, GetApiMapRoadsResponses, GetApiMapStaircasesData, GetApiMapStaircasesErrors, GetApiMapStaircasesResponses, GetApiMapStateData, GetApiMapStateErrors, GetApiMapStateResponses, GetApiMapTerrainData, GetApiMapTerrainErrors, GetApiMapTerrainRasterPngData, GetApiMapTerrainRasterPngResponses, GetApiMapTerrainResponses, GetApiMapVoronoiBordersData, GetApiMapVoronoiBordersErrors, GetApiMapVoronoiBordersResponses, GetApiMapVoronoiData, GetApiMapVoronoiErrors, GetApiMapVoronoiResponses, GetApiPlayerByIdArmorsData, GetApiPlayerByIdArmorsResponses, GetApiPlayerByIdHandsData, GetApiPlayerByIdHandsResponses, GetApiPlayerByIdOwnedData, GetApiPlayerByIdOwnedResponses, GetApiPlayerByIdRpgData, GetApiPlayerByIdRpgErrors, GetApiPlayerByIdRpgResponses, GetApiPlayerByIdSkinData, GetApiPlayerByIdSkinErrors, GetApiPlayerByIdSkinResponses, GetApiPlayersByEmailByEmailData, GetApiPlayersByEmailByEmailErrors, GetApiPlayersByEmailByEmailResponses, GetApiPlayersNamesData, GetApiPlayersNamesResponses, GetApiQuestsData, GetApiQuestsResponses, GetApiServerInfoData, GetApiServerInfoResponses, GetApiSiegeWeaponsData, GetApiSiegeWeaponsResponses, GetApiSkinsByNameConfigData, GetApiSkinsByNameConfigErrors, GetApiSkinsByNameConfigResponses, GetApiSkinsData, GetApiSkinsResponses, GetApiSpellsData, GetApiSpellsResponses, GetApiToolsData, GetApiToolsResponses, GetApiVehiclesByNameConfigData, GetApiVehiclesByNameConfigErrors, GetApiVehiclesByNameConfigResponses, GetApiWeaponsData, GetApiWeaponsResponses, PostApiAdminAuctionsByIdForceCancelData, PostApiAdminAuctionsByIdForceCancelErrors, PostApiAdminAuctionsByIdForceCancelResponses, PostApiAdminInstancesData, PostApiAdminInstancesErrors, PostApiAdminInstancesResponses, PostApiAdminNpcTypesReloadData, PostApiAdminNpcTypesReloadErrors, PostApiAdminNpcTypesReloadResponses, PostApiAdminPlayersByNameGiveData, PostApiAdminPlayersByNameGiveErrors, PostApiAdminPlayersByNameGiveResponses, PostApiAdminPlayersByNameRenameData, PostApiAdminPlayersByNameRenameErrors, PostApiAdminPlayersByNameRenameResponses, PostApiAdminPlayersData, PostApiAdminPlayersErrors, PostApiAdminPlayersResponses, PostApiAdminReloadData, PostApiAdminReloadErrors, PostApiAdminReloadResponses, PostApiAdminRestartData, PostApiAdminRestartErrors, PostApiAdminRestartResponses, PostApiAdminScenesByIdDuplicateData, PostApiAdminScenesByIdDuplicateErrors, PostApiAdminScenesByIdDuplicateResponses, PostApiAdminScenesData, PostApiAdminScenesErrors, PostApiAdminScenesResponses, PostApiAdminUsersData, PostApiAdminUsersErrors, PostApiAdminUsersResponses, PostApiAdminWorldsData, PostApiAdminWorldsErrors, PostApiAdminWorldsResponses, PostApiAssetsReloadData, PostApiCharacterCreateData, PostApiCharacterCreateErrors, PostApiCharacterCreateResponses, PostApiCharacterRpgcreateData, PostApiCharacterRpgcreateErrors, PostApiCharacterRpgcreateResponses, PostApiPlayerByIdScreenshotsData, PostApiPlayerByIdScreenshotsErrors, PostApiPlayerByIdScreenshotsResponses, PostAuthNoauthLoginData, PostAuthNoauthLoginErrors, PostAuthNoauthLoginResponses, PutApiAdminClaimsByIdBoundsData, PutApiAdminClaimsByIdBoundsErrors, PutApiAdminClaimsByIdBoundsResponses, PutApiAdminClaimsByIdTrustData, PutApiAdminClaimsByIdTrustErrors, PutApiAdminClaimsByIdTrustResponses, PutApiAdminConfigsByData, PutApiAdminConfigsByErrors, PutApiAdminConfigsByResponses, PutApiAdminGametimeData, PutApiAdminGametimeErrors, PutApiAdminGametimeResponses, PutApiAdminInstancesByIdBoundsData, PutApiAdminInstancesByIdBoundsErrors, PutApiAdminInstancesByIdBoundsResponses, PutApiAdminInstancesByIdChunksData, PutApiAdminInstancesByIdChunksErrors, PutApiAdminInstancesByIdChunksResponses, PutApiAdminInstancesByIdData, PutApiAdminInstancesByIdEnabledData, PutApiAdminInstancesByIdEnabledErrors, PutApiAdminInstancesByIdEnabledResponses, PutApiAdminInstancesByIdErrors, PutApiAdminInstancesByIdLayoutData, PutApiAdminInstancesByIdLayoutErrors, PutApiAdminInstancesByIdLayoutResponses, PutApiAdminInstancesByIdResponses, PutApiAdminPlayersByNameEquipmentData, PutApiAdminPlayersByNameEquipmentErrors, PutApiAdminPlayersByNameEquipmentResponses, PutApiAdminPlayersByNameKeybindingsData, PutApiAdminPlayersByNameKeybindingsErrors, PutApiAdminPlayersByNameKeybindingsResponses, PutApiAdminPlayersByNamePreferencesData, PutApiAdminPlayersByNamePreferencesErrors, PutApiAdminPlayersByNamePreferencesResponses, PutApiAdminPlayersByNameRpgData, PutApiAdminPlayersByNameRpgErrors, PutApiAdminPlayersByNameRpgResponses, PutApiAdminScenesByIdData, PutApiAdminScenesByIdDimensionsData, PutApiAdminScenesByIdDimensionsErrors, PutApiAdminScenesByIdDimensionsResponses, PutApiAdminScenesByIdErrors, PutApiAdminScenesByIdLayoutData, PutApiAdminScenesByIdLayoutErrors, PutApiAdminScenesByIdLayoutResponses, PutApiAdminScenesByIdResponses, PutApiAdminUsersByEmailData, PutApiAdminUsersByEmailErrors, PutApiAdminUsersByEmailResponses, PutApiPlayerByIdSkinData, PutApiPlayerByIdSkinErrors, PutApiPlayerByIdSkinResponses } from './types.gen';
+import type { DeleteApiAdminClaimsByIdData, DeleteApiAdminClaimsByIdErrors, DeleteApiAdminClaimsByIdResponses, DeleteApiAdminInstancesByIdData, DeleteApiAdminInstancesByIdErrors, DeleteApiAdminInstancesByIdResponses, DeleteApiAdminScenesByIdData, DeleteApiAdminScenesByIdErrors, DeleteApiAdminScenesByIdResponses, DeleteApiAdminSocialFactionsByIdData, DeleteApiAdminSocialFactionsByIdErrors, DeleteApiAdminSocialFactionsByIdMembersByPlayerIdData, DeleteApiAdminSocialFactionsByIdMembersByPlayerIdErrors, DeleteApiAdminSocialFactionsByIdMembersByPlayerIdResponses, DeleteApiAdminSocialFactionsByIdResponses, DeleteApiAdminSocialGroupsByIdData, DeleteApiAdminSocialGroupsByIdErrors, DeleteApiAdminSocialGroupsByIdMembersByPlayerIdData, DeleteApiAdminSocialGroupsByIdMembersByPlayerIdErrors, DeleteApiAdminSocialGroupsByIdMembersByPlayerIdResponses, DeleteApiAdminSocialGroupsByIdResponses, DeleteApiAdminSocialGuildsByIdData, DeleteApiAdminSocialGuildsByIdErrors, DeleteApiAdminSocialGuildsByIdMembersByPlayerIdData, DeleteApiAdminSocialGuildsByIdMembersByPlayerIdErrors, DeleteApiAdminSocialGuildsByIdMembersByPlayerIdResponses, DeleteApiAdminSocialGuildsByIdResponses, DeleteApiAdminUsersByEmailData, DeleteApiAdminUsersByEmailErrors, DeleteApiAdminUsersByEmailResponses, DeleteApiGameAssetsBlendCacheByData, DeleteApiGameAssetsBlendCacheByErrors, DeleteApiGameAssetsBlendCacheByResponses, GetApiAdminAuctionsData, GetApiAdminAuctionsErrors, GetApiAdminAuctionsResponses, GetApiAdminBlocksData, GetApiAdminBlocksErrors, GetApiAdminBlocksResponses, GetApiAdminChunksDiscoveredData, GetApiAdminChunksDiscoveredErrors, GetApiAdminChunksDiscoveredResponses, GetApiAdminClaimsByIdData, GetApiAdminClaimsByIdErrors, GetApiAdminClaimsByIdResponses, GetApiAdminClaimsData, GetApiAdminClaimsErrors, GetApiAdminClaimsResponses, GetApiAdminClassesData, GetApiAdminClassesErrors, GetApiAdminClassesResponses, GetApiAdminConfigsByData, GetApiAdminConfigsByErrors, GetApiAdminConfigsByResponses, GetApiAdminConfigsData, GetApiAdminConfigsErrors, GetApiAdminConfigsResponses, GetApiAdminInstancesByIdBlocksData, GetApiAdminInstancesByIdBlocksErrors, GetApiAdminInstancesByIdBlocksResponses, GetApiAdminInstancesByIdData, GetApiAdminInstancesByIdErrors, GetApiAdminInstancesByIdResponses, GetApiAdminInstancesData, GetApiAdminInstancesErrors, GetApiAdminInstancesResponses, GetApiAdminItemsData, GetApiAdminItemsErrors, GetApiAdminItemsResponses, GetApiAdminNpcsData, GetApiAdminNpcsErrors, GetApiAdminNpcsResponses, GetApiAdminNpcTypesData, GetApiAdminNpcTypesErrors, GetApiAdminNpcTypesResponses, GetApiAdminPlainColorsData, GetApiAdminPlainColorsErrors, GetApiAdminPlainColorsResponses, GetApiAdminPlayersByNameData, GetApiAdminPlayersByNameErrors, GetApiAdminPlayersByNameResponses, GetApiAdminPlayersData, GetApiAdminPlayersErrors, GetApiAdminPlayersResponses, GetApiAdminScenesByIdBlocksRawData, GetApiAdminScenesByIdBlocksRawErrors, GetApiAdminScenesByIdBlocksRawResponses, GetApiAdminScenesByIdData, GetApiAdminScenesByIdEntitiesData, GetApiAdminScenesByIdEntitiesErrors, GetApiAdminScenesByIdEntitiesResponses, GetApiAdminScenesByIdErrors, GetApiAdminScenesByIdResponses, GetApiAdminScenesData, GetApiAdminScenesErrors, GetApiAdminScenesResponses, GetApiAdminSchemasByFilenameData, GetApiAdminSchemasByFilenameErrors, GetApiAdminSchemasByFilenameResponses, GetApiAdminSimulationDefaultsData, GetApiAdminSimulationDefaultsErrors, GetApiAdminSimulationDefaultsResponses, GetApiAdminSkillsData, GetApiAdminSkillsErrors, GetApiAdminSkillsResponses, GetApiAdminSocialFactionsByIdMembersData, GetApiAdminSocialFactionsByIdMembersErrors, GetApiAdminSocialFactionsByIdMembersResponses, GetApiAdminSocialFactionsData, GetApiAdminSocialFactionsErrors, GetApiAdminSocialFactionsResponses, GetApiAdminSocialGroupsData, GetApiAdminSocialGroupsErrors, GetApiAdminSocialGroupsResponses, GetApiAdminSocialGuildsData, GetApiAdminSocialGuildsErrors, GetApiAdminSocialGuildsResponses, GetApiAdminSocialOnlinePlayersData, GetApiAdminSocialOnlinePlayersErrors, GetApiAdminSocialOnlinePlayersResponses, GetApiAdminSocialPlayersData, GetApiAdminSocialPlayersErrors, GetApiAdminSocialPlayersResponses, GetApiAdminStatusData, GetApiAdminStatusErrors, GetApiAdminStatusResponses, GetApiAdminUsersData, GetApiAdminUsersErrors, GetApiAdminUsersResponses, GetApiAdminWorldsData, GetApiAdminWorldsErrors, GetApiAdminWorldsResponses, GetApiAdminWsInstancesByIdData, GetApiAdminWsNpcsData, GetApiAdminWsScenesByIdData, GetApiAdminWsSimulationData, GetApiArmorsData, GetApiArmorsResponses, GetApiAssetsManifestData, GetApiAttacksData, GetApiAttacksResponses, GetApiAuthConfigData, GetApiAuthConfigResponses, GetApiAutocompleteByCommandIdByArgIndexData, GetApiAutocompleteByCommandIdByArgIndexErrors, GetApiAutocompleteByCommandIdByArgIndexResponses, GetApiBiomesData, GetApiBiomesResponses, GetApiBiomesTintsData, GetApiBiomesTintsResponses, GetApiChunksByCxByCzData, GetApiChunksByCxByCzErrors, GetApiChunksByCxByCzResponses, GetApiClassesData, GetApiClassesResponses, GetApiFurnituresData, GetApiFurnituresResponses, GetApiGameAssetsBbmodelExportByData, GetApiGameAssetsBbmodelExportByErrors, GetApiGameAssetsBbmodelExportByResponses, GetApiGameAssetsBlendPreviewByData, GetApiGameAssetsBlendPreviewByErrors, GetApiGameAssetsBlendPreviewByResponses, GetApiGameAssetsBlendSceneByData, GetApiGameAssetsBlendSceneByErrors, GetApiGameAssetsBlendSceneByResponses, GetApiGameAssetsData, GetApiGameAssetsFileByData, GetApiGameAssetsFileByErrors, GetApiGameAssetsFileByResponses, GetApiGameAssetsResponses, GetApiI18nByLocaleData, GetApiI18nByLocaleResponses, GetApiItemsMetaData, GetApiItemsMetaResponses, GetApiKeybindingsData, GetApiKeybindingsResponses, GetApiLayoutRegistryData, GetApiLayoutRegistryResponses, GetApiMacrosContextData, GetApiMacrosContextResponses, GetApiMapHousesData, GetApiMapHousesErrors, GetApiMapHousesResponses, GetApiMapRoadRasterData, GetApiMapRoadRasterErrors, GetApiMapRoadRasterPngData, GetApiMapRoadRasterPngErrors, GetApiMapRoadRasterPngResponses, GetApiMapRoadRasterResponses, GetApiMapRoadsData, GetApiMapRoadsErrors, GetApiMapRoadsResponses, GetApiMapStaircasesData, GetApiMapStaircasesErrors, GetApiMapStaircasesResponses, GetApiMapStateData, GetApiMapStateErrors, GetApiMapStateResponses, GetApiMapTerrainData, GetApiMapTerrainErrors, GetApiMapTerrainRasterPngData, GetApiMapTerrainRasterPngResponses, GetApiMapTerrainResponses, GetApiMapVoronoiBordersData, GetApiMapVoronoiBordersErrors, GetApiMapVoronoiBordersResponses, GetApiMapVoronoiData, GetApiMapVoronoiErrors, GetApiMapVoronoiResponses, GetApiPlayerByIdArmorsData, GetApiPlayerByIdArmorsResponses, GetApiPlayerByIdHandsData, GetApiPlayerByIdHandsResponses, GetApiPlayerByIdOwnedData, GetApiPlayerByIdOwnedResponses, GetApiPlayerByIdRpgData, GetApiPlayerByIdRpgErrors, GetApiPlayerByIdRpgResponses, GetApiPlayerByIdSkinData, GetApiPlayerByIdSkinErrors, GetApiPlayerByIdSkinResponses, GetApiPlayersByEmailByEmailData, GetApiPlayersByEmailByEmailErrors, GetApiPlayersByEmailByEmailResponses, GetApiPlayersNamesData, GetApiPlayersNamesResponses, GetApiQuestsData, GetApiQuestsResponses, GetApiServerInfoData, GetApiServerInfoResponses, GetApiSiegeWeaponsData, GetApiSiegeWeaponsResponses, GetApiSkinsByNameConfigData, GetApiSkinsByNameConfigErrors, GetApiSkinsByNameConfigResponses, GetApiSkinsData, GetApiSkinsResponses, GetApiSpellsData, GetApiSpellsResponses, GetApiToolsData, GetApiToolsResponses, GetApiVehiclesByNameConfigData, GetApiVehiclesByNameConfigErrors, GetApiVehiclesByNameConfigResponses, GetApiWeaponsData, GetApiWeaponsResponses, PostApiAdminAuctionsByIdForceCancelData, PostApiAdminAuctionsByIdForceCancelErrors, PostApiAdminAuctionsByIdForceCancelResponses, PostApiAdminInstancesData, PostApiAdminInstancesErrors, PostApiAdminInstancesResponses, PostApiAdminNpcTypesReloadData, PostApiAdminNpcTypesReloadErrors, PostApiAdminNpcTypesReloadResponses, PostApiAdminPlayersByNameGiveData, PostApiAdminPlayersByNameGiveErrors, PostApiAdminPlayersByNameGiveResponses, PostApiAdminPlayersByNameRenameData, PostApiAdminPlayersByNameRenameErrors, PostApiAdminPlayersByNameRenameResponses, PostApiAdminPlayersData, PostApiAdminPlayersErrors, PostApiAdminPlayersResponses, PostApiAdminReloadData, PostApiAdminReloadErrors, PostApiAdminReloadResponses, PostApiAdminRestartData, PostApiAdminRestartErrors, PostApiAdminRestartResponses, PostApiAdminScenesByIdDuplicateData, PostApiAdminScenesByIdDuplicateErrors, PostApiAdminScenesByIdDuplicateResponses, PostApiAdminScenesData, PostApiAdminScenesErrors, PostApiAdminScenesResponses, PostApiAdminSocialFactionsByIdMembersData, PostApiAdminSocialFactionsByIdMembersErrors, PostApiAdminSocialFactionsByIdMembersResponses, PostApiAdminSocialFactionsData, PostApiAdminSocialFactionsErrors, PostApiAdminSocialFactionsResponses, PostApiAdminSocialGroupsByIdMembersData, PostApiAdminSocialGroupsByIdMembersErrors, PostApiAdminSocialGroupsByIdMembersResponses, PostApiAdminSocialGroupsData, PostApiAdminSocialGroupsErrors, PostApiAdminSocialGroupsResponses, PostApiAdminSocialGuildsByIdMembersData, PostApiAdminSocialGuildsByIdMembersErrors, PostApiAdminSocialGuildsByIdMembersResponses, PostApiAdminSocialGuildsData, PostApiAdminSocialGuildsErrors, PostApiAdminSocialGuildsResponses, PostApiAdminUsersData, PostApiAdminUsersErrors, PostApiAdminUsersResponses, PostApiAdminWorldsData, PostApiAdminWorldsErrors, PostApiAdminWorldsResponses, PostApiAssetsReloadData, PostApiCharacterCreateData, PostApiCharacterCreateErrors, PostApiCharacterCreateResponses, PostApiCharacterRpgcreateData, PostApiCharacterRpgcreateErrors, PostApiCharacterRpgcreateResponses, PostApiPlayerByIdScreenshotsData, PostApiPlayerByIdScreenshotsErrors, PostApiPlayerByIdScreenshotsResponses, PostAuthNoauthLoginData, PostAuthNoauthLoginErrors, PostAuthNoauthLoginResponses, PutApiAdminClaimsByIdBoundsData, PutApiAdminClaimsByIdBoundsErrors, PutApiAdminClaimsByIdBoundsResponses, PutApiAdminClaimsByIdTrustData, PutApiAdminClaimsByIdTrustErrors, PutApiAdminClaimsByIdTrustResponses, PutApiAdminConfigsByData, PutApiAdminConfigsByErrors, PutApiAdminConfigsByResponses, PutApiAdminGametimeData, PutApiAdminGametimeErrors, PutApiAdminGametimeResponses, PutApiAdminInstancesByIdBoundsData, PutApiAdminInstancesByIdBoundsErrors, PutApiAdminInstancesByIdBoundsResponses, PutApiAdminInstancesByIdChunksData, PutApiAdminInstancesByIdChunksErrors, PutApiAdminInstancesByIdChunksResponses, PutApiAdminInstancesByIdData, PutApiAdminInstancesByIdEnabledData, PutApiAdminInstancesByIdEnabledErrors, PutApiAdminInstancesByIdEnabledResponses, PutApiAdminInstancesByIdErrors, PutApiAdminInstancesByIdLayoutData, PutApiAdminInstancesByIdLayoutErrors, PutApiAdminInstancesByIdLayoutResponses, PutApiAdminInstancesByIdResponses, PutApiAdminPlayersByNameEquipmentData, PutApiAdminPlayersByNameEquipmentErrors, PutApiAdminPlayersByNameEquipmentResponses, PutApiAdminPlayersByNameKeybindingsData, PutApiAdminPlayersByNameKeybindingsErrors, PutApiAdminPlayersByNameKeybindingsResponses, PutApiAdminPlayersByNamePreferencesData, PutApiAdminPlayersByNamePreferencesErrors, PutApiAdminPlayersByNamePreferencesResponses, PutApiAdminPlayersByNameRpgData, PutApiAdminPlayersByNameRpgErrors, PutApiAdminPlayersByNameRpgResponses, PutApiAdminScenesByIdData, PutApiAdminScenesByIdDimensionsData, PutApiAdminScenesByIdDimensionsErrors, PutApiAdminScenesByIdDimensionsResponses, PutApiAdminScenesByIdErrors, PutApiAdminScenesByIdLayoutData, PutApiAdminScenesByIdLayoutErrors, PutApiAdminScenesByIdLayoutResponses, PutApiAdminScenesByIdResponses, PutApiAdminSocialFactionsSettingsData, PutApiAdminSocialFactionsSettingsErrors, PutApiAdminSocialFactionsSettingsResponses, PutApiAdminSocialGuildsByIdData, PutApiAdminSocialGuildsByIdErrors, PutApiAdminSocialGuildsByIdMembersByPlayerIdData, PutApiAdminSocialGuildsByIdMembersByPlayerIdErrors, PutApiAdminSocialGuildsByIdMembersByPlayerIdResponses, PutApiAdminSocialGuildsByIdResponses, PutApiAdminUsersByEmailData, PutApiAdminUsersByEmailErrors, PutApiAdminUsersByEmailResponses, PutApiPlayerByIdSkinData, PutApiPlayerByIdSkinErrors, PutApiPlayerByIdSkinResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -753,6 +753,174 @@ export const getApiAdminScenesByIdBlocksRaw = <ThrowOnError extends boolean = fa
  * Fractional (lego/plate/arch) block entities placed in this scene — not carried by the blocks/raw binary blob, so the client loads them separately on scene open
  */
 export const getApiAdminScenesByIdEntities = <ThrowOnError extends boolean = false>(options: Options<GetApiAdminScenesByIdEntitiesData, ThrowOnError>): RequestResult<GetApiAdminScenesByIdEntitiesResponses, GetApiAdminScenesByIdEntitiesErrors, ThrowOnError> => (options.client ?? client).get<GetApiAdminScenesByIdEntitiesResponses, GetApiAdminScenesByIdEntitiesErrors, ThrowOnError>({ url: '/api/admin/scenes/{id}/entities', ...options });
+
+/**
+ * Names of currently connected players (group-member autocomplete)
+ */
+export const getApiAdminSocialOnlinePlayers = <ThrowOnError extends boolean = false>(options?: Options<GetApiAdminSocialOnlinePlayersData, ThrowOnError>): RequestResult<GetApiAdminSocialOnlinePlayersResponses, GetApiAdminSocialOnlinePlayersErrors, ThrowOnError> => (options?.client ?? client).get<GetApiAdminSocialOnlinePlayersResponses, GetApiAdminSocialOnlinePlayersErrors, ThrowOnError>({ url: '/api/admin/social/online-players', ...options });
+
+/**
+ * Canonical display names of every known player (online + persisted), de-duplicated — for social name-field autocomplete
+ */
+export const getApiAdminSocialPlayers = <ThrowOnError extends boolean = false>(options?: Options<GetApiAdminSocialPlayersData, ThrowOnError>): RequestResult<GetApiAdminSocialPlayersResponses, GetApiAdminSocialPlayersErrors, ThrowOnError> => (options?.client ?? client).get<GetApiAdminSocialPlayersResponses, GetApiAdminSocialPlayersErrors, ThrowOnError>({ url: '/api/admin/social/players', ...options });
+
+/**
+ * All active player groups
+ */
+export const getApiAdminSocialGroups = <ThrowOnError extends boolean = false>(options?: Options<GetApiAdminSocialGroupsData, ThrowOnError>): RequestResult<GetApiAdminSocialGroupsResponses, GetApiAdminSocialGroupsErrors, ThrowOnError> => (options?.client ?? client).get<GetApiAdminSocialGroupsResponses, GetApiAdminSocialGroupsErrors, ThrowOnError>({ url: '/api/admin/social/groups', ...options });
+
+/**
+ * Create a group led by an online player
+ */
+export const postApiAdminSocialGroups = <ThrowOnError extends boolean = false>(options?: Options<PostApiAdminSocialGroupsData, ThrowOnError>): RequestResult<PostApiAdminSocialGroupsResponses, PostApiAdminSocialGroupsErrors, ThrowOnError> => (options?.client ?? client).post<PostApiAdminSocialGroupsResponses, PostApiAdminSocialGroupsErrors, ThrowOnError>({
+    url: '/api/admin/social/groups',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+/**
+ * Add an online player to a group
+ */
+export const postApiAdminSocialGroupsByIdMembers = <ThrowOnError extends boolean = false>(options: Options<PostApiAdminSocialGroupsByIdMembersData, ThrowOnError>): RequestResult<PostApiAdminSocialGroupsByIdMembersResponses, PostApiAdminSocialGroupsByIdMembersErrors, ThrowOnError> => (options.client ?? client).post<PostApiAdminSocialGroupsByIdMembersResponses, PostApiAdminSocialGroupsByIdMembersErrors, ThrowOnError>({
+    url: '/api/admin/social/groups/{id}/members',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove a member from a group
+ */
+export const deleteApiAdminSocialGroupsByIdMembersByPlayerId = <ThrowOnError extends boolean = false>(options: Options<DeleteApiAdminSocialGroupsByIdMembersByPlayerIdData, ThrowOnError>): RequestResult<DeleteApiAdminSocialGroupsByIdMembersByPlayerIdResponses, DeleteApiAdminSocialGroupsByIdMembersByPlayerIdErrors, ThrowOnError> => (options.client ?? client).delete<DeleteApiAdminSocialGroupsByIdMembersByPlayerIdResponses, DeleteApiAdminSocialGroupsByIdMembersByPlayerIdErrors, ThrowOnError>({ url: '/api/admin/social/groups/{id}/members/{playerId}', ...options });
+
+/**
+ * Disband a group
+ */
+export const deleteApiAdminSocialGroupsById = <ThrowOnError extends boolean = false>(options: Options<DeleteApiAdminSocialGroupsByIdData, ThrowOnError>): RequestResult<DeleteApiAdminSocialGroupsByIdResponses, DeleteApiAdminSocialGroupsByIdErrors, ThrowOnError> => (options.client ?? client).delete<DeleteApiAdminSocialGroupsByIdResponses, DeleteApiAdminSocialGroupsByIdErrors, ThrowOnError>({ url: '/api/admin/social/groups/{id}', ...options });
+
+/**
+ * All guilds
+ */
+export const getApiAdminSocialGuilds = <ThrowOnError extends boolean = false>(options?: Options<GetApiAdminSocialGuildsData, ThrowOnError>): RequestResult<GetApiAdminSocialGuildsResponses, GetApiAdminSocialGuildsErrors, ThrowOnError> => (options?.client ?? client).get<GetApiAdminSocialGuildsResponses, GetApiAdminSocialGuildsErrors, ThrowOnError>({ url: '/api/admin/social/guilds', ...options });
+
+/**
+ * Create a guild
+ */
+export const postApiAdminSocialGuilds = <ThrowOnError extends boolean = false>(options?: Options<PostApiAdminSocialGuildsData, ThrowOnError>): RequestResult<PostApiAdminSocialGuildsResponses, PostApiAdminSocialGuildsErrors, ThrowOnError> => (options?.client ?? client).post<PostApiAdminSocialGuildsResponses, PostApiAdminSocialGuildsErrors, ThrowOnError>({
+    url: '/api/admin/social/guilds',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+/**
+ * Disband a guild
+ */
+export const deleteApiAdminSocialGuildsById = <ThrowOnError extends boolean = false>(options: Options<DeleteApiAdminSocialGuildsByIdData, ThrowOnError>): RequestResult<DeleteApiAdminSocialGuildsByIdResponses, DeleteApiAdminSocialGuildsByIdErrors, ThrowOnError> => (options.client ?? client).delete<DeleteApiAdminSocialGuildsByIdResponses, DeleteApiAdminSocialGuildsByIdErrors, ThrowOnError>({ url: '/api/admin/social/guilds/{id}', ...options });
+
+/**
+ * Rename / retag / set MOTD of a guild
+ */
+export const putApiAdminSocialGuildsById = <ThrowOnError extends boolean = false>(options: Options<PutApiAdminSocialGuildsByIdData, ThrowOnError>): RequestResult<PutApiAdminSocialGuildsByIdResponses, PutApiAdminSocialGuildsByIdErrors, ThrowOnError> => (options.client ?? client).put<PutApiAdminSocialGuildsByIdResponses, PutApiAdminSocialGuildsByIdErrors, ThrowOnError>({
+    url: '/api/admin/social/guilds/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Add a player to a guild
+ */
+export const postApiAdminSocialGuildsByIdMembers = <ThrowOnError extends boolean = false>(options: Options<PostApiAdminSocialGuildsByIdMembersData, ThrowOnError>): RequestResult<PostApiAdminSocialGuildsByIdMembersResponses, PostApiAdminSocialGuildsByIdMembersErrors, ThrowOnError> => (options.client ?? client).post<PostApiAdminSocialGuildsByIdMembersResponses, PostApiAdminSocialGuildsByIdMembersErrors, ThrowOnError>({
+    url: '/api/admin/social/guilds/{id}/members',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove a member from a guild
+ */
+export const deleteApiAdminSocialGuildsByIdMembersByPlayerId = <ThrowOnError extends boolean = false>(options: Options<DeleteApiAdminSocialGuildsByIdMembersByPlayerIdData, ThrowOnError>): RequestResult<DeleteApiAdminSocialGuildsByIdMembersByPlayerIdResponses, DeleteApiAdminSocialGuildsByIdMembersByPlayerIdErrors, ThrowOnError> => (options.client ?? client).delete<DeleteApiAdminSocialGuildsByIdMembersByPlayerIdResponses, DeleteApiAdminSocialGuildsByIdMembersByPlayerIdErrors, ThrowOnError>({ url: '/api/admin/social/guilds/{id}/members/{playerId}', ...options });
+
+/**
+ * Set a guild member's rank
+ */
+export const putApiAdminSocialGuildsByIdMembersByPlayerId = <ThrowOnError extends boolean = false>(options: Options<PutApiAdminSocialGuildsByIdMembersByPlayerIdData, ThrowOnError>): RequestResult<PutApiAdminSocialGuildsByIdMembersByPlayerIdResponses, PutApiAdminSocialGuildsByIdMembersByPlayerIdErrors, ThrowOnError> => (options.client ?? client).put<PutApiAdminSocialGuildsByIdMembersByPlayerIdResponses, PutApiAdminSocialGuildsByIdMembersByPlayerIdErrors, ThrowOnError>({
+    url: '/api/admin/social/guilds/{id}/members/{playerId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Faction settings and definitions
+ */
+export const getApiAdminSocialFactions = <ThrowOnError extends boolean = false>(options?: Options<GetApiAdminSocialFactionsData, ThrowOnError>): RequestResult<GetApiAdminSocialFactionsResponses, GetApiAdminSocialFactionsErrors, ThrowOnError> => (options?.client ?? client).get<GetApiAdminSocialFactionsResponses, GetApiAdminSocialFactionsErrors, ThrowOnError>({ url: '/api/admin/social/factions', ...options });
+
+/**
+ * Create or replace a faction definition (matched by id)
+ */
+export const postApiAdminSocialFactions = <ThrowOnError extends boolean = false>(options?: Options<PostApiAdminSocialFactionsData, ThrowOnError>): RequestResult<PostApiAdminSocialFactionsResponses, PostApiAdminSocialFactionsErrors, ThrowOnError> => (options?.client ?? client).post<PostApiAdminSocialFactionsResponses, PostApiAdminSocialFactionsErrors, ThrowOnError>({
+    url: '/api/admin/social/factions',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+/**
+ * Update global faction settings
+ */
+export const putApiAdminSocialFactionsSettings = <ThrowOnError extends boolean = false>(options?: Options<PutApiAdminSocialFactionsSettingsData, ThrowOnError>): RequestResult<PutApiAdminSocialFactionsSettingsResponses, PutApiAdminSocialFactionsSettingsErrors, ThrowOnError> => (options?.client ?? client).put<PutApiAdminSocialFactionsSettingsResponses, PutApiAdminSocialFactionsSettingsErrors, ThrowOnError>({
+    url: '/api/admin/social/factions/settings',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+/**
+ * Delete a faction definition
+ */
+export const deleteApiAdminSocialFactionsById = <ThrowOnError extends boolean = false>(options: Options<DeleteApiAdminSocialFactionsByIdData, ThrowOnError>): RequestResult<DeleteApiAdminSocialFactionsByIdResponses, DeleteApiAdminSocialFactionsByIdErrors, ThrowOnError> => (options.client ?? client).delete<DeleteApiAdminSocialFactionsByIdResponses, DeleteApiAdminSocialFactionsByIdErrors, ThrowOnError>({ url: '/api/admin/social/factions/{id}', ...options });
+
+/**
+ * Players affiliated with a faction (online + persisted)
+ */
+export const getApiAdminSocialFactionsByIdMembers = <ThrowOnError extends boolean = false>(options: Options<GetApiAdminSocialFactionsByIdMembersData, ThrowOnError>): RequestResult<GetApiAdminSocialFactionsByIdMembersResponses, GetApiAdminSocialFactionsByIdMembersErrors, ThrowOnError> => (options.client ?? client).get<GetApiAdminSocialFactionsByIdMembersResponses, GetApiAdminSocialFactionsByIdMembersErrors, ThrowOnError>({ url: '/api/admin/social/factions/{id}/members', ...options });
+
+/**
+ * Make a player join a faction (admin — no cooldown)
+ */
+export const postApiAdminSocialFactionsByIdMembers = <ThrowOnError extends boolean = false>(options: Options<PostApiAdminSocialFactionsByIdMembersData, ThrowOnError>): RequestResult<PostApiAdminSocialFactionsByIdMembersResponses, PostApiAdminSocialFactionsByIdMembersErrors, ThrowOnError> => (options.client ?? client).post<PostApiAdminSocialFactionsByIdMembersResponses, PostApiAdminSocialFactionsByIdMembersErrors, ThrowOnError>({
+    url: '/api/admin/social/factions/{id}/members',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove a player from a faction
+ */
+export const deleteApiAdminSocialFactionsByIdMembersByPlayerId = <ThrowOnError extends boolean = false>(options: Options<DeleteApiAdminSocialFactionsByIdMembersByPlayerIdData, ThrowOnError>): RequestResult<DeleteApiAdminSocialFactionsByIdMembersByPlayerIdResponses, DeleteApiAdminSocialFactionsByIdMembersByPlayerIdErrors, ThrowOnError> => (options.client ?? client).delete<DeleteApiAdminSocialFactionsByIdMembersByPlayerIdResponses, DeleteApiAdminSocialFactionsByIdMembersByPlayerIdErrors, ThrowOnError>({ url: '/api/admin/social/factions/{id}/members/{playerId}', ...options });
 
 /**
  * NPC type definitions (codex info), keyed by type id

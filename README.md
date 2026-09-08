@@ -201,6 +201,27 @@ never hand-edit either.
 | GET | `/api/admin/schemas/{filename}` | A JSON Schema file (data/config/schemas/*.schema.json) for the config editor |
 | GET | `/api/admin/simulation/defaults` | Defaults the world simulator admin UI prefills its editors with |
 | GET | `/api/admin/skills` | All attack and spell ids |
+| GET | `/api/admin/social/factions` | Faction settings and definitions |
+| POST | `/api/admin/social/factions` | Create or replace a faction definition (matched by id) |
+| PUT | `/api/admin/social/factions/settings` | Update global faction settings |
+| DELETE | `/api/admin/social/factions/{id}` | Delete a faction definition |
+| GET | `/api/admin/social/factions/{id}/members` | Players affiliated with a faction (online + persisted) |
+| POST | `/api/admin/social/factions/{id}/members` | Make a player join a faction (admin — no cooldown) |
+| DELETE | `/api/admin/social/factions/{id}/members/{playerId}` | Remove a player from a faction |
+| GET | `/api/admin/social/groups` | All active player groups |
+| POST | `/api/admin/social/groups` | Create a group led by an online player |
+| DELETE | `/api/admin/social/groups/{id}` | Disband a group |
+| POST | `/api/admin/social/groups/{id}/members` | Add an online player to a group |
+| DELETE | `/api/admin/social/groups/{id}/members/{playerId}` | Remove a member from a group |
+| GET | `/api/admin/social/guilds` | All guilds |
+| POST | `/api/admin/social/guilds` | Create a guild |
+| DELETE | `/api/admin/social/guilds/{id}` | Disband a guild |
+| PUT | `/api/admin/social/guilds/{id}` | Rename / retag / set MOTD of a guild |
+| POST | `/api/admin/social/guilds/{id}/members` | Add a player to a guild |
+| DELETE | `/api/admin/social/guilds/{id}/members/{playerId}` | Remove a member from a guild |
+| PUT | `/api/admin/social/guilds/{id}/members/{playerId}` | Set a guild member's rank |
+| GET | `/api/admin/social/online-players` | Names of currently connected players (group-member autocomplete) |
+| GET | `/api/admin/social/players` | Canonical display names of every known player (online + persisted), de-duplicated — for social name-field autocomplete |
 | GET | `/api/admin/status` | Server status snapshot (TPS, players, chunks, heap, CPU) |
 | GET | `/api/admin/users` | All local/no-auth accounts |
 | POST | `/api/admin/users` | Create a local/no-auth user account |

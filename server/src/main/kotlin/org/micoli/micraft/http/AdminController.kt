@@ -174,6 +174,38 @@ data class SceneCreateRequest(val name: String, val width: Int, val height: Int,
 
 @Serializable data class SceneLayoutRequest(val shortcutBarPages: List<List<String?>>)
 
+// ── Social admin ─────────────────────────────────────────────────────────────
+@Serializable data class SocialNameRequest(val playerName: String)
+
+@Serializable
+data class GuildCreateRequest(val name: String, val tag: String, val ownerName: String)
+
+@Serializable
+data class GuildUpdateRequest(
+    val name: String? = null,
+    val tag: String? = null,
+    val motd: String? = null,
+)
+
+@Serializable data class GuildRankRequest(val rank: String)
+
+@Serializable
+data class SocialMemberDto(val playerId: String, val playerName: String, val online: Boolean)
+
+@Serializable
+data class FactionSettingsRequest(
+    val enabled: Boolean,
+    val friendlyFire: Boolean,
+    val changeCooldownSeconds: Long,
+    val spawnRingRadius: Double,
+)
+
+@Serializable
+data class FactionAdminView(
+    val settings: FactionSettingsRequest,
+    val list: List<org.micoli.micraft.social.FactionDefinition>,
+)
+
 @Serializable
 data class SceneBlockDto(
     val x: Int,
@@ -2629,6 +2661,521 @@ class AdminController(
                         adminJson.encodeToString(
                             ListSerializer(BlockEntityProto.serializer()), scene.toEntityProtos()),
                         ContentType.Application.Json)
+                }
+
+            // ── Social (groups / guilds / factions) ──────────────────────────
+            get(
+                "/api/admin/social/online-players",
+                {
+                    description = "Names of currently connected players (group-member autocomplete)"
+                    response { code(HttpStatusCode.OK) { body<List<String>>() } }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    call.respondText(
+                        adminJson.encodeToString(
+                            ListSerializer(String.serializer()),
+                            adminWorld().getPlayerStates().map { it.name }),
+                        ContentType.Application.Json)
+                }
+
+            get(
+                "/api/admin/social/players",
+                {
+                    description =
+                        "Canonical display names of every known player (online + persisted), " +
+                            "de-duplicated — for social name-field autocomplete"
+                    response { code(HttpStatusCode.OK) { body<List<String>>() } }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    val online = adminWorld().getPlayerStates().map { it.name }
+                    val persisted =
+                        persistence?.let { p ->
+                            p.listPlayers().mapNotNull { file -> p.loadPlayerState(file)?.name }
+                        } ?: emptyList()
+                    val names = (online + persisted).distinct().sorted()
+                    call.respondText(
+                        adminJson.encodeToString(ListSerializer(String.serializer()), names),
+                        ContentType.Application.Json)
+                }
+
+            get(
+                "/api/admin/social/groups",
+                {
+                    description = "All active player groups"
+                    response {
+                        code(HttpStatusCode.OK) {
+                            body<List<org.micoli.micraft.social.GroupInfo>>()
+                        }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    call.respondText(
+                        adminJson.encodeToString(
+                            ListSerializer(org.micoli.micraft.social.GroupInfo.serializer()),
+                            adminWorld().groupManager.adminAll()),
+                        ContentType.Application.Json)
+                }
+
+            post(
+                "/api/admin/social/groups",
+                {
+                    description = "Create a group led by an online player"
+                    request { body<SocialNameRequest>() }
+                    response {
+                        code(HttpStatusCode.Created) { body<org.micoli.micraft.social.GroupInfo>() }
+                        code(HttpStatusCode.BadRequest) { description = "Leader offline / busy" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val body = Json.decodeFromString<SocialNameRequest>(call.receiveText())
+                    val info =
+                        try {
+                            adminWorld().groupManager.adminCreate(body.playerName)
+                        } catch (e: Exception) {
+                            return@post call.respond(
+                                HttpStatusCode.BadRequest, e.message ?: "Failed")
+                        }
+                    call.respond(
+                        HttpStatusCode.Created,
+                        adminJson.encodeToString(
+                            org.micoli.micraft.social.GroupInfo.serializer(), info))
+                }
+
+            post(
+                "/api/admin/social/groups/{id}/members",
+                {
+                    description = "Add an online player to a group"
+                    request {
+                        pathParameter<String>("id") { description = "Group id" }
+                        body<SocialNameRequest>()
+                    }
+                    response {
+                        code(HttpStatusCode.OK) { body<org.micoli.micraft.social.GroupInfo>() }
+                        code(HttpStatusCode.BadRequest) {
+                            description = "Offline / full / not found"
+                        }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val id =
+                        call.parameters["id"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val body = Json.decodeFromString<SocialNameRequest>(call.receiveText())
+                    val info =
+                        try {
+                            adminWorld().groupManager.adminAddMember(id, body.playerName)
+                        } catch (e: Exception) {
+                            return@post call.respond(
+                                HttpStatusCode.BadRequest, e.message ?: "Failed")
+                        }
+                    call.respondText(
+                        adminJson.encodeToString(
+                            org.micoli.micraft.social.GroupInfo.serializer(), info),
+                        ContentType.Application.Json)
+                }
+
+            delete(
+                "/api/admin/social/groups/{id}/members/{playerId}",
+                {
+                    description = "Remove a member from a group"
+                    request {
+                        pathParameter<String>("id") { description = "Group id" }
+                        pathParameter<String>("playerId") { description = "Member player id" }
+                    }
+                    response {
+                        code(HttpStatusCode.NoContent) {}
+                        code(HttpStatusCode.BadRequest) { description = "Not found" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@delete
+                    val id =
+                        call.parameters["id"]
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    val pid =
+                        call.parameters["playerId"]
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    try {
+                        adminWorld().groupManager.adminRemoveMember(id, pid)
+                    } catch (e: Exception) {
+                        return@delete call.respond(HttpStatusCode.BadRequest, e.message ?: "Failed")
+                    }
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            delete(
+                "/api/admin/social/groups/{id}",
+                {
+                    description = "Disband a group"
+                    request { pathParameter<String>("id") { description = "Group id" } }
+                    response {
+                        code(HttpStatusCode.NoContent) {}
+                        code(HttpStatusCode.BadRequest) { description = "Group not found" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@delete
+                    val id =
+                        call.parameters["id"]
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    try {
+                        adminWorld().groupManager.adminDisband(id)
+                    } catch (e: Exception) {
+                        return@delete call.respond(HttpStatusCode.BadRequest, e.message ?: "Failed")
+                    }
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            get(
+                "/api/admin/social/guilds",
+                {
+                    description = "All guilds"
+                    response {
+                        code(HttpStatusCode.OK) {
+                            body<List<org.micoli.micraft.social.GuildInfoDto>>()
+                        }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    call.respondText(
+                        adminJson.encodeToString(
+                            ListSerializer(org.micoli.micraft.social.GuildInfoDto.serializer()),
+                            adminWorld().guildManager.adminAll()),
+                        ContentType.Application.Json)
+                }
+
+            post(
+                "/api/admin/social/guilds",
+                {
+                    description = "Create a guild"
+                    request { body<GuildCreateRequest>() }
+                    response {
+                        code(HttpStatusCode.Created) {
+                            body<org.micoli.micraft.social.GuildInfoDto>()
+                        }
+                        code(HttpStatusCode.BadRequest) { description = "Invalid name/tag/owner" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val body = Json.decodeFromString<GuildCreateRequest>(call.receiveText())
+                    val dto =
+                        try {
+                            adminWorld()
+                                .guildManager
+                                .adminCreate(body.name, body.tag, body.ownerName)
+                        } catch (e: Exception) {
+                            return@post call.respond(
+                                HttpStatusCode.BadRequest, e.message ?: "Failed")
+                        }
+                    call.respond(
+                        HttpStatusCode.Created,
+                        adminJson.encodeToString(
+                            org.micoli.micraft.social.GuildInfoDto.serializer(), dto))
+                }
+
+            put(
+                "/api/admin/social/guilds/{id}",
+                {
+                    description = "Rename / retag / set MOTD of a guild"
+                    request {
+                        pathParameter<String>("id") { description = "Guild id" }
+                        body<GuildUpdateRequest>()
+                    }
+                    response {
+                        code(HttpStatusCode.OK) { body<org.micoli.micraft.social.GuildInfoDto>() }
+                        code(HttpStatusCode.BadRequest) { description = "Invalid / not found" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@put
+                    val id =
+                        call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    val body = Json.decodeFromString<GuildUpdateRequest>(call.receiveText())
+                    val dto =
+                        try {
+                            adminWorld()
+                                .guildManager
+                                .adminUpdate(id, body.name, body.tag, body.motd)
+                        } catch (e: Exception) {
+                            return@put call.respond(
+                                HttpStatusCode.BadRequest, e.message ?: "Failed")
+                        }
+                    call.respondText(
+                        adminJson.encodeToString(
+                            org.micoli.micraft.social.GuildInfoDto.serializer(), dto),
+                        ContentType.Application.Json)
+                }
+
+            delete(
+                "/api/admin/social/guilds/{id}",
+                {
+                    description = "Disband a guild"
+                    request { pathParameter<String>("id") { description = "Guild id" } }
+                    response {
+                        code(HttpStatusCode.NoContent) {}
+                        code(HttpStatusCode.BadRequest) { description = "Guild not found" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@delete
+                    val id =
+                        call.parameters["id"]
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    try {
+                        adminWorld().guildManager.adminDelete(id)
+                    } catch (e: Exception) {
+                        return@delete call.respond(HttpStatusCode.BadRequest, e.message ?: "Failed")
+                    }
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            post(
+                "/api/admin/social/guilds/{id}/members",
+                {
+                    description = "Add a player to a guild"
+                    request {
+                        pathParameter<String>("id") { description = "Guild id" }
+                        body<SocialNameRequest>()
+                    }
+                    response {
+                        code(HttpStatusCode.OK) { body<org.micoli.micraft.social.GuildInfoDto>() }
+                        code(HttpStatusCode.BadRequest) { description = "Unknown / busy player" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val id =
+                        call.parameters["id"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val body = Json.decodeFromString<SocialNameRequest>(call.receiveText())
+                    val dto =
+                        try {
+                            adminWorld().guildManager.adminAddMember(id, body.playerName)
+                        } catch (e: Exception) {
+                            return@post call.respond(
+                                HttpStatusCode.BadRequest, e.message ?: "Failed")
+                        }
+                    call.respondText(
+                        adminJson.encodeToString(
+                            org.micoli.micraft.social.GuildInfoDto.serializer(), dto),
+                        ContentType.Application.Json)
+                }
+
+            put(
+                "/api/admin/social/guilds/{id}/members/{playerId}",
+                {
+                    description = "Set a guild member's rank"
+                    request {
+                        pathParameter<String>("id") { description = "Guild id" }
+                        pathParameter<String>("playerId") { description = "Member player id" }
+                        body<GuildRankRequest>()
+                    }
+                    response {
+                        code(HttpStatusCode.OK) { body<org.micoli.micraft.social.GuildInfoDto>() }
+                        code(HttpStatusCode.BadRequest) { description = "Unknown rank / member" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@put
+                    val id =
+                        call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    val pid =
+                        call.parameters["playerId"]
+                            ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    val body = Json.decodeFromString<GuildRankRequest>(call.receiveText())
+                    val dto =
+                        try {
+                            adminWorld().guildManager.adminSetRank(id, pid, body.rank)
+                        } catch (e: Exception) {
+                            return@put call.respond(
+                                HttpStatusCode.BadRequest, e.message ?: "Failed")
+                        }
+                    call.respondText(
+                        adminJson.encodeToString(
+                            org.micoli.micraft.social.GuildInfoDto.serializer(), dto),
+                        ContentType.Application.Json)
+                }
+
+            delete(
+                "/api/admin/social/guilds/{id}/members/{playerId}",
+                {
+                    description = "Remove a member from a guild"
+                    request {
+                        pathParameter<String>("id") { description = "Guild id" }
+                        pathParameter<String>("playerId") { description = "Member player id" }
+                    }
+                    response {
+                        code(HttpStatusCode.OK) { body<org.micoli.micraft.social.GuildInfoDto>() }
+                        code(HttpStatusCode.BadRequest) { description = "Owner / not a member" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@delete
+                    val id =
+                        call.parameters["id"]
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    val pid =
+                        call.parameters["playerId"]
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    val dto =
+                        try {
+                            adminWorld().guildManager.adminRemoveMember(id, pid)
+                        } catch (e: Exception) {
+                            return@delete call.respond(
+                                HttpStatusCode.BadRequest, e.message ?: "Failed")
+                        }
+                    call.respondText(
+                        adminJson.encodeToString(
+                            org.micoli.micraft.social.GuildInfoDto.serializer(), dto),
+                        ContentType.Application.Json)
+                }
+
+            get(
+                "/api/admin/social/factions",
+                {
+                    description = "Faction settings and definitions"
+                    response { code(HttpStatusCode.OK) { body<FactionAdminView>() } }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    val fm = adminWorld().factionManager
+                    val s = fm.adminSettings()
+                    call.respondText(
+                        adminJson.encodeToString(
+                            FactionAdminView.serializer(),
+                            FactionAdminView(
+                                FactionSettingsRequest(
+                                    s.enabled,
+                                    s.friendlyFire,
+                                    s.changeCooldownSeconds,
+                                    s.spawnRingRadius),
+                                fm.adminList())),
+                        ContentType.Application.Json)
+                }
+
+            put(
+                "/api/admin/social/factions/settings",
+                {
+                    description = "Update global faction settings"
+                    request { body<FactionSettingsRequest>() }
+                    response { code(HttpStatusCode.NoContent) {} }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@put
+                    val body = Json.decodeFromString<FactionSettingsRequest>(call.receiveText())
+                    adminWorld()
+                        .factionManager
+                        .adminSetSettings(
+                            body.enabled,
+                            body.friendlyFire,
+                            body.changeCooldownSeconds,
+                            body.spawnRingRadius)
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            post(
+                "/api/admin/social/factions",
+                {
+                    description = "Create or replace a faction definition (matched by id)"
+                    request { body<org.micoli.micraft.social.FactionDefinition>() }
+                    response { code(HttpStatusCode.NoContent) {} }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val def =
+                        Json.decodeFromString<org.micoli.micraft.social.FactionDefinition>(
+                            call.receiveText())
+                    if (def.id.isBlank())
+                        return@post call.respond(HttpStatusCode.BadRequest, "id required")
+                    adminWorld().factionManager.adminUpsert(def)
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            delete(
+                "/api/admin/social/factions/{id}",
+                {
+                    description = "Delete a faction definition"
+                    request { pathParameter<String>("id") { description = "Faction id" } }
+                    response { code(HttpStatusCode.NoContent) {} }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@delete
+                    val id =
+                        call.parameters["id"]
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    adminWorld().factionManager.adminDelete(id)
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            get(
+                "/api/admin/social/factions/{id}/members",
+                {
+                    description = "Players affiliated with a faction (online + persisted)"
+                    request { pathParameter<String>("id") { description = "Faction id" } }
+                    response { code(HttpStatusCode.OK) { body<List<SocialMemberDto>>() } }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    val id =
+                        call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                    val members =
+                        adminWorld().factionManager.adminMembers(id).map {
+                            SocialMemberDto(it.playerId, it.playerName, it.online)
+                        }
+                    call.respondText(
+                        adminJson.encodeToString(
+                            ListSerializer(SocialMemberDto.serializer()), members),
+                        ContentType.Application.Json)
+                }
+
+            post(
+                "/api/admin/social/factions/{id}/members",
+                {
+                    description = "Make a player join a faction (admin — no cooldown)"
+                    request {
+                        pathParameter<String>("id") { description = "Faction id" }
+                        body<SocialNameRequest>()
+                    }
+                    response {
+                        code(HttpStatusCode.NoContent) {}
+                        code(HttpStatusCode.BadRequest) { description = "Unknown player / faction" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val id =
+                        call.parameters["id"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val body = Json.decodeFromString<SocialNameRequest>(call.receiveText())
+                    try {
+                        adminWorld().factionManager.adminJoin(body.playerName, id)
+                    } catch (e: Exception) {
+                        return@post call.respond(HttpStatusCode.BadRequest, e.message ?: "Failed")
+                    }
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            delete(
+                "/api/admin/social/factions/{id}/members/{playerId}",
+                {
+                    description = "Remove a player from a faction"
+                    request {
+                        pathParameter<String>("id") { description = "Faction id" }
+                        pathParameter<String>("playerId") { description = "Member player id" }
+                    }
+                    response { code(HttpStatusCode.NoContent) {} }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@delete
+                    val pid =
+                        call.parameters["playerId"]
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    adminWorld().factionManager.adminLeave(pid)
+                    call.respond(HttpStatusCode.NoContent)
                 }
 
             // ── NPC types ─────────────────────────────────────────────────────

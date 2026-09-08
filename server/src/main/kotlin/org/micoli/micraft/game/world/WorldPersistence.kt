@@ -520,6 +520,30 @@ class WorldPersistence(val worldDir: Path) {
         }
     }
 
+    private val factionsFile = worldDir.resolve("factions.yaml")
+
+    /** Admin-managed faction overrides — take precedence over the config `factions:` section. */
+    fun loadFactions(): org.micoli.micraft.game.FactionsSection? {
+        if (!factionsFile.exists()) return null
+        return try {
+            Yaml.default.decodeFromString(
+                org.micoli.micraft.game.FactionsSection.serializer(), factionsFile.readText())
+        } catch (e: Exception) {
+            worldPersistenceLog.warn("Failed to load factions: {}", e.message)
+            null
+        }
+    }
+
+    fun saveFactions(section: org.micoli.micraft.game.FactionsSection) {
+        try {
+            factionsFile.writeText(
+                Yaml.default.encodeToString(
+                    org.micoli.micraft.game.FactionsSection.serializer(), section))
+        } catch (e: IOException) {
+            worldPersistenceLog.warn("Failed to save factions: {}", e.message)
+        }
+    }
+
     private val scenesFile = worldDir.resolve("scenes.yaml")
 
     /** Metadata only (see [Scene] doc) — hydrated with [loadSceneBlocks] per entry. */

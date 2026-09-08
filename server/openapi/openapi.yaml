@@ -3020,6 +3020,616 @@ paths:
           description: Missing admin permission
           headers: {}
       deprecated: false
+  /api/admin/social/online-players:
+    get:
+      tags: []
+      description: Names of currently connected players (group-member autocomplete)
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  title: String
+                title: List<String>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/players:
+    get:
+      tags: []
+      description: "Canonical display names of every known player (online + persisted),\
+        \ de-duplicated — for social name-field autocomplete"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  title: String
+                title: List<String>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/groups:
+    get:
+      tags: []
+      description: All active player groups
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.social.GroupInfo"
+                title: List<GroupInfo>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+    post:
+      tags: []
+      description: Create a group led by an online player
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.SocialNameRequest"
+        required: false
+      responses:
+        "201":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.social.GroupInfo"
+        "400":
+          description: Leader offline / busy
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/groups/{id}/members:
+    post:
+      tags: []
+      description: Add an online player to a group
+      parameters:
+      - name: id
+        in: path
+        description: Group id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.SocialNameRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.social.GroupInfo"
+        "400":
+          description: Offline / full / not found
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/groups/{id}/members/{playerId}:
+    delete:
+      tags: []
+      description: Remove a member from a group
+      parameters:
+      - name: id
+        in: path
+        description: Group id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      - name: playerId
+        in: path
+        description: Member player id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "204":
+          headers: {}
+        "400":
+          description: Not found
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/groups/{id}:
+    delete:
+      tags: []
+      description: Disband a group
+      parameters:
+      - name: id
+        in: path
+        description: Group id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "204":
+          headers: {}
+        "400":
+          description: Group not found
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/guilds:
+    get:
+      tags: []
+      description: All guilds
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.social.GuildInfoDto"
+                title: List<GuildInfoDto>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+    post:
+      tags: []
+      description: Create a guild
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.GuildCreateRequest"
+        required: false
+      responses:
+        "201":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.social.GuildInfoDto"
+        "400":
+          description: Invalid name/tag/owner
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/guilds/{id}:
+    put:
+      tags: []
+      description: Rename / retag / set MOTD of a guild
+      parameters:
+      - name: id
+        in: path
+        description: Guild id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.GuildUpdateRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.social.GuildInfoDto"
+        "400":
+          description: Invalid / not found
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+    delete:
+      tags: []
+      description: Disband a guild
+      parameters:
+      - name: id
+        in: path
+        description: Guild id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "204":
+          headers: {}
+        "400":
+          description: Guild not found
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/guilds/{id}/members:
+    post:
+      tags: []
+      description: Add a player to a guild
+      parameters:
+      - name: id
+        in: path
+        description: Guild id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.SocialNameRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.social.GuildInfoDto"
+        "400":
+          description: Unknown / busy player
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/guilds/{id}/members/{playerId}:
+    put:
+      tags: []
+      description: Set a guild member's rank
+      parameters:
+      - name: id
+        in: path
+        description: Guild id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      - name: playerId
+        in: path
+        description: Member player id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.GuildRankRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.social.GuildInfoDto"
+        "400":
+          description: Unknown rank / member
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+    delete:
+      tags: []
+      description: Remove a member from a guild
+      parameters:
+      - name: id
+        in: path
+        description: Guild id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      - name: playerId
+        in: path
+        description: Member player id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.social.GuildInfoDto"
+        "400":
+          description: Owner / not a member
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/factions:
+    get:
+      tags: []
+      description: Faction settings and definitions
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.FactionAdminView"
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+    post:
+      tags: []
+      description: Create or replace a faction definition (matched by id)
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.social.FactionDefinition"
+        required: false
+      responses:
+        "204":
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/factions/settings:
+    put:
+      tags: []
+      description: Update global faction settings
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.FactionSettingsRequest"
+        required: false
+      responses:
+        "204":
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/factions/{id}:
+    delete:
+      tags: []
+      description: Delete a faction definition
+      parameters:
+      - name: id
+        in: path
+        description: Faction id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "204":
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/factions/{id}/members:
+    get:
+      tags: []
+      description: Players affiliated with a faction (online + persisted)
+      parameters:
+      - name: id
+        in: path
+        description: Faction id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.http.SocialMemberDto"
+                title: List<SocialMemberDto>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+    post:
+      tags: []
+      description: Make a player join a faction (admin — no cooldown)
+      parameters:
+      - name: id
+        in: path
+        description: Faction id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.SocialNameRequest"
+        required: false
+      responses:
+        "204":
+          headers: {}
+        "400":
+          description: Unknown player / faction
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/social/factions/{id}/members/{playerId}:
+    delete:
+      tags: []
+      description: Remove a player from a faction
+      parameters:
+      - name: id
+        in: path
+        description: Faction id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      - name: playerId
+        in: path
+        description: Member player id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "204":
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/admin/npc-types:
     get:
       tags: []
@@ -6653,6 +7263,336 @@ components:
       - yOffset
       - zOffset
       title: BlockEntityProto
+    org.micoli.micraft.social.GroupInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          title: String
+        leaderId:
+          type: string
+          title: String
+        leaderName:
+          type: string
+          title: String
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.social.GroupMemberInfo"
+          title: List<GroupMemberInfo>
+      required:
+      - id
+      - leaderId
+      - leaderName
+      - members
+      title: GroupInfo
+    org.micoli.micraft.social.GroupMemberInfo:
+      type: object
+      properties:
+        online:
+          type: boolean
+          title: Boolean
+        playerId:
+          type: string
+          title: String
+        playerName:
+          type: string
+          title: String
+      required:
+      - online
+      - playerId
+      - playerName
+      title: GroupMemberInfo
+    org.micoli.micraft.http.SocialNameRequest:
+      type: object
+      properties:
+        playerName:
+          type: string
+          title: String
+      required:
+      - playerName
+      title: SocialNameRequest
+    org.micoli.micraft.social.GuildInfoDto:
+      type: object
+      properties:
+        bank:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+            title: Int
+          title: "Map<ItemType,Int>"
+        bankLog:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.social.GuildBankEntryInfo"
+          title: List<GuildBankEntryInfo>
+        createdAtMs:
+          type: integer
+          format: int64
+          title: Long
+        id:
+          type: string
+          title: String
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.social.GuildMemberInfo"
+          title: List<GuildMemberInfo>
+        motd:
+          type: string
+          title: String
+        myFlags:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.social.GuildPermission"
+          title: Set<GuildPermission>
+          uniqueItems: true
+        myRank:
+          type: string
+          title: String
+        name:
+          type: string
+          title: String
+        ownerId:
+          type: string
+          title: String
+        ranks:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.social.GuildRank"
+          title: List<GuildRank>
+        tag:
+          type: string
+          title: String
+      required:
+      - bank
+      - bankLog
+      - createdAtMs
+      - id
+      - members
+      - motd
+      - myFlags
+      - myRank
+      - name
+      - ownerId
+      - ranks
+      - tag
+      title: GuildInfoDto
+    org.micoli.micraft.social.GuildBankEntryInfo:
+      type: object
+      properties:
+        atMs:
+          type: integer
+          format: int64
+          title: Long
+        delta:
+          type: integer
+          format: int32
+          title: Int
+        itemId:
+          type: string
+          title: String
+        playerName:
+          type: string
+          title: String
+      required:
+      - atMs
+      - delta
+      - itemId
+      - playerName
+      title: GuildBankEntryInfo
+    org.micoli.micraft.social.GuildMemberInfo:
+      type: object
+      properties:
+        joinedAtMs:
+          type: integer
+          format: int64
+          title: Long
+        online:
+          type: boolean
+          title: Boolean
+        playerId:
+          type: string
+          title: String
+        playerName:
+          type: string
+          title: String
+        rank:
+          type: string
+          title: String
+      required:
+      - joinedAtMs
+      - online
+      - playerId
+      - playerName
+      - rank
+      title: GuildMemberInfo
+    org.micoli.micraft.social.GuildPermission:
+      type: string
+      enum:
+      - INVITE
+      - KICK
+      - MANAGE_RANKS
+      - EDIT_MOTD
+      - BANK_DEPOSIT
+      - BANK_WITHDRAW
+      - DISBAND
+      - EDIT_INFO
+      title: GuildPermission
+    org.micoli.micraft.social.GuildRank:
+      type: object
+      properties:
+        flags:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.social.GuildPermission"
+          title: Set<GuildPermission>
+          uniqueItems: true
+        name:
+          type: string
+          title: String
+        order:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - flags
+      - name
+      - order
+      title: GuildRank
+    org.micoli.micraft.http.GuildCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          title: String
+        ownerName:
+          type: string
+          title: String
+        tag:
+          type: string
+          title: String
+      required:
+      - name
+      - ownerName
+      - tag
+      title: GuildCreateRequest
+    org.micoli.micraft.http.GuildUpdateRequest:
+      type: object
+      properties:
+        motd:
+          type:
+          - "null"
+          - string
+          title: String
+        name:
+          type:
+          - "null"
+          - string
+          title: String
+        tag:
+          type:
+          - "null"
+          - string
+          title: String
+      title: GuildUpdateRequest
+    org.micoli.micraft.http.GuildRankRequest:
+      type: object
+      properties:
+        rank:
+          type: string
+          title: String
+      required:
+      - rank
+      title: GuildRankRequest
+    org.micoli.micraft.social.FactionDefinition:
+      type: object
+      properties:
+        color:
+          type: string
+          title: String
+        description:
+          type: string
+          title: String
+        id:
+          type: string
+          title: String
+        name:
+          type: string
+          title: String
+        spawnX:
+          type:
+          - "null"
+          - integer
+          format: int32
+          title: Int
+        spawnZ:
+          type:
+          - "null"
+          - integer
+          format: int32
+          title: Int
+      required:
+      - color
+      - description
+      - id
+      - name
+      title: FactionDefinition
+    org.micoli.micraft.http.FactionSettingsRequest:
+      type: object
+      properties:
+        changeCooldownSeconds:
+          type: integer
+          format: int64
+          title: Long
+        enabled:
+          type: boolean
+          title: Boolean
+        friendlyFire:
+          type: boolean
+          title: Boolean
+        spawnRingRadius:
+          type: number
+          format: double
+          title: Double
+      required:
+      - changeCooldownSeconds
+      - enabled
+      - friendlyFire
+      - spawnRingRadius
+      title: FactionSettingsRequest
+    org.micoli.micraft.http.FactionAdminView:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.social.FactionDefinition"
+          title: List<FactionDefinition>
+        settings:
+          $ref: "#/components/schemas/org.micoli.micraft.http.FactionSettingsRequest"
+      required:
+      - list
+      - settings
+      title: FactionAdminView
+    org.micoli.micraft.http.SocialMemberDto:
+      type: object
+      properties:
+        online:
+          type: boolean
+          title: Boolean
+        playerId:
+          type: string
+          title: String
+        playerName:
+          type: string
+          title: String
+      required:
+      - online
+      - playerId
+      - playerName
+      title: SocialMemberDto
     org.micoli.micraft.protocol.NpcCodexInfo:
       type: object
       properties:
