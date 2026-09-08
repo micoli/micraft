@@ -9,6 +9,7 @@ import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.behaviors.StaticNpcBehavior
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.support.completions
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 
@@ -126,7 +127,8 @@ class GotoCommandTest {
             mapOf(
                 "cavern - desert_0" to Vec3(10f, 5f, 10f),
                 "cavern - forest_1" to Vec3(20f, 5f, 20f))
-        val result = cmd.completeArg(0, "cavern", null, testContext(namedPoints = { points }))
+        val result =
+            cmd.completions(0, "cavern", testContext(namedPoints = { points })).map { it.label }
         assertTrue(result.contains("cavern - desert_0"))
         assertTrue(result.contains("cavern - forest_1"))
     }

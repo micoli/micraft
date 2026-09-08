@@ -269,6 +269,27 @@ export interface CommandInfo {
   autocompleteArgs?: number[];
 }
 
+export interface ConnectedPlayer {
+  name: string;
+  id: string;
+}
+
+/**
+ * One autocomplete entry. A bare string is a `label === value` suggestion; the object form carries
+ * a distinct wire `value` (e.g. `@<playerId>`) swapped in at submit time while the console keeps
+ * showing `label`.
+ */
+export type Suggestion = string | { label: string; value: string };
+
+export function suggestionLabel(s: Suggestion): string {
+  return typeof s === "string" ? s : s.label;
+}
+
+export function suggestionValue(s: Suggestion): string {
+  if (typeof s === "string") return s;
+  return s.value || s.label;
+}
+
 export interface RecipeIngredient {
   type: string;
   count: number;

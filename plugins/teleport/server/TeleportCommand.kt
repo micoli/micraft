@@ -2,7 +2,10 @@ package org.micoli.micraft.plugins.teleport
 
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.Completion
 import org.micoli.micraft.command.PluginCommand
+import org.micoli.micraft.command.playerCompletions
+import org.micoli.micraft.command.resolvePlayerSession
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
@@ -16,20 +19,19 @@ class TeleportCommand : PluginCommand {
 
     override val autocompleteArgs = listOf(0)
 
-    override suspend fun completeArg(
+    override suspend fun completeArgRich(
         argIndex: Int,
         partial: String,
         session: PlayerSession?,
         context: CommandContext
-    ): List<String> =
-        context.sessions().map { it.state.name }.filter { it.contains(partial, ignoreCase = true) }
+    ): List<Completion> = context.playerCompletions(partial)
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
         val i18n = context.i18n
         val parts = args.trim().split(Regex("\\s+|,"))
         if (parts.size == 1 && parts[0].isNotEmpty() && parts[0].toFloatOrNull() == null) {
-            val target = context.sessions().find { it.state.name == parts[0] }
+            val target = context.resolvePlayerSession(parts[0])
             if (target == null) {
                 session.send(
                     ServerMessage.Notification(i18n.t(lang, "teleport:server:not_found", parts[0])))

@@ -1,5 +1,17 @@
 import { useCallback, useEffect, useRef, useState, KeyboardEvent, MutableRefObject } from "react";
 import { matchesEvent } from "../lib/input/keyboard";
+import { Suggestion, suggestionLabel, suggestionValue } from "../types";
+
+/** Replaces an applied completion's label (a whole space-delimited argument, which may itself
+ * contain spaces) with its wire value. */
+function swapCompletedArgs(text: string, applied: Map<string, string>): string {
+  let out = text;
+  for (const [label, value] of applied) {
+    if (label === value) continue;
+    out = out.split(" " + label).join(" " + value);
+  }
+  return out;
+}
 
 interface ConsoleState {
   history: string[];
@@ -9,10 +21,10 @@ interface ConsoleState {
   tabMatches: string[];
 }
 
-async function computeSuggestions(val: string): Promise<string[]> {
+async function computeSuggestions(val: string): Promise<Suggestion[]> {
   if (!val.startsWith("/")) return [];
   const knownCommands: string[] = (window.mcState.knownCommands || []).sort();
-  const completers: Record<string, (p: string) => string[] | Promise<string[]>> =
+  const completers: Record<string, (p: string) => Suggestion[] | Promise<Suggestion[]>> =
     window.mcState.commandCompleters || {};
   const spaceIdx = val.indexOf(" ");
   if (spaceIdx === -1) {
@@ -34,9 +46,21 @@ interface UseConsoleParams {
 
 export function useConsole({ open, onClose, submittedRef, stateRef, initialValueRef, focusRef }: UseConsoleParams) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [selIdx, setSelIdx] = useState(-1);
   const completionSeqRef = useRef(0);
+  const appliedCompletionsRef = useRef<Map<string, string>>(new Map());
+  // The last completion inserted, so re-triggering (Enter / repeated Tab) replaces from the same
+  // anchor instead of the last space — a label may contain spaces (e.g. "Morlin Swanhelm").
+  const lastApplyRef = useRef<{ prefix: string; text: string } | null>(null);
+
+  function insertPrefix(val: string): string {
+    const la = lastApplyRef.current;
+    if (la && val === la.prefix + la.text) return la.prefix;
+    const firstSpaceIdx = val.indexOf(" ");
+    if (firstSpaceIdx === -1) return "";
+    return val.slice(0, val.lastIndexOf(" ") + 1);
+  }
 
   const updateSuggestions = useCallback(async (val: string) => {
     const seq = ++completionSeqRef.current;
@@ -55,6 +79,8 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
     el.value = initialValueRef.current;
     initialValueRef.current = "";
     submittedRef.current = null;
+    appliedCompletionsRef.current.clear();
+    lastApplyRef.current = null;
     stateRef.current.histIdx = -1;
     const shouldFocus = focusRef.current;
     if (shouldFocus && document.pointerLockElement) document.exitPointerLock();
@@ -65,15 +91,14 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
     }, 10);
   }, [open, focusRef, initialValueRef, stateRef, submittedRef, updateSuggestions]);
 
-  function applyCompletion(val: string, match: string) {
+  function applyCompletion(val: string, match: Suggestion) {
     const el = inputRef.current!;
-    const firstSpaceIdx = val.indexOf(" ");
-    if (firstSpaceIdx === -1) {
-      el.value = suggestions.length === 1 ? match + " " : match;
-    } else {
-      const lastSpaceIdx = val.lastIndexOf(" ");
-      el.value = val.slice(0, lastSpaceIdx + 1) + match;
-    }
+    const label = suggestionLabel(match);
+    if (typeof match !== "string") appliedCompletionsRef.current.set(label, suggestionValue(match));
+    const prefix = insertPrefix(val);
+    const inserted = prefix === "" && suggestions.length === 1 ? label + " " : label;
+    el.value = prefix + inserted;
+    lastApplyRef.current = { prefix, text: inserted };
     updateSuggestions(el.value);
     setSelIdx(-1);
   }
@@ -90,10 +115,12 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
           applyCompletion(el.value, suggestions[selIdx]);
           return;
         }
-        if (suggestions.length === 1) {
+        const la = lastApplyRef.current;
+        const alreadyApplied = la != null && el.value === la.prefix + la.text;
+        if (!alreadyApplied && suggestions.length === 1) {
           const sp = el.value.lastIndexOf(" ");
           const currentToken = sp === -1 ? el.value : el.value.slice(sp + 1);
-          if (currentToken !== suggestions[0]) {
+          if (currentToken !== suggestionLabel(suggestions[0])) {
             applyCompletion(el.value, suggestions[0]);
             return;
           }
@@ -103,7 +130,7 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
           if (text === "/disconnect" && window.mcState) {
             window.mcState.intentionalDisconnect = true;
           }
-          submittedRef.current = text;
+          submittedRef.current = swapCompletedArgs(text, appliedCompletionsRef.current);
           if (h.length === 0 || h[h.length - 1] !== text) h.push(text);
           try {
             localStorage.setItem("mc_history_" + c.playerName, JSON.stringify(h.slice(-50)));
@@ -147,13 +174,13 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
         if (suggestions.length === 0) return;
         const nextIdx = (selIdx + 1) % suggestions.length;
         setSelIdx(nextIdx);
-        const val = el.value;
-        const firstSpaceIdx = val.indexOf(" ");
-        if (firstSpaceIdx === -1) {
-          el.value = suggestions[nextIdx];
-        } else {
-          const lastSpaceIdx = val.lastIndexOf(" ");
-          el.value = val.slice(0, lastSpaceIdx + 1) + suggestions[nextIdx];
+        const match = suggestions[nextIdx];
+        const label = suggestionLabel(match);
+        const prefix = insertPrefix(el.value);
+        el.value = prefix + label;
+        lastApplyRef.current = { prefix, text: label };
+        if (typeof match !== "string") {
+          appliedCompletionsRef.current.set(label, suggestionValue(match));
         }
         break;
       }
@@ -172,6 +199,7 @@ export function useConsole({ open, onClose, submittedRef, stateRef, initialValue
   function handleInput() {
     const el = inputRef.current!;
     stateRef.current.histIdx = -1;
+    lastApplyRef.current = null;
     updateSuggestions(el.value);
     setSelIdx(-1);
     stateRef.current.tabIdx = -1;

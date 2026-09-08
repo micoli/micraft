@@ -5,9 +5,11 @@ import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import org.micoli.micraft.command.Completion
 import org.micoli.micraft.game.GameLoop
+
+private val json = Json { encodeDefaults = true }
 
 class AutocompleteController(private val gameLoop: GameLoop) {
     fun register(route: Route) =
@@ -29,7 +31,7 @@ class AutocompleteController(private val gameLoop: GameLoop) {
                         }
                     }
                     response {
-                        code(HttpStatusCode.OK) { body<List<String>>() }
+                        code(HttpStatusCode.OK) { body<List<Completion>>() }
                         code(HttpStatusCode.BadRequest) {
                             description = "Missing commandId or argIndex"
                         }
@@ -45,7 +47,7 @@ class AutocompleteController(private val gameLoop: GameLoop) {
                     val player = call.request.queryParameters["player"] ?: ""
                     val results = gameLoop.autocomplete(commandId, argIndex, partial, player)
                     call.respondText(
-                        Json.encodeToString(ListSerializer(String.serializer()), results),
+                        json.encodeToString(ListSerializer(Completion.serializer()), results),
                         ContentType.Application.Json)
                 }
         }

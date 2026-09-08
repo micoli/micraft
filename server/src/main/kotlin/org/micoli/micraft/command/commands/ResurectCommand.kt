@@ -4,6 +4,8 @@ import java.util.UUID
 import org.micoli.micraft.combat.CombatState
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.command.Completion
+import org.micoli.micraft.command.resolvePlayerSession
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
@@ -16,29 +18,28 @@ class ResurectCommand : CommandHandler {
     override val usage = "$command [playerName]"
     override val autocompleteArgs = listOf(0)
 
-    override suspend fun completeArg(
+    override suspend fun completeArgRich(
         argIndex: Int,
         partial: String,
         session: PlayerSession?,
         context: CommandContext,
-    ): List<String> =
+    ): List<Completion> =
         if (argIndex != 0) emptyList()
         else
             context
                 .sessions()
-                .filter { it.isDowned }
-                .map { it.state.name }
-                .filter { it.contains(partial, ignoreCase = true) }
+                .filter { it.isDowned && it.state.name.contains(partial, ignoreCase = true) }
+                .map { Completion(it.state.name, "@" + it.state.id) }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
-        val targetName = args.trim().ifBlank { session.state.name }
+        val targetToken = args.trim().ifBlank { session.state.name }
         val target =
-            context.sessions().find { it.state.name.equals(targetName, ignoreCase = true) }
+            context.resolvePlayerSession(targetToken)
                 ?: run {
                     session.send(
                         ServerMessage.Notification(
-                            context.i18n.t(lang, "resurect:server:not_found", targetName)))
+                            context.i18n.t(lang, "resurect:server:not_found", targetToken)))
                     return
                 }
 

@@ -3,6 +3,10 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.command.Completion
+import org.micoli.micraft.command.canonicalPlayerName
+import org.micoli.micraft.command.playerCompletions
+import org.micoli.micraft.command.resolvePlayerSession
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -25,18 +29,16 @@ class GuildCommand : CommandHandler {
             "transfer",
             "disband",
             "info")
+    override val autocompleteArgs = listOf(0, 1)
 
-    override suspend fun completeArg(
+    override suspend fun completeArgRich(
         argIndex: Int,
         partial: String,
         session: PlayerSession?,
         context: CommandContext,
-    ): List<String> {
-        if (argIndex == 0) return options.filter { it.contains(partial, ignoreCase = true) }
-        return context
-            .sessions()
-            .map { it.state.name }
-            .filter { it.contains(partial, ignoreCase = true) }
+    ): List<Completion>? {
+        if (argIndex == 0) return null
+        return context.playerCompletions(partial, excludeSelf = session)
     }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
@@ -51,7 +53,7 @@ class GuildCommand : CommandHandler {
                 if (toks.size < 2) return usage(session, context)
                 gm.create(session, toks.dropLast(1).joinToString(" "), toks.last())
             }
-            "invite" -> gm.invite(session, rest)
+            "invite" -> gm.invite(session, context.canonicalPlayerName(rest))
             "accept" ->
                 gm.pendingGuildIdFor(session.id)?.let { gm.respondInvite(session, it, true) }
             "decline" ->
@@ -79,17 +81,14 @@ class GuildCommand : CommandHandler {
     /**
      * Resolves a name to a player-id, preferring an online session, then the actor's guild roster.
      */
-    private fun memberId(context: CommandContext, actor: PlayerSession, name: String): String? {
-        context
-            .sessions()
-            .find { it.state.name.equals(name, ignoreCase = true) }
-            ?.let {
-                return it.id
-            }
+    private fun memberId(context: CommandContext, actor: PlayerSession, token: String): String? {
+        context.resolvePlayerSession(token)?.let {
+            return it.id
+        }
         return context.guildRegistry
             ?.guildOf(actor.id)
             ?.members
-            ?.find { it.playerName.equals(name, ignoreCase = true) }
+            ?.find { it.playerName.equals(token, ignoreCase = true) }
             ?.playerId
     }
 }

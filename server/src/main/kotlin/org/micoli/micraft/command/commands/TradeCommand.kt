@@ -3,6 +3,9 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.command.Completion
+import org.micoli.micraft.command.canonicalPlayerName
+import org.micoli.micraft.command.playerCompletions
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -13,17 +16,12 @@ class TradeCommand : CommandHandler {
     override val usage = "$command <playerName>"
     override val autocompleteArgs = listOf(0)
 
-    override suspend fun completeArg(
+    override suspend fun completeArgRich(
         argIndex: Int,
         partial: String,
         session: PlayerSession?,
         context: CommandContext,
-    ): List<String> =
-        context
-            .sessions()
-            .filter { it.state.name != session?.state?.name }
-            .map { it.state.name }
-            .filter { it.contains(partial, ignoreCase = true) }
+    ): List<Completion> = context.playerCompletions(partial, excludeSelf = session)
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val tradeManager = context.tradeManager
@@ -33,6 +31,6 @@ class TradeCommand : CommandHandler {
                     context.i18n.t(session.state.language, "trade:server:usage")))
             return
         }
-        tradeManager.initiate(session, args.trim())
+        tradeManager.initiate(session, context.canonicalPlayerName(args.trim()))
     }
 }

@@ -10,6 +10,7 @@ import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.support.completions
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 
@@ -137,7 +138,9 @@ class ResurectCommandTest {
         val bob = downedSession(id = "b", name = "Bob")
         val carol = testSession(id = "c", name = "Carol") // not downed
         val result =
-            cmd.completeArg(0, "", caster, testContext(sessions = listOf(caster, bob, carol)))
+            cmd.completions(0, "", testContext(sessions = listOf(caster, bob, carol)), caster).map {
+                it.label
+            }
         assertTrue("Bob" in result)
         assertFalse("Carol" in result)
     }
@@ -148,7 +151,8 @@ class ResurectCommandTest {
         val bob = downedSession(id = "b", name = "Bob")
         val barry = downedSession(id = "d", name = "Barry")
         val result =
-            cmd.completeArg(0, "Ba", caster, testContext(sessions = listOf(caster, bob, barry)))
+            cmd.completions(0, "Ba", testContext(sessions = listOf(caster, bob, barry)), caster)
+                .map { it.label }
         assertTrue("Barry" in result)
         assertFalse("Bob" in result)
     }

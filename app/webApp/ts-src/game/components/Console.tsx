@@ -1,6 +1,7 @@
 import { MutableRefObject, useEffect, useRef } from "react";
 import { cn } from "../../primitives/cn";
 import { useConsole } from "../hooks/useConsole";
+import { suggestionLabel } from "../types";
 
 interface ConsoleState {
   history: string[];
@@ -56,7 +57,7 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
         >
           {suggestions.map((s, i) => (
             <div
-              key={s}
+              key={suggestionLabel(s)}
               onMouseDown={(e) => {
                 e.preventDefault();
                 applyCompletion(inputRef.current!.value, s);
@@ -67,7 +68,7 @@ export function Console({ open, onClose, submittedRef, stateRef, initialValueRef
                 i === selIdx ? "bg-blue-300 text-black" : "text-white/80 hover:bg-white/10",
               )}
             >
-              {s}
+              {suggestionLabel(s)}
             </div>
           ))}
         </div>

@@ -160,9 +160,8 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
-                  title: String
-                title: List<String>
+                  $ref: "#/components/schemas/org.micoli.micraft.command.Completion"
+                title: List<Completion>
         "400":
           description: Missing commandId or argIndex
           headers: {}
@@ -3855,6 +3854,19 @@ components:
       required:
       - email
       title: NoAuthLoginResponse
+    org.micoli.micraft.command.Completion:
+      type: object
+      properties:
+        label:
+          type: string
+          title: String
+        value:
+          type: string
+          title: String
+      required:
+      - label
+      - value
+      title: Completion
     org.micoli.micraft.ui.WidgetRegistryEntry:
       type: object
       properties:

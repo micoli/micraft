@@ -3,6 +3,9 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.command.Completion
+import org.micoli.micraft.command.playerCompletions
+import org.micoli.micraft.command.resolvePlayerSession
 import org.micoli.micraft.game.npc.CurrencyUtils
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
@@ -13,6 +16,14 @@ class GiveMoneyCommand : CommandHandler {
     override val permission = "admin"
     override val description = "Give copper to a player (or yourself if name omitted)."
     override val usage = "$command <amount> [playerName]"
+    override val autocompleteArgs = listOf(1)
+
+    override suspend fun completeArgRich(
+        argIndex: Int,
+        partial: String,
+        session: PlayerSession?,
+        context: CommandContext,
+    ): List<Completion> = if (argIndex == 1) context.playerCompletions(partial) else emptyList()
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
@@ -30,9 +41,7 @@ class GiveMoneyCommand : CommandHandler {
             if (targetName == null) {
                 session
             } else {
-                context.sessions().firstOrNull {
-                    it.state.name.equals(targetName, ignoreCase = true)
-                }
+                context.resolvePlayerSession(targetName)
                     ?: run {
                         session.send(
                             ServerMessage.Notification(

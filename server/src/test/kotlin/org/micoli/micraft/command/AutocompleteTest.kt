@@ -15,6 +15,7 @@ import org.micoli.micraft.plugins.goto.GotoCommand
 import org.micoli.micraft.plugins.kick.KickCommand
 import org.micoli.micraft.plugins.summon.SummonCommand
 import org.micoli.micraft.plugins.teleport.TeleportCommand
+import org.micoli.micraft.support.completions
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 
@@ -55,35 +56,35 @@ class AutocompleteTest {
 
     @Test
     fun kickCommand_completeArg_returnsConnectedPlayers() = runBlocking {
-        val alice = testSession(name = "Alice")
-        val bob = testSession(name = "Bob")
+        val alice = testSession(id = "id-alice", name = "Alice")
+        val bob = testSession(id = "id-bob", name = "Bob")
         val cmd = KickCommand()
-        val result = cmd.completeArg(0, "A", null, testContext(sessions = listOf(alice, bob)))
-        assertEquals(listOf("Alice"), result)
+        val result = cmd.completions(0, "A", testContext(sessions = listOf(alice, bob)))
+        assertEquals(listOf(Completion("Alice", "@id-alice")), result)
     }
 
     @Test
     fun teleportCommand_completeArg_returnsConnectedPlayers() = runBlocking {
-        val alice = testSession(name = "Alice")
+        val alice = testSession(id = "id-alice", name = "Alice")
         val cmd = TeleportCommand()
-        val result = cmd.completeArg(0, "", null, testContext(sessions = listOf(alice)))
-        assertEquals(listOf("Alice"), result)
+        val result = cmd.completions(0, "", testContext(sessions = listOf(alice)))
+        assertEquals(listOf(Completion("Alice", "@id-alice")), result)
     }
 
     @Test
     fun summonCommand_completeArg_returnsConnectedPlayers() = runBlocking {
-        val alice = testSession(name = "Alice")
+        val alice = testSession(id = "id-alice", name = "Alice")
         val cmd = SummonCommand()
-        val result = cmd.completeArg(0, "", null, testContext(sessions = listOf(alice)))
-        assertEquals(listOf("Alice"), result)
+        val result = cmd.completions(0, "", testContext(sessions = listOf(alice)))
+        assertEquals(listOf(Completion("Alice", "@id-alice")), result)
     }
 
     @Test
     fun talkCommand_completeArg_returnsConnectedPlayers() = runBlocking {
-        val alice = testSession(name = "Alice")
+        val alice = testSession(id = "id-alice", name = "Alice")
         val cmd = TalkCommand()
-        val result = cmd.completeArg(0, "", null, testContext(sessions = listOf(alice)))
-        assertEquals(listOf("Alice"), result)
+        val result = cmd.completions(0, "", testContext(sessions = listOf(alice)))
+        assertEquals(listOf(Completion("Alice", "@id-alice")), result)
     }
 
     @Test

@@ -39,6 +39,20 @@ export type OrgMicoliMicraftAuthNoAuthLoginResponse = {
 };
 
 /**
+ * Completion
+ */
+export type OrgMicoliMicraftCommandCompletion = {
+    /**
+     * String
+     */
+    label: string;
+    /**
+     * String
+     */
+    value: string;
+};
+
+/**
  * WidgetRegistryEntry
  */
 export type OrgMicoliMicraftUiWidgetRegistryEntry = {
@@ -3538,9 +3552,9 @@ export type GetApiAutocompleteByCommandIdByArgIndexErrors = {
 
 export type GetApiAutocompleteByCommandIdByArgIndexResponses = {
     /**
-     * List<String>
+     * List<Completion>
      */
-    200: Array<string>;
+    200: Array<OrgMicoliMicraftCommandCompletion>;
 };
 
 export type GetApiAutocompleteByCommandIdByArgIndexResponse = GetApiAutocompleteByCommandIdByArgIndexResponses[keyof GetApiAutocompleteByCommandIdByArgIndexResponses];

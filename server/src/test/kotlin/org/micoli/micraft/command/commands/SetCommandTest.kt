@@ -11,6 +11,7 @@ import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.support.completions
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 
@@ -190,7 +191,10 @@ class SetCommandTest {
     fun autocomplete_arg1_returnsPlayerNames() = runBlocking {
         val caller = testSession(id = "a", name = "Alice")
         val bob = sessionWithChar()
-        val result = cmd.completeArg(1, "", caller, testContext(sessions = listOf(caller, bob)))
+        val result =
+            cmd.completions(1, "", testContext(sessions = listOf(caller, bob)), caller).map {
+                it.label
+            }
         assertTrue("Bob" in result)
         assertTrue("Alice" in result)
     }

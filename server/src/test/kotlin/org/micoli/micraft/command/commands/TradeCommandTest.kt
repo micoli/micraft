@@ -6,6 +6,7 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.support.completions
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testI18n
 import org.micoli.micraft.support.testSession
@@ -58,7 +59,7 @@ class TradeCommandTest {
         val alice = testSession(name = "Alice")
         val bob = testSession(id = "bob-id", name = "Bob")
         val ctx = testContext(sessions = listOf(alice, bob))
-        val results = cmd.completeArg(0, "", alice, ctx)
+        val results = cmd.completions(0, "", ctx, alice).map { it.label }
         assertFalse(results.contains("Alice"))
         assertTrue(results.contains("Bob"))
     }

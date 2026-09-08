@@ -1,8 +1,15 @@
 import { getApiAutocompleteByCommandIdByArgIndex } from "../../generated/api/requests";
+import type { Suggestion } from "../types";
 
-function registerCompleter(cmd: string, fn: (partial: string) => string[] | Promise<string[]>): void {
+function registerCompleter(cmd: string, fn: (partial: string) => Suggestion[] | Promise<Suggestion[]>): void {
   window.mcState.commandCompleters[cmd] = fn;
   if (!window.mcState.knownCommands.includes(cmd)) window.mcState.knownCommands.push(cmd);
+}
+
+function playerSuggestions(partial: string): Suggestion[] {
+  return (window.mcState.connectedPlayers || [])
+    .filter((p) => p.name.startsWith(partial))
+    .map((p) => ({ label: p.name, value: "@" + p.id }));
 }
 
 function registerServerCompleters(commands: Array<{ id: string; command: string; autocompleteArgs?: number[] }>): void {
@@ -59,7 +66,7 @@ export function registerUtils(): Pick<
     "THIRD_PERSON_ORBIT_CURSOR",
   ];
   registerCompleter("/view_mode", (p) => viewModes.filter((m) => m.toLowerCase().startsWith(p.toLowerCase())));
-  registerCompleter("/kick", (p) => (window.mcState.connectedPlayers || []).filter((n) => n.startsWith(p)));
+  registerCompleter("/kick", playerSuggestions);
   registerCompleter("/shaders", (p) => ["on", "off"].filter((o) => o.startsWith(p)));
   registerCompleter("/time", (p) => Array.from({ length: 24 }, (_, i) => String(i)).filter((o) => o.startsWith(p)));
   registerCompleter("/save", () => []);
@@ -67,18 +74,17 @@ export function registerUtils(): Pick<
   registerCompleter("/yield", () => []);
   registerCompleter("/preferences", () => []);
   registerCompleter("/disconnect", () => []);
-  registerCompleter("/teleport", (p) => (window.mcState.connectedPlayers || []).filter((n) => n.startsWith(p)));
-  registerCompleter("/summon", (p) => (window.mcState.connectedPlayers || []).filter((n) => n.startsWith(p)));
+  registerCompleter("/teleport", playerSuggestions);
+  registerCompleter("/summon", playerSuggestions);
   registerCompleter("/goto", (p) => {
-    const players: string[] = (window.mcState.connectedPlayers || []).filter((n: string) => n.startsWith(p));
     const npcs: string[] = (window.mcState.npcNames || []).filter((n: string) => n.startsWith(p));
-    return [...players, ...npcs];
+    return [...playerSuggestions(p), ...npcs];
   });
   registerCompleter("/layouts", () => []);
   registerCompleter("/refetch", () => []);
   // /layout completer is overwritten by GameUI when layouts are synced
   registerCompleter("/layout", () => []);
-  registerCompleter("/talk", (p) => (window.mcState.connectedPlayers || []).filter((n: string) => n.startsWith(p)));
+  registerCompleter("/talk", playerSuggestions);
   registerCompleter("/join", (p) => (window.mcState.knownChannels || []).filter((c: string) => c.startsWith(p)));
   registerCompleter("/leave", (p) =>
     (window.mcState.subscribedChannels || []).map((c) => c.name).filter((n) => n.startsWith(p)),

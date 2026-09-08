@@ -3,6 +3,9 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.command.Completion
+import org.micoli.micraft.command.playerCompletions
+import org.micoli.micraft.command.resolvePlayerSession
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -14,24 +17,24 @@ class TalkCommand : CommandHandler {
 
     override val autocompleteArgs = listOf(0)
 
-    override suspend fun completeArg(
+    override suspend fun completeArgRich(
         argIndex: Int,
         partial: String,
         session: PlayerSession?,
         context: CommandContext
-    ): List<String> =
-        context.sessions().map { it.state.name }.filter { it.contains(partial, ignoreCase = true) }
+    ): List<Completion> = context.playerCompletions(partial)
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val i18n = context.i18n
-        val targetName = args.trim()
-        if (targetName.isBlank()) {
+        val targetToken = args.trim()
+        if (targetToken.isBlank()) {
             session.send(
                 ServerMessage.Notification(
                     i18n.t(session.state.language, "talk:server:usage"), "system"))
             return
         }
-        val target = context.sessions().find { it.state.name == targetName }
+        val target = context.resolvePlayerSession(targetToken)
+        val targetName = target?.state?.name ?: targetToken
         if (target == null) {
             session.send(
                 ServerMessage.Notification(

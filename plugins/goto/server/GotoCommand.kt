@@ -2,7 +2,10 @@ package org.micoli.micraft.plugins.goto
 
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.Completion
 import org.micoli.micraft.command.PluginCommand
+import org.micoli.micraft.command.playerCompletions
+import org.micoli.micraft.command.resolvePlayerSession
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.plugins.teleport.safeTeleportPos
 import org.micoli.micraft.protocol.ServerMessage
@@ -16,16 +19,17 @@ class GotoCommand : PluginCommand {
 
     override val autocompleteArgs = listOf(0)
 
-    override suspend fun completeArg(
+    override suspend fun completeArgRich(
         argIndex: Int,
         partial: String,
         session: PlayerSession?,
         context: CommandContext
-    ): List<String> {
-        val players = context.sessions().map { it.state.name }
+    ): List<Completion> {
         val npcs = context.npcManager?.getAll()?.map { it.state.name } ?: emptyList()
         val named = context.namedPoints().keys.toList()
-        return (players + npcs + named).filter { it.contains(partial, ignoreCase = true) }
+        val rest =
+            (npcs + named).filter { it.contains(partial, ignoreCase = true) }.map { Completion(it) }
+        return context.playerCompletions(partial) + rest
     }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
@@ -37,7 +41,7 @@ class GotoCommand : PluginCommand {
             return
         }
         val targetPos =
-            context.sessions().find { it.state.name == target }?.state?.pos
+            context.resolvePlayerSession(target)?.state?.pos
                 ?: context.npcManager?.findByNameOrId(target)?.state?.pos
                 ?: context.namedPoints()[target]
         if (targetPos == null) {

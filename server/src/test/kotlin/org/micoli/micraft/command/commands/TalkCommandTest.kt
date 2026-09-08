@@ -6,6 +6,7 @@ import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.support.completions
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 
@@ -78,7 +79,7 @@ class TalkCommandTest {
         val mgr = ChatChannelManager()
         val svc = ChatService(mgr, {}, { listOf(session, other) })
         val ctx = testContext(chatService = svc, sessions = listOf(session, other))
-        val results = cmd.completeArg(0, "B", session, ctx)
-        assertTrue(results.contains("Bob"))
+        val results = cmd.completions(0, "B", ctx, session)
+        assertTrue(results.any { it.label == "Bob" && it.value == "@bob-id" })
     }
 }

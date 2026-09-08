@@ -47,6 +47,25 @@ export const org_micoli_micraft_auth_NoAuthLoginResponseSchema = {
     title: 'NoAuthLoginResponse'
 } as const;
 
+export const org_micoli_micraft_command_CompletionSchema = {
+    type: 'object',
+    properties: {
+        label: {
+            type: 'string',
+            title: 'String'
+        },
+        value: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'label',
+        'value'
+    ],
+    title: 'Completion'
+} as const;
+
 export const org_micoli_micraft_ui_WidgetRegistryEntrySchema = {
     type: 'object',
     properties: {

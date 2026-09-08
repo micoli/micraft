@@ -318,10 +318,13 @@ declare global {
     // Player / session
     playerName: string;
     playerId: string;
-    connectedPlayers: string[];
+    connectedPlayers: import("./game/types").ConnectedPlayer[];
     npcNames: string[];
     // Commands / autocomplete
-    commandCompleters: Record<string, (partial: string) => string[] | Promise<string[]>>;
+    commandCompleters: Record<
+      string,
+      (partial: string) => import("./game/types").Suggestion[] | Promise<import("./game/types").Suggestion[]>
+    >;
     knownCommands: string[];
     // Channels
     activeChannel: string;
@@ -560,7 +563,10 @@ declare global {
     setConnectedPlayers(namesJson: string): void;
     setNpcNames(namesJson: string): void;
     updateNpcProximity(json: string): void;
-    registerCompleter(cmd: string, fn: (partial: string) => string[] | Promise<string[]>): void;
+    registerCompleter(
+      cmd: string,
+      fn: (partial: string) => import("./game/types").Suggestion[] | Promise<import("./game/types").Suggestion[]>,
+    ): void;
     registerServerCompleters(commands: Array<{ id: string; command: string; autocompleteArgs?: number[] }>): void;
     // i18n / biome
     fetchI18n(locale: string): void;

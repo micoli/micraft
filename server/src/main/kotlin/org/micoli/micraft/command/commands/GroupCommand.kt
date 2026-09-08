@@ -3,6 +3,10 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.command.Completion
+import org.micoli.micraft.command.canonicalPlayerName
+import org.micoli.micraft.command.playerCompletions
+import org.micoli.micraft.command.resolvePlayerSession
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -14,18 +18,16 @@ class GroupCommand : CommandHandler {
         "$command create|invite <player>|accept|leave|kick <player>|transfer <player>|disband|who"
     override val options =
         listOf("create", "invite", "accept", "leave", "kick", "transfer", "disband", "who")
+    override val autocompleteArgs = listOf(0, 1)
 
-    override suspend fun completeArg(
+    override suspend fun completeArgRich(
         argIndex: Int,
         partial: String,
         session: PlayerSession?,
         context: CommandContext,
-    ): List<String> {
-        if (argIndex == 0) return options.filter { it.contains(partial, ignoreCase = true) }
-        return context
-            .sessions()
-            .map { it.state.name }
-            .filter { it.contains(partial, ignoreCase = true) }
+    ): List<Completion>? {
+        if (argIndex == 0) return null
+        return context.playerCompletions(partial, excludeSelf = session)
     }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
@@ -35,7 +37,7 @@ class GroupCommand : CommandHandler {
         val rest = parts.getOrNull(1)?.trim().orEmpty()
         when (sub) {
             "create" -> gm.create(session)
-            "invite" -> gm.invite(session, rest)
+            "invite" -> gm.invite(session, context.canonicalPlayerName(rest))
             "accept" ->
                 gm.pendingGroupIdFor(session.id)?.let { gm.respondInvite(session, it, true) }
             "decline" ->
@@ -52,6 +54,6 @@ class GroupCommand : CommandHandler {
         }
     }
 
-    private fun resolveId(context: CommandContext, name: String): String? =
-        context.sessions().find { it.state.name.equals(name, ignoreCase = true) }?.id
+    private fun resolveId(context: CommandContext, token: String): String? =
+        context.resolvePlayerSession(token)?.id
 }

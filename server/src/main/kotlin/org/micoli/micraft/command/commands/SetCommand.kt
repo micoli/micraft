@@ -3,6 +3,9 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.command.Completion
+import org.micoli.micraft.command.playerCompletions
+import org.micoli.micraft.command.resolvePlayerSession
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
@@ -26,15 +29,15 @@ class SetCommand : CommandHandler {
         session: PlayerSession?,
         context: CommandContext,
     ): List<String> =
-        when (argIndex) {
-            0 -> listOf("hp", "mana").filter { it.contains(partial, ignoreCase = true) }
-            1 ->
-                context
-                    .sessions()
-                    .map { it.state.name }
-                    .filter { it.contains(partial, ignoreCase = true) }
-            else -> emptyList()
-        }
+        if (argIndex == 0) listOf("hp", "mana").filter { it.contains(partial, ignoreCase = true) }
+        else emptyList()
+
+    override suspend fun completeArgRich(
+        argIndex: Int,
+        partial: String,
+        session: PlayerSession?,
+        context: CommandContext,
+    ): List<Completion>? = if (argIndex == 1) context.playerCompletions(partial) else null
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
@@ -57,7 +60,7 @@ class SetCommand : CommandHandler {
         }
 
         val target =
-            context.sessions().find { it.state.name.equals(playerName, ignoreCase = true) }
+            context.resolvePlayerSession(playerName)
                 ?: run {
                     session.send(
                         ServerMessage.Notification(

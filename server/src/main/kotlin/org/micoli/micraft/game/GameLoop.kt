@@ -19,6 +19,7 @@ import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.command.Completion
 import org.micoli.micraft.command.Plugin
 import org.micoli.micraft.command.commands.resolveSkin
 import org.micoli.micraft.config.ConfigRegistry
@@ -868,10 +869,17 @@ class GameLoop(
     /**
      * A connected player by name, across every world (a `?gameSession=` browser client included).
      */
-    internal fun sessionByName(playerName: String): PlayerSession? =
-        gameWorldRegistry.all().firstNotNullOfOrNull { w ->
+    internal fun sessionByName(playerName: String): PlayerSession? {
+        if (playerName.startsWith("@")) {
+            val id = playerName.drop(1)
+            return gameWorldRegistry.all().firstNotNullOfOrNull { w ->
+                w.sessions.all().find { it.state.id == id }
+            }
+        }
+        return gameWorldRegistry.all().firstNotNullOfOrNull { w ->
             w.sessions.all().find { it.state.name == playerName }
         }
+    }
 
     /**
      * The [GameWorld] this session is connected to (a `?gameSession=` client's own, or default).
@@ -1624,12 +1632,15 @@ class GameLoop(
         argIndex: Int,
         partial: String,
         playerName: String
-    ): List<String> {
+    ): List<Completion> {
         val handler = commands.values.find { it.id.toString() == commandId } ?: return emptyList()
         if (argIndex !in handler.autocompleteArgs) return emptyList()
         val session = sessionByName(playerName)
-        return handler.completeArg(
-            argIndex, partial, session, session?.let { commandContextFor(it) } ?: commandContext)
+        val context = session?.let { commandContextFor(it) } ?: commandContext
+        handler.completeArgRich(argIndex, partial, session, context)?.let {
+            return it
+        }
+        return handler.completeArg(argIndex, partial, session, context).map { Completion(it) }
     }
 
     /**

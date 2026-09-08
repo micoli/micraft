@@ -248,7 +248,11 @@ class RemotePlayerManager(private val scene: JsAny) {
             ?.value
 
     private fun updateAutocomplete() {
-        val json = "[" + playerNames.values.joinToString(",") { "\"$it\"" } + "]"
+        val json =
+            playerNames.entries.joinToString(prefix = "[", postfix = "]") { (id, name) ->
+                val safe = name.replace("\\", "\\\\").replace("\"", "\\\"")
+                """{"name":"$safe","id":"$id"}"""
+            }
         jsSetConnectedPlayers(json)
     }
 

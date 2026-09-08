@@ -320,4 +320,16 @@ fun testContext(
         actionBlockRegistry = actionBlockRegistry,
     )
 
+/** Resolves a command's completions the way `GameLoop.autocomplete` does (rich, then string). */
+suspend fun org.micoli.micraft.command.CommandHandler.completions(
+    argIndex: Int,
+    partial: String,
+    context: CommandContext,
+    session: PlayerSession? = null,
+): List<org.micoli.micraft.command.Completion> =
+    completeArgRich(argIndex, partial, session, context)
+        ?: completeArg(argIndex, partial, session, context).map {
+            org.micoli.micraft.command.Completion(it)
+        }
+
 fun testWeatherManager() = WeatherManager(WeatherConfig())

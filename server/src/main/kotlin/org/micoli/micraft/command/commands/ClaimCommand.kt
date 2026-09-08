@@ -3,6 +3,9 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.command.Completion
+import org.micoli.micraft.command.canonicalPlayerName
+import org.micoli.micraft.command.playerCompletions
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.protocol.ServerMessage
@@ -29,18 +32,18 @@ class ClaimCommand : CommandHandler {
         session: PlayerSession?,
         context: CommandContext,
     ): List<String> =
-        when (argIndex) {
-            0 ->
-                listOf("trust", "untrust", "abandon", "info").filter {
-                    it.contains(partial, ignoreCase = true)
-                }
-            1 ->
-                context
-                    .sessions()
-                    .map { it.state.name }
-                    .filter { it.contains(partial, ignoreCase = true) }
-            else -> emptyList()
-        }
+        if (argIndex == 0)
+            listOf("trust", "untrust", "abandon", "info").filter {
+                it.contains(partial, ignoreCase = true)
+            }
+        else emptyList()
+
+    override suspend fun completeArgRich(
+        argIndex: Int,
+        partial: String,
+        session: PlayerSession?,
+        context: CommandContext,
+    ): List<Completion>? = if (argIndex == 1) context.playerCompletions(partial) else null
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
@@ -54,7 +57,7 @@ class ClaimCommand : CommandHandler {
 
         val parts = args.trim().split(Regex("\\s+"))
         val subcommand = parts.getOrNull(0).orEmpty().lowercase()
-        val playerName = parts.getOrNull(1).orEmpty()
+        val playerName = context.canonicalPlayerName(parts.getOrNull(1).orEmpty())
 
         val pos = session.state.pos
         val here = BlockPos(pos.x.toInt(), pos.y.toInt(), pos.z.toInt())

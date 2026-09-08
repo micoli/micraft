@@ -2,7 +2,10 @@ package org.micoli.micraft.plugins.summon
 
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.Completion
 import org.micoli.micraft.command.PluginCommand
+import org.micoli.micraft.command.playerCompletions
+import org.micoli.micraft.command.resolvePlayerSession
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.plugins.teleport.safeTeleportPos
 import org.micoli.micraft.protocol.ServerMessage
@@ -16,23 +19,23 @@ class SummonCommand : PluginCommand {
 
     override val autocompleteArgs = listOf(0)
 
-    override suspend fun completeArg(
+    override suspend fun completeArgRich(
         argIndex: Int,
         partial: String,
         session: PlayerSession?,
         context: CommandContext
-    ): List<String> =
-        context.sessions().map { it.state.name }.filter { it.contains(partial, ignoreCase = true) }
+    ): List<Completion> = context.playerCompletions(partial)
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
         val i18n = context.i18n
-        val target = args.trim()
-        if (target.isBlank()) {
+        val token = args.trim()
+        if (token.isBlank()) {
             session.send(ServerMessage.Notification(i18n.t(lang, "summon:server:usage")))
             return
         }
-        val targetSession: PlayerSession? = context.sessions().find { it.state.name == target }
+        val targetSession: PlayerSession? = context.resolvePlayerSession(token)
+        val target = targetSession?.state?.name ?: token
         if (targetSession == null) {
             session.send(
                 ServerMessage.Notification(i18n.t(lang, "summon:server:not_found", target)))
