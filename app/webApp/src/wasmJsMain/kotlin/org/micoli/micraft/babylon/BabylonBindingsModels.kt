@@ -63,8 +63,9 @@ fun jsSetNpcTransform(
     y: Double,
     z: Double,
     yaw: Float,
-    isWalking: Boolean
-): Unit = js("mc.setNpcTransform(model, x, y, z, yaw, isWalking)")
+    isWalking: Boolean,
+    isFlying: Boolean
+): Unit = js("mc.setNpcTransform(model, x, y, z, yaw, isWalking, isFlying)")
 
 fun jsSetNpcScale(model: JsAny, scale: Float): Unit = js("mc.setNpcScale(model, scale)")
 

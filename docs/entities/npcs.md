@@ -9,7 +9,9 @@ title: NPCs
 NPC types include `SELLER`, `BLACK_SMITH`, `GOAT`, `DUCK`, `WOLF`, `CAT`, `BEAR`,
 `POLAR_BEAR` and more, with behaviours: **static**, **interactable**,
 **random-wander**, and **hostile-aggro**. Models are Blockbench `bbmodel`
-animations with configurable walk-bone aliases.
+animations with configurable bone aliases in `walkBoneAliases`
+(`rightArm`/`leftArm`/`rightLeg`/`leftLeg` for the walk cycle; add
+`rightWing`/`leftWing` and the client plays a wing-flap while the NPC is flying).
 
 - **`/spawn <npc_model> [x y z]`** *(admin)* — spawn on the block you look at.
 - **`/npc <spawn|list|remove|tp> [args]`** — manage NPCs.

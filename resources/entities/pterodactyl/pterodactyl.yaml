@@ -26,7 +26,7 @@ animal:
   fleeRadius: 0.0
   starvationDeathDays: 5.0
 walkBoneAliases:
-  rightArm: wing1
-  leftArm: wing0
   rightLeg: leg1
   leftLeg: leg0
+  rightWing: wing1
+  leftWing: wing0

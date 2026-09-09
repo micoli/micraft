@@ -357,11 +357,12 @@ class NpcManager(
             instance.animalData = data
             instance.state = instance.state.copy(animalData = data.toState())
         }
+        if (instance.flying) instance.state = instance.state.copy(flying = true)
         npcs[id] = instance
         if (broadCastNpcPositions) {
-            broadcast(ServerMessage.NpcSpawned(state))
+            broadcast(ServerMessage.NpcSpawned(instance.state))
         } else {
-            val stateWithAggro = state.copy(aggroTargetId = null)
+            val stateWithAggro = instance.state.copy(aggroTargetId = null)
             val rangesq = tuning.updateRange * tuning.updateRange
             for (s in getSessions()) {
                 val dx = s.state.pos.x - pos.x

@@ -521,7 +521,15 @@ declare global {
     initNpcWalkBones(json: string): void;
     isNpcModelsReady(): boolean;
     createNpcModel(scene: Scene, npcType: string): McPlayerModel | null;
-    setNpcTransform(model: McPlayerModel, x: number, y: number, z: number, yaw: number, isWalking: boolean): void;
+    setNpcTransform(
+      model: McPlayerModel,
+      x: number,
+      y: number,
+      z: number,
+      yaw: number,
+      isWalking: boolean,
+      isFlying?: boolean,
+    ): void;
     setNpcScale(model: McPlayerModel, scale: number): void;
     disposeNpcModel(model: McPlayerModel): void;
     openNpcDialog(json: string): void;

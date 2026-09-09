@@ -17,6 +17,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
     @OptIn(ExperimentalWasmJsInterop::class) private val npcModels = mutableMapOf<String, JsAny>()
     private val npcBuffers = mutableMapOf<String, ArrayDeque<PosSnapshot>>()
     private val npcRenderedYaw = mutableMapOf<String, Float>()
+    private val npcFlying = mutableMapOf<String, Boolean>()
     private val pendingNpcs = mutableListOf<NpcState>()
     private val npcNames = mutableMapOf<String, String>()
     private val npcScales = mutableMapOf<String, Float>()
@@ -113,6 +114,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         npcModels.remove(id)?.let(::jsDisposeNpcModel)
         npcBuffers.remove(id)
         npcRenderedYaw.remove(id)
+        npcFlying.remove(id)
     }
 
     fun tick() {
@@ -130,7 +132,8 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
             val prevYaw = npcRenderedYaw[id] ?: yaw
             val renderedYaw = lerpAngle(prevYaw, yaw, 0.12f)
             npcRenderedYaw[id] = renderedYaw
-            val isWalking = abs(vel.x) > 0.01f || abs(vel.z) > 0.01f
+            val flying = npcFlying[id] == true
+            val isWalking = !flying && (abs(vel.x) > 0.01f || abs(vel.z) > 0.01f)
             jsSetNpcTransform(
                 model,
                 pos.x.toDouble(),
@@ -138,6 +141,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
                 pos.z.toDouble(),
                 renderedYaw,
                 isWalking,
+                flying,
             )
         }
         if (++proximityTick >= PROXIMITY_THROTTLE_TICKS) {
@@ -198,6 +202,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
 
     private fun pushSnapshot(npc: NpcState) {
         val buf = npcBuffers.getOrPut(npc.id) { ArrayDeque() }
+        npcFlying[npc.id] = npc.flying
         buf.addLast(PosSnapshot(npc.pos, npc.vel, npc.yaw, nowMs()))
         while (buf.size > MAX_BUFFER) buf.removeFirst()
     }

@@ -22,8 +22,8 @@ private const val MAX_WALK_SAMPLES = 24
 class RandomMovableNpcBehavior : NpcBehavior {
 
     override fun tick(instance: NpcInstance, world: WorldState, ctx: NpcTickContext): Boolean {
-        updateFlightMode(instance)
-        var changed = NpcPhysics.applyGravity(instance, world)
+        var changed = updateFlightMode(instance)
+        changed = NpcPhysics.applyGravity(instance, world) || changed
         if (instance.hibernating) return changed
         val now = System.currentTimeMillis()
         val isFrozen =
@@ -50,14 +50,18 @@ class RandomMovableNpcBehavior : NpcBehavior {
      * player who has it targeted — then lands to fight on the ground. A `FLYING`-only NPC always
      * flies.
      */
-    private fun updateFlightMode(instance: NpcInstance) {
+    private fun updateFlightMode(instance: NpcInstance): Boolean {
         val def = instance.definition
-        if (!def.canFly) return
+        if (!def.canFly) return false
         val engaged =
             instance.aggroTarget != null ||
                 instance.npcAggroTarget != null ||
                 instance.targetedByPlayer
         instance.flying = !(def.canWalk && engaged)
+        if (instance.state.flying == instance.flying) return false
+        // Kept on the wire state so the client can switch between the flap and walk animations.
+        instance.state = instance.state.copy(flying = instance.flying)
+        return true
     }
 
     private fun tickChase(

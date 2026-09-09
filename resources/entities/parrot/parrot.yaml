@@ -18,10 +18,10 @@ spawn:
   maxTotal: 80
   minTotal: 40
 walkBoneAliases:
-  rightArm: wing0
-  leftArm: wing1
   rightLeg: leg0
   leftLeg: leg1
+  rightWing: wing0
+  leftWing: wing1
 animal:
   diet: HERBIVORE
   canReproduce: false

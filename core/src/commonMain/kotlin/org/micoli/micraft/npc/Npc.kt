@@ -20,4 +20,6 @@ data class NpcState(
     val animalData: AnimalStateData? = null,
     val scale: Float = 1.0f,
     val ownerId: String? = null,
+    /** Airborne: the client plays the wing-flap animation instead of the walk cycle. */
+    val flying: Boolean = false,
 )

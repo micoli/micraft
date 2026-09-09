@@ -122,7 +122,15 @@ export function registerNpcModel(): Pick<
       return model;
     },
 
-    setNpcTransform: (model: McPlayerModel, x: number, y: number, z: number, yaw: number, isWalking: boolean): void => {
+    setNpcTransform: (
+      model: McPlayerModel,
+      x: number,
+      y: number,
+      z: number,
+      yaw: number,
+      isWalking: boolean,
+      isFlying?: boolean,
+    ): void => {
       model.root.position.x = x;
       model.root.position.y = y;
       model.root.position.z = z;
@@ -135,6 +143,39 @@ export function registerNpcModel(): Pick<
 
       const PROC_AMP = 30;
       const PROC_PHASE: Record<string, number> = { rightArm: 0, leftArm: Math.PI, rightLeg: Math.PI, leftLeg: 0 };
+
+      const restWings = (): void => {
+        for (const bname of ["rightWing", "leftWing"] as const) {
+          const b = pn[bname];
+          if (!b) continue;
+          b.node.rotation.x = b.restRotation?.[0] ?? 0;
+          b.node.rotation.z = b.restRotation?.[2] ?? 0;
+        }
+      };
+
+      // Wing-flap: birds only, played whenever the NPC is airborne. Wings roll (z) around the
+      // shoulder in mirror; the walk cycle (legs) is skipped.
+      if (isFlying && (pn.rightWing || pn.leftWing)) {
+        const FLAP_HZ = 2.6;
+        const FLAP_AMP = 42 * DEG;
+        const flap = Math.sin((Date.now() / 1000) * FLAP_HZ * 2 * Math.PI) * FLAP_AMP;
+        for (const [bname, sign] of [
+          ["rightWing", 1],
+          ["leftWing", -1],
+        ] as const) {
+          const b = pn[bname];
+          if (!b) continue;
+          const rest = b.restRotation ?? [0, 0, 0];
+          b.node.rotation.x = rest[0];
+          b.node.rotation.z = rest[2] + sign * flap;
+        }
+        for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
+          if (pn[bname]) pn[bname].node.rotation.x = pn[bname].restRotation?.[0] ?? 0;
+        }
+        return;
+      }
+
+      restWings();
 
       if (isWalking) {
         const animLen = Math.max(wa["rightArm"]?.length ?? 1, 1e-3);
