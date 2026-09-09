@@ -61,8 +61,10 @@ dev-restart-server: ## Rebuild + restart Ktor server only — run after every se
 	$(PITCHFORK) restart server
 
 dev-restart-clean-server: ## Wipe world/config state then restart server
+	$(PITCHFORK) stop server
+	sleep 2
 	$(EXEC) "rm data/world/default_world/*.json data/world/default_world/chunks/* data/config/*/* || true"
-	$(PITCHFORK) restart server
+	$(PITCHFORK) start server
 
 dev-task-stop: ## Stop all pitchfork daemons (keeps container alive)
 	$(PITCHFORK) stop -l

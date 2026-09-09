@@ -78,6 +78,12 @@
         "headInLiquid": {
           "type": "boolean"
         },
+        "currentBreath": {
+          "type": "integer"
+        },
+        "maxBreath": {
+          "type": "integer"
+        },
         "inventory": {
           "type": "object",
           "additionalProperties": {

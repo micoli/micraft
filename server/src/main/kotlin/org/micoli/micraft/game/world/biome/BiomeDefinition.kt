@@ -49,6 +49,12 @@ data class BiomeDefinition(
     val liquid: Boolean = false,
     val waterLevel: Int = 0,
     val waterMaxDepth: Int = 8,
+    /** Amplitude in blocks of small-scale seabed relief for a liquid biome (0 = flat floor). */
+    val waterFloorRelief: Int = 0,
+    /** Fraction (0..1) of a liquid biome's surface that emerges as islands above [waterLevel]. */
+    val islandFraction: Double = 0.0,
+    /** Peak height in blocks an island crest rises above [waterLevel]. */
+    val islandHeight: Int = 8,
     val tintColor: List<Double>? = null,
     val caverns: CavernConfig? = null,
     val maxNpcs: Int = 0,

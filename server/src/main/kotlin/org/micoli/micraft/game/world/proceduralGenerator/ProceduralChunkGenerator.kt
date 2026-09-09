@@ -27,6 +27,8 @@ class ProceduralChunkGenerator(
     private val mountainNoise = PerlinNoise(seed + 2L)
     private val moistureNoise = PerlinNoise(seed + 1L)
     private val waterNoise = PerlinNoise(seed + 3L)
+    private val seabedNoise = PerlinNoise(seed + 6L)
+    private val islandNoise = PerlinNoise(seed + 7L)
     private val fillerNoise = PerlinNoise3D(seed + 5L)
     private val cavernGenerator = CavernGenerator(seed, biomeRegistry.voronoiCellSize)
     val voronoi = VoronoiBiomeZones(seed, biomeRegistry, moistureNoise)
@@ -49,6 +51,29 @@ class ProceduralChunkGenerator(
         if (sample.primary.id == sample.secondary.id) 1.0 else sample.blendFactor
 
     /**
+     * Noise value a column must exceed to sit under an island, chosen so that roughly [fraction] of
+     * the island-noise field (approximately Gaussian, σ≈[ISLAND_NOISE_SIGMA]) clears it.
+     */
+    private fun islandThreshold(fraction: Double): Double =
+        ISLAND_NOISE_SIGMA * probit(1.0 - fraction.coerceIn(1e-4, 0.5))
+
+    /** Standard-normal inverse CDF — Abramowitz & Stegun 26.2.23, |error| < 4.5e-4. */
+    private fun probit(p: Double): Double {
+        val a = if (p < 0.5) p else 1.0 - p
+        val t = kotlin.math.sqrt(-2.0 * kotlin.math.ln(a))
+        val x =
+            t -
+                (2.515517 + 0.802853 * t + 0.010328 * t * t) /
+                    (1.0 + 1.432788 * t + 0.189269 * t * t + 0.001308 * t * t * t)
+        return if (p < 0.5) -x else x
+    }
+
+    companion object {
+        /** Empirical standard deviation of the 3-octave island-noise field. */
+        private const val ISLAND_NOISE_SIGMA = 0.18
+    }
+
+    /**
      * Water surface Y for an aquatic column — flat at the biome's waterLevel. The basin is closed
      * purely by the floor rising to waterLevel at borders (see [surfaceHeight]); keeping the
      * surface flat guarantees no water block is ever left exposed next to a lower neighbour.
@@ -58,8 +83,38 @@ class ProceduralChunkGenerator(
 
     fun surfaceHeight(wx: Int, wz: Int, sample: VoronoiBiomeZones.ColumnSample): Int {
         if (sample.primary.liquid) {
-            val depth = (sample.primary.waterMaxDepth * basinEdge(sample)).roundToInt()
-            return (sample.primary.waterLevel - depth).coerceIn(4, WorldConstants.WORLD_MAX_Y - 1)
+            val prim = sample.primary
+            val edge = basinEdge(sample)
+            var floor = prim.waterLevel - prim.waterMaxDepth * edge
+
+            // Small-scale seabed relief so the floor is not a flat plane. Damped toward the
+            // basin border by `edge` to keep the closing ramp clean.
+            if (prim.waterFloorRelief > 0) {
+                val r =
+                    seabedNoise.octaveNoise(wx / 40.0, wz / 40.0, octaves = 4, persistence = 0.5)
+                floor += r * prim.waterFloorRelief * edge
+            }
+
+            // Islands: an independent low-frequency noise field. Columns above `threshold` all
+            // emerge (floor pulled to at least waterLevel, plus a rounded crest); a short band
+            // below `threshold` ramps the floor up so the shore is a slope, not a wall.
+            // `islandThreshold` is picked so that ~`islandFraction` of the field clears it.
+            if (prim.islandFraction > 0.0 && edge > 0.6) {
+                val n =
+                    islandNoise.octaveNoise(wx / 96.0, wz / 96.0, octaves = 3, persistence = 0.5)
+                val threshold = islandThreshold(prim.islandFraction)
+                val rim = 0.12
+                if (n >= threshold) {
+                    val t = ((n - threshold) / (1.0 - threshold)).coerceIn(0.0, 1.0)
+                    val crest = t * t * (3.0 - 2.0 * t)
+                    floor = maxOf(floor, prim.waterLevel.toDouble()) + prim.islandHeight * crest
+                } else if (n >= threshold - rim) {
+                    val k = (n - (threshold - rim)) / rim
+                    floor += (prim.waterLevel - floor) * (k * k * (3.0 - 2.0 * k))
+                }
+            }
+
+            return floor.roundToInt().coerceIn(4, WorldConstants.WORLD_MAX_Y - 1)
         }
         val n = elevationNoise.octaveNoise(wx / 64.0, wz / 64.0, octaves = 6, persistence = 0.5)
         val t = (n + 1.0) / 2.0

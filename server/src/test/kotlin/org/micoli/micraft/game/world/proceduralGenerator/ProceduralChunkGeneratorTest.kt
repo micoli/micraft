@@ -421,6 +421,89 @@ class ProceduralChunkGeneratorTest {
         assertEquals(a.generate(ChunkPos(0, 0)), b.generate(ChunkPos(0, 0)))
     }
 
+    // ── Aquatic relief + islands ──────────────────────────────────────────────
+
+    private val reliefRegistry =
+        BiomeRegistry.from(
+            BiomeConfig(
+                biomes =
+                    listOf(
+                        seaBiome.copy(
+                            waterFloorRelief = 4,
+                            islandFraction = 0.08,
+                            islandHeight = 6,
+                        ),
+                        BiomeDefinition(
+                            id = "plains",
+                            zones = listOf(BiomeZone(0.5, 1.0)),
+                            surface = BlockType.GRASS,
+                            subsurface = BlockType.DIRT,
+                            elevationMin = 72,
+                            elevationMax = 96,
+                        )),
+                voronoiCellSize = 64,
+                voronoiBlendRadius = 6,
+            ))
+
+    private fun seaColumns(gen: ProceduralChunkGenerator, range: IntProgression) =
+        range.flatMap { wx ->
+            range.mapNotNull { wz ->
+                val sample = gen.voronoi.sample(wx, wz)
+                if (sample.primary.id == "sea") gen.surfaceHeight(wx, wz, sample) else null
+            }
+        }
+
+    @Test
+    fun generate_aquaticRelief_floorIsNotFlat() {
+        val gen = ProceduralChunkGenerator(seed = 3L, biomeRegistry = reliefRegistry)
+        val heights = seaColumns(gen, -160..160 step 2)
+        assertTrue(heights.size > 200, "need a sizeable sea sample, got ${heights.size}")
+        assertTrue(
+            heights.toSet().size > 4,
+            "seabed relief must vary the floor height, distinct=${heights.toSet()}")
+    }
+
+    @Test
+    fun generate_aquaticRelief_islandsCoverRoughlyConfiguredFraction() {
+        val gen = ProceduralChunkGenerator(seed = 3L, biomeRegistry = reliefRegistry)
+        val heights = seaColumns(gen, -320..320 step 2)
+        val emerged = heights.count { it >= 60 }
+        val fraction = emerged.toDouble() / heights.size
+        assertTrue(
+            fraction in 0.04..0.13,
+            "island coverage $fraction (emerged=$emerged / ${heights.size}) far from 0.08")
+    }
+
+    @Test
+    fun generate_aquaticRelief_noExposedWaterAndDeterministic() {
+        val a = ProceduralChunkGenerator(seed = 3L, biomeRegistry = reliefRegistry)
+        val b = ProceduralChunkGenerator(seed = 3L, biomeRegistry = reliefRegistry)
+        assertEquals(a.generate(ChunkPos(1, -1)), b.generate(ChunkPos(1, -1)))
+
+        val gen = ProceduralChunkGenerator(seed = 3L, biomeRegistry = reliefRegistry)
+        val world = HashMap<Triple<Int, Int, Int>, BlockType>()
+        for (cx in -2..2) for (cz in -2..2) {
+            val chunk = gen.generate(ChunkPos(cx, cz))
+            val ox = cx * WorldConstants.CHUNK_SIZE
+            val oz = cz * WorldConstants.CHUNK_SIZE
+            for (lx in 0 until WorldConstants.CHUNK_SIZE) for (lz in
+                0 until WorldConstants.CHUNK_SIZE) for (y in 0 until WorldConstants.WORLD_MAX_Y) {
+                val blk = chunk.getBlock(lx, y, lz)
+                if (blk != BlockType.AIR) world[Triple(ox + lx, y, oz + lz)] = blk
+            }
+        }
+        for ((pos, blk) in world) {
+            if (blk != BlockType.WATER) continue
+            val (x, y, z) = pos
+            for ((nx, nz) in listOf(x - 1 to z, x + 1 to z, x to z - 1, x to z + 1)) {
+                if (nx < -30 || nx > 30 || nz < -30 || nz > 30) continue
+                assertTrue(
+                    world[Triple(nx, y, nz)] != null,
+                    "WATER at ($x,$y,$z) leaks toward ($nx,$y,$nz)")
+            }
+        }
+    }
+
     @Test
     fun namedStaircasePoints_defaultRegistry_returnsNonEmpty() {
         val gen = ProceduralChunkGenerator(seed = 42L, biomeRegistry = BiomeRegistry.default())

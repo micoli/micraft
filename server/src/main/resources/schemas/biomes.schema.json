@@ -129,6 +129,15 @@
           "waterMaxDepth": {
             "type": "integer"
           },
+          "waterFloorRelief": {
+            "type": "integer"
+          },
+          "islandFraction": {
+            "type": "number"
+          },
+          "islandHeight": {
+            "type": "integer"
+          },
           "tintColor": {
             "oneOf": [
               {

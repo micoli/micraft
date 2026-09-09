@@ -39,6 +39,9 @@ class BiomeRegistry(
                             liquid = true,
                             waterLevel = 60,
                             waterMaxDepth = 8,
+                            waterFloorRelief = 4,
+                            islandFraction = 0.08,
+                            islandHeight = 6,
                             tintColor = listOf(0.09, 0.26, 0.5),
                         ),
                         BiomeDefinition(
@@ -54,6 +57,9 @@ class BiomeRegistry(
                             liquid = true,
                             waterLevel = 72,
                             waterMaxDepth = 8,
+                            waterFloorRelief = 3,
+                            islandFraction = 0.08,
+                            islandHeight = 5,
                             tintColor = listOf(0.16, 0.38, 0.55),
                         ),
                         BiomeDefinition(
