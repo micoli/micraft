@@ -509,13 +509,17 @@ class NpcManager(
     }
 
     suspend fun despawnOrphanedNpcs(sessions: Collection<PlayerSession>) {
-        val zoneSizeSq = tuning.npcZoneSize.toFloat().let { it * it }
+        // Keep radius must cover the spawner's candidate box (±npcZoneSize/CHUNK_SIZE chunks around
+        // a player, plus the intra-chunk random offset), and use the same axis-aligned metric —
+        // a circular test culls the box corners the spawner just filled, so spawn and despawn
+        // fight each other every slow-lane tick.
+        val keepDist = tuning.npcZoneSize.toFloat() + 2f * WorldConstants.CHUNK_SIZE
         val orphans =
             npcs.values.filter { npc ->
                 sessions.none { s ->
-                    val dx = s.state.pos.x - npc.state.pos.x
-                    val dz = s.state.pos.z - npc.state.pos.z
-                    dx * dx + dz * dz <= zoneSizeSq
+                    val dx = abs(s.state.pos.x - npc.state.pos.x)
+                    val dz = abs(s.state.pos.z - npc.state.pos.z)
+                    dx <= keepDist && dz <= keepDist
                 }
             }
         for (npc in orphans) {
