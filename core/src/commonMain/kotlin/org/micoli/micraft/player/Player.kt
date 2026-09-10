@@ -13,6 +13,15 @@ import org.micoli.micraft.ui.defaultLayout
 
 @Serializable data class Vec3(val x: Float, val y: Float, val z: Float)
 
+@Serializable
+data class CompassTargetState(
+    val x: Float,
+    val y: Float,
+    val z: Float,
+    val label: String? = null,
+    val visible: Boolean = true,
+)
+
 @Serializable data class Orientation(val yaw: Float, val pitch: Float)
 
 @Serializable data class ChannelSubscription(val name: String, val autoFocus: Boolean = false)
@@ -92,4 +101,5 @@ data class PlayerState(
     val factionChangedAtMs: Long? = null,
     val pets: List<PetRecord> = emptyList(),
     val activePetId: String? = null,
+    val compassTarget: CompassTargetState? = null,
 )

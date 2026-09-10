@@ -7,9 +7,9 @@ interface Props {
 // Angles are screen-space bearings when the player faces yaw 0 (i.e. +Z / "south").
 // Verified in-game: forward(yaw) = (sin yaw, cos yaw), so +Z is at screen angle 0 and -Z at 180.
 const CARDINALS: { label: string; angle: number }[] = [
-  { label: "N", angle: 180 },
+  { label: "N", angle: 0 },
   { label: "E", angle: 90 },
-  { label: "S", angle: 0 },
+  { label: "S", angle: 180 },
   { label: "W", angle: 270 },
 ];
 
@@ -28,7 +28,7 @@ export function Compass({ layoutStyle }: Props) {
 
   // Movement/yaw convention (verified in-game): forward(yaw) = (sin yaw, cos yaw); strafe-right = (cos yaw, -sin yaw).
   // Screen "up" = forward, so the target's screen bearing (clockwise from up) is atan2(dx, dz) - yaw.
-  const norm = (deg: number) => ((deg % 360) + 540) % 360 - 180;
+  const norm = (deg: number) => (((deg % 360) + 540) % 360) - 180;
   const needleAngle = norm((Math.atan2(dx, dz) * 180) / Math.PI - hud.yaw);
   const roseAngle = norm(-hud.yaw);
 

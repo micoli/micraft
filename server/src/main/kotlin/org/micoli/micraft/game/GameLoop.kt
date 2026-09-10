@@ -1055,6 +1055,28 @@ class GameLoop(
 
     private fun flushWorld() = gameWorld.flush()
 
+    /**
+     * Per-session state pushed once on connect. Split out of onConnect to keep it under the JVM
+     * 64KB method limit.
+     */
+    private suspend fun sendPostConnectSyncs(
+        session: PlayerSession,
+        gw: GameWorld,
+        playerName: String
+    ) {
+        session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+        session.send(ServerMessage.WalletUpdate(session.state.wallet))
+        gw.questManager?.sendQuestSync(session)
+        gw.mailManager?.let { session.send(ServerMessage.MailSync(it.loadForPlayer(playerName))) }
+        gw.claimManager.sendSync(session)
+        session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBarPages.toPageMap()))
+        session.send(ServerMessage.TimeUpdate(gw.gameTicks))
+        session.state.compassTarget?.let {
+            session.send(
+                ServerMessage.CompassUpdate(it.x, it.y, it.z, it.label, active = it.visible))
+        }
+    }
+
     private fun buildPreferencesSync(session: PlayerSession): ServerMessage.PreferencesSync {
         val knownChannels = worldOf(session).chatChannelManager.listKnownChannels()
         val commandList =
@@ -1791,6 +1813,7 @@ class GameLoop(
                 leftHandItem = saved?.leftHandItem,
                 pets = saved?.pets ?: emptyList(),
                 activePetId = null,
+                compassTarget = saved?.compassTarget,
             )
         val sessionPermissions = authResult?.permissions ?: setOf("*")
         val session =
@@ -1899,13 +1922,7 @@ class GameLoop(
         gw.groupManager.sendSync(session)
         gw.guildManager.sendSync(session)
         gw.factionManager.sendSync(session)
-        session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
-        session.send(ServerMessage.WalletUpdate(session.state.wallet))
-        gw.questManager?.sendQuestSync(session)
-        gw.mailManager?.let { session.send(ServerMessage.MailSync(it.loadForPlayer(playerName))) }
-        gw.claimManager.sendSync(session)
-        session.send(ServerMessage.ShortcutBarUpdate(session.shortcutBarPages.toPageMap()))
-        session.send(ServerMessage.TimeUpdate(gw.gameTicks))
+        sendPostConnectSyncs(session, gw, playerName)
         val charData = session.characterData
         if (charData != null) {
             val bonuses =

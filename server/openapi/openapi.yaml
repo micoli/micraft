@@ -5539,6 +5539,10 @@ components:
         chunkDebugVisible:
           type: boolean
           title: Boolean
+        compassTarget:
+          oneOf:
+          - type: "null"
+          - $ref: "#/components/schemas/org.micoli.micraft.player.CompassTargetState"
         continuousBreak:
           type: boolean
           title: Boolean
@@ -5980,6 +5984,35 @@ components:
       - level
       - xp
       title: CombatantData
+    org.micoli.micraft.player.CompassTargetState:
+      type: object
+      properties:
+        label:
+          type:
+          - "null"
+          - string
+          title: String
+        visible:
+          type: boolean
+          title: Boolean
+        x:
+          type: number
+          format: float
+          title: Float
+        "y":
+          type: number
+          format: float
+          title: Float
+        z:
+          type: number
+          format: float
+          title: Float
+      required:
+      - visible
+      - x
+      - "y"
+      - z
+      title: CompassTargetState
     org.micoli.micraft.player.EditMode:
       type: string
       enum:

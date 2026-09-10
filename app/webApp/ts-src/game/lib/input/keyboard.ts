@@ -258,7 +258,7 @@ export function registerKeyboard(): Pick<
         if (matched.has("screenshot")) window.mcState.events.push("screenshot");
         if (matched.has("quest_journal")) window.mc?.openQuestJournal?.();
         if (matched.has("quest_tracking")) window.mc?.toggleQuestTracker?.();
-        if (matched.has("toggle_compass")) window.mc?.toggleCompass?.();
+        if (matched.has("toggle_compass")) window.mcState.events.push("toggle_compass");
         const pageActionMatched = Array.from({ length: 12 }, (_, i) =>
           i < 10 ? `shortcut_page_${i + 1}` : i === 10 ? "shortcut_page_prev" : "shortcut_page_next",
         ).some((action) => matched.has(action));

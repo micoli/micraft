@@ -683,7 +683,6 @@ declare global {
     statusEffectUpdate(json: string): void;
     breathUpdate(json: string): void;
     compassUpdate(json: string): void;
-    toggleCompass(): void;
     playerDowned(playerId: string): void;
     playerRespawned(json: string): void;
     xpGained(json: string): void;

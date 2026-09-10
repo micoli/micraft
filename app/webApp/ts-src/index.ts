@@ -387,7 +387,6 @@ window.mc = {
   statusEffectUpdate: () => {},
   breathUpdate: () => {},
   compassUpdate: () => {},
-  toggleCompass: () => {},
   playerDowned: () => {},
   playerRespawned: () => {},
   xpGained: () => {},

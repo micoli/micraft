@@ -83,7 +83,8 @@ export function GameScreen() {
     startPreloading();
   }, []);
 
-  const compassMarker = state.compassVisible && state.compassTarget ? state.compassTarget : null;
+  // The map cross shows whenever a target is set, independent of the compass widget's visibility.
+  const compassMarker = state.compassTarget;
   useEffect(() => {
     if (compassMarker) window.mc.setCompassOnMinimap?.(compassMarker.x, compassMarker.z);
     else window.mc.removeCompassFromMinimap?.();

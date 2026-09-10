@@ -1007,6 +1007,8 @@ class LocalPlayerController(
                 event == "vehicle_mount" -> outMessages.trySend(ClientMessage.Command("/mount"))
                 event == "tame" -> outMessages.trySend(ClientMessage.Command("/tame"))
                 event == "pet_dismiss" -> outMessages.trySend(ClientMessage.Command("/pet dismiss"))
+                event == "toggle_compass" ->
+                    outMessages.trySend(ClientMessage.Command("/compass toggle"))
                 event == "siege_weapon_rotate" -> {
                     val targetId = currentCombatTargetId ?: return@repeat
                     if (isPlaceableTarget(targetId))

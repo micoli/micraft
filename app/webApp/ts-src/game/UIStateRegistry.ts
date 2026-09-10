@@ -117,21 +117,19 @@ const ingameMapRegistry = {
 };
 
 const compassRegistry = {
+  // Server-authoritative (persisted in PlayerState): CompassUpdate drives both the target and its
+  // visibility. hasTarget=false means the target was cleared; active is the visible flag.
   compass_update: (
     state: UiState,
-    payload: { x: number; y: number; z: number; label?: string | null; active?: boolean },
+    payload: { x: number; y: number; z: number; label?: string | null; active?: boolean; hasTarget?: boolean },
   ) => {
-    if (payload.active === false) return { ...state, compassTarget: null, compassVisible: false };
+    if (payload.hasTarget === false) return { ...state, compassTarget: null, compassVisible: false };
     return {
       ...state,
       compassTarget: { x: payload.x, y: payload.y, z: payload.z, label: payload.label ?? null },
-      compassVisible: true,
+      compassVisible: payload.active !== false,
     };
   },
-  compass_toggle: (state: UiState) =>
-    state.compassTarget ? { ...state, compassVisible: !state.compassVisible } : state,
-  compass_open: (state: UiState) => ({ ...state, compassVisible: true }),
-  compass_close: (state: UiState) => ({ ...state, compassVisible: false }),
 };
 
 const tradeRegistry = {
