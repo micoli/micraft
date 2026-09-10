@@ -32,6 +32,13 @@ cliffs.
 - `liquid: true` — marks the biome as water-filled.
 - `waterLevel` — the flat water surface Y.
 - `waterMaxDepth` (default 8) — deepest the carved basin floor drops below `waterLevel`.
+- `waterFloorRelief` (default 0) — amplitude in blocks of small-scale noise bumps on the
+  seabed. Damped toward the basin border so the closing ramp to the shore stays clean.
+- `islandFraction` (default 0) — fraction 0..1 of the biome surface that emerges as land.
+  A low-frequency noise field is thresholded (probit-calibrated) so roughly that fraction
+  of the surface rises above `waterLevel`; a rim band ramps the floor up to each island
+  shore instead of a wall.
+- `islandHeight` (default 8) — peak height in blocks an island crest reaches above `waterLevel`.
 - `tintColor` — `[r, g, b]` 0..1, applied as a full-screen colour + tighter fog only while
   the player's **head is underwater** (`PlayerState.headInLiquid`), fading in/out. Out of
   the water the view is unchanged.
@@ -39,10 +46,10 @@ cliffs.
 **No overflow.** Every land biome shares an `elevationMin` floor `L = 72` (≥ the highest
 `waterLevel`). The basin floor is carved down by `waterMaxDepth × basinEdge`, where
 `basinEdge` tapers to 0 at any biome border, so the floor rises back to `waterLevel`
-exactly at the shore. The water surface stays flat at `waterLevel`, so a water block is
-never left exposed next to a lower neighbour — the shore is always solid terrain at or
-above `waterLevel`. `sea` beside `lake` closes both basins symmetrically at the shared
-border.
+exactly at the shore. The water surface stays flat at `waterLevel` regardless of seabed
+relief or islands, so a water block is never left exposed next to a lower neighbour — the
+shore is always solid terrain at or above `waterLevel`. `sea` beside `lake` closes both
+basins symmetrically at the shared border.
 
 Aquatic biomes carry no vegetation and no caverns, and are excluded from faction
 spawn placement. Minimap colour comes from their blue `grassColor`. Their

@@ -25,7 +25,7 @@ class CompassCommandTest {
     }
 
     @Test
-    fun coords_sendActiveCompassUpdate() = runBlocking {
+    fun coords_persistOnStateAndSendActiveUpdate() = runBlocking {
         val session = testSession()
         cmd.execute(session, "100 64 200", testContext())
         val update = session.sent.filterIsInstance<ServerMessage.CompassUpdate>().single()
@@ -33,6 +33,28 @@ class CompassCommandTest {
         assertEquals(64f, update.y)
         assertEquals(200f, update.z)
         assertTrue(update.active)
+        assertTrue(update.hasTarget)
+        val saved = session.state.compassTarget!!
+        assertEquals(200f, saved.z)
+        assertTrue(saved.visible)
+    }
+
+    @Test
+    fun toggle_flipsVisibilityAndPersists() = runBlocking {
+        val session = testSession()
+        cmd.execute(session, "10 20 30", testContext())
+        cmd.execute(session, "toggle", testContext())
+        assertTrue(!session.state.compassTarget!!.visible)
+        val last = session.sent.filterIsInstance<ServerMessage.CompassUpdate>().last()
+        assertTrue(!last.active)
+        assertTrue(last.hasTarget)
+    }
+
+    @Test
+    fun toggle_withoutTarget_sendsNothing() = runBlocking {
+        val session = testSession()
+        cmd.execute(session, "toggle", testContext())
+        assertTrue(session.sent.none { it is ServerMessage.CompassUpdate })
     }
 
     @Test
@@ -58,11 +80,13 @@ class CompassCommandTest {
     }
 
     @Test
-    fun clear_sendsInactiveCompassUpdate() = runBlocking {
+    fun clear_dropsTargetFromState() = runBlocking {
         val session = testSession()
+        cmd.execute(session, "1 2 3", testContext())
         cmd.execute(session, "clear", testContext())
-        val update = session.sent.filterIsInstance<ServerMessage.CompassUpdate>().single()
-        assertTrue(!update.active)
+        assertEquals(null, session.state.compassTarget)
+        val update = session.sent.filterIsInstance<ServerMessage.CompassUpdate>().last()
+        assertTrue(!update.hasTarget)
     }
 
     @Test

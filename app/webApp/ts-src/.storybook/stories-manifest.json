@@ -74,6 +74,36 @@
     "name": "With Target Of Target",
     "source": ".stories/game/layout/CombatTargetFrame.stories.tsx"
   },
+  "game-layout-compass--facing-target": {
+    "title": "Game/Layout/Compass",
+    "name": "Facing Target",
+    "source": ".stories/game/layout/Compass.stories.tsx"
+  },
+  "game-layout-compass--no-target": {
+    "title": "Game/Layout/Compass",
+    "name": "No Target",
+    "source": ".stories/game/layout/Compass.stories.tsx"
+  },
+  "game-layout-compass--target-behind": {
+    "title": "Game/Layout/Compass",
+    "name": "Target Behind",
+    "source": ".stories/game/layout/Compass.stories.tsx"
+  },
+  "game-layout-compass--target-below": {
+    "title": "Game/Layout/Compass",
+    "name": "Target Below",
+    "source": ".stories/game/layout/Compass.stories.tsx"
+  },
+  "game-layout-compass--target-right": {
+    "title": "Game/Layout/Compass",
+    "name": "Target Right",
+    "source": ".stories/game/layout/Compass.stories.tsx"
+  },
+  "game-layout-compass--with-elevation-and-label": {
+    "title": "Game/Layout/Compass",
+    "name": "With Elevation And Label",
+    "source": ".stories/game/layout/Compass.stories.tsx"
+  },
   "game-layout-hotbar--empty": {
     "title": "Game/Layout/Hotbar",
     "name": "Empty",

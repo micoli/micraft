@@ -122,7 +122,7 @@ make test                     # all test suites
 | Command | Usage | Description | Options / Autocomplete |
 |---------|-------|-------------|------------------------|
 | `/adduser` | `/adduser <email> <password> [displayName] [group1,group2,...]` | Add a local auth user. Usage: /adduser <email> <password> [displayName] [group1,group2,...] | — |
-| `/compass` | `/compass <x y z \| pointName \| clear>` | Points the compass widget at coordinates or a named point. | dynamic |
+| `/compass` | `/compass <x y z \| pointName \| toggle \| clear>` | Points the compass widget at coordinates or a named point. | dynamic |
 | `/goto` | `/goto <playerName\|npcName>` | Teleports you to a player or NPC. | dynamic |
 | `/kick` | `/kick <playerName>` | Kicks a connected player. | dynamic |
 | `/npc` | `/npc <spawn\|list\|remove\|tp> [args]` | Manage NPCs in the world. | — |

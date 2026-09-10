@@ -12,9 +12,18 @@ title: HUD, stats & visuals
   natural cavern darkness.
 - **HUD layout** — every widget can be moved and resized on a 48×48 grid, saved
   per player. See [Layout editor](../systems/layout-editor.md).
+- **Compass** — **`/compass <x y z>`** or **`/compass <pointName>`** (same named
+  points as `/goto`) sets a waypoint; the widget then shows a rose that spins with
+  your heading, a needle toward the target, and the flat and 3D distance. A red
+  cross also marks the target on the minimap and the in-game map. **`Alt+B`**
+  (`toggle_compass`) or **`/compass toggle`** hides/shows the widget; **`/compass
+  clear`** drops the waypoint. The target and its visibility are saved per player
+  and restored on reconnect.
 
 RPG HUD elements (HP/mana/stamina bars, XP bar, action bar, target frame, aggro
 indicators, quest tracker) are described under [RPG](../rpg/index.md).
+
+{{ story "story/game-layout-compass--with-elevation-and-label" caption="Compass widget — heading rose, needle to the waypoint, flat and 3D distance" }}
 
 {{ story "story/game-layout-hud--simple" caption="Statistics overlay — position, timing and streaming counters" }}
 
