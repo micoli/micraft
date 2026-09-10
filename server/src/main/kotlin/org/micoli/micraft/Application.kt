@@ -9,7 +9,6 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
-import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
@@ -56,7 +55,6 @@ import org.micoli.micraft.game.loadServerConfig
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
-import org.micoli.micraft.game.npc.NpcSpawner
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.placeable.furniture.FurnitureRegistryLoader
@@ -200,19 +198,21 @@ fun Application.module() {
     val siegeProjectileRegistryLoader = get<SiegeProjectileRegistryLoader>()
     val furnitureRegistryLoader = get<FurnitureRegistryLoader>()
 
-    val biomeFile = Path.of(dataPath + "/config/biomes.yaml")
-    val biomeResourcesFile = resourcesConfigDir.resolve("biomes.yaml")
-    val roadConfigPath = Path.of(dataPath + "/config/roads.yaml")
-    val roadResourcesFile = resourcesConfigDir.resolve("roads.yaml")
-    val houseConfigPath = Path.of(dataPath + "/config/houses.yaml")
-    val houseResourcesFile = resourcesConfigDir.resolve("houses.yaml")
-
     val reloadBiomes: () -> ChunkGenerator = {
         ProceduralChunkGenerator(
             seed = gameConfig.worldSeed,
-            biomeRegistry = loadBiomeRegistry(biomeFile, biomeResourcesFile),
-            roadConfig = loadRoadConfig(roadConfigPath, roadResourcesFile),
-            houseConfig = loadHouseConfig(houseConfigPath, houseResourcesFile),
+            biomeRegistry = loadBiomeRegistry(
+                Path.of(dataPath + "/config/biomes.yaml"),
+                resourcesConfigDir.resolve("biomes.yaml")
+            ),
+            roadConfig = loadRoadConfig(
+                Path.of(dataPath + "/config/roads.yaml"),
+                resourcesConfigDir.resolve("roads.yaml")
+            ),
+            houseConfig = loadHouseConfig(
+                Path.of(dataPath + "/config/houses.yaml"),
+                resourcesConfigDir.resolve("houses.yaml")
+            ),
         )
     }
 
@@ -303,7 +303,6 @@ fun Application.module() {
             npcRegistryLoader = get<NpcRegistryLoader>(),
             npcSubsystemFactory = get<NpcSubsystemFactory>(),
             npcManager = get<NpcManager>(),
-            npcSpawner = get<NpcSpawner>(),
             vehicleManager = get<VehicleManager>(),
             placeableManager = get<PlaceableManager>(),
             siegeWeaponManager = get<SiegeWeaponManager>(),

@@ -62,7 +62,6 @@ import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
-import org.micoli.micraft.game.npc.NpcSpawner
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.npc.NpcSubsystemHooks
 import org.micoli.micraft.game.placeable.PlaceableManager
@@ -116,7 +115,6 @@ import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.EndToEndBoundedChunkGenerator
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
-import org.micoli.micraft.game.world.sanitizePlayerName
 import org.micoli.micraft.game.world.scene.ScenePlacer
 import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
@@ -351,7 +349,6 @@ class GameLoop(
             gameDayDurationSecondsOf = { NpcConstants.live.gameDayDurationSeconds },
         ),
     private val npcManager: NpcManager = npcSubsystemFactory.npcManager,
-    private val npcSpawner: NpcSpawner = npcSubsystemFactory.npcSpawner,
     private val combatConfig: CombatConfigData = CombatConfig().data,
     val attackRegistry: Map<String, AttackDefinition> = SkillsConfig().data.attacks,
     val spellRegistry: Map<String, SpellDefinition> = SkillsConfig().data.spells,
@@ -648,13 +645,6 @@ class GameLoop(
 
     val gameTimeService: GameTimeService = npcSubsystem.gameTimeService
 
-    private val animalInteractionProcessor = npcSubsystem.animals
-
-    private val packCoordinator = npcSubsystem.packs
-
-    /** Owns the NPC tick order; shared with the admin world simulator. */
-    private val npcTickPipeline = npcSubsystem.pipeline
-
     @Volatile private var appScope: Application? = null
 
     private val commands: MutableMap<String, CommandHandler> =
@@ -838,7 +828,7 @@ class GameLoop(
             sendStatusUpdate = statusUpdateSender(combatProcessor),
         )
 
-    /** Recompute + push a StatusUpdate for [session] through the given world's combat processor. */
+    /** Recompute + push a StatusUpdate for session through the given world's combat processor. */
     private fun statusUpdateSender(
         combatProcessor: CombatProcessor
     ): suspend (PlayerSession) -> Unit = sender@{ session ->
@@ -960,22 +950,6 @@ class GameLoop(
 
     fun getPlayerStates(): List<PlayerState> = sessionRegistry.all().map { it.state }
 
-    /** Live session for a connected player, looked up by display name — null if offline. */
-    fun findSession(name: String): PlayerSession? =
-        sessionRegistry.all().find {
-            sanitizePlayerName(it.state.name).equals(name, ignoreCase = true)
-        }
-
-    /**
-     * Persists a live session correctly — folds session-only fields (inventory, characterData,
-     * shortcutBarPages, knownRecipes) into [PlayerState] before writing, unlike a bare
-     * `persistence.savePlayerState` which would clobber them with a stale snapshot.
-     */
-    fun savePlayerSession(session: PlayerSession) = playerPersister.save(session)
-
-    suspend fun broadcastPlayerUpdate(session: PlayerSession) =
-        sessionRegistry.broadcast(ServerMessage.PlayerUpdate(session.state))
-
     fun getWorldState(): WorldState = world
 
     fun railNetworkRegistry(): RailNetworkRegistry = railNetworkRegistry
@@ -985,14 +959,6 @@ class GameLoop(
     fun claims(): ClaimRegistry = claimRegistry
 
     fun scenes(): SceneRegistry = sceneRegistry
-
-    // Pushed to every connected admin whenever the zone list changes, so the minimap's unified
-    // outlines (unlike AdminZoneWireframe, which only covers the zone the player is standing in)
-    // stay in sync without requiring a reconnect.
-    suspend fun broadcastInstanceZonesSync() {
-        val msg = ServerMessage.InstanceZonesSync(instanceRegistry.all().map { it.toProto() })
-        sessionRegistry.all().filter { it.hasPermission("admin") }.forEach { it.send(msg) }
-    }
 
     // Instance zone blocks live in the same shared WorldState as everywhere else — the admin
     // block editor bypasses BlockPlacer/BlockBreaker (which reject edits inside protected zones
@@ -1011,14 +977,6 @@ class GameLoop(
     private val playerAdminListeners =
         java.util.concurrent.CopyOnWriteArrayList<suspend (String) -> Unit>()
 
-    fun addPlayerAdminListener(listener: suspend (String) -> Unit) {
-        playerAdminListeners.add(listener)
-    }
-
-    fun removePlayerAdminListener(listener: suspend (String) -> Unit) {
-        playerAdminListeners.remove(listener)
-    }
-
     private suspend fun broadcastPlayerAdmin(json: String) {
         for (l in playerAdminListeners) runCatching { l(json) }
     }
@@ -1027,13 +985,7 @@ class GameLoop(
 
     fun getGameTicks(): Long = gameWorld.gameTicks
 
-    fun setGameTicks(ticks: Long) {
-        gameWorld.gameTicks = ticks
-    }
-
     fun getWeatherZones() = weatherManager.getZones()
-
-    fun getNpcInstances() = npcManager.getAll()
 
     fun getNpcManager() = npcManager
 

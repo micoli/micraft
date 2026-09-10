@@ -3,14 +3,14 @@ version: "1.0"
 profile:
   name: qodana.starter
 
-#include:
-#  - name: All
-#    paths:
-#      - app/desktopApp
-#      - app/shared
-#      - app/webApp
-#      - core/src
-#      - server/src
+include:
+  - name: All
+    paths:
+      - app/desktopApp
+      - app/shared
+      - app/webApp
+      - core/src
+      - server/src
 
 exclude:
   - name: All
