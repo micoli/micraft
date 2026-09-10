@@ -182,7 +182,8 @@
                         "STATISTICS",
                         "QUEST_TRACKER",
                         "BUFF_BAR",
-                        "PET_HUD"
+                        "PET_HUD",
+                        "COMPASS"
                       ]
                     },
                     "x": {

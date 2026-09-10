@@ -48,6 +48,8 @@ export interface E2eSnapshot {
   } | null;
   /** Breath meter, mirrored from BreathUpdate. `null` before the first update. */
   breath: { current: number; max: number; submerged: boolean } | null;
+  /** Compass target, mirrored from CompassUpdate. `null` when the compass is cleared/inactive. */
+  compass: { x: number; y: number; z: number; label: string | null; visible: boolean } | null;
   /** Set once the player has been downed (HP reached 0); cleared on respawn. */
   playerDowned: boolean;
   /** Current combat target, mirrored from CombatTargetUpdate. `null` when nothing targeted. */

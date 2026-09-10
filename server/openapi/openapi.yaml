@@ -3937,6 +3937,7 @@ components:
       - QUEST_TRACKER
       - BUFF_BAR
       - PET_HUD
+      - COMPASS
       title: WidgetType
     org.micoli.micraft.http.ServerInfo:
       type: object

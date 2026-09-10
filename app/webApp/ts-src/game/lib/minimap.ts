@@ -23,6 +23,7 @@ let zoomIndex = 1;
 const chunkSurfaces: Record<string, { topY: number[]; topBlock: number[] }> = {};
 const npcPositions: Map<string, { x: number; z: number }> = new Map();
 const remotePlayers: Map<string, { x: number; z: number; yaw: number }> = new Map();
+let compassTarget: { x: number; z: number } | null = null;
 let frameCount = 0;
 
 // Terrain raster base layer
@@ -250,6 +251,8 @@ export function registerMinimap(): Pick<
   | "minimapZoomOut"
   | "setNpcOnMinimap"
   | "removeNpcFromMinimap"
+  | "setCompassOnMinimap"
+  | "removeCompassFromMinimap"
   | "setPlayerOnMinimap"
   | "removePlayerFromMinimap"
   | "setMinimapWeather"
@@ -301,6 +304,14 @@ export function registerMinimap(): Pick<
 
     removeNpcFromMinimap: (id: string): void => {
       npcPositions.delete(id);
+    },
+
+    setCompassOnMinimap: (x: number, z: number): void => {
+      compassTarget = { x, z };
+    },
+
+    removeCompassFromMinimap: (): void => {
+      compassTarget = null;
     },
 
     setPlayerOnMinimap: (id: string, x: number, z: number, yaw: number): void => {
@@ -542,6 +553,29 @@ export function registerMinimap(): Pick<
         ctx.fill();
         ctx.strokeStyle = "#000000";
         ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+
+      // Compass target cross (clamped to the minimap edge so it always shows a direction)
+      if (compassTarget) {
+        const raw = {
+          x: (compassTarget.x - playerX + halfBlocks) * pixPerBlock,
+          z: (playerZ - compassTarget.z + halfBlocks) * pixPerBlock, // Z flipped
+        };
+        const pad = 6;
+        const px = Math.max(pad, Math.min(MINIMAP_SIZE - pad, raw.x));
+        const pz = Math.max(pad, Math.min(MINIMAP_SIZE - pad, raw.z));
+        const r = 4;
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(px - r, pz - r);
+        ctx.lineTo(px + r, pz + r);
+        ctx.moveTo(px - r, pz + r);
+        ctx.lineTo(px + r, pz - r);
+        ctx.stroke();
+        ctx.strokeStyle = "#e74c3c";
+        ctx.lineWidth = 1.5;
         ctx.stroke();
       }
 

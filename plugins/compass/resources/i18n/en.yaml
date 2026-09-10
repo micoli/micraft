@@ -1,0 +1,7 @@
+compass:
+  server:
+    usage: "Usage: /compass <x y z | pointName | clear>"
+    not_found: "Unknown point: {0}"
+    set: "Compass set to {0} {1} {2}."
+    set_named: "Compass set to {0}."
+    cleared: "Compass cleared."

@@ -58,6 +58,7 @@ ui:
   group_panel: ["Alt+KeyG"]
   guild_panel: [KeyU]
   faction_panel: ["Alt+KeyF"]
+  toggle_compass: ["Alt+KeyB"]
 
 building:
   place_rotate: [KeyR]

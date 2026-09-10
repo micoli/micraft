@@ -74,6 +74,8 @@ export interface UiState {
   characterOpen: boolean;
   characterSyncData: CharacterSyncData | null;
   ingameMapVisible: boolean;
+  compassTarget: { x: number; y: number; z: number; label: string | null } | null;
+  compassVisible: boolean;
   combatTarget: CombatTargetData | null;
   playerStatus: PlayerStatusData | null;
   breath: { current: number; max: number; submerged: boolean } | null;
@@ -112,6 +114,24 @@ const ingameMapRegistry = {
   ingame_map_toggle: (state: UiState) => ({ ...state, ingameMapVisible: !state.ingameMapVisible }),
   ingame_map_open: (state: UiState) => ({ ...state, ingameMapVisible: true }),
   ingame_map_close: (state: UiState) => ({ ...state, ingameMapVisible: false }),
+};
+
+const compassRegistry = {
+  compass_update: (
+    state: UiState,
+    payload: { x: number; y: number; z: number; label?: string | null; active?: boolean },
+  ) => {
+    if (payload.active === false) return { ...state, compassTarget: null, compassVisible: false };
+    return {
+      ...state,
+      compassTarget: { x: payload.x, y: payload.y, z: payload.z, label: payload.label ?? null },
+      compassVisible: true,
+    };
+  },
+  compass_toggle: (state: UiState) =>
+    state.compassTarget ? { ...state, compassVisible: !state.compassVisible } : state,
+  compass_open: (state: UiState) => ({ ...state, compassVisible: true }),
+  compass_close: (state: UiState) => ({ ...state, compassVisible: false }),
 };
 
 const tradeRegistry = {
@@ -472,6 +492,7 @@ export const actionRegistry = {
   ...gameRegistry,
   ...globalRegistry,
   ...ingameMapRegistry,
+  ...compassRegistry,
   ...instanceRegistry,
   ...socialRegistry,
   ...layoutEditorRegistry,

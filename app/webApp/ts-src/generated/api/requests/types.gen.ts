@@ -98,7 +98,7 @@ export type OrgMicoliMicraftUiWidgetRegistryEntry = {
 /**
  * WidgetType
  */
-export type OrgMicoliMicraftUiWidgetType = 'MINIMAP' | 'HUD' | 'SHORTCUT_BAR' | 'CHAT_HISTORY' | 'INPUT_BOX' | 'INVENTORY' | 'CHUNK_DEBUG' | 'INGAME_MAP' | 'ATTACK_PANEL' | 'PLAYER_STATUS' | 'COMBAT_TARGET' | 'XP_BAR' | 'AGGRO_INDICATORS' | 'STATISTICS' | 'QUEST_TRACKER' | 'BUFF_BAR' | 'PET_HUD';
+export type OrgMicoliMicraftUiWidgetType = 'MINIMAP' | 'HUD' | 'SHORTCUT_BAR' | 'CHAT_HISTORY' | 'INPUT_BOX' | 'INVENTORY' | 'CHUNK_DEBUG' | 'INGAME_MAP' | 'ATTACK_PANEL' | 'PLAYER_STATUS' | 'COMBAT_TARGET' | 'XP_BAR' | 'AGGRO_INDICATORS' | 'STATISTICS' | 'QUEST_TRACKER' | 'BUFF_BAR' | 'PET_HUD' | 'COMPASS';
 
 /**
  * ServerInfo
@@ -1515,6 +1515,10 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      */
     continuousBreak: boolean;
     /**
+     * Int
+     */
+    currentBreath: number;
+    /**
      * Set<String>
      */
     disabledCommands: Array<string>;
@@ -1606,6 +1610,10 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      * Boolean
      */
     lightBoostEnabled: boolean;
+    /**
+     * Int
+     */
+    maxBreath: number;
     /**
      * Boolean
      */
@@ -3307,6 +3315,14 @@ export type OrgMicoliMicraftProtocolItemInfo = {
  * NpcTuning
  */
 export type OrgMicoliMicraftGameNpcNpcTuning = {
+    /**
+     * Float
+     */
+    flyCruiseHeight: number;
+    /**
+     * Float
+     */
+    flyVerticalStep: number;
     /**
      * Double
      */

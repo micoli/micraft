@@ -85,6 +85,7 @@ const ACTION_GROUPS: Record<string, string[]> = {
     "minimap_zoom_in",
     "minimap_zoom_out",
     "ingame_map",
+    "toggle_compass",
     "layout_editor",
     "health_bar",
     "screenshot",

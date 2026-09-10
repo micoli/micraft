@@ -233,6 +233,8 @@ fun jsStatusEffectUpdate(json: String): Unit = js("mc.statusEffectUpdate(json)")
 
 fun jsBreathUpdate(json: String): Unit = js("mc.breathUpdate(json)")
 
+fun jsCompassUpdate(json: String): Unit = js("mc.compassUpdate(json)")
+
 fun jsPlayerDowned(playerId: String): Unit = js("mc.playerDowned(playerId)")
 
 fun jsPlayerRespawned(json: String): Unit = js("mc.playerRespawned(json)")

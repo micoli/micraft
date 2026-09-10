@@ -59,6 +59,7 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 | `ui` | `group_panel` | Alt+KeyG |
 | `ui` | `guild_panel` | KeyU |
 | `ui` | `faction_panel` | Alt+KeyF |
+| `ui` | `toggle_compass` | Alt+KeyB |
 | `building` | `place_rotate` | KeyR |
 | `building` | `block_interact` | KeyC |
 | `building` | `actionblock_edit` | Alt+KeyB |

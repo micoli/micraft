@@ -184,6 +184,16 @@ val WIDGET_REGISTRY: List<WidgetRegistryEntry> =
             minH = 4,
             editorLabel = "Pet HUD",
             editorColor = "rgba(46,164,120,0.75)"),
+        WidgetRegistryEntry(
+            WidgetType.COMPASS,
+            x = 0,
+            y = 16,
+            w = 7,
+            h = 9,
+            minW = 5,
+            minH = 6,
+            editorLabel = "Compass",
+            editorColor = "rgba(120,140,200,0.75)"),
     )
 
 val DEFAULT_WIDGETS: List<LayoutWidget> =

@@ -1,0 +1,7 @@
+compass:
+  server:
+    usage: "Usage : /compass <x y z | nomPoint | clear>"
+    not_found: "Point inconnu : {0}"
+    set: "Boussole pointée vers {0} {1} {2}."
+    set_named: "Boussole pointée vers {0}."
+    cleared: "Boussole désactivée."

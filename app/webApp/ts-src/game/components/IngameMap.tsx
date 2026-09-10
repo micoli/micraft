@@ -42,10 +42,15 @@ interface Props {
   playerX?: number;
   playerZ?: number;
   playerYaw?: number;
+  compassTarget?: { x: number; z: number } | null;
   layoutStyle?: React.CSSProperties;
 }
 
 const RADIUS = 800;
+
+// Module-level so renderOverlay (a plain function) can read it without threading a 10th arg
+// through every call site.
+let overlayCompassTarget: { x: number; z: number } | null = null;
 
 const WEATHER_FILL: Record<string, string> = {
   RAIN: "rgba(80,120,255,0.18)",
@@ -304,9 +309,29 @@ function renderOverlay(
   ctx.lineWidth = 1.2;
   ctx.stroke();
   ctx.restore();
+
+  if (overlayCompassTarget) {
+    const tx = Math.round(w / 2 + (overlayCompassTarget.x - viewCx) * scale);
+    const tz = Math.round(h / 2 - (overlayCompassTarget.z - viewCz) * scale);
+    const pad = 8;
+    const mx = Math.max(pad, Math.min(w - pad, tx));
+    const mz = Math.max(pad, Math.min(h - pad, tz));
+    const r = 6;
+    ctx.beginPath();
+    ctx.moveTo(mx - r, mz - r);
+    ctx.lineTo(mx + r, mz + r);
+    ctx.moveTo(mx - r, mz + r);
+    ctx.lineTo(mx + r, mz - r);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.strokeStyle = "#e74c3c";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
 }
 
-export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle }: Props) {
+export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, compassTarget = null, layoutStyle }: Props) {
   const bgRef = useRef<HTMLCanvasElement>(null);
   const bordersRef = useRef<HTMLCanvasElement>(null);
   const poiRef = useRef<HTMLCanvasElement>(null);
@@ -481,6 +506,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
 
   useEffect(() => {
     playerPosRef.current = { x: playerX, z: playerZ, yaw: playerYaw };
+    overlayCompassTarget = compassTarget;
     const fc = fetchCenterRef.current;
     const { x: panX, z: panZ } = panRef.current;
     const zoom = zoomRef.current;
@@ -604,7 +630,7 @@ export function IngameMap({ playerX = 0, playerZ = 0, playerYaw = 0, layoutStyle
         if (bordersRef.current)
           renderBorders(bordersRef.current, borderDataRef.current, roadImgRef.current, fcx, fcz, px2, pz2, z2);
       });
-  }, [playerX, playerZ, playerYaw]);
+  }, [playerX, playerZ, playerYaw, compassTarget]);
 
   const toggle = (key: keyof typeof layers) => setLayers((prev) => ({ ...prev, [key]: !prev[key] }));
 

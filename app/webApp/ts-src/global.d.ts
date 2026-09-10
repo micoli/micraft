@@ -561,6 +561,8 @@ declare global {
     minimapZoomOut(): void;
     setNpcOnMinimap(id: string, x: number, z: number): void;
     removeNpcFromMinimap(id: string): void;
+    setCompassOnMinimap(x: number, z: number): void;
+    removeCompassFromMinimap(): void;
     setPlayerOnMinimap(id: string, x: number, z: number, yaw: number): void;
     removePlayerFromMinimap(id: string): void;
     setMinimapWeather(json: string): void;
@@ -680,6 +682,8 @@ declare global {
     playerStatusUpdate(json: string): void;
     statusEffectUpdate(json: string): void;
     breathUpdate(json: string): void;
+    compassUpdate(json: string): void;
+    toggleCompass(): void;
     playerDowned(playerId: string): void;
     playerRespawned(json: string): void;
     xpGained(json: string): void;

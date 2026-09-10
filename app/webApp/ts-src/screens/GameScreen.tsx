@@ -29,6 +29,7 @@ import { CombatTargetFrame } from "../game/components/target/CombatTargetFrame";
 import { PlayerDownedOverlay } from "../game/components/PlayerDownedOverlay";
 import { AttackPanel } from "../game/components/AttackPanel";
 import { XpBar } from "../game/components/XpBar";
+import { Compass } from "../game/components/Compass";
 import { useGameContext } from "../game/GameContext";
 import { AggroIndicators } from "../game/components/character/AggroIndicators";
 import { Statistics } from "../game/components/statistics/Statistics";
@@ -81,6 +82,12 @@ export function GameScreen() {
   useEffect(() => {
     startPreloading();
   }, []);
+
+  const compassMarker = state.compassVisible && state.compassTarget ? state.compassTarget : null;
+  useEffect(() => {
+    if (compassMarker) window.mc.setCompassOnMinimap?.(compassMarker.x, compassMarker.z);
+    else window.mc.removeCompassFromMinimap?.();
+  }, [compassMarker]);
 
   useEffect(() => {
     const zone = state.adminZone;
@@ -275,6 +282,7 @@ export function GameScreen() {
               playerX={state.hud?.x}
               playerZ={state.hud?.z}
               playerYaw={state.hud?.yaw}
+              compassTarget={compassMarker}
               layoutStyle={widgetStyle(activeLayout, "INGAME_MAP")}
             />
           )}
@@ -371,6 +379,9 @@ export function GameScreen() {
             <CombatTargetFrame target={state.combatTarget} layoutStyle={widgetStyle(activeLayout, "COMBAT_TARGET")} />
           )}
           <XpBar layoutStyle={widgetStyle(activeLayout, "XP_BAR")} />
+          {state.compassVisible && state.compassTarget && (
+            <Compass layoutStyle={widgetStyle(activeLayout, "COMPASS")} />
+          )}
           {state.playerDowned && <PlayerDownedOverlay />}
           {state.consoleOpen && (
             <Console

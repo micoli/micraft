@@ -945,6 +945,11 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     jsBreathUpdate(Json.encodeToString(msg))
                 })
             put(
+                ServerMessage.CompassUpdate::class,
+                typedHandler { msg: ServerMessage.CompassUpdate ->
+                    jsCompassUpdate(Json.encodeToString(msg))
+                })
+            put(
                 ServerMessage.PlayerDowned::class,
                 typedHandler { msg: ServerMessage.PlayerDowned -> jsPlayerDowned(msg.playerId) })
             put(

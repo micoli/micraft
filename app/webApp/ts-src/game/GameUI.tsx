@@ -80,6 +80,8 @@ const initial: UiState = {
   characterOpen: false,
   characterSyncData: null,
   ingameMapVisible: false,
+  compassTarget: null,
+  compassVisible: false,
   combatTarget: null,
   playerStatus: null,
   breath: null,
@@ -834,6 +836,19 @@ export function GameUI() {
       dispatch("trade_close");
     };
     window.mc.IngameMap = () => dispatch("ingame_map_toggle");
+    window.mc.toggleCompass = () => dispatch("compass_toggle");
+    window.mc.compassUpdate = (json: string) => {
+      const data = JSON.parse(json);
+      const active = data.active !== false;
+      const target = active ? { x: data.x, y: data.y, z: data.z, label: data.label ?? null } : null;
+      if (window.__mcE2E) {
+        window.mcE2E = {
+          ...(window.mcE2E ?? {}),
+          compass: target ? { ...target, visible: true } : null,
+        };
+      }
+      dispatch("compass_update", data);
+    };
     window.mc.dumpStats = () => {
       const h = hudDataRef.current;
       if (!h) return;

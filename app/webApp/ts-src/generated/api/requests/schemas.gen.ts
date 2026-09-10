@@ -149,7 +149,8 @@ export const org_micoli_micraft_ui_WidgetTypeSchema = {
         'STATISTICS',
         'QUEST_TRACKER',
         'BUFF_BAR',
-        'PET_HUD'
+        'PET_HUD',
+        'COMPASS'
     ],
     title: 'WidgetType'
 } as const;
@@ -2322,6 +2323,11 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             type: 'boolean',
             title: 'Boolean'
         },
+        currentBreath: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
         disabledCommands: {
             type: 'array',
             items: {
@@ -2458,6 +2464,11 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         lightBoostEnabled: {
             type: 'boolean',
             title: 'Boolean'
+        },
+        maxBreath: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
         },
         mounted: {
             type: 'boolean',
@@ -2645,6 +2656,7 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'biome',
         'chunkDebugVisible',
         'continuousBreak',
+        'currentBreath',
         'disabledCommands',
         'disabledViewModes',
         'dominantHand',
@@ -2663,6 +2675,7 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'language',
         'layouts',
         'lightBoostEnabled',
+        'maxBreath',
         'mounted',
         'name',
         'orientation',
@@ -5238,6 +5251,16 @@ export const org_micoli_micraft_protocol_ItemInfoSchema = {
 export const org_micoli_micraft_game_npc_NpcTuningSchema = {
     type: 'object',
     properties: {
+        flyCruiseHeight: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        flyVerticalStep: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
         gameDayDurationSeconds: {
             type: 'number',
             format: 'double',
@@ -5330,6 +5353,8 @@ export const org_micoli_micraft_game_npc_NpcTuningSchema = {
         }
     },
     required: [
+        'flyCruiseHeight',
+        'flyVerticalStep',
         'gameDayDurationSeconds',
         'interactionRange',
         'jumpVelocity',

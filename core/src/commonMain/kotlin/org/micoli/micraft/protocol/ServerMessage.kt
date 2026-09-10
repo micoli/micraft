@@ -570,6 +570,23 @@ sealed class ServerMessage {
         val maxBreath: Int,
         val submerged: Boolean,
     ) : ServerMessage()
+
+    /**
+     * Sets (or clears) the client compass widget target. [active] false hides the widget and
+     * discards the target; otherwise the widget points to ([x], [y], [z]).
+     */
+    @ProtoId(88)
+    @Serializable
+    data class CompassUpdate(
+        val x: Float,
+        val y: Float,
+        val z: Float,
+        val label: String? = null,
+        // Default Json (encodeDefaults=false) would drop `active` when true — the common case —
+        // so GameClient's JSON to window.mc.compassUpdate would omit it and the TS side would
+        // read `undefined` and hide the widget.
+        @EncodeDefault(ALWAYS) val active: Boolean = true,
+    ) : ServerMessage()
 }
 
 @Serializable
