@@ -1,7 +1,7 @@
 package org.micoli.micraft.auth
 
-import java.nio.file.Path
 import kotlin.system.exitProcess
+import org.micoli.micraft.config.ConfigPaths
 
 fun main(args: Array<String>) {
     if (args.size < 2) {
@@ -19,11 +19,11 @@ fun main(args: Array<String>) {
         if (args.size >= 4) args[3].split(",").map { it.trim() }.filter { it.isNotEmpty() }
         else emptyList()
 
-    val usersFile = Path.of("data/config/auth/users.yaml")
+    val usersFile = ConfigPaths.dataConfig("auth/users.yaml")
 
     val groupsConfig =
         loadGroupsConfig(
-            Path.of("data/config/auth/groups.yaml"), Path.of("resources/config/groups.yaml"))
+            ConfigPaths.dataConfig("auth/groups.yaml"), ConfigPaths.resourcesConfig("groups.yaml"))
     val provider = LocalAuthProvider(usersFile, groupsConfig)
     runCatching { provider.addUser(email, password, displayName, groups) }
         .onSuccess { println("User added: $email (displayName=$displayName, groups=$groups)") }

@@ -49,8 +49,10 @@ private fun SiegeWeaponYamlEntry.applyOverride(o: SiegeWeaponYamlOverride): Sieg
  * Mirrors [org.micoli.micraft.game.world.block.BlockRegistryLoader]'s shape exactly.
  */
 class SiegeWeaponRegistryLoader(
-    private val resourcesWeaponsPath: Path,
-    private val dataWeaponsPath: Path,
+    private val resourcesWeaponsPath: Path =
+        org.micoli.micraft.config.ConfigPaths.resourcesDir("siege/weapons"),
+    private val dataWeaponsPath: Path =
+        org.micoli.micraft.config.ConfigPaths.dataResources("siege/weapons"),
 ) {
     private fun generateFromResources(): Map<String, SiegeWeaponYamlEntry> {
         val map = mutableMapOf<String, SiegeWeaponYamlEntry>()

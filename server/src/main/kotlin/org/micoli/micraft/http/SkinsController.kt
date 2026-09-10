@@ -4,7 +4,6 @@ import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import java.nio.file.Path
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
@@ -12,7 +11,7 @@ import org.micoli.micraft.command.commands.availablePlayerSkins
 import org.micoli.micraft.game.skin.SkinDefinition
 import org.micoli.micraft.game.skin.SkinRegistryLoader
 
-class SkinsController(private val dataPath: String = "data") {
+class SkinsController {
     fun register(route: Route) =
         route.apply {
             get(
@@ -39,11 +38,7 @@ class SkinsController(private val dataPath: String = "data") {
                     val name = call.parameters["name"].orEmpty()
                     val definition =
                         if (name.isBlank() || name.contains('/') || name.contains("..")) null
-                        else
-                            SkinRegistryLoader(
-                                    Path.of("resources/models"),
-                                    Path.of("$dataPath/resources/models"))
-                                .load(name)
+                        else SkinRegistryLoader().load(name)
                     if (definition == null) {
                         call.respond(HttpStatusCode.NotFound)
                         return@get

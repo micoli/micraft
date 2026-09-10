@@ -20,7 +20,7 @@ class AdminControllerAuthTest {
     private val scope = CoroutineScope(Dispatchers.Default)
 
     private fun controller(tokenStore: TokenStore?) =
-        AdminController(null, null, null, GameLoop(testWorld()), "data", tokenStore)
+        AdminController(null, null, null, GameLoop(testWorld()), tokenStore)
 
     @Test
     fun `api_admin_no_bearer_returns_401_when_auth_enabled`() = testApplication {

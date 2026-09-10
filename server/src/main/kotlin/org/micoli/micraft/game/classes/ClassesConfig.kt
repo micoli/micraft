@@ -8,6 +8,8 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import org.micoli.micraft.config.ConfigPaths
+import org.micoli.micraft.config.SchemaValidation
 import org.micoli.micraft.config.YamlSection
 import org.micoli.micraft.config.isYamlEffectivelyEmpty
 import org.micoli.micraft.config.mergeConfig
@@ -22,8 +24,8 @@ private val log = LoggerFactory.getLogger(ClassesConfig::class.java)
 private const val SCHEMA_HEADER = "# yaml-language-server: \$schema=../schemas/classes.schema.json"
 
 class ClassesConfig(
-    private val path: Path = Path.of("data/config/classes.yaml"),
-    private val resourcesPath: Path = Path.of("resources/config/classes.yaml"),
+    private val path: Path = ConfigPaths.dataConfig("classes.yaml"),
+    private val resourcesPath: Path = ConfigPaths.resourcesConfig("classes.yaml"),
 ) {
     @Volatile
     var data: ClassesConfigData = ClassesConfigData()
@@ -94,6 +96,7 @@ class ClassesConfig(
         val merged = ClassesConfigData(regen = mergedRegen, classes = mergedClasses)
 
         path.writeText(spliceMissingAsComments(originalText, buildYamlSection(merged, node)))
+        SchemaValidation.validate(path, "classes.schema.json")
         return merged
     }
 

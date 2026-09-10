@@ -26,7 +26,8 @@ private val SECTION_SERIALIZER =
         String.serializer(),
         MapSerializer(String.serializer(), ListSerializer(String.serializer())))
 
-private val DEFAULT_RESOURCES_PATH = Path.of("resources/config/keybindings.yaml")
+private val DEFAULT_RESOURCES_PATH =
+    org.micoli.micraft.config.ConfigPaths.resourcesConfig("keybindings.yaml")
 
 private fun loadDefaultSections(defaultsPath: Path): Map<String, Map<String, List<String>>> {
     val text = defaultsPath.readText()

@@ -6,6 +6,7 @@ import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.combat.AttackDefinition
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.SharedGameServices
@@ -107,9 +108,7 @@ class GameLoopModule {
     fun dropConfig(blockRegistryLoader: BlockRegistryLoader): DropConfig =
         DropConfig(blockRegistryLoader)
 
-    @Single
-    fun questRegistryLoader(): QuestRegistryLoader =
-        QuestRegistryLoader(Path.of("resources/quests"))
+    @Single fun questRegistryLoader(): QuestRegistryLoader = QuestRegistryLoader()
 
     @Single
     fun questManager(
@@ -154,9 +153,7 @@ class GameLoopModule {
 
     @Single fun liquidManager(worldState: WorldState): LiquidManager = LiquidManager(worldState)
 
-    @Single
-    fun vegetationConfig(): VegetationConfig =
-        VegetationConfig(Path.of("data/config/vegetation.yaml"))
+    @Single fun vegetationConfig(): VegetationConfig = VegetationConfig()
 
     @Single
     fun vegetationManager(
@@ -169,19 +166,12 @@ class GameLoopModule {
             vegetationConfig,
             savePath =
                 optionalWorldPersistence.value?.worldDir?.resolve("vegetation_state.yaml")
-                    ?: Path.of("data/world/default_world/vegetation_state.yaml"),
+                    ?: ConfigPaths.dataWorld("default_world/vegetation_state.yaml"),
         )
 
-    @Single
-    fun recipeRegistryLoader(): RecipeRegistryLoader =
-        RecipeRegistryLoader(Path.of("data/config/recipes.yaml"))
+    @Single fun recipeRegistryLoader(): RecipeRegistryLoader = RecipeRegistryLoader()
 
-    @Single
-    fun armorRegistryLoader(): ArmorRegistryLoader =
-        ArmorRegistryLoader(
-            armorsPath = Path.of("resources/armors"),
-            dataArmorsPath = Path.of("data/resources/armors"),
-        )
+    @Single fun armorRegistryLoader(): ArmorRegistryLoader = ArmorRegistryLoader()
 
     /**
      * Armour definitions as the combat maths sees them.
@@ -195,23 +185,13 @@ class GameLoopModule {
     fun armorRegistry(armorRegistryLoader: ArmorRegistryLoader): Map<String, ArmorDefinition> =
         armorRegistryLoader.load()
 
-    @Single
-    fun weaponRegistryLoader(): WeaponRegistryLoader =
-        WeaponRegistryLoader(
-            weaponsPath = Path.of("resources/weapons"),
-            dataWeaponsPath = Path.of("data/resources/weapons"),
-        )
+    @Single fun weaponRegistryLoader(): WeaponRegistryLoader = WeaponRegistryLoader()
 
     @Single
     fun weaponRegistry(weaponRegistryLoader: WeaponRegistryLoader): Map<String, WeaponDefinition> =
         weaponRegistryLoader.load()
 
-    @Single
-    fun toolRegistryLoader(): ToolRegistryLoader =
-        ToolRegistryLoader(
-            toolsPath = Path.of("resources/tools"),
-            dataToolsPath = Path.of("data/resources/tools"),
-        )
+    @Single fun toolRegistryLoader(): ToolRegistryLoader = ToolRegistryLoader()
 
     @Single
     fun toolRegistry(toolRegistryLoader: ToolRegistryLoader): Map<String, ToolDefinition> =
@@ -219,7 +199,7 @@ class GameLoopModule {
 
     @Single
     fun weaponCategoryRegistryLoader(): WeaponCategoryRegistryLoader =
-        WeaponCategoryRegistryLoader(Path.of("data/config/weapons.yaml"))
+        WeaponCategoryRegistryLoader()
 
     @Single
     fun weaponCategories(
@@ -227,23 +207,16 @@ class GameLoopModule {
     ): Map<EquipmentCategory, WeaponCategoryDefinition> = weaponCategoryRegistryLoader.load()
 
     @Single
-    fun toolCategoryRegistryLoader(): ToolCategoryRegistryLoader =
-        ToolCategoryRegistryLoader(Path.of("data/config/tools.yaml"))
+    fun toolCategoryRegistryLoader(): ToolCategoryRegistryLoader = ToolCategoryRegistryLoader()
 
     @Single
     fun toolCategories(
         toolCategoryRegistryLoader: ToolCategoryRegistryLoader
     ): Map<EquipmentCategory, ToolCategoryDefinition> = toolCategoryRegistryLoader.load()
 
-    @Single
-    fun npcConfigLoader(): NpcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml"))
+    @Single fun npcConfigLoader(): NpcConfigLoader = NpcConfigLoader()
 
-    @Single
-    fun npcRegistryLoader(): NpcRegistryLoader =
-        NpcRegistryLoader(
-            resourcesEntityPath = Path.of("resources/entities"),
-            dataEntityPath = Path.of("data/resources/entities"),
-        )
+    @Single fun npcRegistryLoader(): NpcRegistryLoader = NpcRegistryLoader()
 
     /**
      * The live host's side of the NPC wiring. The admin world simulator builds the same object with
@@ -519,9 +492,7 @@ class GameLoopModule {
             getNpcs = { npcManager.getAll() },
         )
 
-    @Single
-    fun tradeConfigLoader(): TradeConfigLoader =
-        TradeConfigLoader(Path.of("data/config/trade.yaml"))
+    @Single fun tradeConfigLoader(): TradeConfigLoader = TradeConfigLoader()
 
     @Single
     fun tradeManager(
@@ -554,9 +525,7 @@ class GameLoopModule {
                 )
             })
 
-    @Single
-    fun auctionConfigLoader(): AuctionConfigLoader =
-        AuctionConfigLoader(Path.of("data/config/auction.yaml"))
+    @Single fun auctionConfigLoader(): AuctionConfigLoader = AuctionConfigLoader()
 
     @Single
     fun auctionManager(
@@ -599,9 +568,7 @@ class GameLoopModule {
     fun siegeProjectileManager(sessionRegistry: SessionRegistry): SiegeProjectileManager =
         SiegeProjectileManager(sessionRegistry::broadcast)
 
-    @Single
-    fun claimConfigLoader(): ClaimConfigLoader =
-        ClaimConfigLoader(Path.of("data/config/claims.yaml"))
+    @Single fun claimConfigLoader(): ClaimConfigLoader = ClaimConfigLoader()
 
     @Single
     fun claimManager(

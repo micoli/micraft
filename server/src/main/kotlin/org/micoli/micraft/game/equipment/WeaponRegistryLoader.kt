@@ -7,6 +7,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.yamlConfigSection
 import org.slf4j.LoggerFactory
@@ -20,8 +21,8 @@ private fun WeaponYamlEntry.applyOverride(o: WeaponYamlOverride) =
         rotate = o.rotate ?: rotate)
 
 class WeaponRegistryLoader(
-    private val weaponsPath: Path,
-    private val dataWeaponsPath: Path,
+    private val weaponsPath: Path = ConfigPaths.resourcesDir("weapons"),
+    private val dataWeaponsPath: Path = ConfigPaths.dataResources("weapons"),
 ) {
     fun load(): Map<String, WeaponDefinition> {
         if (!weaponsPath.exists()) return emptyMap()

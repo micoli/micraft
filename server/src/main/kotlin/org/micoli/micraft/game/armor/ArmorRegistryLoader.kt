@@ -17,8 +17,9 @@ private fun ArmorYamlEntry.applyOverride(o: ArmorYamlOverride) =
     copy(wearable = o.wearable ?: wearable, statBonus = o.statBonus ?: statBonus)
 
 class ArmorRegistryLoader(
-    private val armorsPath: Path,
-    private val dataArmorsPath: Path,
+    private val armorsPath: Path = org.micoli.micraft.config.ConfigPaths.resourcesDir("armors"),
+    private val dataArmorsPath: Path =
+        org.micoli.micraft.config.ConfigPaths.dataResources("armors"),
 ) {
     fun load(): Map<String, ArmorDefinition> {
         if (!armorsPath.exists()) return emptyMap()

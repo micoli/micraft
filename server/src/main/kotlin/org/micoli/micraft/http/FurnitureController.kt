@@ -4,7 +4,6 @@ import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import java.nio.file.Path
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
@@ -16,7 +15,7 @@ import org.micoli.micraft.placeable.furniture.FurnitureDefinition
 // furniture tab would render them as "undefined". Mirrors SiegeWeaponsController.
 private val json = Json { encodeDefaults = true }
 
-class FurnitureController(private val dataPath: String) {
+class FurnitureController {
     fun register(route: Route) =
         route.apply {
             get(
@@ -27,12 +26,7 @@ class FurnitureController(private val dataPath: String) {
                         code(HttpStatusCode.OK) { body<Map<String, FurnitureDefinition>>() }
                     }
                 }) {
-                    val furnitures =
-                        FurnitureRegistryLoader(
-                                Path.of("resources/furnitures"),
-                                Path.of("$dataPath/resources/furnitures"))
-                            .load()
-                            .mapKeys { it.key.id }
+                    val furnitures = FurnitureRegistryLoader().load().mapKeys { it.key.id }
                     call.respondText(
                         json.encodeToString(
                             MapSerializer(String.serializer(), FurnitureDefinition.serializer()),

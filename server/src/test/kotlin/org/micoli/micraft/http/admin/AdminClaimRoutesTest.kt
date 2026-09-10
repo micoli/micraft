@@ -15,7 +15,7 @@ import org.micoli.micraft.support.testWorld
 
 class AdminClaimRoutesTest {
     private fun controller(gameLoop: GameLoop = GameLoop(testWorld())) =
-        AdminController(null, null, null, gameLoop, "data") to gameLoop
+        AdminController(null, null, null, gameLoop) to gameLoop
 
     @Test
     fun `api_admin_claims_returns_200_with_created_claim`() = testApplication {

@@ -25,10 +25,12 @@ private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), VehicleYam
 
 /** Mirrors [org.micoli.micraft.game.item.ItemRegistryLoader]'s data-dir-override-merge shape. */
 class VehicleRegistryLoader(
-    private val path: Path,
-    private val resourcesPath: Path = Path.of("resources/config/vehicles.yaml"),
-    private val modelsPath: Path = Path.of("resources/vehicles"),
-    private val dataModelsPath: Path = Path.of("data/resources/vehicles"),
+    private val path: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("vehicles.yaml"),
+    private val resourcesPath: Path =
+        org.micoli.micraft.config.ConfigPaths.resourcesConfig("vehicles.yaml"),
+    private val modelsPath: Path = org.micoli.micraft.config.ConfigPaths.resourcesDir("vehicles"),
+    private val dataModelsPath: Path =
+        org.micoli.micraft.config.ConfigPaths.dataResources("vehicles"),
 ) {
     private val modelLoader = VehicleModelRegistryLoader(modelsPath, dataModelsPath)
     private val default: Map<String, VehicleYamlEntry> =

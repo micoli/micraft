@@ -51,8 +51,10 @@ private fun SiegeProjectileYamlEntry.applyOverride(
  * exactly (same pattern as [SiegeWeaponRegistryLoader]).
  */
 class SiegeProjectileRegistryLoader(
-    private val resourcesProjectilesPath: Path,
-    private val dataProjectilesPath: Path,
+    private val resourcesProjectilesPath: Path =
+        org.micoli.micraft.config.ConfigPaths.resourcesDir("siege/projectiles"),
+    private val dataProjectilesPath: Path =
+        org.micoli.micraft.config.ConfigPaths.dataResources("siege/projectiles"),
 ) {
     private fun generateFromResources(): Map<String, SiegeProjectileYamlEntry> {
         val map = mutableMapOf<String, SiegeProjectileYamlEntry>()

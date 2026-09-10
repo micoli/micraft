@@ -1,19 +1,13 @@
 package org.micoli.micraft.game
 
-import com.charleskorn.kaml.Yaml
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import org.micoli.micraft.config.isYamlEffectivelyEmpty
-import org.micoli.micraft.config.mergeConfig
-import org.micoli.micraft.config.spliceMissingAsComments
-import org.micoli.micraft.config.yamlConfigSection
+import org.micoli.micraft.config.ConfigPaths
+import org.micoli.micraft.config.OverridablePaths
+import org.micoli.micraft.config.loadOverridableConfig
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.protocol.MessageEncoding
@@ -117,34 +111,10 @@ data class ServerConfig(
     @EncodeDefault(ALWAYS) val factions: FactionsSection = FactionsSection(),
 )
 
-fun loadServerConfig(path: Path, resourcesPath: Path): ServerConfig {
-    val default = Yaml.default.decodeFromString(ServerConfig.serializer(), resourcesPath.readText())
-    val originalText = if (path.exists()) path.readText() else ""
-    path.parent?.createDirectories()
-    if (originalText.isBlank()) {
-        serverConfigLog.info("No server.yaml at {}, creating with defaults", path.toAbsolutePath())
-        path.writeText(
-            spliceMissingAsComments("", yamlConfigSection(ServerConfig::class, "", default, null)))
-        return default
-    }
-    val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
-    if (node == null) {
-        if (!originalText.isYamlEffectivelyEmpty())
-            serverConfigLog.warn("server.yaml has unparseable structure, leaving file untouched")
-        return default
-    }
-    val decoded =
-        runCatching { Yaml.default.decodeFromString(ServerConfig.serializer(), originalText) }
-            .getOrElse { e ->
-                serverConfigLog.warn("Failed to parse server.yaml ({}), using defaults", e.message)
-                default
-            }
-    val merged = mergeConfig(ServerConfig::class, decoded, default, node)
-    path.writeText(
-        spliceMissingAsComments(
-            originalText, yamlConfigSection(ServerConfig::class, "", merged, node)))
-    return merged
-}
+fun loadServerConfig(
+    path: Path = ConfigPaths.dataConfig("server.yaml"),
+    resourcesPath: Path = ConfigPaths.resourcesConfig("server.yaml"),
+): ServerConfig = loadOverridableConfig("server.yaml", OverridablePaths(resourcesPath, path))
 
 fun applyServerConfig(config: ServerConfig) {
     with(config.world) {

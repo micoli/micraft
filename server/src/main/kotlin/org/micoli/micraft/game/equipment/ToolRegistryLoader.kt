@@ -21,8 +21,8 @@ private fun ToolYamlEntry.applyOverride(o: ToolYamlOverride) =
         rotate = o.rotate ?: rotate)
 
 class ToolRegistryLoader(
-    private val toolsPath: Path,
-    private val dataToolsPath: Path,
+    private val toolsPath: Path = org.micoli.micraft.config.ConfigPaths.resourcesDir("tools"),
+    private val dataToolsPath: Path = org.micoli.micraft.config.ConfigPaths.dataResources("tools"),
 ) {
     fun load(): Map<String, ToolDefinition> {
         if (!toolsPath.exists()) return emptyMap()

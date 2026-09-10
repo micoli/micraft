@@ -335,7 +335,10 @@ private fun configFilesPage(): String {
         "Configuration files",
         "Every file is optional: on first run the server writes a fully-commented template " +
             "into `data/config/`, merging any bundled default. Reload most of them at runtime " +
-            "with `/reload` or `/config:reload`.",
+            "with `/reload` or `/config:reload`. The data root defaults to `data/` and can be " +
+            "relocated with the `MICRAFT_DATA_DIR` environment variable. Set " +
+            "`MICRAFT_CONFIG_STRICT=1` to make a config that violates its JSON Schema abort " +
+            "server startup instead of only logging a warning.",
         table(listOf("Override file", "JSON Schema", "Bundled default"), rows),
     )
 }

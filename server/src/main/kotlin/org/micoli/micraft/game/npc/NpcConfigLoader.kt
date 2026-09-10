@@ -10,7 +10,9 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(NpcConfigLoader::class.java)
 
-class NpcConfigLoader(private val path: Path) {
+class NpcConfigLoader(
+    private val path: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("npc.yaml")
+) {
     init {
         if (!path.exists()) {
             path.parent.createDirectories()

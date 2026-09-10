@@ -88,20 +88,11 @@ class SharedGameServices(
          */
         fun default(): SharedGameServices {
             val weatherConfig = WeatherConfig()
-            val armorLoader =
-                ArmorRegistryLoader(
-                    armorsPath = Path.of("resources/armors"),
-                    dataArmorsPath = Path.of("data/resources/armors"))
-            val weaponLoader =
-                WeaponRegistryLoader(
-                    weaponsPath = Path.of("resources/weapons"),
-                    dataWeaponsPath = Path.of("data/resources/weapons"))
-            val toolLoader =
-                ToolRegistryLoader(
-                    toolsPath = Path.of("resources/tools"),
-                    dataToolsPath = Path.of("data/resources/tools"))
-            val weaponCatLoader = WeaponCategoryRegistryLoader(Path.of("data/config/weapons.yaml"))
-            val toolCatLoader = ToolCategoryRegistryLoader(Path.of("data/config/tools.yaml"))
+            val armorLoader = ArmorRegistryLoader()
+            val weaponLoader = WeaponRegistryLoader()
+            val toolLoader = ToolRegistryLoader()
+            val weaponCatLoader = WeaponCategoryRegistryLoader()
+            val toolCatLoader = ToolCategoryRegistryLoader()
             val skills = SkillsConfig()
             val combat = CombatConfig()
             val classes = ClassesConfig()
@@ -111,28 +102,22 @@ class SharedGameServices(
                 i18n = I18nConfig.fromClasspath(pluginsRoot = Path.of("plugins")),
                 configRegistry = ConfigRegistry.buildConfigRegistry(weatherConfig),
                 weatherConfig = weatherConfig,
-                vegetationConfig = VegetationConfig(Path.of("data/config/vegetation.yaml")),
+                vegetationConfig = VegetationConfig(),
                 chatChannelManager = ChatChannelManager(),
-                dropConfig =
-                    DropConfig(
-                        BlockRegistryLoader(
-                            Path.of("resources/blocks"), Path.of("data/resources/blocks"))),
+                dropConfig = DropConfig(BlockRegistryLoader()),
                 networkStats = NetworkStats(),
-                recipeRegistryLoader = RecipeRegistryLoader(Path.of("data/config/recipes.yaml")),
+                recipeRegistryLoader = RecipeRegistryLoader(),
                 armorRegistryLoader = armorLoader,
                 weaponRegistryLoader = weaponLoader,
                 toolRegistryLoader = toolLoader,
                 weaponCategoryRegistryLoader = weaponCatLoader,
                 toolCategoryRegistryLoader = toolCatLoader,
-                npcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml")),
-                npcRegistryLoader =
-                    NpcRegistryLoader(
-                        resourcesEntityPath = Path.of("resources/entities"),
-                        dataEntityPath = Path.of("data/resources/entities")),
-                questRegistryLoader = QuestRegistryLoader(Path.of("resources/quests")),
-                tradeConfigLoader = TradeConfigLoader(Path.of("data/config/trade.yaml")),
-                auctionConfigLoader = AuctionConfigLoader(Path.of("data/config/auction.yaml")),
-                claimConfigLoader = ClaimConfigLoader(Path.of("data/config/claims.yaml")),
+                npcConfigLoader = NpcConfigLoader(),
+                npcRegistryLoader = NpcRegistryLoader(),
+                questRegistryLoader = QuestRegistryLoader(),
+                tradeConfigLoader = TradeConfigLoader(),
+                auctionConfigLoader = AuctionConfigLoader(),
+                claimConfigLoader = ClaimConfigLoader(),
                 combatConfig = combat,
                 skillsConfig = skills,
                 classesConfig = classes,

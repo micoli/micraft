@@ -1,8 +1,10 @@
 package org.micoli.micraft.game.world.vegetation
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.schema.JsonSchemaRoot
 
 @Serializable
+@JsonSchemaRoot(file = "vegetation.schema.json")
 data class VegetationConfigData(
     val enabled: Boolean = true,
     val growthCheckIntervalTicks: Int = 40,

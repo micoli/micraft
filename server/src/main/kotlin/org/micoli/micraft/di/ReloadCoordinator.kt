@@ -1,6 +1,5 @@
 package org.micoli.micraft.di
 
-import java.nio.file.Path
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
 import org.micoli.micraft.game.RECONCILE_TOLERANCE_XZ
@@ -81,7 +80,7 @@ class ReloadCoordinator(
         val newWeatherConfig = WeatherConfig()
         weatherManager.reload(newWeatherConfig)
         lines += i18n.t(lang, "reload:server:weather", newWeatherConfig.data.weatherTypes.size)
-        val newVegetationConfig = VegetationConfig(Path.of("data/config/vegetation.yaml"))
+        val newVegetationConfig = VegetationConfig()
         vegetationManager.reload(newVegetationConfig)
         lines += i18n.t(lang, "reload:server:vegetation", newVegetationConfig.data.chains.size)
         if (reloadArmorRegistry != null) {

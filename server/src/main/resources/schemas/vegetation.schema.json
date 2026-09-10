@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "enabled": {
+      "type": "boolean"
+    },
+    "growthCheckIntervalTicks": {
+      "type": "integer"
+    },
+    "chains": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "stages",
+          "finalTree"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "block",
+                "minTicks",
+                "maxTicks"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "block": {
+                  "type": "string"
+                },
+                "minTicks": {
+                  "type": "integer"
+                },
+                "maxTicks": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "finalTree": {
+            "type": "string"
+          },
+          "requiresVegetationHost": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "regrowth": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "grazed",
+          "regrows"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "grazed": {
+            "type": "string"
+          },
+          "regrows": {
+            "type": "string"
+          },
+          "minTicks": {
+            "type": "integer"
+          },
+          "maxTicks": {
+            "type": "integer"
+          },
+          "requiresVegetationHost": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

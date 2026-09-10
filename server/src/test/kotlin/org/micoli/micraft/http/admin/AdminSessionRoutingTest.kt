@@ -33,7 +33,7 @@ class AdminSessionRoutingTest {
                 e2eEnabled = e2e,
                 factory = { id -> buildE2eGameWorld(id, gen(), shared) },
             )
-        return AdminController(null, null, null, gameLoop, "data", null, registry)
+        return AdminController(null, null, null, gameLoop, null, registry)
     }
 
     private suspend fun gameTicks(client: io.ktor.client.HttpClient, session: String?): Long {

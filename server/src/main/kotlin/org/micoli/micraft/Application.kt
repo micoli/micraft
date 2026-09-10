@@ -25,6 +25,7 @@ import org.micoli.micraft.auth.OAuthProvider
 import org.micoli.micraft.auth.installAuthRoutes
 import org.micoli.micraft.auth.loadGroupsConfig
 import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.di.AppModule
@@ -163,10 +164,6 @@ internal fun applyE2eWorldOverrides(groundY: Int) {
 
 @kotlinx.serialization.Serializable data class PlayerByEmailEntry(val name: String, val id: String)
 
-val dataPath = "data"
-val configDir: Path = Path.of("$dataPath/config")
-val resourcesConfigDir: Path = Path.of("resources/config")
-
 fun Application.module() {
     install(WebSockets) {}
     install(Koin) { modules(AppModule().module) }
@@ -201,18 +198,9 @@ fun Application.module() {
     val reloadBiomes: () -> ChunkGenerator = {
         ProceduralChunkGenerator(
             seed = gameConfig.worldSeed,
-            biomeRegistry = loadBiomeRegistry(
-                Path.of(dataPath + "/config/biomes.yaml"),
-                resourcesConfigDir.resolve("biomes.yaml")
-            ),
-            roadConfig = loadRoadConfig(
-                Path.of(dataPath + "/config/roads.yaml"),
-                resourcesConfigDir.resolve("roads.yaml")
-            ),
-            houseConfig = loadHouseConfig(
-                Path.of(dataPath + "/config/houses.yaml"),
-                resourcesConfigDir.resolve("houses.yaml")
-            ),
+            biomeRegistry = loadBiomeRegistry(),
+            roadConfig = loadRoadConfig(),
+            houseConfig = loadHouseConfig(),
         )
     }
 
@@ -227,16 +215,10 @@ fun Application.module() {
             furnitureRegistryLoader)
     }
 
-    val reloadGameConfigLambda: () -> Unit = {
-        validateYamlConfig(configDir.resolve("server.yaml"), "server.schema.json")
-        applyServerConfig(
-            loadServerConfig(
-                Path.of(dataPath + "/config/server.yaml"),
-                resourcesConfigDir.resolve("server.yaml")))
-    }
+    val reloadGameConfigLambda: () -> Unit = { applyServerConfig(loadServerConfig()) }
 
     val authConfig = serverConfig.auth
-    val groupsResourcesFile = resourcesConfigDir.resolve("groups.yaml")
+    val groupsResourcesFile = ConfigPaths.resourcesConfig("groups.yaml")
     val groupsConfig = get<GroupsConfig>()
     val authProvider = get<OptionalAuthProvider>().value
     val tokenStore = get<OptionalTokenStore>().value
@@ -266,12 +248,7 @@ fun Application.module() {
             reloadRegistries = reloadRegistries,
             reloadGameConfig = reloadGameConfigLambda,
             factionsSection = serverConfig.factions,
-            reloadFactionsConfig = {
-                loadServerConfig(
-                        Path.of(dataPath + "/config/server.yaml"),
-                        resourcesConfigDir.resolve("server.yaml"))
-                    .factions
-            },
+            reloadFactionsConfig = { loadServerConfig().factions },
             i18n = get<I18nConfig>(),
             tokenStore = tokenStore,
             authProvider = authProvider,
@@ -384,7 +361,7 @@ fun Application.module() {
         val assetNotify = AssetNotifyController(assetManifest)
         assetNotify.register(this)
         assetNotify.start(this@module)
-        KeybindingsController(persistence, dataPath).register(this)
+        KeybindingsController(persistence).register(this)
         AutocompleteController(gameLoop).register(this)
         I18nController(gameLoop).register(this)
         LayoutController().register(this)
@@ -394,19 +371,19 @@ fun Application.module() {
         MacrosController().register(this)
         BiomesController(biomeRegistry).register(this)
         PlayerSkinController(persistence).register(this)
-        ScreenshotController(dataPath).register(this)
+        ScreenshotController().register(this)
         PlayerArmorsController(persistence, sessionRegistry).register(this)
         PlayerHandsController(persistence, sessionRegistry).register(this)
         PlayerOwnedController(persistence, sessionRegistry).register(this)
         PlayerRpgController(persistence).register(this)
         CharacterController(persistence).register(this)
-        SkinsController(dataPath).register(this)
-        VehiclesController(dataPath).register(this)
-        ArmorsController(dataPath).register(this)
-        WeaponsController(dataPath).register(this)
-        ToolsController(dataPath).register(this)
-        SiegeWeaponsController(dataPath).register(this)
-        FurnitureController(dataPath).register(this)
+        SkinsController().register(this)
+        VehiclesController().register(this)
+        ArmorsController().register(this)
+        WeaponsController().register(this)
+        ToolsController().register(this)
+        SiegeWeaponsController().register(this)
+        FurnitureController().register(this)
         AuctionsController(gameLoop, tokenStore).register(this)
         GameAssetsController().register(this)
         QuestsController(questManager).register(this)
@@ -421,7 +398,6 @@ fun Application.module() {
                 noAuthAccountStore,
                 persistence,
                 gameLoop,
-                dataPath,
                 tokenStore)
         adminController.register(this)
         adminController.registerAdminWs(this)

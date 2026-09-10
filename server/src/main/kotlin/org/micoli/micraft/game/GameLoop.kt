@@ -249,9 +249,7 @@ class GameLoop(
             zoneLevelAt = { x, z -> world.zoneLevelAt(x, z) },
             lowLevelSpawnSlots = { count, radius -> world.distinctLowLevelSpawns(count, radius) },
         ),
-    private val dropConfig: DropConfig =
-        DropConfig(
-            BlockRegistryLoader(Path.of("resources/blocks"), Path.of("data/resources/blocks"))),
+    private val dropConfig: DropConfig = DropConfig(BlockRegistryLoader()),
     private val worldItems: WorldItemManager =
         WorldItemManager(
             dropConfig,
@@ -263,37 +261,24 @@ class GameLoop(
     private val weatherManager: WeatherManager = WeatherManager(weatherConfig),
     private val configRegistry: ConfigRegistry = ConfigRegistry.buildConfigRegistry(weatherConfig),
     private val liquidManager: LiquidManager = LiquidManager(world),
-    private val vegetationConfig: VegetationConfig =
-        VegetationConfig(Path.of("data/config/vegetation.yaml")),
+    private val vegetationConfig: VegetationConfig = VegetationConfig(),
     private val vegetationManager: VegetationManager =
         VegetationManager(
             world,
             vegetationConfig,
             savePath =
                 persistence?.worldDir?.resolve("vegetation_state.yaml")
-                    ?: Path.of("data/world/default_world/vegetation_state.yaml"),
+                    ?: org.micoli.micraft.config.ConfigPaths.dataWorld(
+                        "default_world/vegetation_state.yaml"),
         ),
-    private val recipeRegistryLoader: RecipeRegistryLoader =
-        RecipeRegistryLoader(Path.of("data/config/recipes.yaml")),
-    private val armorRegistryLoader: ArmorRegistryLoader =
-        ArmorRegistryLoader(
-            armorsPath = Path.of("resources/armors"),
-            dataArmorsPath = Path.of("data/resources/armors"),
-        ),
-    private val weaponRegistryLoader: WeaponRegistryLoader =
-        WeaponRegistryLoader(
-            weaponsPath = Path.of("resources/weapons"),
-            dataWeaponsPath = Path.of("data/resources/weapons"),
-        ),
-    private val toolRegistryLoader: ToolRegistryLoader =
-        ToolRegistryLoader(
-            toolsPath = Path.of("resources/tools"),
-            dataToolsPath = Path.of("data/resources/tools"),
-        ),
+    private val recipeRegistryLoader: RecipeRegistryLoader = RecipeRegistryLoader(),
+    private val armorRegistryLoader: ArmorRegistryLoader = ArmorRegistryLoader(),
+    private val weaponRegistryLoader: WeaponRegistryLoader = WeaponRegistryLoader(),
+    private val toolRegistryLoader: ToolRegistryLoader = ToolRegistryLoader(),
     private val weaponCategoryRegistryLoader: WeaponCategoryRegistryLoader =
-        WeaponCategoryRegistryLoader(Path.of("data/config/weapons.yaml")),
+        WeaponCategoryRegistryLoader(),
     private val toolCategoryRegistryLoader: ToolCategoryRegistryLoader =
-        ToolCategoryRegistryLoader(Path.of("data/config/tools.yaml")),
+        ToolCategoryRegistryLoader(),
     private val instanceRegistry: InstanceRegistry = InstanceRegistry(persistence),
     private val claimRegistry: ClaimRegistry = ClaimRegistry(persistence),
     private val actionBlockRegistry: ActionBlockRegistry = ActionBlockRegistry(persistence),
@@ -323,12 +308,8 @@ class GameLoop(
             actionBlockRegistry = actionBlockRegistry,
         ),
     private val sceneRegistry: SceneRegistry = SceneRegistry(persistence),
-    private val npcConfigLoader: NpcConfigLoader = NpcConfigLoader(Path.of("data/config/npc.yaml")),
-    private val npcRegistryLoader: NpcRegistryLoader =
-        NpcRegistryLoader(
-            resourcesEntityPath = Path.of("resources/entities"),
-            dataEntityPath = Path.of("data/resources/entities"),
-        ),
+    private val npcConfigLoader: NpcConfigLoader = NpcConfigLoader(),
+    private val npcRegistryLoader: NpcRegistryLoader = NpcRegistryLoader(),
     /**
      * The single wiring of the NPC subsystem, shared with the admin world simulator.
      *
@@ -444,8 +425,7 @@ class GameLoop(
             getSessions = sessionRegistry::all,
             getNpcs = { npcManager.getAll() },
         ),
-    private val tradeConfigLoader: TradeConfigLoader =
-        TradeConfigLoader(Path.of("data/config/trade.yaml")),
+    private val tradeConfigLoader: TradeConfigLoader = TradeConfigLoader(),
     private val tradeManager: TradeManager =
         TradeManager(
             getSessions = sessionRegistry::all,
@@ -453,8 +433,7 @@ class GameLoop(
             savePlayer = playerPersister::save,
             maxDistance = tradeConfigLoader.load().maxDistance,
         ),
-    private val auctionConfigLoader: AuctionConfigLoader =
-        AuctionConfigLoader(Path.of("data/config/auction.yaml")),
+    private val auctionConfigLoader: AuctionConfigLoader = AuctionConfigLoader(),
     private val auctionManager: AuctionManager? =
         persistence?.worldDir?.let { worldDir ->
             AuctionManager(
@@ -492,8 +471,7 @@ class GameLoop(
             placeableManager = placeableManager,
             siegeWeaponManager = siegeWeaponManager,
         ),
-    private val claimConfigLoader: ClaimConfigLoader =
-        ClaimConfigLoader(Path.of("data/config/claims.yaml")),
+    private val claimConfigLoader: ClaimConfigLoader = ClaimConfigLoader(),
     private val claimManager: ClaimManager =
         ClaimManager(
             registry = claimRegistry,

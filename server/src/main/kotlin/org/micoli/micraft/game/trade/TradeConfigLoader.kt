@@ -10,7 +10,9 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(TradeConfigLoader::class.java)
 
-class TradeConfigLoader(private val path: Path) {
+class TradeConfigLoader(
+    private val path: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("trade.yaml")
+) {
     init {
         if (!path.exists()) {
             path.parent.createDirectories()

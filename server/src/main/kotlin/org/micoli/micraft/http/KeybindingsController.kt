@@ -4,18 +4,15 @@ import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import java.nio.file.Path
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.game.keybinding.loadKeyBindings
 import org.micoli.micraft.game.world.WorldPersistence
 
-class KeybindingsController(
-    private val persistence: WorldPersistence?,
-    private val dataPath: String,
-) {
+class KeybindingsController(private val persistence: WorldPersistence?) {
     fun register(route: Route) =
         route.apply {
             get(
@@ -37,7 +34,7 @@ class KeybindingsController(
                         if (player != null && persistence != null) {
                             persistence.loadPlayerKeyBindings(player)
                         } else {
-                            loadKeyBindings(Path.of(dataPath + "/config/keybindings.yaml"))
+                            loadKeyBindings(ConfigPaths.dataConfig("keybindings.yaml"))
                         }
                     val serializer =
                         MapSerializer(String.serializer(), ListSerializer(String.serializer()))

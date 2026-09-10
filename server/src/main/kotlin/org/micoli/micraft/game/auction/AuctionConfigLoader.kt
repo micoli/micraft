@@ -10,7 +10,9 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(AuctionConfigLoader::class.java)
 
-class AuctionConfigLoader(private val path: Path) {
+class AuctionConfigLoader(
+    private val path: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("auction.yaml")
+) {
     init {
         if (!path.exists()) {
             path.parent.createDirectories()

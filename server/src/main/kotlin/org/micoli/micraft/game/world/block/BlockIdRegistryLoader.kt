@@ -22,8 +22,9 @@ private val log = LoggerFactory.getLogger(BlockIdRegistryLoader::class.java)
  * decoding to the right block type across releases.
  */
 class BlockIdRegistryLoader(
-    private val path: Path,
-    private val resourcesPath: Path = Path.of("resources/config/block_ids.yaml"),
+    private val path: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("block_ids.yaml"),
+    private val resourcesPath: Path =
+        org.micoli.micraft.config.ConfigPaths.resourcesConfig("block_ids.yaml"),
 ) {
     private fun decode(text: String): Map<String, Int> =
         if (text.isBlank()) emptyMap()

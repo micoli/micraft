@@ -16,7 +16,9 @@ fun findRecursive(path: Path, mask: String): List<Path> {
 
 private val log = LoggerFactory.getLogger(QuestRegistryLoader::class.java)
 
-class QuestRegistryLoader(private val questsPath: Path) {
+class QuestRegistryLoader(
+    private val questsPath: Path = org.micoli.micraft.config.ConfigPaths.resourcesDir("quests")
+) {
     @Volatile private var cached: Map<String, QuestDefinition>? = null
 
     fun load(): Map<String, QuestDefinition> =

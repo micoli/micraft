@@ -23,8 +23,9 @@ private val ENTRY_MAP_SERIALIZER =
     MapSerializer(String.serializer(), ToolCategoryYamlEntry.serializer())
 
 class ToolCategoryRegistryLoader(
-    private val path: Path,
-    private val resourcesPath: Path = Path.of("resources/config/tools.yaml"),
+    private val path: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("tools.yaml"),
+    private val resourcesPath: Path =
+        org.micoli.micraft.config.ConfigPaths.resourcesConfig("tools.yaml"),
 ) {
     private val default: Map<String, ToolCategoryYamlEntry> =
         Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, resourcesPath.readText())

@@ -49,8 +49,10 @@ private fun FurnitureYamlEntry.applyOverride(o: FurnitureYamlOverride): Furnitur
  * [org.micoli.micraft.game.placeable.siege.SiegeWeaponRegistryLoader]'s shape exactly.
  */
 class FurnitureRegistryLoader(
-    private val resourcesFurnituresPath: Path,
-    private val dataFurnituresPath: Path,
+    private val resourcesFurnituresPath: Path =
+        org.micoli.micraft.config.ConfigPaths.resourcesDir("furnitures"),
+    private val dataFurnituresPath: Path =
+        org.micoli.micraft.config.ConfigPaths.dataResources("furnitures"),
 ) {
     private fun generateFromResources(): Map<String, FurnitureYamlEntry> {
         if (!resourcesFurnituresPath.exists()) {

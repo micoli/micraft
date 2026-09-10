@@ -1,9 +1,7 @@
 package org.micoli.micraft.di
 
-import java.nio.file.Path
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
-import org.micoli.micraft.dataPath
 import org.micoli.micraft.game.item.ItemRegistryLoader
 import org.micoli.micraft.game.item.expandPlainColorItems
 import org.micoli.micraft.game.placeable.furniture.FurnitureRegistryLoader
@@ -14,7 +12,6 @@ import org.micoli.micraft.game.vehicle.VehicleRegistryLoader
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.PlainColorRegistry
-import org.micoli.micraft.game.world.block.BlockIdRegistryLoader
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
 import org.micoli.micraft.placeable.PlaceableDefinition
 import org.micoli.micraft.placeable.PlaceableRegistry
@@ -60,56 +57,21 @@ fun loadRegistries(
 
 @Module
 class RegistryModule {
-    @Single
-    fun blockRegistryLoader(): BlockRegistryLoader =
-        BlockRegistryLoader(
-            resourcesBlocksPath = Path.of("resources/blocks"),
-            dataBlocksPath = Path.of("$dataPath/resources/blocks"),
-            blockIdRegistryLoader =
-                BlockIdRegistryLoader(Path.of("$dataPath/config/block_ids.yaml")),
-        )
+    @Single fun blockRegistryLoader(): BlockRegistryLoader = BlockRegistryLoader()
 
-    @Single
-    fun itemRegistryLoader(): ItemRegistryLoader =
-        ItemRegistryLoader(
-            Path.of("$dataPath/config/items.yaml"),
-            Path.of("resources/config/items.yaml"),
-        )
+    @Single fun itemRegistryLoader(): ItemRegistryLoader = ItemRegistryLoader()
 
-    @Single
-    fun plainColorRegistryLoader(): PlainColorRegistryLoader =
-        PlainColorRegistryLoader(
-            Path.of("$dataPath/config/plain_colors.yaml"),
-            Path.of("resources/config/plain_colors.yaml"),
-        )
+    @Single fun plainColorRegistryLoader(): PlainColorRegistryLoader = PlainColorRegistryLoader()
 
-    @Single
-    fun vehicleRegistryLoader(): VehicleRegistryLoader =
-        VehicleRegistryLoader(
-            Path.of("$dataPath/config/vehicles.yaml"),
-            Path.of("resources/config/vehicles.yaml"),
-        )
+    @Single fun vehicleRegistryLoader(): VehicleRegistryLoader = VehicleRegistryLoader()
 
-    @Single
-    fun siegeWeaponRegistryLoader(): SiegeWeaponRegistryLoader =
-        SiegeWeaponRegistryLoader(
-            resourcesWeaponsPath = Path.of("resources/siege/weapons"),
-            dataWeaponsPath = Path.of("$dataPath/resources/siege/weapons"),
-        )
+    @Single fun siegeWeaponRegistryLoader(): SiegeWeaponRegistryLoader = SiegeWeaponRegistryLoader()
 
     @Single
     fun siegeProjectileRegistryLoader(): SiegeProjectileRegistryLoader =
-        SiegeProjectileRegistryLoader(
-            resourcesProjectilesPath = Path.of("resources/siege/projectiles"),
-            dataProjectilesPath = Path.of("$dataPath/resources/siege/projectiles"),
-        )
+        SiegeProjectileRegistryLoader()
 
-    @Single
-    fun furnitureRegistryLoader(): FurnitureRegistryLoader =
-        FurnitureRegistryLoader(
-            resourcesFurnituresPath = Path.of("resources/furnitures"),
-            dataFurnituresPath = Path.of("$dataPath/resources/furnitures"),
-        )
+    @Single fun furnitureRegistryLoader(): FurnitureRegistryLoader = FurnitureRegistryLoader()
 
     @Single(createdAtStart = true)
     fun registryBootstrap(

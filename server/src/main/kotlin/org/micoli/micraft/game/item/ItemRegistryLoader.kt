@@ -25,8 +25,9 @@ private val log = LoggerFactory.getLogger(ItemRegistryLoader::class.java)
 private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), ItemYamlEntry.serializer())
 
 class ItemRegistryLoader(
-    private val path: Path,
-    private val resourcesPath: Path = Path.of("resources/config/items.yaml"),
+    private val path: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("items.yaml"),
+    private val resourcesPath: Path =
+        org.micoli.micraft.config.ConfigPaths.resourcesConfig("items.yaml"),
 ) {
     private val default: Map<String, ItemYamlEntry> =
         Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, resourcesPath.readText())

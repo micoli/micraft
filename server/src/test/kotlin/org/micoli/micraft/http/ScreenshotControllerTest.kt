@@ -43,7 +43,9 @@ class ScreenshotControllerTest {
 
     @Test
     fun saveScreenshot_createsFile() = testApplication {
-        application { routing { ScreenshotController(tmpDir.absolutePath).register(this) } }
+        application {
+            routing { ScreenshotController(File(tmpDir, "screenshots").toPath()).register(this) }
+        }
         val r =
             client.post("/api/player/$testPlayerId/screenshots") {
                 contentType(ContentType.Application.Json)
@@ -59,7 +61,9 @@ class ScreenshotControllerTest {
 
     @Test
     fun missingPlayerId_returnsBadRequest() = testApplication {
-        application { routing { ScreenshotController(tmpDir.absolutePath).register(this) } }
+        application {
+            routing { ScreenshotController(File(tmpDir, "screenshots").toPath()).register(this) }
+        }
         val r =
             client.post("/api/player//screenshots") {
                 contentType(ContentType.Application.Json)
@@ -70,7 +74,9 @@ class ScreenshotControllerTest {
 
     @Test
     fun missingImageData_returnsBadRequest() = testApplication {
-        application { routing { ScreenshotController(tmpDir.absolutePath).register(this) } }
+        application {
+            routing { ScreenshotController(File(tmpDir, "screenshots").toPath()).register(this) }
+        }
         val r =
             client.post("/api/player/$testPlayerId/screenshots") {
                 contentType(ContentType.Application.Json)
@@ -81,7 +87,9 @@ class ScreenshotControllerTest {
 
     @Test
     fun invalidBase64_returnsBadRequest() = testApplication {
-        application { routing { ScreenshotController(tmpDir.absolutePath).register(this) } }
+        application {
+            routing { ScreenshotController(File(tmpDir, "screenshots").toPath()).register(this) }
+        }
         val r =
             client.post("/api/player/$testPlayerId/screenshots") {
                 contentType(ContentType.Application.Json)

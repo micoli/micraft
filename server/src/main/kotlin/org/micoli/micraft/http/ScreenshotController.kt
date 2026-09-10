@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.micoli.micraft.config.ConfigPaths
 
 private val TIMESTAMP_FMT: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss").withZone(ZoneOffset.UTC)
@@ -22,7 +23,9 @@ private val TIMESTAMP_FMT: DateTimeFormatter =
 
 @Serializable private data class UploadScreenshotResponse(val filename: String)
 
-class ScreenshotController(private val dataPath: String) {
+class ScreenshotController(
+    private val screenshotsDir: java.nio.file.Path = ConfigPaths.dataRoot.resolve("screenshots"),
+) {
     fun register(route: Route) =
         route.apply {
             post(
@@ -69,7 +72,7 @@ class ScreenshotController(private val dataPath: String) {
                                 return@post call.respond(HttpStatusCode.BadRequest)
                             }
 
-                    val dir = File("$dataPath/screenshots/$id")
+                    val dir = screenshotsDir.resolve(id).toFile()
                     dir.mkdirs()
                     val filename = "${TIMESTAMP_FMT.format(Instant.now())}.png"
                     File(dir, filename).writeBytes(bytes)

@@ -18,8 +18,9 @@ private fun VehicleModelDefinition.applyOverride(o: VehicleModelYamlOverride) =
  * back to [VehicleModelDefinition]'s defaults.
  */
 class VehicleModelRegistryLoader(
-    private val modelsPath: Path,
-    private val dataModelsPath: Path,
+    private val modelsPath: Path = org.micoli.micraft.config.ConfigPaths.resourcesDir("vehicles"),
+    private val dataModelsPath: Path =
+        org.micoli.micraft.config.ConfigPaths.dataResources("vehicles"),
 ) {
     fun load(name: String): VehicleModelDefinition? {
         val yaml = modelsPath.resolve("$name/$name.yaml")

@@ -45,10 +45,11 @@ private fun BlockYamlEntry.applyOverride(o: BlockYamlOverride): BlockYamlEntry {
 }
 
 class BlockRegistryLoader(
-    private val resourcesBlocksPath: Path,
-    private val dataBlocksPath: Path,
-    private val blockIdRegistryLoader: BlockIdRegistryLoader =
-        BlockIdRegistryLoader(Path.of("data/config/block_ids.yaml")),
+    private val resourcesBlocksPath: Path =
+        org.micoli.micraft.config.ConfigPaths.resourcesDir("blocks"),
+    private val dataBlocksPath: Path =
+        org.micoli.micraft.config.ConfigPaths.dataResources("blocks"),
+    private val blockIdRegistryLoader: BlockIdRegistryLoader = BlockIdRegistryLoader(),
 ) {
     private fun generateFromResources(): Map<String, BlockYamlEntry> {
         val map = mutableMapOf<String, BlockYamlEntry>()

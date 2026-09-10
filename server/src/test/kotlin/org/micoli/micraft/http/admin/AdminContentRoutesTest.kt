@@ -21,7 +21,7 @@ class AdminContentRoutesTest {
     private val scope = CoroutineScope(Dispatchers.Default)
 
     private fun controller(store: TokenStore? = null) =
-        AdminController(null, null, null, GameLoop(testWorld()), "data", store)
+        AdminController(null, null, null, GameLoop(testWorld()), store)
 
     @Test
     fun `api_admin_blocks_returns_200_with_json_array`() = testApplication {

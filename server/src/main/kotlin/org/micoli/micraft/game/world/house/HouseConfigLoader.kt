@@ -1,44 +1,19 @@
 package org.micoli.micraft.game.world.house
 
-import com.charleskorn.kaml.Yaml
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
-import org.micoli.micraft.config.isYamlEffectivelyEmpty
-import org.micoli.micraft.config.mergeConfig
-import org.micoli.micraft.config.spliceMissingAsComments
-import org.micoli.micraft.config.validateYamlConfig
-import org.micoli.micraft.config.yamlConfigSection
+import org.micoli.micraft.config.ConfigPaths
+import org.micoli.micraft.config.OverridablePaths
+import org.micoli.micraft.config.loadOverridableConfig
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger("HouseConfigLoader")
 
-fun loadHouseConfig(path: Path, resourcesPath: Path): HouseConfig {
-    val default = Yaml.default.decodeFromString(HouseConfig.serializer(), resourcesPath.readText())
-    val originalText = if (path.exists()) path.readText() else ""
-    path.parent?.createDirectories()
-    if (originalText.isBlank()) {
-        log.info("No houses.yaml found at {} — creating with defaults", path.toAbsolutePath())
-        path.writeText(
-            spliceMissingAsComments("", yamlConfigSection(HouseConfig::class, "", default, null)))
-        return default
-    }
-    validateYamlConfig(path, "houses.schema.json")
-    val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
-    if (node == null) {
-        if (!originalText.isYamlEffectivelyEmpty())
-            log.warn("houses.yaml has unparseable structure, leaving file untouched")
-        return default
-    }
-    val decoded =
-        runCatching { Yaml.default.decodeFromString(HouseConfig.serializer(), originalText) }
-            .getOrElse { e ->
-                log.warn("Failed to load houses.yaml ({}) — using defaults", e.message)
-                default
-            }
-    val merged = mergeConfig(HouseConfig::class, decoded, default, node)
+fun loadHouseConfig(
+    path: Path = ConfigPaths.dataConfig("houses.yaml"),
+    resourcesPath: Path = ConfigPaths.resourcesConfig("houses.yaml"),
+): HouseConfig {
+    val merged =
+        loadOverridableConfig<HouseConfig>("houses.yaml", OverridablePaths(resourcesPath, path))
     log.info(
         "Houses loaded: enabled={} | gridCellSize={} | types=[{}] | biomes=[{}]",
         merged.enabled,
@@ -46,8 +21,5 @@ fun loadHouseConfig(path: Path, resourcesPath: Path): HouseConfig {
         merged.houseTypes.joinToString { it.id },
         merged.biomes.keys.joinToString(),
     )
-    path.writeText(
-        spliceMissingAsComments(
-            originalText, yamlConfigSection(HouseConfig::class, "", merged, node)))
     return merged
 }

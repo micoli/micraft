@@ -23,8 +23,9 @@ private val ENTRY_MAP_SERIALIZER =
     MapSerializer(String.serializer(), WeaponCategoryYamlEntry.serializer())
 
 class WeaponCategoryRegistryLoader(
-    private val path: Path,
-    private val resourcesPath: Path = Path.of("resources/config/weapons.yaml"),
+    private val path: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("weapons.yaml"),
+    private val resourcesPath: Path =
+        org.micoli.micraft.config.ConfigPaths.resourcesConfig("weapons.yaml"),
 ) {
     private val default: Map<String, WeaponCategoryYamlEntry> =
         Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, resourcesPath.readText())

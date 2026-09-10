@@ -1,6 +1,5 @@
 package org.micoli.micraft.command.commands
 
-import java.nio.file.Path
 import java.util.UUID
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -14,7 +13,7 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(SkinCommand::class.java)
 
-private val skinsRoot = Path.of("resources/models")
+private val skinsRoot = org.micoli.micraft.config.ConfigPaths.resourcesDir("models")
 
 fun availablePlayerSkins(): List<String> =
     runCatching {

@@ -159,16 +159,19 @@ class GameWorld(
     private var chunkRetentionTickCounter = 0
 
     private val npcSavePath: Path
-        get() = persistence?.worldDir?.resolve("npcs.yaml") ?: Path.of("data/config/spawns.json")
+        get() =
+            persistence?.worldDir?.resolve("npcs.yaml")
+                ?: org.micoli.micraft.config.ConfigPaths.dataConfig("spawns.json")
 
     private val vehicleSavePath: Path
         get() =
-            persistence?.worldDir?.resolve("vehicles.yaml") ?: Path.of("data/config/vehicles.yaml")
+            persistence?.worldDir?.resolve("vehicles.yaml")
+                ?: org.micoli.micraft.config.ConfigPaths.dataConfig("vehicles.yaml")
 
     private val placeableSavePath: Path
         get() =
             persistence?.worldDir?.resolve("placeables.yaml")
-                ?: Path.of("data/config/placeables_save.yaml")
+                ?: org.micoli.micraft.config.ConfigPaths.dataConfig("placeables_save.yaml")
 
     /**
      * Load the state that belongs to this world's directory. Global registries are loaded

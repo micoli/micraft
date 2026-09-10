@@ -22,8 +22,8 @@ private fun SkinDefinition.applyOverride(o: SkinYamlOverride) =
  * registry — the client then falls back to the stance eye offset.
  */
 class SkinRegistryLoader(
-    private val skinsPath: Path,
-    private val dataSkinsPath: Path,
+    private val skinsPath: Path = org.micoli.micraft.config.ConfigPaths.resourcesDir("models"),
+    private val dataSkinsPath: Path = org.micoli.micraft.config.ConfigPaths.dataResources("models"),
 ) {
     fun load(): Map<String, SkinDefinition> {
         if (!skinsPath.exists()) return emptyMap()

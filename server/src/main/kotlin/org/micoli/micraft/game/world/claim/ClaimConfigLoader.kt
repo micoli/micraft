@@ -10,7 +10,9 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(ClaimConfigLoader::class.java)
 
-class ClaimConfigLoader(private val path: Path) {
+class ClaimConfigLoader(
+    private val path: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("claims.yaml")
+) {
     init {
         if (!path.exists()) {
             path.parent.createDirectories()

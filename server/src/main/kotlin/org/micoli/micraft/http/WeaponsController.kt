@@ -4,14 +4,13 @@ import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import java.nio.file.Path
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.equipment.WeaponRegistryLoader
 
-class WeaponsController(private val dataPath: String) {
+class WeaponsController {
     fun register(route: Route) =
         route.apply {
             get(
@@ -20,11 +19,7 @@ class WeaponsController(private val dataPath: String) {
                     description = "List all weapon definitions"
                     response { code(HttpStatusCode.OK) { body<Map<String, WeaponDefinition>>() } }
                 }) {
-                    val weapons =
-                        WeaponRegistryLoader(
-                                Path.of("resources/weapons"),
-                                Path.of("$dataPath/resources/weapons"))
-                            .load()
+                    val weapons = WeaponRegistryLoader().load()
                     call.respondText(
                         Json.encodeToString(
                             MapSerializer(String.serializer(), WeaponDefinition.serializer()),

@@ -67,7 +67,8 @@ data class GameWorldOptions(
     val gameDayDurationSecondsOf: () -> Double = { NpcConstants.live.gameDayDurationSeconds },
     /** `null` = use [SharedGameServices.experienceConfigData]. */
     val experienceConfigData: ExperienceConfigData? = null,
-    val vegetationSavePath: Path = Path.of("data/world/_e2e_discard/vegetation_state.yaml"),
+    val vegetationSavePath: Path =
+        org.micoli.micraft.config.ConfigPaths.dataWorld("_e2e_discard/vegetation_state.yaml"),
     val commandContextProvider: () -> CommandContext = {
         error("this GameWorld has no CommandContext")
     },

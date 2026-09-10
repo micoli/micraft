@@ -15,7 +15,6 @@ import io.ktor.websocket.*
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.io.File
-import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -380,12 +379,11 @@ class AdminController(
     private val noAuthAccountStore: org.micoli.micraft.auth.NoAuthAccountStore?,
     private val persistence: WorldPersistence?,
     private val gameLoop: GameLoop,
-    private val dataPath: String,
     private val tokenStore: TokenStore? = null,
     private val gameWorldRegistry: org.micoli.micraft.game.world.GameWorldRegistry =
         gameLoop.gameWorldRegistry,
 ) {
-    private val configDir = Path.of("$dataPath/config")
+    private val configDir = org.micoli.micraft.config.ConfigPaths.dataRoot.resolve("config")
 
     companion object {
         /**
@@ -420,23 +418,13 @@ class AdminController(
 
     // Loaded fresh per call rather than borrowed from `gameLoop` — its own copies only populate
     // once `GameLoop.start()` runs, which a bare-bones test setup never calls.
-    private fun armorRegistry() =
-        org.micoli.micraft.game.armor
-            .ArmorRegistryLoader(Path.of("resources/armors"), Path.of("$dataPath/resources/armors"))
-            .load()
+    private fun armorRegistry() = org.micoli.micraft.game.armor.ArmorRegistryLoader().load()
 
-    private fun weaponRegistry() =
-        org.micoli.micraft.game.equipment
-            .WeaponRegistryLoader(
-                Path.of("resources/weapons"), Path.of("$dataPath/resources/weapons"))
-            .load()
+    private fun weaponRegistry() = org.micoli.micraft.game.equipment.WeaponRegistryLoader().load()
 
-    private fun toolRegistry() =
-        org.micoli.micraft.game.equipment
-            .ToolRegistryLoader(Path.of("resources/tools"), Path.of("$dataPath/resources/tools"))
-            .load()
+    private fun toolRegistry() = org.micoli.micraft.game.equipment.ToolRegistryLoader().load()
 
-    private val worldsDir = Path.of("$dataPath/world")
+    private val worldsDir = org.micoli.micraft.config.ConfigPaths.dataRoot.resolve("world")
     private val activeWorldName: String =
         System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world"
 

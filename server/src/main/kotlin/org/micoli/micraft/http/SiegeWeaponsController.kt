@@ -4,7 +4,6 @@ import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import java.nio.file.Path
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
@@ -17,7 +16,7 @@ import org.micoli.micraft.placeable.siege.SiegeWeaponDefinition
 // siege weapons tab then rendered as "undefined".
 private val json = Json { encodeDefaults = true }
 
-class SiegeWeaponsController(private val dataPath: String) {
+class SiegeWeaponsController {
     fun register(route: Route) =
         route.apply {
             get(
@@ -28,12 +27,7 @@ class SiegeWeaponsController(private val dataPath: String) {
                         code(HttpStatusCode.OK) { body<Map<String, SiegeWeaponDefinition>>() }
                     }
                 }) {
-                    val weapons =
-                        SiegeWeaponRegistryLoader(
-                                Path.of("resources/siege/weapons"),
-                                Path.of("$dataPath/resources/siege/weapons"))
-                            .load()
-                            .mapKeys { it.key.id }
+                    val weapons = SiegeWeaponRegistryLoader().load().mapKeys { it.key.id }
                     call.respondText(
                         json.encodeToString(
                             MapSerializer(String.serializer(), SiegeWeaponDefinition.serializer()),

@@ -1,6 +1,5 @@
 package org.micoli.micraft.simulation
 
-import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -137,7 +136,9 @@ class WorldSimulator(
                     gameDayDurationSecondsOf = { config.gameDayDurationSeconds },
                     experienceConfigData = deps.experienceConfig,
                     // never saved: the simulated world is discarded on stop
-                    vegetationSavePath = Path.of("data/world/.simulator/vegetation_state.yaml"),
+                    vegetationSavePath =
+                        org.micoli.micraft.config.ConfigPaths.dataWorld(
+                            ".simulator/vegetation_state.yaml"),
                     initialGameTicks = 0L,
                     broadcastWorldChange = { message -> onWorldUpdate(message) },
                     npcLifecycleGate = {

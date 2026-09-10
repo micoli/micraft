@@ -24,8 +24,9 @@ private val recipeLog = LoggerFactory.getLogger(RecipeRegistryLoader::class.java
 private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), RecipeYamlEntry.serializer())
 
 class RecipeRegistryLoader(
-    private val path: Path,
-    private val resourcesPath: Path = Path.of("resources/config/recipes.yaml"),
+    private val path: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("recipes.yaml"),
+    private val resourcesPath: Path =
+        org.micoli.micraft.config.ConfigPaths.resourcesConfig("recipes.yaml"),
 ) {
     private val default: Map<String, RecipeYamlEntry> =
         Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, resourcesPath.readText())

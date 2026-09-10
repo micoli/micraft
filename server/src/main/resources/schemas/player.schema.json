@@ -616,6 +616,42 @@
             "string",
             "null"
           ]
+        },
+        "compassTarget": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "x",
+                "y",
+                "z"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "z": {
+                  "type": "number"
+                },
+                "label": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "visible": {
+                  "type": "boolean"
+                }
+              }
+            }
+          ]
         }
       }
     },

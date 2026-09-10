@@ -1,12 +1,9 @@
 package org.micoli.micraft.di
 
-import java.nio.file.Path
 import java.time.Instant
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
-import org.micoli.micraft.config.validateYamlConfig
-import org.micoli.micraft.configDir
-import org.micoli.micraft.dataPath
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.world.WorldMetadata
 import org.micoli.micraft.game.world.WorldPersistence
@@ -22,7 +19,6 @@ import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGen
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.EndToEndBoundedChunkGenerator
 import org.micoli.micraft.game.world.road.loadRoadConfig
 import org.micoli.micraft.game.world.scene.SceneRegistry
-import org.micoli.micraft.resourcesConfigDir
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(WorldModule::class.java)
@@ -34,7 +30,7 @@ fun worldName(): String =
 class WorldModule {
     @Single
     fun optionalWorldPersistence(gameConfig: GameConfig): OptionalWorldPersistence {
-        val dir = Path.of("$dataPath/world/${worldName()}")
+        val dir = ConfigPaths.dataWorld(worldName())
         val persistence =
             WorldPersistence(dir).also { p ->
                 if (p.loadMetadata() == null) {
@@ -48,24 +44,11 @@ class WorldModule {
         return OptionalWorldPersistence(persistence)
     }
 
-    @Single
-    fun biomeRegistry(): BiomeRegistry =
-        loadBiomeRegistry(
-            Path.of("$dataPath/config/biomes.yaml"), resourcesConfigDir.resolve("biomes.yaml"))
+    @Single fun biomeRegistry(): BiomeRegistry = loadBiomeRegistry()
 
-    @Single
-    fun optionalRoadConfig(): OptionalRoadConfig {
-        validateYamlConfig(configDir.resolve("roads.yaml"), "roads.schema.json")
-        return OptionalRoadConfig(
-            loadRoadConfig(
-                Path.of("$dataPath/config/roads.yaml"), resourcesConfigDir.resolve("roads.yaml")))
-    }
+    @Single fun optionalRoadConfig(): OptionalRoadConfig = OptionalRoadConfig(loadRoadConfig())
 
-    @Single
-    fun optionalHouseConfig(): OptionalHouseConfig =
-        OptionalHouseConfig(
-            loadHouseConfig(
-                Path.of("$dataPath/config/houses.yaml"), resourcesConfigDir.resolve("houses.yaml")))
+    @Single fun optionalHouseConfig(): OptionalHouseConfig = OptionalHouseConfig(loadHouseConfig())
 
     @Single
     fun chunkGenerator(

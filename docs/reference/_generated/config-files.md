@@ -2,7 +2,7 @@
 
 ### Configuration files
 
-Every file is optional: on first run the server writes a fully-commented template into `data/config/`, merging any bundled default. Reload most of them at runtime with `/reload` or `/config:reload`.
+Every file is optional: on first run the server writes a fully-commented template into `data/config/`, merging any bundled default. Reload most of them at runtime with `/reload` or `/config:reload`. The data root defaults to `data/` and can be relocated with the `MICRAFT_DATA_DIR` environment variable. Set `MICRAFT_CONFIG_STRICT=1` to make a config that violates its JSON Schema abort server startup instead of only logging a warning.
 
 | Override file | JSON Schema | Bundled default |
 |---|---|---|
@@ -10,7 +10,7 @@ Every file is optional: on first run the server writes a fully-commented templat
 | `data/config/block_ids.yaml` | `block_ids.schema.json` | `resources/config/block_ids.yaml` |
 | `data/config/classes.yaml` | `classes.schema.json` | `resources/config/classes.yaml` |
 | `data/config/combat.yaml` | `combat.schema.json` | `resources/config/combat.yaml` |
-| `data/config/experience.yaml` | — | `resources/config/experience.yaml` |
+| `data/config/experience.yaml` | `experience.schema.json` | `resources/config/experience.yaml` |
 | `data/config/groups.yaml` | `groups.schema.json` | `resources/config/groups.yaml` |
 | `data/config/houses.yaml` | `houses.schema.json` | `resources/config/houses.yaml` |
 | `data/config/items.yaml` | `items.schema.json` | `resources/config/items.yaml` |
@@ -20,7 +20,7 @@ Every file is optional: on first run the server writes a fully-commented templat
 | `data/config/roads.yaml` | `roads.schema.json` | `resources/config/roads.yaml` |
 | `data/config/server.yaml` | `server.schema.json` | `resources/config/server.yaml` |
 | `data/config/tools.yaml` | `tools.schema.json` | `resources/config/tools.yaml` |
-| `data/config/vegetation.yaml` | — | `resources/config/vegetation.yaml` |
+| `data/config/vegetation.yaml` | `vegetation.schema.json` | `resources/config/vegetation.yaml` |
 | `data/config/vehicles.yaml` | `vehicles.schema.json` | `resources/config/vehicles.yaml` |
 | `data/config/weapons.yaml` | `weapons.schema.json` | `resources/config/weapons.yaml` |
 | `data/config/weather.yaml` | `weather.schema.json` | `resources/config/weather.yaml` |
