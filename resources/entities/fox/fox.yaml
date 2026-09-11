@@ -24,6 +24,7 @@ animal:
   preyTypes: [duck_baby, cat_baby]
   canReproduce: false
   hungerRatePerDay: 0.08
+  starvationDeathDays: 3.0
   hungerThresholdToHunt: 0.5
   hungerThresholdToMate: 0.6
   fleeRadius: 10.0

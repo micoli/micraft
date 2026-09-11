@@ -20,12 +20,17 @@ attacks:
   - attackId: scorpion_sting
     level: 1
 walkBoneAliases:
-  rightArm: leg1
-  leftArm: leg0
-  rightLeg: leg7
-  leftLeg: leg6
+  rightLeg0: leg1
+  leftLeg0: leg0
+  rightLeg1: leg3
+  leftLeg1: leg2
+  rightLeg2: leg5
+  leftLeg2: leg4
+  rightLeg3: leg7
+  leftLeg3: leg6
 animal:
   diet: CARNIVORE
   lifespanDays: 20.0
   canReproduce: false
   hungerRatePerDay: 0.08
+  starvationDeathDays: 3.0

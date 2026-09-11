@@ -27,6 +27,7 @@ animal:
   lifespanDays: 24.0
   canReproduce: false
   hungerRatePerDay: 0.09
+  starvationDeathDays: 3.0
 pack:
   callRadius: 32.0
   relayHops: 2

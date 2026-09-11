@@ -23,4 +23,5 @@ animal:
   lifespanDays: 16.0
   canReproduce: false
   hungerRatePerDay: 0.1
+  starvationDeathDays: 2.0
   fleeRadius: 8.0

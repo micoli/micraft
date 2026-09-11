@@ -18,12 +18,17 @@ attacks:
   - attackId: spider_web_bite
     level: 1
 walkBoneAliases:
-  rightArm: leg1
-  leftArm: leg0
-  rightLeg: leg7
-  leftLeg: leg6
+  rightLeg0: rightLeg0
+  leftLeg0: leftLeg0
+  rightLeg1: rightLeg1
+  leftLeg1: leftLeg1
+  rightLeg2: rightLeg2
+  leftLeg2: leftLeg2
+  rightLeg3: rightLeg3
+  leftLeg3: leftLeg3
 animal:
   diet: CARNIVORE
   lifespanDays: 18.0
   canReproduce: false
   hungerRatePerDay: 0.1
+  starvationDeathDays: 2.0

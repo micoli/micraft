@@ -22,3 +22,4 @@ animal:
   lifespanDays: 18.0
   canReproduce: false
   hungerRatePerDay: 0.09
+  starvationDeathDays: 2.0

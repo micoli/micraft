@@ -27,3 +27,4 @@ animal:
   preyTypes: [rabbit]
   canReproduce: false
   hungerRatePerDay: 0.08
+  starvationDeathDays: 3.0
