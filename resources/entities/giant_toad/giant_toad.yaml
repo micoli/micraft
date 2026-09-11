@@ -1,0 +1,29 @@
+behavior: animal
+width: 0.7
+height: 0.35
+wanderSpeed: 1.0
+wanderRadius: 12.0
+hp: 16
+aggroMode: PASSIVE_COOPERATIVE
+aggroRange: 7.0
+tier: COMMON
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [forest, pine_forest]
+  maxTotal: 40
+  minTotal: 20
+tameable: false
+attacks:
+  - attackId: giant_toad_tongue
+    level: 1
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: CARNIVORE
+  lifespanDays: 18.0
+  canReproduce: false
+  hungerRatePerDay: 0.09
