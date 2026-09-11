@@ -1,0 +1,22 @@
+behavior: random_movable
+width: 0.6
+height: 1.9
+wanderSpeed: 0.9
+wanderRadius: 15.0
+hp: 30
+aggroMode: AGGRESSIVE
+aggroRange: 8.0
+tier: COMMON
+minLevel: 11
+maxLevel: 15
+xpReward: 28
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [plains, dry_plains, forest]
+  maxTotal: 55
+  minTotal: 35
+tameable: false
+attacks:
+  - attackId: zombie_bite
+    level: 1

@@ -1,0 +1,18 @@
+damageType: PHYSICAL
+enabled: true
+levels:
+  1:
+    power: 6
+    weaponDice: 1d6
+    cooldownMs: 1500
+    statusEffect: Withering
+  2:
+    power: 9
+    weaponDice: 1d8
+    cooldownMs: 1400
+    statusEffect: Withering
+  3:
+    power: 13
+    weaponDice: 2d6
+    cooldownMs: 1300
+    statusEffect: Withering
