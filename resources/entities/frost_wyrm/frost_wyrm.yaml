@@ -1,0 +1,28 @@
+behavior: random_movable
+width: 1.2
+height: 1.6
+wanderSpeed: 1.6
+wanderRadius: 22.0
+hp: 180
+aggroMode: AGGRESSIVE
+aggroRange: 14.0
+tier: BOSS
+minLevel: 22
+maxLevel: 25
+xpReward: 320
+movementMode: [FLYING]
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [snow_peaks]
+  maxTotal: 4
+  minTotal: 1
+tameable: false
+attacks:
+  - attackId: slash
+    level: 3
+spells:
+  - frost_wyrm_breath
+walkBoneAliases:
+  rightArm: wingR
+  leftArm: wingL
