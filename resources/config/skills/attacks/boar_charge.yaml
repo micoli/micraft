@@ -1,0 +1,13 @@
+damageType: PHYSICAL
+enabled: true
+levels:
+  1:
+    power: 6
+    weaponDice: 1d8
+    cooldownMs: 2200
+    statusEffect: Stunned
+  2:
+    power: 9
+    weaponDice: 2d6
+    cooldownMs: 2000
+    statusEffect: Stunned

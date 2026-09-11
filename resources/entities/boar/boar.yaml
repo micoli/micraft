@@ -1,0 +1,30 @@
+behavior: animal
+width: 0.9
+height: 0.7
+wanderSpeed: 1.6
+wanderRadius: 22.0
+hp: 22
+aggroMode: PASSIVE_COOPERATIVE
+aggroRange: 8.0
+tier: COMMON
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [forest, plains, dry_plains]
+  maxTotal: 70
+  minTotal: 45
+tameable: true
+tameBaseChance: 0.15
+attacks:
+  - attackId: boar_charge
+    level: 1
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: OMNIVORE
+  lifespanDays: 25.0
+  canReproduce: false
+  hungerRatePerDay: 0.08
