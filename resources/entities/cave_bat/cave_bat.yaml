@@ -1,0 +1,36 @@
+behavior: animal
+width: 0.35
+height: 0.25
+wanderSpeed: 2.4
+wanderRadius: 20.0
+hp: 6
+aggroMode: PASSIVE_COOPERATIVE
+aggroRange: 6.0
+tier: COMMON
+movementMode: [FLYING]
+spawn:
+  autoSpawn: true
+  maxPerChunk: 3
+  spawnBiomes: [forest, pine_forest, snow_peaks]
+  maxTotal: 60
+  minTotal: 30
+tameable: false
+attacks:
+  - attackId: cave_bat_bite
+    level: 1
+walkBoneAliases:
+  rightArm: wingR
+  leftArm: wingL
+animal:
+  diet: CARNIVORE
+  lifespanDays: 12.0
+  canReproduce: false
+  hungerRatePerDay: 0.1
+pack:
+  callRadius: 18.0
+  relayHops: 1
+  maxSize: 6
+  minSizeToEngage: 2
+  callCooldownSec: 12.0
+  rallyTimeoutSec: 10.0
+  chaseRadius: 20.0
