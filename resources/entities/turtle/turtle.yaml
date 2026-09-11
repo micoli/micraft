@@ -1,0 +1,29 @@
+behavior: animal
+width: 0.8
+height: 0.5
+wanderSpeed: 0.8
+wanderRadius: 15.0
+hp: 35
+aggroMode: PASSIVE
+tier: COMMON
+minLevel: 16
+maxLevel: 20
+movementMode: [WALKING, SWIMMING]
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [desert, plains]
+  maxTotal: 40
+  minTotal: 22
+tameable: true
+tameBaseChance: 0.3
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: HERBIVORE
+  lifespanDays: 40.0
+  canReproduce: false
+  hungerRatePerDay: 0.05
