@@ -1,0 +1,31 @@
+behavior: animal
+width: 0.5
+height: 0.2
+wanderSpeed: 1.2
+wanderRadius: 10.0
+hp: 10
+aggroMode: PASSIVE_COOPERATIVE
+tier: COMMON
+movementMode: [WALKING, SWIMMING]
+spawn:
+  autoSpawn: true
+  maxPerChunk: 3
+  spawnBiomes: [desert, plains]
+  maxTotal: 50
+  minTotal: 28
+tameable: false
+attacks:
+  - attackId: crab_pinch
+    level: 1
+walkBoneAliases:
+  rightLeg0: leg1
+  leftLeg0: leg0
+  rightLeg1: leg3
+  leftLeg1: leg2
+  rightLeg2: leg5
+  leftLeg2: leg4
+animal:
+  diet: OMNIVORE
+  lifespanDays: 14.0
+  canReproduce: false
+  hungerRatePerDay: 0.09
