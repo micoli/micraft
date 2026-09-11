@@ -1,0 +1,26 @@
+behavior: animal
+width: 0.4
+height: 0.5
+wanderSpeed: 0.6
+wanderRadius: 10.0
+hp: 6
+aggroMode: PASSIVE
+tier: COMMON
+minLevel: 16
+maxLevel: 20
+movementMode: [SWIMMING]
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: []
+  maxTotal: 35
+  minTotal: 20
+tameable: false
+attacks:
+  - attackId: jellyfish_sting
+    level: 1
+animal:
+  diet: OMNIVORE
+  lifespanDays: 12.0
+  canReproduce: false
+  hungerRatePerDay: 0.05
