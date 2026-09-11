@@ -1,0 +1,36 @@
+behavior: animal
+width: 1.3
+height: 1.9
+wanderSpeed: 1.9
+wanderRadius: 35.0
+hp: 170
+aggroMode: AGGRESSIVE
+aggroRange: 14.0
+tier: BOSS
+minLevel: 20
+maxLevel: 25
+xpReward: 290
+movementMode: [FLYING]
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [snow_peaks, dry_plains]
+  maxTotal: 4
+  minTotal: 1
+tameable: false
+attacks:
+  - attackId: hawk_dive
+    level: 2
+spells:
+  - storm_roc_gust
+walkBoneAliases:
+  rightArm: wingR
+  leftArm: wingL
+  rightLeg: legR
+  leftLeg: legL
+animal:
+  diet: CARNIVORE
+  lifespanDays: 30.0
+  canReproduce: false
+  hungerRatePerDay: 0.06
+  starvationDeathDays: 4.0
