@@ -1,0 +1,22 @@
+behavior: random_movable
+width: 1.2
+height: 2.2
+wanderSpeed: 0.7
+wanderRadius: 12.0
+hp: 150
+aggroMode: AGGRESSIVE
+aggroRange: 10.0
+tier: BOSS
+minLevel: 20
+maxLevel: 25
+xpReward: 230
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [snow_peaks, dry_plains]
+  maxTotal: 5
+  minTotal: 1
+tameable: false
+attacks:
+  - attackId: golem_stone_smash
+    level: 1
