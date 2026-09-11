@@ -1,0 +1,24 @@
+behavior: random_movable
+width: 1.2
+height: 2.2
+wanderSpeed: 0.6
+wanderRadius: 10.0
+hp: 195
+aggroMode: AGGRESSIVE
+aggroRange: 12.0
+tier: BOSS
+minLevel: 20
+maxLevel: 25
+xpReward: 320
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [snow_peaks]
+  maxTotal: 4
+  minTotal: 1
+tameable: false
+attacks:
+  - attackId: golem_stone_smash
+    level: 2
+spells:
+  - crystal_shard_barrage

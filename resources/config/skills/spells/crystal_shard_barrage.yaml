@@ -1,0 +1,7 @@
+type: NECROTIC_AOE
+enabled: true
+manaCost: 0
+cooldownMs: 7500
+aoeRadius: 4.5
+maxRange: 12.0
+statusEffect: Frozen
