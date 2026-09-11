@@ -1,0 +1,24 @@
+behavior: random_movable
+width: 1.1
+height: 2.0
+wanderSpeed: 1.2
+wanderRadius: 16.0
+hp: 210
+aggroMode: AGGRESSIVE
+aggroRange: 10.0
+tier: BOSS
+minLevel: 20
+maxLevel: 25
+xpReward: 300
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [dry_plains, desert]
+  maxTotal: 4
+  minTotal: 1
+tameable: false
+attacks:
+  - attackId: bear_maul
+    level: 3
+spells:
+  - plague_ogre_burst
