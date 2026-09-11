@@ -639,7 +639,7 @@ declare global {
     updateShortcutBar(json: string): void;
     setSelectedSlot(slot: number): void;
     consumeSlotUpdate(): string;
-    showLoginOverlay(): void;
+    showLoginOverlay(reason?: string): void;
     hideLoginOverlay(): void;
     clearStoredToken(): void;
     showDisconnectedOverlay(msg: string): void;

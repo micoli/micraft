@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { KeyboardEvent } from "react";
 import {
   getApiAuthConfig,
@@ -36,9 +36,17 @@ const SUPPORTED_LANGS: { code: string; label: string }[] = [
   { code: "fr", label: "Français" },
 ];
 
+// Reasons a WebSocket disconnect can hand off to this screen via navigate("/chars", { state }).
+const DISCONNECT_REASON_MESSAGES: Record<string, string> = {
+  superseded: "Connected from another device",
+};
+
 export function CharacterSelectionScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { loginResultRef } = useGameContext();
+  const disconnectReason = (location.state as { reason?: string } | null)?.reason;
+  const disconnectMessage = disconnectReason ? DISCONNECT_REASON_MESSAGES[disconnectReason] : undefined;
 
   const [authMode, setAuthMode] = useState<AuthMode>("loading");
   const [username] = useState(getLastUser());
@@ -165,6 +173,11 @@ export function CharacterSelectionScreen() {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/82 z-[2000]">
       <Panel className="min-w-[340px]">
+        {disconnectMessage && (
+          <div className="mb-4 rounded border border-yellow-700/50 bg-yellow-950/40 px-3 py-2 text-xs text-yellow-300">
+            {disconnectMessage}
+          </div>
+        )}
         <div
           className="flex flex-col gap-5"
           onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {

@@ -5,6 +5,7 @@ import io.ktor.client.engine.js.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.websocket.*
 import kotlin.math.abs
+import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -34,6 +35,7 @@ import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
+import org.micoli.micraft.protocol.SUPERSEDED_CONNECTION_CLOSE_CODE
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
 import org.micoli.micraft.protocol.SiegeWeaponCodexInfo
@@ -137,6 +139,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private var serverPort = 0
     private var token = ""
     private val e2eSession: String = if (jsE2eEnabled()) jsE2eSessionId() else ""
+    // Random id generated once per client instance (tab/window) — sent in every Connect so the
+    // server can tell a genuine reconnect apart from a second tab racing for the same player id.
+    private val connectionId: String =
+        List(4) { Random.nextInt(0x10000000, Int.MAX_VALUE).toString(16) }.joinToString("")
     private val needsWorld: Boolean = if (jsE2eEnabled()) jsE2eNeedsWorld() else true
     private var lastWorldUpdateJson: String = "null"
     /** Rolling window of `ServerMessage.Notification` texts, mirrored into the e2e snapshot. */
@@ -363,7 +369,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                             userName = currentUsername,
                                             preferredLanguage = currentLang,
                                             token = currentToken,
-                                            needsWorld = needsWorld))))
+                                            needsWorld = needsWorld,
+                                            connectionId = connectionId))))
 
                             val inputJob = launch {
                                 while (isActive) {
@@ -458,6 +465,15 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
 
                 if (!isActive) break
                 resetForReconnect()
+                val superseded = lastCloseCode == SUPERSEDED_CONNECTION_CLOSE_CODE
+                if (superseded) {
+                    // Another tab/session took over this player — do NOT auto-reconnect: racing
+                    // the newer connection for the same player id is what caused the reconnect
+                    // ping-pong loop. Stay disconnected until the user acts.
+                    jsLog("WS superseded by newer connection — returning to character select")
+                    jsShowLoginOverlay("superseded")
+                    break
+                }
                 val authRejected = lastCloseCode == CloseReason.Codes.VIOLATED_POLICY.code
                 if (sessionWelcomed || authRejected) {
                     retryDelay = 1000L

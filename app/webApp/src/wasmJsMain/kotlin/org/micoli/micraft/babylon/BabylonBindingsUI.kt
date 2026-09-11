@@ -21,7 +21,7 @@ fun jsHideDisconnectedOverlay(): Unit = js("mc.hideDisconnectedOverlay()")
 
 // ── Login overlay ─────────────────────────────────────────────────────────────
 
-fun jsShowLoginOverlay(): Unit = js("mc.showLoginOverlay()")
+fun jsShowLoginOverlay(reason: String = ""): Unit = js("mc.showLoginOverlay(reason)")
 
 fun jsHideLoginOverlay(): Unit = js("mc.hideLoginOverlay()")
 

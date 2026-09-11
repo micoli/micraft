@@ -11,6 +11,12 @@ import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.social.GuildRank
 import org.micoli.micraft.ui.GameLayout
 
+// WebSocket close code sent when a session is displaced by a newer connection for the same
+// player (e.g. a second browser tab). In the reserved application range (4000-4999) so the
+// client can tell it apart from a real auth rejection (1008 VIOLATED_POLICY) and skip
+// auto-reconnect instead of racing the newer connection for the same player id.
+const val SUPERSEDED_CONNECTION_CLOSE_CODE: Short = 4001
+
 @Serializable
 sealed class ClientMessage {
     @ProtoId(0)
@@ -21,6 +27,9 @@ sealed class ClientMessage {
         val preferredLanguage: String = "en",
         val token: String = "",
         val needsWorld: Boolean = true,
+        // Random id generated once per client instance (tab/window) — lets the server tell
+        // apart a genuine reconnect from a second tab racing for the same player id.
+        val connectionId: String = "",
     ) : ClientMessage()
 
     @ProtoId(1)

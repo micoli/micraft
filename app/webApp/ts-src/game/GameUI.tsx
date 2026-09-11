@@ -125,7 +125,7 @@ export function GameUI() {
     chunkMeshing: 0,
   });
 
-  const navigateRef = useRef<((to: string) => void) | null>(null);
+  const navigateRef = useRef<((to: string, options?: { state?: unknown }) => void) | null>(null);
   const isGameRouteRef = useRef(false);
 
   const logTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -619,7 +619,7 @@ export function GameUI() {
       return entry ? `/game/${encodeURIComponent(email)}/${entry.id}` : "/chars";
     };
 
-    window.mc.showLoginOverlay = () => {
+    window.mc.showLoginOverlay = (reason?: string) => {
       window.mcState.loginOverlayPending = false;
       const username = getLastUser();
       const accountKey = getAccountEmail() || username;
@@ -636,13 +636,13 @@ export function GameUI() {
       const token = getStoredToken();
       const intentional = window.mcState.intentionalDisconnect;
       window.mcState.intentionalDisconnect = false;
-      if (player && !intentional) {
+      if (player && !intentional && !reason) {
         loginResultRef.current = `${accountKey}\t${player}\t${lang}\t${token}`;
         navigateRef.current?.(lastGameUrl());
         return;
       }
       document.exitPointerLock();
-      navigateRef.current?.(player ? "/chars" : "/auth");
+      navigateRef.current?.(player ? "/chars" : "/auth", reason ? { state: { reason } } : undefined);
     };
     window.mc.hideLoginOverlay = () => navigateRef.current?.(lastGameUrl());
     window.mc.showDisconnectedOverlay = (msg: string) => {

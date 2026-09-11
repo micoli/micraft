@@ -58,6 +58,7 @@ import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.plugin.TickContext
 import org.micoli.micraft.plugin.TickHandler
+import org.micoli.micraft.protocol.SUPERSEDED_CONNECTION_CLOSE_CODE
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
@@ -220,7 +221,8 @@ class GameWorld(
             if (existing !== session) {
                 runCatching {
                     existing.socket.close(
-                        CloseReason(CloseReason.Codes.VIOLATED_POLICY, "replaced by new session"))
+                        CloseReason(
+                            SUPERSEDED_CONNECTION_CLOSE_CODE, "replaced by newer connection"))
                 }
             }
         }
@@ -239,9 +241,10 @@ class GameWorld(
         // down the state of the session that replaced it.
         if (sessions[id] !== session) {
             log.info(
-                "stale session closed: {} name={} (replaced by newer session)",
+                "stale session closed: {} name={} connection={} (replaced by newer session)",
                 id.take(8),
-                session.state.name)
+                session.state.name,
+                session.connectionId.take(8))
             return
         }
         broadcastPlayerAdmin("""{"type":"playerLeft","id":"$id"}""")

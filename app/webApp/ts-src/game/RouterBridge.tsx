@@ -5,7 +5,7 @@ export function RouterBridge({
   navigateRef,
   isGameRouteRef,
 }: {
-  navigateRef: React.MutableRefObject<((to: string) => void) | null>;
+  navigateRef: React.MutableRefObject<((to: string, options?: { state?: unknown }) => void) | null>;
   isGameRouteRef: React.MutableRefObject<boolean>;
 }) {
   const navigate = useNavigate();

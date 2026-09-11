@@ -1754,7 +1754,8 @@ class GameLoop(
                 state,
                 networkStats = networkStats,
                 permissions = sessionPermissions,
-                chunkMode = chunkSection.transport)
+                chunkMode = chunkSection.transport,
+                connectionId = connectMsg?.connectionId ?: "")
         session.gameSessionId = gameSessionId
         session.worldStreaming = needsWorld
         if (gw.spawnEditMode != EditMode.GAME)
@@ -1796,11 +1797,12 @@ class GameLoop(
         if (reservedCharacter != null)
             session.state = session.state.copy(characterData = reservedCharacter)
         log.info(
-            "player connected: {} name={} user={} world={} (total={})",
+            "player connected: {} name={} user={} world={} connection={} (total={})",
             id.take(8),
             playerName,
             userName,
             gw.id,
+            session.connectionId.take(8),
             gw.sessions.size + 1)
 
         session.send(
