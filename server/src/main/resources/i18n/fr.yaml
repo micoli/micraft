@@ -401,6 +401,9 @@ claim:
     player_not_found: "Joueur '{0}' introuvable."
     trust_granted: "{0} peut désormais construire sur votre claim."
     trust_revoked: "{0} ne peut plus construire sur votre claim."
+hub:
+  server:
+    channel_unavailable: "Ce canal n'est pas disponible depuis le compagnon web."
 group:
   server:
     usage: "Usage : /group create|invite <joueur>|accept|leave|kick <joueur>|transfer <joueur>|disband|who"

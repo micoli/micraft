@@ -226,6 +226,15 @@ class GameWorld(
                 }
             }
         }
+        // A hub-only companion session for this player (see SessionRegistry.companionsById) is
+        // superseded the same way a stale game session is above — the player is now in-game, the
+        // companion socket should reconnect and attach to this session instead of standing alone.
+        sessions.companion(id)?.let { companion ->
+            runCatching {
+                companion.socket.close(
+                    CloseReason(SUPERSEDED_CONNECTION_CLOSE_CODE, "replaced by newer connection"))
+            }
+        }
         sessions[id] = session
         val pos = session.state.pos
         broadcastPlayerAdmin(
@@ -253,7 +262,7 @@ class GameWorld(
         petManager.onPlayerDisconnected(session)
         npcManager.clearPlayer(id)
         vehicleManager.clearRider(id)
-        npcTickPipeline.onPlayerDisconnected(sessions.all())
+        npcTickPipeline.onPlayerDisconnected(sessions.playing())
         tradeManager.onPlayerDisconnect(id)
         auctionManager?.clearFilter(id)
         groupManager.onDisconnect(session)
@@ -283,7 +292,7 @@ class GameWorld(
         if (TickSection.PLAYERS in tickSections) {
             val intentCollector = intentCollectorProvider()
             tickProfiler.measure("players") {
-                sessions.all().forEach { session ->
+                sessions.playing().forEach { session ->
                     val input = intentCollector.collect(session)
                     blockBreaker.tick(session)
                     val prevBreath = session.state.currentBreath
@@ -340,7 +349,7 @@ class GameWorld(
         }
 
         if (TickSection.WORLD_ITEMS in tickSections) {
-            tickProfiler.measure("worldItems") { worldItems.tickCollection(sessions.all()) }
+            tickProfiler.measure("worldItems") { worldItems.tickCollection(sessions.playing()) }
         }
         gameTimeService.tick(TICK_SECONDS.toDouble())
 
@@ -381,13 +390,13 @@ class GameWorld(
     private fun retainChunks() {
         val cs = WorldConstants.CHUNK_SIZE
         val centers =
-            sessions.all().map { s ->
+            sessions.playing().map { s ->
                 ChunkPos(
                     Math.floorDiv(s.state.pos.x.toInt(), cs),
                     Math.floorDiv(s.state.pos.z.toInt(), cs))
             }
         val maxForward =
-            sessions.all().maxOfOrNull {
+            sessions.playing().maxOfOrNull {
                 it.state.overrideForwardViewRadius ?: WorldConstants.FORWARD_VIEW_RADIUS
             } ?: WorldConstants.FORWARD_VIEW_RADIUS
         val flushed =
@@ -404,15 +413,16 @@ class GameWorld(
     private suspend fun fullSimulationTick() {
         if (TickSection.NPC in tickSections) {
             tickProfiler.measure("npc") {
-                npcTickPipeline.tick(world, sessions.all(), combatProcessor)
+                npcTickPipeline.tick(world, sessions.playing(), combatProcessor)
             }
         }
         if (TickSection.VEHICLES in tickSections) {
-            tickProfiler.measure("vehicles") { vehicleTickPipeline.tick(world, sessions.all()) }
+            tickProfiler.measure("vehicles") { vehicleTickPipeline.tick(world, sessions.playing()) }
         }
         if (TickSection.SIEGE in tickSections) {
             tickProfiler.measure("siegeProjectiles") {
-                siegeProjectileTickPipeline.tick(world, sessions.all(), npcManager, combatProcessor)
+                siegeProjectileTickPipeline.tick(
+                    world, sessions.playing(), npcManager, combatProcessor)
             }
         }
         // In the tick, not in a wall-clock coroutine of its own: driving the slow lane from a
@@ -423,16 +433,16 @@ class GameWorld(
             if (npcLifecycleTickCounter >= NpcSubsystemFactory.LIFECYCLE_INTERVAL_TICKS) {
                 npcLifecycleTickCounter = 0
                 tickProfiler.measure("npcLifecycle") {
-                    runCatching { npcTickPipeline.lifecycle(world, sessions.all()) }
+                    runCatching { npcTickPipeline.lifecycle(world, sessions.playing()) }
                         .onFailure { log.error("npc lifecycle error: {}", it.message, it) }
                 }
             }
         }
         if (TickSection.STATUS_EFFECTS in tickSections) {
-            tickProfiler.measure("statusEffects") { statusEffectProcessor.tick(sessions.all()) }
+            tickProfiler.measure("statusEffects") { statusEffectProcessor.tick(sessions.playing()) }
         }
         if (TickSection.REGEN in tickSections) {
-            tickProfiler.measure("regen") { regenProcessor.tick(sessions.all()) }
+            tickProfiler.measure("regen") { regenProcessor.tick(sessions.playing()) }
         }
         if (TickSection.WEATHER in tickSections) {
             tickProfiler.measure("weather") {
@@ -456,7 +466,7 @@ class GameWorld(
             targetDistanceTickCounter++
             if (targetDistanceTickCounter >= TARGET_DISTANCE_REFRESH_TICKS) {
                 targetDistanceTickCounter = 0
-                sessions.all().forEach { session ->
+                sessions.playing().forEach { session ->
                     if (session.combatState.targetId != null) {
                         session.send(combatProcessor.buildTargetUpdate(session))
                     }

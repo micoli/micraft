@@ -105,6 +105,7 @@ import org.micoli.micraft.http.ChunkController
 import org.micoli.micraft.http.DocsController
 import org.micoli.micraft.http.FurnitureController
 import org.micoli.micraft.http.GameAssetsController
+import org.micoli.micraft.http.HubController
 import org.micoli.micraft.http.I18nController
 import org.micoli.micraft.http.ItemsController
 import org.micoli.micraft.http.KeybindingsController
@@ -390,6 +391,7 @@ fun Application.module() {
         PlayersController(gameLoop.getMailManager()).register(this)
         staticFiles("/api/models", File("resources"))
         MapController(gameLoop, tokenStore).register(this)
+        HubController(gameLoop, tokenStore, noAuthAccountStore, gameLoop.i18n).register(this)
         MetricsController(gameLoop).register(this)
         DocsController().register(this)
         val adminController =

@@ -401,6 +401,9 @@ claim:
     player_not_found: "Player '{0}' not found."
     trust_granted: "{0} can now build on your claim."
     trust_revoked: "{0} can no longer build on your claim."
+hub:
+  server:
+    channel_unavailable: "This channel isn't available from the web companion."
 group:
   server:
     usage: "Usage: /group create|invite <player>|accept|leave|kick <player>|transfer <player>|disband|who"

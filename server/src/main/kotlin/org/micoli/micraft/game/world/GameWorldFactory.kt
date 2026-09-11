@@ -12,6 +12,8 @@ import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.RegenProcessor
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
+import org.micoli.micraft.game.mail.MailManager
+import org.micoli.micraft.game.mail.MailPersistence
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.npc.NpcSubsystemHooks
@@ -85,6 +87,11 @@ data class GameWorldOptions(
      * When false the auto-spawner never populates the world; `/spawn` still works. E2E sets this.
      */
     val npcAutoSpawn: Boolean = true,
+    /**
+     * Non-null backs this world with real on-disk player/mail state — a test-only escape hatch
+     * (production always goes through the Koin-wired [org.micoli.micraft.game.GameLoop] path).
+     */
+    val persistence: WorldPersistence? = null,
 )
 
 /**
@@ -99,7 +106,7 @@ fun buildGameWorld(
     shared: SharedGameServices,
     opts: GameWorldOptions = GameWorldOptions(),
 ): GameWorld {
-    val world = WorldState(generator = generator, persistence = null)
+    val world = WorldState(generator = generator, persistence = opts.persistence)
     val sessions = SessionRegistry()
     val playerPersister = PlayerPersister(null)
     val chatChannelManager = ChatChannelManager() // per-world: custom channels don't leak across
@@ -388,7 +395,7 @@ fun buildGameWorld(
     return GameWorld(
         id = id,
         world = world,
-        persistence = null,
+        persistence = opts.persistence,
         sessions = sessions,
         tickSections = opts.tickSections,
         spawnEditMode = opts.spawnEditMode,
@@ -412,7 +419,14 @@ fun buildGameWorld(
         chatChannelManager = chatChannelManager,
         experienceProcessor = experienceProcessor,
         questManager = questManager,
-        mailManager = null,
+        mailManager =
+            opts.persistence?.let {
+                MailManager(
+                    MailPersistence(it.worldDir.resolve("players")),
+                    sessions,
+                    shared.i18n,
+                    playerPersister::save)
+            },
         claimManager = claimManager,
         claimRegistry = claimRegistry,
         actionBlockService = actionBlockService,

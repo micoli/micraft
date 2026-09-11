@@ -3,6 +3,7 @@ package org.micoli.micraft.game.session
 import io.ktor.websocket.*
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -98,6 +99,23 @@ open class PlayerSession(
 
     @Volatile var chunkSocket: DefaultWebSocketSession? = null
 
+    // Set for a hub-only session hydrated from persistence with no live /game connection — see
+    // SessionRegistry.companionsById. Excluded from tick/simulation via SessionRegistry.playing().
+    @Volatile var companion: Boolean = false
+
+    // Additional sockets fanned out to on every send() — a /hub connection for a player already
+    // in-game attaches here instead of creating a second PlayerSession, so wallet/inventory/state
+    // never diverge between the two connections.
+    private val extraSockets = CopyOnWriteArrayList<DefaultWebSocketSession>()
+
+    fun attachExtra(socket: DefaultWebSocketSession) {
+        extraSockets.add(socket)
+    }
+
+    fun detachExtra(socket: DefaultWebSocketSession) {
+        extraSockets.remove(socket)
+    }
+
     // The `?gameSession=` id this connection joined — null / "default" is GameLoop's default world.
     // Lets command handling resolve the session's own GameWorld instead of the default one.
     @Volatile var gameSessionId: String? = null
@@ -116,7 +134,13 @@ open class PlayerSession(
     open suspend fun send(msg: ServerMessage) {
         val bytes = ServerMessageCodec.encode(msg)
         networkStats.bytesOut.addAndGet(bytes.size.toLong())
-        sendMutex.withLock { socket.send(Frame.Binary(true, bytes)) }
+        sendMutex.withLock {
+            socket.send(Frame.Binary(true, bytes))
+            for (extra in extraSockets) {
+                runCatching { extra.send(Frame.Binary(true, bytes)) }
+                    .onFailure { extraSockets.remove(extra) }
+            }
+        }
     }
 
     open suspend fun sendChunk(msg: ServerMessage.ChunkData) {
