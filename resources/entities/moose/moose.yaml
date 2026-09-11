@@ -1,0 +1,29 @@
+behavior: animal
+width: 1.2
+height: 1.4
+wanderSpeed: 1.5
+wanderRadius: 30.0
+hp: 40
+aggroMode: PASSIVE_COOPERATIVE
+aggroRange: 8.0
+tier: ELITE
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [pine_forest, snow_peaks]
+  maxTotal: 30
+  minTotal: 16
+tameable: false
+attacks:
+  - attackId: boar_charge
+    level: 2
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: HERBIVORE
+  lifespanDays: 30.0
+  canReproduce: false
+  hungerRatePerDay: 0.07
