@@ -1,0 +1,24 @@
+behavior: animal
+width: 0.45
+height: 0.4
+wanderSpeed: 1.6
+wanderRadius: 20.0
+hp: 8
+aggroMode: PASSIVE_COOPERATIVE
+tier: COMMON
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [forest, plains]
+  maxTotal: 55
+  minTotal: 35
+tameable: true
+tameBaseChance: 0.2
+walkBoneAliases:
+  rightLeg: leg0
+  leftLeg: leg1
+animal:
+  diet: OMNIVORE
+  lifespanDays: 18.0
+  canReproduce: false
+  hungerRatePerDay: 0.09
