@@ -1,0 +1,7 @@
+type: NECROTIC_AOE
+enabled: true
+manaCost: 0
+cooldownMs: 7000
+aoeRadius: 5.0
+maxRange: 10.0
+statusEffect: Stunned

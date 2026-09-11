@@ -1,0 +1,40 @@
+behavior: animal
+width: 1.4
+height: 1.4
+wanderSpeed: 1.2
+wanderRadius: 20.0
+hp: 210
+aggroMode: AGGRESSIVE
+aggroRange: 12.0
+tier: BOSS
+minLevel: 20
+maxLevel: 25
+xpReward: 300
+movementMode: [SWIMMING]
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: []
+  maxTotal: 4
+  minTotal: 1
+tameable: false
+attacks:
+  - attackId: octopus_ink
+    level: 1
+spells:
+  - kraken_tentacle_slam
+walkBoneAliases:
+  rightLeg0: t1
+  leftLeg0: t0
+  rightLeg1: t3
+  leftLeg1: t2
+  rightLeg2: t5
+  leftLeg2: t4
+  rightLeg3: t7
+  leftLeg3: t6
+animal:
+  diet: CARNIVORE
+  lifespanDays: 40.0
+  canReproduce: false
+  hungerRatePerDay: 0.05
+  starvationDeathDays: 6.0
