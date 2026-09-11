@@ -15,6 +15,7 @@ import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.AttackLevelDefinition
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.combat.CombatProcessor
+import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.npc.animal.AnimalInstanceData
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
@@ -867,6 +868,7 @@ class NpcManager(
     suspend fun tickAggro(
         sessions: Collection<PlayerSession>,
         combatProcessor: CombatProcessor,
+        spellProcessor: SpellProcessor? = null,
     ) {
         val now = System.currentTimeMillis()
         for (instance in npcs.values) {
@@ -966,6 +968,9 @@ class NpcManager(
                 continue
             }
             combatProcessor.handleNpcAttack(instance, targetSession)
+            if (instance.definition.spells.isNotEmpty()) {
+                spellProcessor?.tryNpcCast(instance, targetSession)
+            }
         }
     }
 

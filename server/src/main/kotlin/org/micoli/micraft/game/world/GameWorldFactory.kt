@@ -440,6 +440,7 @@ fun buildGameWorld(
         instanceRegistry = instanceRegistry,
         worldItems = worldItems,
         combatProcessor = combatProcessor,
+        spellProcessor = spellProcessor,
         statusEffectProcessor = statusEffectProcessor,
         regenProcessor = regenProcessor,
         weatherManager = weatherManager,

@@ -18,6 +18,7 @@ import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.RegenProcessor
+import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.mail.MailManager
 import org.micoli.micraft.game.npc.NpcManager
@@ -122,6 +123,7 @@ class GameWorld(
     val instanceRegistry: InstanceRegistry,
     val worldItems: WorldItemManager,
     val combatProcessor: CombatProcessor,
+    val spellProcessor: SpellProcessor? = null,
     private val statusEffectProcessor: StatusEffectProcessor,
     val regenProcessor: RegenProcessor,
     val weatherManager: WeatherManager,
@@ -413,7 +415,7 @@ class GameWorld(
     private suspend fun fullSimulationTick() {
         if (TickSection.NPC in tickSections) {
             tickProfiler.measure("npc") {
-                npcTickPipeline.tick(world, sessions.playing(), combatProcessor)
+                npcTickPipeline.tick(world, sessions.playing(), combatProcessor, spellProcessor)
             }
         }
         if (TickSection.VEHICLES in tickSections) {

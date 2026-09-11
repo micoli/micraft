@@ -374,6 +374,7 @@ class CombatProcessor(
                         currentRage = (newTargetChar.currentRage + 20).coerceAtMost(config.maxRage))
             }
             target.characterData = newTargetChar
+            applyStatusEffect(target, levelDef, now)
             broadcastHealthUpdate(target.id, false, newTargetChar.currentHp, theirDerived.maxHp)
             subscribeToChannel(target, "combat")
             if (newTargetChar.currentHp <= 0) {

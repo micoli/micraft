@@ -212,4 +212,110 @@ class SpellProcessorAoeTest {
                 it.message.contains("cooldown", ignoreCase = true)
             })
     }
+
+    private fun fakeBoss(spells: List<String>): NpcInstance {
+        val def =
+            NpcDefinition(
+                type = "boss",
+                behavior = StaticNpcBehavior(),
+                bbmodelFile = "boss.bbmodel",
+                width = 1f,
+                height = 2f,
+                wanderSpeed = 1f,
+                wanderRadius = 5f,
+                hp = 100,
+                aggroMode = AggroMode.AGGRESSIVE,
+                spells = spells,
+            )
+        val state =
+            NpcState(
+                id = "boss-1",
+                name = "Boss",
+                type = "boss",
+                pos = Vec3(0f, 0f, 0f),
+                yaw = 0f,
+                currentHp = 100,
+                maxHp = 100,
+            )
+        return NpcInstance(state = state, definition = def, spawnPos = Vec3(0f, 0f, 0f))
+    }
+
+    @Test
+    fun `npc cast applies its configured status effect to the in-range target`() = runBlocking {
+        val frostSpell =
+            SpellDefinition(
+                type = SpellType.NECROTIC_AOE,
+                aoeRadius = 4f,
+                maxRange = 15f,
+                cooldownMs = 5000L,
+                statusEffect = "Frozen",
+            )
+        val boss = fakeBoss(listOf("frost_breath"))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(2f, 0f, 0f))
+        target.characterData = testChar("Bob")
+
+        val proc =
+            SpellProcessor(
+                spellRegistry = mapOf("frost_breath" to frostSpell),
+                classRegistry = emptyMap(),
+                armorRegistry = emptyMap(),
+                combatConfig = CombatConfigData(),
+                combatProcessor = buildCombatProcessor { listOf(target) },
+                getSessions = { listOf(target) },
+                getNpcs = { emptyList() },
+            )
+
+        val cast = proc.tryNpcCast(boss, target)
+
+        assertTrue(cast)
+        assertTrue(target.combatState.activeEffects.any { it.effect is StatusEffect.Frozen })
+    }
+
+    @Test
+    fun `npc cast respects its own cooldown independently of melee`() = runBlocking {
+        val spell =
+            SpellDefinition(
+                type = SpellType.NECROTIC_AOE,
+                aoeRadius = 4f,
+                maxRange = 15f,
+                cooldownMs = 60_000L,
+                statusEffect = "Stunned",
+            )
+        val boss = fakeBoss(listOf("slam"))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+        target.characterData = testChar("Bob")
+        val proc =
+            SpellProcessor(
+                spellRegistry = mapOf("slam" to spell),
+                classRegistry = emptyMap(),
+                armorRegistry = emptyMap(),
+                combatConfig = CombatConfigData(),
+                combatProcessor = buildCombatProcessor { listOf(target) },
+                getSessions = { listOf(target) },
+                getNpcs = { emptyList() },
+            )
+
+        assertTrue(proc.tryNpcCast(boss, target))
+        assertFalse(proc.tryNpcCast(boss, target))
+    }
+
+    @Test
+    fun `npc cast out of maxRange does nothing`() = runBlocking {
+        val spell = SpellDefinition(type = SpellType.NECROTIC_AOE, aoeRadius = 4f, maxRange = 5f)
+        val boss = fakeBoss(listOf("far_spell"))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(50f, 0f, 0f))
+        target.characterData = testChar("Bob")
+        val proc =
+            SpellProcessor(
+                spellRegistry = mapOf("far_spell" to spell),
+                classRegistry = emptyMap(),
+                armorRegistry = emptyMap(),
+                combatConfig = CombatConfigData(),
+                combatProcessor = buildCombatProcessor { listOf(target) },
+                getSessions = { listOf(target) },
+                getNpcs = { emptyList() },
+            )
+
+        assertFalse(proc.tryNpcCast(boss, target))
+    }
 }

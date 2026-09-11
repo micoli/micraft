@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.npc
 
 import org.micoli.micraft.game.combat.CombatProcessor
+import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.npc.pack.PackCoordinator
 import org.micoli.micraft.game.pet.PetCoordinator
@@ -38,6 +39,7 @@ class NpcTickPipeline(
         world: WorldState,
         sessions: Collection<PlayerSession>,
         combatProcessor: CombatProcessor,
+        spellProcessor: SpellProcessor? = null,
     ) {
         // First: a sleeping NPC must be flagged before the behavior and aggro passes read it.
         hibernation?.tick()
@@ -46,7 +48,7 @@ class NpcTickPipeline(
         npcManager.tick(world)
         // Before tickAggro so a target picked this tick is acted on in the same tick.
         packs?.tick()
-        npcManager.tickAggro(sessions, combatProcessor)
+        npcManager.tickAggro(sessions, combatProcessor, spellProcessor)
         animals.tick()
         visibilityTickCounter++
         if (visibilityTickCounter >= ctx.tuning.npcVisibilityCheckIntervalTicks) {

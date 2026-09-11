@@ -30,6 +30,7 @@ class NpcInstance(
     @Volatile var lastPackCallMs: Long = 0L,
     @Volatile var lastDamagedAtMs: Long = 0L,
     val attackCooldownsUntilMs: MutableMap<String, Long> = mutableMapOf(),
+    val spellCooldownsUntilMs: MutableMap<String, Long> = mutableMapOf(),
     val damageContributors: MutableMap<String, Int> = mutableMapOf(),
     @Volatile var chaseTargetPos: Vec3? = null,
     /**

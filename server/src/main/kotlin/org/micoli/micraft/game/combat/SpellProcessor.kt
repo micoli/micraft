@@ -1,7 +1,6 @@
 package org.micoli.micraft.game.combat
 
 import kotlin.math.sqrt
-import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.equipment.ToolDefinition
@@ -187,7 +186,7 @@ class SpellProcessor(
         when (spell.type) {
             SpellType.NECROTIC_AOE -> {
                 val radiusSq = spell.aoeRadius * spell.aoeRadius
-                val effect = StatusEffect.Withering
+                val effect = resolveStatusEffect(spell.statusEffect)
                 val durationSec = effect.durationSec
                 val hitPlayers = mutableListOf<String>()
                 val hitNpcs = mutableListOf<String>()
@@ -241,6 +240,72 @@ class SpellProcessor(
                 session.combatState.attackCooldownsUntilMs,
                 session.state.godMode,
             ))
+    }
+
+    /**
+     * NPC-initiated counterpart to [handleCastAoeSpell]: a boss-tier NPC (`spells:` in its yaml)
+     * fires a NECROTIC_AOE spell centered on its current target, on its own cooldown. Mirrors the
+     * player path's hit-resolution but never touches mana/rage (NPCs don't have a spellcaster
+     * resource loop) and excludes the caster itself from the blast.
+     */
+    suspend fun tryNpcCast(npc: NpcInstance, target: PlayerSession): Boolean {
+        val spellIds = npc.definition.spells
+        if (spellIds.isEmpty()) return false
+        val now = System.currentTimeMillis()
+
+        val targetPos = target.state.pos
+        val npcPos = npc.state.pos
+        val dx = targetPos.x - npcPos.x
+        val dy = targetPos.y - npcPos.y
+        val dz = targetPos.z - npcPos.z
+        val distSq = dx * dx + dy * dy + dz * dz
+
+        val cast =
+            spellIds.shuffled().firstNotNullOfOrNull { spellId ->
+                val spell = spellRegistry[spellId] ?: return@firstNotNullOfOrNull null
+                if (spell.type != SpellType.NECROTIC_AOE || !spell.enabled)
+                    return@firstNotNullOfOrNull null
+                if (now < (npc.spellCooldownsUntilMs[spellId] ?: 0L))
+                    return@firstNotNullOfOrNull null
+                if (distSq > spell.maxRange * spell.maxRange) return@firstNotNullOfOrNull null
+                spellId to spell
+            } ?: return false
+
+        val (spellId, spell) = cast
+        npc.spellCooldownsUntilMs[spellId] = now + spell.cooldownMs
+
+        val radiusSq = spell.aoeRadius * spell.aoeRadius
+        val effect = resolveStatusEffect(spell.statusEffect)
+        val durationSec = effect.durationSec
+
+        for (s in getSessions()) {
+            if (s.characterData == null) continue
+            val sp = s.state.pos
+            val ex = targetPos.x - sp.x
+            val ey = targetPos.y - sp.y
+            val ez = targetPos.z - sp.z
+            if (ex * ex + ey * ey + ez * ez <= radiusSq) {
+                combatProcessor.applyStatusEffectTo(s, effect, durationSec, now)
+            }
+        }
+        for (other in getNpcs()) {
+            if (other.isDead || other.state.id == npc.state.id) continue
+            val op = other.state.pos
+            val ex = targetPos.x - op.x
+            val ey = targetPos.y - op.y
+            val ez = targetPos.z - op.z
+            if (ex * ex + ey * ey + ez * ez <= radiusSq) {
+                other.activeEffects.removeAll { it.effect::class == effect::class }
+                other.activeEffects.add(
+                    org.micoli.micraft.combat.ActiveStatusEffect(
+                        effect, now + (durationSec * 1000).toLong()))
+            }
+        }
+
+        val aoeMsg = ServerMessage.AoEEffect(targetPos.x, targetPos.y, targetPos.z, spell.aoeRadius)
+        for (s in getSessions()) s.send(aoeMsg)
+        log.debug("NPC {} cast {} at {}", npc.state.name, spellId, targetPos)
+        return true
     }
 
     fun reload(

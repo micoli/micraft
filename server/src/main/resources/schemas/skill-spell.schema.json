@@ -33,6 +33,12 @@
     },
     "maxRange": {
       "type": "number"
+    },
+    "statusEffect": {
+      "type": [
+        "string",
+        "null"
+      ]
     }
   }
 }
