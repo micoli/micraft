@@ -1,0 +1,35 @@
+behavior: animal
+width: 0.7
+height: 1.1
+wanderSpeed: 1.1
+wanderRadius: 12.0
+hp: 220
+aggroMode: AGGRESSIVE
+aggroRange: 10.0
+tier: BOSS
+minLevel: 20
+maxLevel: 25
+xpReward: 310
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [forest, pine_forest]
+  maxTotal: 4
+  minTotal: 1
+tameable: false
+attacks:
+  - attackId: scorpion_sting
+    level: 3
+spells:
+  - hydra_regrowth
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: CARNIVORE
+  lifespanDays: 35.0
+  canReproduce: false
+  hungerRatePerDay: 0.06
+  starvationDeathDays: 5.0
