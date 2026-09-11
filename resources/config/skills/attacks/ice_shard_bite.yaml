@@ -1,0 +1,18 @@
+damageType: PHYSICAL
+enabled: true
+levels:
+  1:
+    power: 7
+    weaponDice: 1d8
+    cooldownMs: 1600
+    statusEffect: Frozen
+  2:
+    power: 11
+    weaponDice: 2d6
+    cooldownMs: 1500
+    statusEffect: Frozen
+  3:
+    power: 15
+    weaponDice: 2d8
+    cooldownMs: 1400
+    statusEffect: Frozen

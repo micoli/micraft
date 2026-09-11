@@ -1,0 +1,42 @@
+behavior: animal
+width: 0.5
+height: 0.9
+wanderSpeed: 2.1
+wanderRadius: 40.0
+hp: 24
+aggroMode: AGGRESSIVE
+aggroRange: 9.0
+tier: ELITE
+minLevel: 16
+maxLevel: 20
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [snow_peaks]
+  maxTotal: 45
+  minTotal: 25
+tameable: true
+tameBaseChance: 0.2
+attacks:
+  - attackId: wolf_bite
+    level: 2
+  - attackId: ice_shard_bite
+    level: 1
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: CARNIVORE
+  lifespanDays: 30.0
+  canReproduce: false
+  hungerRatePerDay: 0.09
+pack:
+  callRadius: 40.0
+  relayHops: 3
+  maxSize: 6
+  minSizeToEngage: 4
+  callCooldownSec: 20.0
+  rallyTimeoutSec: 20.0
+  chaseRadius: 45.0
