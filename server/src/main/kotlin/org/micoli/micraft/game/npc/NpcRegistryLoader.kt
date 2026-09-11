@@ -2,13 +2,8 @@ package org.micoli.micraft.game.npc
 
 import com.charleskorn.kaml.Yaml
 import java.nio.file.Path
-import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
-import org.micoli.micraft.config.spliceMissingAsComments
-import org.micoli.micraft.config.yamlOverrideSection
+import org.micoli.micraft.config.OverridablePaths
+import org.micoli.micraft.config.loadOverridableDir
 import org.micoli.micraft.game.npc.animal.applyOverride
 import org.micoli.micraft.game.npc.animal.toEntry
 import org.micoli.micraft.game.npc.pack.applyOverride
@@ -42,6 +37,7 @@ private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
         spells = o.spells ?: spells,
         minLevel = o.minLevel ?: minLevel,
         maxLevel = o.maxLevel ?: maxLevel,
+        tier = o.tier ?: tier,
         characterClass = o.characterClass ?: characterClass,
         baseStats = o.baseStats ?: baseStats,
         xpReward = o.xpReward ?: xpReward,
@@ -87,6 +83,7 @@ fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition =
         spells = o.spells ?: spells,
         minLevel = o.minLevel ?: minLevel,
         maxLevel = o.maxLevel ?: maxLevel,
+        tier = o.tier ?: tier,
         characterClass = o.characterClass ?: characterClass,
         baseStats = o.baseStats ?: baseStats,
         xpReward = o.xpReward ?: xpReward,
@@ -116,52 +113,12 @@ class NpcRegistryLoader(
     fun reload(): Map<String, NpcDefinition> = computeLoad().also { cached = it }
 
     private fun computeLoad(): Map<String, NpcDefinition> {
-        val entries = mutableMapOf<String, NpcYamlEntry>()
-        resourcesEntityPath
-            .listDirectoryEntries()
-            .filter { it.isDirectory() }
-            .forEach { entityDir ->
-                val name = entityDir.fileName.toString()
-                val resourceYaml = entityDir.resolve("$name.yaml")
-                if (!resourceYaml.exists()) return@forEach
-                runCatching {
-                        Yaml.default.decodeFromString(
-                            NpcYamlEntry.serializer(), resourceYaml.readText())
-                    }
-                    .onFailure { npcLog.warn("Failed to load NPC {}: {}", name, it.message) }
-                    .getOrNull()
-                    ?.let { entry ->
-                        val dataYaml = dataEntityPath.resolve("$name/$name.yaml")
-                        val merged =
-                            if (dataYaml.exists()) {
-                                val content = dataYaml.readText()
-                                val overrideResult =
-                                    if (content.isNotBlank()) {
-                                        runCatching {
-                                            Yaml.default.decodeFromString(
-                                                NpcYamlOverride.serializer(), content)
-                                        }
-                                    } else Result.success(NpcYamlOverride())
-                                val override = overrideResult.getOrNull()
-                                val overridden = override?.let { entry.applyOverride(it) } ?: entry
-                                overrideResult.fold(
-                                    onSuccess = {
-                                        dataYaml.writeText(
-                                            spliceMissingAsComments(
-                                                content, yamlOverrideSection(overridden, it)))
-                                        npcLog.debug("Wrote back merged data override for {}", name)
-                                    },
-                                    onFailure = {
-                                        npcLog.warn(
-                                            "Failed to apply override for {}, leaving file untouched: {}",
-                                            name,
-                                            it.message)
-                                    })
-                                overridden
-                            } else entry
-                        entries[name] = merged
-                    }
-            }
+        val entries: Map<String, NpcYamlEntry> =
+            loadOverridableDir<NpcYamlEntry, NpcYamlOverride>(
+                paths = OverridablePaths(resourcesEntityPath, dataEntityPath),
+                emptyOverride = ::NpcYamlOverride,
+                applyOverride = { entry, override -> entry.applyOverride(override) },
+            )
         val result =
             entries.entries
                 .mapNotNull { (key, entry) ->
@@ -193,6 +150,7 @@ class NpcRegistryLoader(
                                     spells = entry.spells,
                                     minLevel = entry.minLevel,
                                     maxLevel = entry.maxLevel,
+                                    tier = entry.tier,
                                     characterClass = entry.characterClass,
                                     baseStats = entry.baseStats,
                                     xpReward = entry.xpReward,

@@ -1,0 +1,462 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "behavior": {
+      "type": "string",
+      "enum": [
+        "static",
+        "random_movable",
+        "interactionable",
+        "animal",
+        "seller"
+      ]
+    },
+    "width": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "height": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "wanderSpeed": {
+      "type": "number",
+      "minimum": 0
+    },
+    "wanderRadius": {
+      "type": "number",
+      "minimum": 0
+    },
+    "spawn": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "autoSpawn": {
+          "type": "boolean"
+        },
+        "maxPerChunk": {
+          "type": "integer"
+        },
+        "spawnBiomes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "maxTotal": {
+          "type": "integer"
+        },
+        "minTotal": {
+          "type": "integer"
+        }
+      }
+    },
+    "hp": {
+      "type": "integer",
+      "exclusiveMinimum": 0
+    },
+    "aggroMode": {
+      "type": "string",
+      "enum": [
+        "AGGRESSIVE",
+        "PASSIVE",
+        "PASSIVE_COOPERATIVE"
+      ]
+    },
+    "aggroRange": {
+      "type": "number",
+      "minimum": 0
+    },
+    "deaggroTimeSec": {
+      "type": "number",
+      "minimum": 0
+    },
+    "attacks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "attackId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "attackId": {
+            "type": "string"
+          },
+          "level": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "spells": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "minLevel": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "maxLevel": {
+      "type": "integer"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "COMMON",
+        "ELITE",
+        "BOSS"
+      ]
+    },
+    "characterClass": {
+      "type": "string",
+      "enum": [
+        "WARRIOR",
+        "MAGE",
+        "RANGER",
+        "ROGUE",
+        "CLERIC"
+      ]
+    },
+    "baseStats": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "str": {
+          "type": "integer"
+        },
+        "dex": {
+          "type": "integer"
+        },
+        "intel": {
+          "type": "integer"
+        },
+        "wis": {
+          "type": "integer"
+        },
+        "con": {
+          "type": "integer"
+        },
+        "cha": {
+          "type": "integer"
+        }
+      }
+    },
+    "xpReward": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "walkBoneAliases": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "bbmodelFile": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "animal": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "diet": {
+              "type": "string",
+              "enum": [
+                "HERBIVORE",
+                "CARNIVORE",
+                "OMNIVORE"
+              ]
+            },
+            "lifespanDays": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "preyTypes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "canReproduce": {
+              "type": "boolean"
+            },
+            "gestationDays": {
+              "type": "number"
+            },
+            "offspringType": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "offspringMinCount": {
+              "type": "integer"
+            },
+            "offspringMaxCount": {
+              "type": "integer"
+            },
+            "reproductionCooldownDays": {
+              "type": "number"
+            },
+            "matingRange": {
+              "type": "number"
+            },
+            "scale": {
+              "type": "number"
+            },
+            "adultType": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "growthDays": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "baseStats": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "str": {
+                  "type": "integer"
+                },
+                "dex": {
+                  "type": "integer"
+                },
+                "intel": {
+                  "type": "integer"
+                },
+                "wis": {
+                  "type": "integer"
+                },
+                "con": {
+                  "type": "integer"
+                },
+                "cha": {
+                  "type": "integer"
+                }
+              }
+            },
+            "statsVariance": {
+              "type": "integer"
+            },
+            "hpRegenPerSec": {
+              "type": "number"
+            },
+            "manaRegenPerSec": {
+              "type": "number"
+            },
+            "foodSearchRadius": {
+              "type": "number"
+            },
+            "roamRadius": {
+              "type": "number"
+            },
+            "fleeRadius": {
+              "type": "number"
+            },
+            "maxLocalDensity": {
+              "type": "integer"
+            },
+            "densityRadius": {
+              "type": "number"
+            },
+            "matingContactRange": {
+              "type": "number"
+            },
+            "hungerRatePerDay": {
+              "type": "number"
+            },
+            "feedHungerReduction": {
+              "type": "number"
+            },
+            "combatExitDelaySec": {
+              "type": "number"
+            },
+            "hungerThresholdToHunt": {
+              "type": "number"
+            },
+            "hungerThresholdToMate": {
+              "type": "number"
+            },
+            "starvationThreshold": {
+              "type": "number"
+            },
+            "starvationAttackMultiplier": {
+              "type": "number"
+            },
+            "starvationSpeedMultiplier": {
+              "type": "number"
+            },
+            "starvationSterile": {
+              "type": "boolean"
+            },
+            "starvationDeathDays": {
+              "type": "number"
+            },
+            "gestationAttackMultiplier": {
+              "type": "number"
+            },
+            "gestationSpeedMultiplier": {
+              "type": "number"
+            }
+          }
+        }
+      ]
+    },
+    "pack": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "extendPackType": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "callRadius": {
+              "type": "number"
+            },
+            "relayHops": {
+              "type": "integer"
+            },
+            "maxSize": {
+              "type": "integer"
+            },
+            "minSizeToEngage": {
+              "type": "integer"
+            },
+            "callCooldownSec": {
+              "type": "number"
+            },
+            "rallyTimeoutSec": {
+              "type": "number"
+            },
+            "chaseRadius": {
+              "type": "number"
+            },
+            "hostileTypes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "hibernation": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "hoursPerCycle": {
+              "type": "number"
+            },
+            "cycleDays": {
+              "type": "number"
+            },
+            "wakeOnDamage": {
+              "type": "boolean"
+            }
+          }
+        }
+      ]
+    },
+    "shopItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "itemType",
+          "buyPrice"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "itemType": {
+            "type": "string"
+          },
+          "buyPrice": {
+            "type": "integer"
+          },
+          "sellPrice": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "loot": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "dropRate": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "minCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "tameable": {
+      "type": "boolean"
+    },
+    "tameBaseChance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "movementMode": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "WALKING",
+          "SWIMMING",
+          "FLYING"
+        ]
+      }
+    }
+  }
+}

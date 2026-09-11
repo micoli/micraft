@@ -23,6 +23,7 @@ data class NpcYamlOverride(
     val spells: List<String>? = null,
     val minLevel: Int? = null,
     val maxLevel: Int? = null,
+    val tier: NpcTier? = null,
     val characterClass: CharacterClass? = null,
     val baseStats: BaseStats? = null,
     val xpReward: Int? = null,

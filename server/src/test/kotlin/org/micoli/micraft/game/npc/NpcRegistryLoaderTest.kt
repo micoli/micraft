@@ -566,6 +566,60 @@ class NpcRegistryLoaderTest {
     }
 
     @Test
+    fun tier_parsesAndDefaultsToCommon() {
+        val (loader) =
+            loaderWithNpcs(
+                mapOf(
+                    "golem" to
+                        """
+                        behavior: random_movable
+                        width: 1.0
+                        height: 2.2
+                        wanderSpeed: 0.8
+                        wanderRadius: 10.0
+                        tier: BOSS
+                        """
+                            .trimIndent(),
+                    "npc_goat" to
+                        """
+                        behavior: random_movable
+                        width: 0.5
+                        height: 0.9
+                        wanderSpeed: 2.0
+                        wanderRadius: 12.0
+                        """
+                            .trimIndent(),
+                ))
+        val defs = loader.load()
+        assertEquals(NpcTier.BOSS, assertNotNull(defs["golem"]).tier)
+        assertEquals(
+            NpcTier.COMMON,
+            assertNotNull(defs["npc_goat"]).tier,
+            "tier absent from yaml falls back to COMMON")
+    }
+
+    @Test
+    fun tier_override_wins() {
+        val (loader) =
+            loaderWithNpcs(
+                npcs =
+                    mapOf(
+                        "wolf_veteran" to
+                            """
+                            behavior: animal
+                            width: 0.5
+                            height: 0.9
+                            wanderSpeed: 2.0
+                            wanderRadius: 55.0
+                            tier: COMMON
+                            """
+                                .trimIndent()),
+                overrides = mapOf("wolf_veteran" to "tier: ELITE"),
+            )
+        assertEquals(NpcTier.ELITE, assertNotNull(loader.load()["wolf_veteran"]).tier)
+    }
+
+    @Test
     fun load_isMemoized_ignoresFileChangesUntilReload() {
         val (loader) =
             loaderWithNpcs(
