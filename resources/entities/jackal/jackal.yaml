@@ -1,0 +1,37 @@
+behavior: animal
+width: 0.45
+height: 0.5
+wanderSpeed: 2.3
+wanderRadius: 30.0
+hp: 12
+aggroMode: AGGRESSIVE
+aggroRange: 10.0
+tier: COMMON
+spawn:
+  autoSpawn: true
+  maxPerChunk: 3
+  spawnBiomes: [desert, dry_plains]
+  maxTotal: 60
+  minTotal: 40
+tameable: false
+attacks:
+  - attackId: poison_bite
+    level: 1
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: CARNIVORE
+  lifespanDays: 22.0
+  canReproduce: false
+  hungerRatePerDay: 0.09
+pack:
+  callRadius: 30.0
+  relayHops: 2
+  maxSize: 5
+  minSizeToEngage: 3
+  callCooldownSec: 20.0
+  rallyTimeoutSec: 15.0
+  chaseRadius: 35.0
