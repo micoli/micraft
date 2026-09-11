@@ -1,0 +1,30 @@
+behavior: animal
+width: 0.5
+height: 0.4
+wanderSpeed: 2.2
+wanderRadius: 22.0
+hp: 18
+aggroMode: AGGRESSIVE
+aggroRange: 5.0
+tier: ELITE
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [forest, pine_forest, snow_peaks]
+  maxTotal: 35
+  minTotal: 20
+tameable: true
+tameBaseChance: 0.2
+attacks:
+  - attackId: wildcat_pounce
+    level: 1
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: CARNIVORE
+  lifespanDays: 20.0
+  canReproduce: false
+  hungerRatePerDay: 0.09

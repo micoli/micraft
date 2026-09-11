@@ -1,0 +1,15 @@
+damageType: PHYSICAL
+enabled: true
+levels:
+  1:
+    power: 7
+    weaponDice: 1d8
+    cooldownMs: 1400
+  2:
+    power: 11
+    weaponDice: 2d6
+    cooldownMs: 1300
+  3:
+    power: 15
+    weaponDice: 2d8
+    cooldownMs: 1200
