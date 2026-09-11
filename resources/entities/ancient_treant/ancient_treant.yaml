@@ -1,0 +1,24 @@
+behavior: static
+width: 1.0
+height: 2.0
+wanderSpeed: 0.0
+wanderRadius: 0.0
+hp: 200
+aggroMode: AGGRESSIVE
+aggroRange: 10.0
+tier: BOSS
+minLevel: 20
+maxLevel: 25
+xpReward: 300
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [forest, pine_forest]
+  maxTotal: 5
+  minTotal: 1
+tameable: false
+attacks:
+  - attackId: bear_maul
+    level: 3
+spells:
+  - treant_root_grasp
