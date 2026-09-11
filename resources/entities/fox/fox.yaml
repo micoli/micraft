@@ -1,0 +1,29 @@
+behavior: animal
+width: 0.5
+height: 0.6
+wanderSpeed: 2.2
+wanderRadius: 25.0
+hp: 8
+aggroMode: PASSIVE
+tier: COMMON
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [forest, pine_forest, plains]
+  maxTotal: 80
+  minTotal: 50
+tameable: false
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: OMNIVORE
+  lifespanDays: 20.0
+  preyTypes: [duck_baby, cat_baby]
+  canReproduce: false
+  hungerRatePerDay: 0.08
+  hungerThresholdToHunt: 0.5
+  hungerThresholdToMate: 0.6
+  fleeRadius: 10.0
