@@ -1,0 +1,29 @@
+behavior: animal
+width: 0.5
+height: 0.6
+wanderSpeed: 1.7
+wanderRadius: 30.0
+hp: 7
+aggroMode: PASSIVE
+tier: COMMON
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [plains, dry_plains]
+  maxTotal: 40
+  minTotal: 25
+tameable: false
+attacks:
+  - attackId: hawk_dive
+    level: 1
+walkBoneAliases:
+  rightArm: wingR
+  leftArm: wingL
+  rightLeg: legR
+  leftLeg: legL
+animal:
+  diet: CARNIVORE
+  lifespanDays: 22.0
+  preyTypes: [rabbit]
+  canReproduce: false
+  hungerRatePerDay: 0.08
