@@ -1,0 +1,23 @@
+behavior: random_movable
+width: 0.6
+height: 1.8
+wanderSpeed: 1.3
+wanderRadius: 20.0
+hp: 22
+aggroMode: AGGRESSIVE
+aggroRange: 10.0
+tier: ELITE
+minLevel: 16
+maxLevel: 20
+xpReward: 34
+movementMode: [FLYING]
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [snow_peaks, forest]
+  maxTotal: 30
+  minTotal: 16
+tameable: false
+attacks:
+  - attackId: ghost_curse
+    level: 1

@@ -1,0 +1,18 @@
+damageType: PHYSICAL
+enabled: true
+levels:
+  1:
+    power: 4
+    weaponDice: 1d4
+    cooldownMs: 2000
+    statusEffect: Cursed
+  2:
+    power: 6
+    weaponDice: 1d6
+    cooldownMs: 1900
+    statusEffect: Cursed
+  3:
+    power: 9
+    weaponDice: 2d4
+    cooldownMs: 1800
+    statusEffect: Cursed
