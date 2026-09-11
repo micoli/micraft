@@ -1,0 +1,18 @@
+damageType: POISON
+enabled: true
+levels:
+  1:
+    power: 5
+    weaponDice: 1d6
+    cooldownMs: 1400
+    statusEffect: Poisoned
+  2:
+    power: 8
+    weaponDice: 1d8
+    cooldownMs: 1300
+    statusEffect: Poisoned
+  3:
+    power: 11
+    weaponDice: 2d6
+    cooldownMs: 1200
+    statusEffect: Poisoned
