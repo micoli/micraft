@@ -1,0 +1,44 @@
+behavior: animal
+width: 0.7
+height: 1.3
+wanderSpeed: 2.3
+wanderRadius: 45.0
+hp: 160
+aggroMode: AGGRESSIVE
+aggroRange: 12.0
+tier: BOSS
+minLevel: 18
+maxLevel: 25
+xpReward: 260
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [forest, pine_forest]
+  maxTotal: 4
+  minTotal: 1
+tameable: false
+attacks:
+  - attackId: wolf_bite
+    level: 3
+spells:
+  - direwolf_howl_rally
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: CARNIVORE
+  lifespanDays: 35.0
+  canReproduce: false
+  hungerRatePerDay: 0.06
+  starvationDeathDays: 5.0
+pack:
+  extendPackType: [wolf, ice_wolf]
+  callRadius: 45.0
+  relayHops: 4
+  maxSize: 8
+  minSizeToEngage: 3
+  callCooldownSec: 15.0
+  rallyTimeoutSec: 20.0
+  chaseRadius: 50.0
