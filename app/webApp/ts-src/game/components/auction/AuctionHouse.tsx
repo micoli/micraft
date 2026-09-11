@@ -30,6 +30,13 @@ interface Props {
     buyNowPrice: number | null,
   ) => void;
   onFilterChange: (filter: AuctionFilter) => void;
+  /** Radix modal behavior (focus trap + `aria-hidden` outside the dialog) — see
+   *  MailboxOverlay.tsx's `modal` prop doc for why the hub passes `false`. */
+  modal?: boolean;
+  /** "dialog" (default): the game's floating window. "page": no Dialog/Portal — fills whatever
+   *  block-level container it's rendered in, for the hub where each screen owns the whole main
+   *  content area. See MailboxOverlay.tsx's `chrome` prop doc. */
+  chrome?: "dialog" | "page";
 }
 
 export function AuctionHouse({
@@ -44,6 +51,8 @@ export function AuctionHouse({
   onCancel,
   onCreateListing,
   onFilterChange,
+  modal = true,
+  chrome = "dialog",
 }: Props) {
   const [creating, setCreating] = useState(false);
   const [itemFilter, setItemFilter] = useState("");
@@ -84,104 +93,120 @@ export function AuctionHouse({
     setCreating(false);
   };
 
+  const body = (
+    <>
+      {chrome === "page" ? (
+        <div className="text-lg font-semibold text-white/90">Auction House</div>
+      ) : (
+        <DialogTitle>Auction House</DialogTitle>
+      )}
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, marginBottom: 12 }}>
+        <Input
+          placeholder="Filter by item"
+          value={itemFilter}
+          onChange={(e) => setItemFilter(e.target.value)}
+          style={{ width: 140 }}
+        />
+        <Input
+          placeholder="Filter by seller"
+          value={sellerFilter}
+          onChange={(e) => setSellerFilter(e.target.value)}
+          style={{ width: 140 }}
+        />
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, marginBottom: 12 }}>
+        <CurrencyInput onChange={setMinPrice} />
+        <CurrencyInput onChange={setMaxPrice} />
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, marginBottom: 12 }}>
+        <Button
+          variant={mineOnly ? "primary" : "outline"}
+          size="sm"
+          onClick={() => {
+            setMineOnly((v) => !v);
+            setExpiredOnly(false);
+            setMyBidsOnly(false);
+          }}
+        >
+          My Auctions
+        </Button>
+        <Button
+          variant={myBidsOnly ? "primary" : "outline"}
+          size="sm"
+          onClick={() => {
+            setMyBidsOnly((v) => !v);
+            setExpiredOnly(false);
+            setMineOnly(false);
+          }}
+        >
+          My Bids
+        </Button>
+        <Button
+          variant={expiredOnly ? "primary" : "outline"}
+          size="sm"
+          onClick={() => {
+            setExpiredOnly((v) => !v);
+            setMineOnly(false);
+            setMyBidsOnly(false);
+          }}
+        >
+          Expired
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => setCreating((v) => !v)}>
+          {creating ? "Close Form" : "Create Auction"}
+        </Button>
+      </div>
+
+      {creating && (
+        <CreateAuctionForm
+          inventory={inventory}
+          itemMeta={itemMeta}
+          onSubmit={handleCreate}
+          onCancel={() => setCreating(false)}
+        />
+      )}
+
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+        {auctions.length === 0 && (
+          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, textAlign: "center", padding: 20 }}>
+            No listings match these filters.
+          </div>
+        )}
+        {auctions.map((listing) => (
+          <AuctionListingRow
+            key={listing.id}
+            listing={listing}
+            isMine={listing.sellerId === myPlayerId}
+            myPlayerId={myPlayerId}
+            itemMeta={itemMeta}
+            onBid={onBid}
+            onBuyNow={onBuyNow}
+            onCancel={onCancel}
+            onOpenDetail={setSelectedListingId}
+          />
+        ))}
+      </div>
+
+      <AuctionDetail listing={selectedListing} itemMeta={itemMeta} onClose={() => setSelectedListingId(null)} />
+    </>
+  );
+
+  if (chrome === "page") {
+    if (!open) return null;
+    return <div className="flex flex-col h-full p-4">{body}</div>;
+  }
+
   return (
     <Dialog
       open={open}
       onOpenChange={(v) => {
         if (!v) onClose();
       }}
+      modal={modal}
     >
       <DialogContent className="flex flex-col" windowMode="maximized">
-        <DialogTitle>Auction House</DialogTitle>
-
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, marginBottom: 12 }}>
-          <Input
-            placeholder="Filter by item"
-            value={itemFilter}
-            onChange={(e) => setItemFilter(e.target.value)}
-            style={{ width: 140 }}
-          />
-          <Input
-            placeholder="Filter by seller"
-            value={sellerFilter}
-            onChange={(e) => setSellerFilter(e.target.value)}
-            style={{ width: 140 }}
-          />
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, marginBottom: 12 }}>
-          <CurrencyInput onChange={setMinPrice} />
-          <CurrencyInput onChange={setMaxPrice} />
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, marginBottom: 12 }}>
-          <Button
-            variant={mineOnly ? "primary" : "outline"}
-            size="sm"
-            onClick={() => {
-              setMineOnly((v) => !v);
-              setExpiredOnly(false);
-              setMyBidsOnly(false);
-            }}
-          >
-            My Auctions
-          </Button>
-          <Button
-            variant={myBidsOnly ? "primary" : "outline"}
-            size="sm"
-            onClick={() => {
-              setMyBidsOnly((v) => !v);
-              setExpiredOnly(false);
-              setMineOnly(false);
-            }}
-          >
-            My Bids
-          </Button>
-          <Button
-            variant={expiredOnly ? "primary" : "outline"}
-            size="sm"
-            onClick={() => {
-              setExpiredOnly((v) => !v);
-              setMineOnly(false);
-              setMyBidsOnly(false);
-            }}
-          >
-            Expired
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setCreating((v) => !v)}>
-            {creating ? "Close Form" : "Create Auction"}
-          </Button>
-        </div>
-
-        {creating && (
-          <CreateAuctionForm
-            inventory={inventory}
-            itemMeta={itemMeta}
-            onSubmit={handleCreate}
-            onCancel={() => setCreating(false)}
-          />
-        )}
-
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
-          {auctions.length === 0 && (
-            <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, textAlign: "center", padding: 20 }}>
-              No listings match these filters.
-            </div>
-          )}
-          {auctions.map((listing) => (
-            <AuctionListingRow
-              key={listing.id}
-              listing={listing}
-              isMine={listing.sellerId === myPlayerId}
-              myPlayerId={myPlayerId}
-              itemMeta={itemMeta}
-              onBid={onBid}
-              onBuyNow={onBuyNow}
-              onCancel={onCancel}
-              onOpenDetail={setSelectedListingId}
-            />
-          ))}
-        </div>
-
-        <AuctionDetail listing={selectedListing} itemMeta={itemMeta} onClose={() => setSelectedListingId(null)} />
+        {body}
       </DialogContent>
     </Dialog>
   );

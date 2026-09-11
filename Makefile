@@ -22,7 +22,7 @@ endif
         dev-task-stop dev-task-start dev-task-restart dev-tui dev-extract-kay-animations \
         dev-nuke-wasm dev-reset dev-reset-wasm dev-nuke wasm-watch \
         prod-up prod-down prod-restart prod-logs prod-build \
-        build build-all build-client build-wasm build-js build-map build-admin build-docs \
+        build build-all build-client build-wasm build-js build-map build-admin build-hub build-docs \
         build-plugin-examples-hello-world trigger-wasm storybook gen-api \
         code-standard check-docs check-openapi check-schemas ts-code-standard \
         check-configuration spotless-apply ts-typecheck ts-lint ts-lint-fix \
@@ -142,6 +142,9 @@ build-map: ## Rebuild map.js + map.css
 
 build-admin: ## Rebuild admin.js + admin.css
 	$(EXEC) "cd app/webApp/ts-src && npm run build:admin && npm run build:admin:css"
+
+build-hub: ## Rebuild hub.js + hub.css (web companion)
+	$(EXEC) "cd app/webApp/ts-src && npm run build:hub && npm run build:hub:css"
 
 build-docs: ## Build ts-src docs bundle
 	$(EXEC) "cd app/webApp/ts-src && npm run build:docs"

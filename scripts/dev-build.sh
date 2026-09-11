@@ -52,6 +52,8 @@ if $BUILD_JS; then
     cp "$BUILD_WEB/main.css" "$BUILD_WEB/admin.css"
     MC_OUT_MAP_JS="$BUILD_WEB/map.js" npm run build:map
     MC_OUT_ADMIN_JS="$BUILD_WEB/admin.js" npm run build:admin
+    cp "$BUILD_WEB/main.css" "$BUILD_WEB/hub.css"
+    MC_OUT_HUB_JS="$BUILD_WEB/hub.js" npm run build:hub
 
     # The admin page is served from server/src/main/resources/admin.{js,css} (AdminController reads
     # those paths directly), not from the web dist above — so the bundles have to be emitted there as
