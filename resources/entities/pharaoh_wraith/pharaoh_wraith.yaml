@@ -1,0 +1,25 @@
+behavior: random_movable
+width: 0.6
+height: 1.9
+wanderSpeed: 1.3
+wanderRadius: 20.0
+hp: 190
+aggroMode: AGGRESSIVE
+aggroRange: 12.0
+tier: BOSS
+minLevel: 20
+maxLevel: 25
+xpReward: 310
+movementMode: [FLYING]
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [desert]
+  maxTotal: 4
+  minTotal: 1
+tameable: false
+attacks:
+  - attackId: ghost_curse
+    level: 3
+spells:
+  - pharaoh_curse_of_sands
