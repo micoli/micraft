@@ -1,0 +1,26 @@
+behavior: animal
+width: 0.5
+height: 0.2
+wanderSpeed: 2.2
+wanderRadius: 15.0
+hp: 8
+aggroMode: PASSIVE
+tier: COMMON
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [desert, dry_plains]
+  maxTotal: 55
+  minTotal: 30
+tameable: false
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: OMNIVORE
+  lifespanDays: 16.0
+  canReproduce: false
+  hungerRatePerDay: 0.1
+  fleeRadius: 8.0
