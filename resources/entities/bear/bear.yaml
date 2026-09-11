@@ -1,0 +1,31 @@
+behavior: animal
+width: 1.1
+height: 1.0
+wanderSpeed: 1.7
+wanderRadius: 25.0
+hp: 45
+aggroMode: PASSIVE_COOPERATIVE
+aggroRange: 9.0
+tier: ELITE
+minLevel: 11
+maxLevel: 15
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [forest, pine_forest, snow_peaks]
+  maxTotal: 30
+  minTotal: 18
+tameable: false
+attacks:
+  - attackId: bear_maul
+    level: 1
+walkBoneAliases:
+  rightArm: frontLegR
+  leftArm: frontLegL
+  rightLeg: backLegR
+  leftLeg: backLegL
+animal:
+  diet: OMNIVORE
+  lifespanDays: 30.0
+  canReproduce: false
+  hungerRatePerDay: 0.07
