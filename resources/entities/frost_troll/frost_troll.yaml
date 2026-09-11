@@ -1,0 +1,24 @@
+behavior: random_movable
+width: 1.0
+height: 2.0
+wanderSpeed: 1.3
+wanderRadius: 18.0
+hp: 60
+aggroMode: AGGRESSIVE
+aggroRange: 11.0
+tier: ELITE
+minLevel: 16
+maxLevel: 20
+xpReward: 55
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [snow_peaks]
+  maxTotal: 20
+  minTotal: 8
+tameable: false
+attacks:
+  - attackId: bear_maul
+    level: 2
+  - attackId: frost_troll_slam
+    level: 1
