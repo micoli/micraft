@@ -1,0 +1,30 @@
+behavior: animal
+width: 0.6
+height: 0.7
+wanderSpeed: 1.5
+wanderRadius: 25.0
+hp: 8
+aggroMode: PASSIVE
+tier: COMMON
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [forest, pine_forest]
+  maxTotal: 40
+  minTotal: 25
+tameable: false
+attacks:
+  - attackId: owl_dive
+    level: 1
+walkBoneAliases:
+  rightArm: wingR
+  leftArm: wingL
+  rightLeg: legR
+  leftLeg: legL
+animal:
+  diet: CARNIVORE
+  lifespanDays: 25.0
+  preyTypes: [rabbit]
+  canReproduce: false
+  hungerRatePerDay: 0.08
+  hungerThresholdToHunt: 0.5
