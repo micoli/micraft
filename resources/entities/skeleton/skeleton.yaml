@@ -1,0 +1,23 @@
+behavior: random_movable
+width: 0.5
+height: 1.9
+wanderSpeed: 1.6
+wanderRadius: 20.0
+hp: 26
+aggroMode: AGGRESSIVE
+aggroRange: 14.0
+tier: COMMON
+minLevel: 11
+maxLevel: 15
+xpReward: 30
+characterClass: RANGER
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [desert, snow_peaks, dry_plains]
+  maxTotal: 55
+  minTotal: 35
+tameable: false
+attacks:
+  - attackId: skeleton_arrow
+    level: 1
