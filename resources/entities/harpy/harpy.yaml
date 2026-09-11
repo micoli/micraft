@@ -1,0 +1,28 @@
+behavior: random_movable
+width: 0.6
+height: 2.0
+wanderSpeed: 1.5
+wanderRadius: 25.0
+hp: 34
+aggroMode: AGGRESSIVE
+aggroRange: 11.0
+tier: ELITE
+minLevel: 16
+maxLevel: 20
+xpReward: 45
+movementMode: [FLYING]
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [snow_peaks, dry_plains]
+  maxTotal: 25
+  minTotal: 12
+tameable: false
+attacks:
+  - attackId: harpy_shriek
+    level: 1
+walkBoneAliases:
+  rightArm: wingR
+  leftArm: wingL
+  rightLeg: legR
+  leftLeg: legL
