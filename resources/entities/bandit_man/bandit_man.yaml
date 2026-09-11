@@ -1,0 +1,24 @@
+behavior: random_movable
+width: 0.6
+height: 1.9
+wanderSpeed: 1.8
+wanderRadius: 18.0
+hp: 24
+aggroMode: AGGRESSIVE
+aggroRange: 6.0
+deaggroTimeSec: 6.0
+tier: COMMON
+minLevel: 11
+maxLevel: 15
+xpReward: 26
+characterClass: ROGUE
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [dry_plains, desert]
+  maxTotal: 45
+  minTotal: 25
+tameable: false
+attacks:
+  - attackId: slash
+    level: 1
