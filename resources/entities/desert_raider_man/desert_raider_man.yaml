@@ -1,0 +1,25 @@
+behavior: random_movable
+width: 0.6
+height: 1.9
+wanderSpeed: 1.7
+wanderRadius: 22.0
+hp: 32
+aggroMode: AGGRESSIVE
+aggroRange: 9.0
+tier: ELITE
+minLevel: 16
+maxLevel: 20
+xpReward: 42
+characterClass: ROGUE
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [desert, dry_plains]
+  maxTotal: 30
+  minTotal: 15
+tameable: false
+attacks:
+  - attackId: slash
+    level: 2
+  - attackId: desert_raider_javelin
+    level: 1
