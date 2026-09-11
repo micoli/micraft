@@ -1,0 +1,23 @@
+behavior: animal
+width: 0.3
+height: 0.2
+wanderSpeed: 0.7
+wanderRadius: 8.0
+hp: 4
+aggroMode: PASSIVE
+tier: COMMON
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [plains, forest]
+  maxTotal: 60
+  minTotal: 35
+tameable: false
+attacks:
+  - attackId: hedgehog_spikes
+    level: 1
+animal:
+  diet: HERBIVORE
+  lifespanDays: 10.0
+  canReproduce: false
+  hungerRatePerDay: 0.1
