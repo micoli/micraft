@@ -1,0 +1,27 @@
+behavior: animal
+width: 0.3
+height: 0.3
+wanderSpeed: 2.0
+wanderRadius: 20.0
+hp: 12
+aggroMode: AGGRESSIVE
+aggroRange: 6.0
+tier: COMMON
+minLevel: 16
+maxLevel: 20
+movementMode: [SWIMMING]
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: []
+  maxTotal: 40
+  minTotal: 20
+tameable: false
+attacks:
+  - attackId: eel_shock
+    level: 1
+animal:
+  diet: CARNIVORE
+  lifespanDays: 20.0
+  canReproduce: false
+  hungerRatePerDay: 0.09
