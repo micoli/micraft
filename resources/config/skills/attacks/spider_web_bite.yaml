@@ -1,0 +1,13 @@
+damageType: POISON
+enabled: true
+levels:
+  1:
+    power: 4
+    weaponDice: 1d4
+    cooldownMs: 1200
+    statusEffect: Paralyzed
+  2:
+    power: 6
+    weaponDice: 1d6
+    cooldownMs: 1100
+    statusEffect: Paralyzed

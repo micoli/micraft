@@ -1,0 +1,29 @@
+behavior: animal
+width: 0.7
+height: 0.4
+wanderSpeed: 1.8
+wanderRadius: 15.0
+hp: 10
+aggroMode: AGGRESSIVE
+aggroRange: 5.0
+tier: COMMON
+spawn:
+  autoSpawn: true
+  maxPerChunk: 2
+  spawnBiomes: [forest, pine_forest]
+  maxTotal: 50
+  minTotal: 30
+tameable: false
+attacks:
+  - attackId: spider_web_bite
+    level: 1
+walkBoneAliases:
+  rightArm: leg1
+  leftArm: leg0
+  rightLeg: leg7
+  leftLeg: leg6
+animal:
+  diet: CARNIVORE
+  lifespanDays: 18.0
+  canReproduce: false
+  hungerRatePerDay: 0.1
