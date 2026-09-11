@@ -1,0 +1,22 @@
+behavior: random_movable
+width: 0.8
+height: 1.4
+wanderSpeed: 0.6
+wanderRadius: 12.0
+hp: 130
+aggroMode: AGGRESSIVE
+aggroRange: 10.0
+tier: BOSS
+minLevel: 18
+maxLevel: 25
+xpReward: 210
+spawn:
+  autoSpawn: true
+  maxPerChunk: 1
+  spawnBiomes: [desert]
+  maxTotal: 5
+  minTotal: 1
+tameable: false
+attacks:
+  - attackId: sand_worm_burrow_slam
+    level: 1
