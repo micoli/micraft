@@ -1,0 +1,31 @@
+behavior: animal
+width: 0.5
+height: 0.3
+wanderSpeed: 1.6
+wanderRadius: 12.0
+hp: 12
+aggroMode: PASSIVE_COOPERATIVE
+aggroRange: 7.0
+tier: COMMON
+spawn:
+  autoSpawn: true
+  maxPerChunk: 3
+  spawnBiomes: [forest, desert]
+  maxTotal: 55
+  minTotal: 30
+tameable: false
+attacks:
+  - attackId: giant_ant_bite
+    level: 1
+walkBoneAliases:
+  rightLeg0: leg1
+  leftLeg0: leg0
+  rightLeg1: leg3
+  leftLeg1: leg2
+  rightLeg2: leg5
+  leftLeg2: leg4
+animal:
+  diet: OMNIVORE
+  lifespanDays: 14.0
+  canReproduce: false
+  hungerRatePerDay: 0.1
