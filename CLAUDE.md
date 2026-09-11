@@ -12,6 +12,10 @@
 | `app/desktopApp` | `app/desktopApp/src/main` | Desktop client (JVM) |
 | `app/shared` | `app/shared/src/commonMain` | Shared Compose code desktop/web |
 
+## Recherche de code
+
+Plugin `kotlin-lsp` dispo — utilise l'outil `LSP` (go-to-def, find-refs, rename cross-module) pour la recherche/nav Kotlin précise, en complément de Grep/Read pour le texte brut.
+
 ## Domain types
 
 **Block types**: `AIR BEDROCK STONE DIRT GRASS SAND SANDSTONE GRAVEL SNOW OAK_LOG OAK_LEAVES PINE_LOG PINE_LEAVES PINE_LEAVES_SNOW FLOWER WEED`
