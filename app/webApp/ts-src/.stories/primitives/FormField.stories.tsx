@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { FormField } from "../../primitives/FormField";
 import { Label } from "../../primitives/Label";
 import { Input } from "../../primitives/Input";

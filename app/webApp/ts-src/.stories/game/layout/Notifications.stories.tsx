@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Notifications } from "../../../game/components/Notifications";
 
 const meta: Meta<typeof Notifications> = {

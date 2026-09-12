@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { AggroIndicators } from "../../../game/components/character/AggroIndicators";
 import type { NpcProximityEntry } from "../../../game/types";
 

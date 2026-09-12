@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { Meta, StoryObj } from "@storybook/react";
-import { fn } from "@storybook/test";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "storybook/test";
 import { CurrencyInput } from "../../game/components/auction/CurrencyInput";
 import { CurrencyDisplay } from "../../game/components/auction/CurrencyDisplay";
 

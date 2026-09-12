@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { fn, userEvent, within, expect } from "@storybook/test";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn, userEvent, within, expect } from "storybook/test";
 import { MenuGrid } from "../../primitives/MenuGrid";
 
 const meta: Meta<typeof MenuGrid> = {

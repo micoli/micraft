@@ -1,5 +1,5 @@
 import type React from "react";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { XpBar } from "../../../game/components/XpBar";
 import { GameContext, GameContextValue } from "../../../game/GameContext";
 import type { UiState } from "../../../game/UIReducer";

@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { fn } from "@storybook/test";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "storybook/test";
 import { Preferences } from "../../../game/components/preferences/Preferences";
 import type { PreferencesData } from "../../../game/types";
 import { stubMcState } from "../../_support/mcState";

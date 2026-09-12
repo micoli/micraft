@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { BuffBar } from "../../../game/components/buffs/BuffBar";
 
 const meta: Meta<typeof BuffBar> = {

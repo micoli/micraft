@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { HUD } from "../../../game/components/hud/HUD";
 import type { HudData } from "../../../game/types";
 

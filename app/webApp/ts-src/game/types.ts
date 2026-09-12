@@ -151,14 +151,7 @@ export interface ClaimData {
 }
 
 export type GuildPermission =
-  | "INVITE"
-  | "KICK"
-  | "MANAGE_RANKS"
-  | "EDIT_MOTD"
-  | "BANK_DEPOSIT"
-  | "BANK_WITHDRAW"
-  | "DISBAND"
-  | "EDIT_INFO";
+  "INVITE" | "KICK" | "MANAGE_RANKS" | "EDIT_MOTD" | "BANK_DEPOSIT" | "BANK_WITHDRAW" | "DISBAND" | "EDIT_INFO";
 
 export interface GuildRank {
   name: string;

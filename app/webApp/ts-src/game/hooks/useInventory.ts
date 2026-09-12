@@ -46,8 +46,7 @@ export function useInventory() {
     const slotEl = document
       .elementsFromPoint(e.clientX, e.clientY)
       .find((el) => el instanceof HTMLElement && (el as HTMLElement).hasAttribute("data-mc-slot")) as
-      | HTMLElement
-      | undefined;
+      HTMLElement | undefined;
     if (slotEl) {
       const slotIdx = parseInt(slotEl.getAttribute("data-mc-slot")!);
       if (slotIdx > 0) window.mcState.slotDrop?.(slotIdx, { kind: "item", id: item });

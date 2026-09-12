@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { fn } from "@storybook/test";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "storybook/test";
 import { ClaimPanel } from "../../../game/components/claim/ClaimPanel";
 import type { ClaimData } from "../../../game/types";
 import { mockApi } from "../../_support/mockApi";

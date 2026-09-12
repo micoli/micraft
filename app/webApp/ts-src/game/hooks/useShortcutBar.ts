@@ -91,8 +91,7 @@ export function useShortcutBar(
     const slotEl = document
       .elementsFromPoint(e.clientX, e.clientY)
       .find((el) => el instanceof HTMLElement && (el as HTMLElement).hasAttribute("data-mc-slot")) as
-      | HTMLElement
-      | undefined;
+      HTMLElement | undefined;
     if (slotEl !== lastSlotRef.current) {
       if (lastSlotRef.current) lastSlotRef.current.style.background = "";
       if (slotEl) {
@@ -126,8 +125,7 @@ export function useShortcutBar(
     const slotEl = document
       .elementsFromPoint(e.clientX, e.clientY)
       .find((el) => el instanceof HTMLElement && (el as HTMLElement).hasAttribute("data-mc-slot")) as
-      | HTMLElement
-      | undefined;
+      HTMLElement | undefined;
     if (!slotEl) {
       onSlotDrop(sourceIdx, null);
       return;

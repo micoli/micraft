@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { expect, fn, within } from "@storybook/test";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, fn, within } from "storybook/test";
 import { NpcShopDialog } from "../../../game/components/npc/NpcShopDialog";
 import type { NpcDialogData } from "../../../game/types";
 

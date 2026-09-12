@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { FactionPanel } from "../../../../game/components/social/FactionPanel";
 import type { FactionSyncData } from "../../../../game/types";
 import { stubMcState } from "../../../_support/mcState";
