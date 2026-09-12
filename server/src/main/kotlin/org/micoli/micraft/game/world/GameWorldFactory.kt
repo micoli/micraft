@@ -197,7 +197,12 @@ fun buildGameWorld(
                     worldItems.spawnNpcLoot(npc.state.pos, npc.definition.loot)
                     org.micoli.micraft.game.armor.ArmorLootGranter.grant(
                         npc,
-                        shared.armorRegistry,
+                        // Loaded fresh, not via shared.armorRegistry: that field is resolved
+                        // through Koin from a bare Map<String, ArmorDefinition> bean, and on this
+                        // path it was observed to resolve to the weapon registry instead — see
+                        // the armor-loot E2E test for the repro. armorRegistryLoader is a
+                        // concrete class, so its resolution isn't ambiguous.
+                        shared.armorRegistryLoader.load(),
                         sessions::all,
                         playerPersister::save,
                         shared.i18n)

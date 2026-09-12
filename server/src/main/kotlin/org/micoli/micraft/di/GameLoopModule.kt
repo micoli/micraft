@@ -229,7 +229,10 @@ class GameLoopModule {
         experienceProcessor: ExperienceProcessor,
         questManager: QuestManager,
         worldItemManager: WorldItemManager,
-        armorRegistry: Map<String, ArmorDefinition>,
+        // A concrete class, not Map<String, ArmorDefinition>: Koin was observed resolving that
+        // bare Map type to the weapon registry instead on an equivalent wiring — see
+        // GameWorldFactory's ArmorLootGranter call for the repro notes.
+        armorRegistryLoader: ArmorRegistryLoader,
         playerPersister: PlayerPersister,
         i18nConfig: I18nConfig,
     ): NpcSubsystemHooks =
@@ -246,7 +249,11 @@ class GameLoopModule {
                     questManager.onNpcKilled(npc)
                     worldItemManager.spawnNpcLoot(npc.state.pos, npc.definition.loot)
                     ArmorLootGranter.grant(
-                        npc, armorRegistry, sessionRegistry::all, playerPersister::save, i18nConfig)
+                        npc,
+                        armorRegistryLoader.load(),
+                        sessionRegistry::all,
+                        playerPersister::save,
+                        i18nConfig)
                 }
             },
             broadcastCombatLog = { msg ->
