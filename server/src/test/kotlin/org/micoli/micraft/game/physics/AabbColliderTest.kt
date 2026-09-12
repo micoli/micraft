@@ -1,8 +1,11 @@
 package org.micoli.micraft.game.physics
 
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import org.micoli.micraft.game.ServerConfig
+import org.micoli.micraft.game.applyServerConfig
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.physics.AabbCollider
@@ -11,8 +14,19 @@ import org.micoli.micraft.support.testWorld
 private fun WorldState.solid() = { bx: Int, by: Int, bz: Int -> getBlock(bx, by, bz).isSolid }
 
 class AabbColliderTest {
-    private val w = PlayerConstants.WIDTH
-    private val h = PlayerConstants.HEIGHT_STANDING
+    // PlayerConstants is a process-wide mutable singleton other tests (any that boot the real app
+    // module, which loads resources/config/server.yaml — heightStanding: 1.8, not the 2.1 default)
+    // can leave in a non-default state. Reset before every test so results don't depend on run
+    // order.
+    @BeforeTest fun resetPlayerConstants() = applyServerConfig(ServerConfig())
+
+    // Computed properties, not vals: a val field initializer runs before @BeforeTest (JUnit4
+    // construct-then-@Before order), so it would still capture a pollution from a prior test.
+    private val w
+        get() = PlayerConstants.WIDTH
+
+    private val h
+        get() = PlayerConstants.HEIGHT_STANDING
 
     // --- isGrounded ---
 

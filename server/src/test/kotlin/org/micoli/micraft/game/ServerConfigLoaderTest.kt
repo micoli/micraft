@@ -124,8 +124,18 @@ class ServerConfigLoaderTest {
         assertEquals(1, Regex("waterLevel").findAll(afterSecondLoad).count())
     }
 
+    // applyServerConfig mutates process-wide WorldConstants/PlayerConstants/game vars — restore
+    // defaults afterward so these tests don't leak state into whatever test runs next in this JVM.
+    private fun withRestoredConfig(block: () -> Unit) {
+        try {
+            block()
+        } finally {
+            applyServerConfig(ServerConfig())
+        }
+    }
+
     @Test
-    fun applyServerConfig_setsWorldConstants() {
+    fun applyServerConfig_setsWorldConstants() = withRestoredConfig {
         val config =
             ServerConfig(
                 world = WorldSection(viewRadius = 5, forwardViewRadius = 9, worldMaxY = 512),
@@ -141,7 +151,7 @@ class ServerConfigLoaderTest {
     }
 
     @Test
-    fun applyServerConfig_setsGameConstants() {
+    fun applyServerConfig_setsGameConstants() = withRestoredConfig {
         val config =
             ServerConfig(
                 game =
