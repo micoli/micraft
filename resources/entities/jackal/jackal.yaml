@@ -36,3 +36,6 @@ pack:
   callCooldownSec: 20.0
   rallyTimeoutSec: 15.0
   chaseRadius: 35.0
+armorLoot:
+  - armor: tier2_leather_helmet
+    dropRate: 15

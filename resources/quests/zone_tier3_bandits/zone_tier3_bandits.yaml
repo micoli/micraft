@@ -1,0 +1,17 @@
+title: "Bandit Ambush"
+description: "Bandits are ambushing caravans on the trade routes. Drive them off. Recommended for level 15 players."
+type: KILL
+level: 15
+objectives:
+  - npcType: bandit_man
+    requiredCount: 8
+rewards:
+  xp: 1500
+  items:
+    - type: COBBLESTONE
+      count: 25
+  armorRewards:
+    - tier3_mail_chest
+dependsOn: [zone_tier3_skeletons.yaml]
+repeatable: false
+cooldownSeconds: 0

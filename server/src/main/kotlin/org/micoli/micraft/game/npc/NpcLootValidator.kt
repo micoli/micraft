@@ -13,20 +13,27 @@ private val log = LoggerFactory.getLogger(NpcLootValidator::class.java)
 object NpcLootValidator {
     private const val MAX_LEVELS_ABOVE_MOB = 5
 
-    fun validate(npcDefs: Map<String, NpcDefinition>, armorDefs: Map<String, ArmorDefinition>) {
+    /** Returns one message per violation found — empty when every drop respects the cap. */
+    fun validate(
+        npcDefs: Map<String, NpcDefinition>,
+        armorDefs: Map<String, ArmorDefinition>,
+    ): List<String> {
+        val violations = mutableListOf<String>()
         for ((npcType, npc) in npcDefs) {
             for (drop in npc.armorLoot) {
                 val armor = armorDefs[drop.armor] ?: continue
-                if (armor.requiredLevel > npc.maxLevel + MAX_LEVELS_ABOVE_MOB) {
-                    log.warn(
-                        "NPC '{}' (maxLevel={}) drops armor '{}' requiring level {} — more than {} levels above the mob",
-                        npcType,
-                        npc.maxLevel,
-                        drop.armor,
-                        armor.requiredLevel,
-                        MAX_LEVELS_ABOVE_MOB)
+                // Long arithmetic: npc.maxLevel defaults to Int.MAX_VALUE (no cap), and adding
+                // MAX_LEVELS_ABOVE_MOB to that in Int would overflow into a negative number.
+                if (armor.requiredLevel > npc.maxLevel.toLong() + MAX_LEVELS_ABOVE_MOB) {
+                    val message =
+                        "NPC '$npcType' (maxLevel=${npc.maxLevel}) drops armor '${drop.armor}' " +
+                            "requiring level ${armor.requiredLevel} — more than " +
+                            "$MAX_LEVELS_ABOVE_MOB levels above the mob"
+                    log.warn(message)
+                    violations += message
                 }
             }
         }
+        return violations
     }
 }

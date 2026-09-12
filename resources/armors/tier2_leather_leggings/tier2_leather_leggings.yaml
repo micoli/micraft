@@ -1,0 +1,12 @@
+wearable:
+  rightThigh: true
+  rightCalf: true
+  rightFoot: true
+  leftThigh: true
+  leftCalf: true
+  leftFoot: true
+statBonus:
+  dex: 1
+  con: 1
+armorType: LEATHER
+requiredLevel: 6

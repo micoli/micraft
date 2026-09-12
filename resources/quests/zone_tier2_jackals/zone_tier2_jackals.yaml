@@ -1,0 +1,15 @@
+title: "Jackal Pack"
+description: "A pack of jackals is harassing travelers on the dry plains road. Recommended for level 8 players."
+type: KILL
+level: 8
+objectives:
+  - npcType: jackal
+    requiredCount: 10
+rewards:
+  xp: 600
+  items:
+    - type: SANDSTONE
+      count: 10
+dependsOn: [zone_tier2_boars.yaml]
+repeatable: false
+cooldownSeconds: 0

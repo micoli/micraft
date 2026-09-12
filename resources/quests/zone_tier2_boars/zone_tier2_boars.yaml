@@ -1,0 +1,15 @@
+title: "Boar Hunt"
+description: "A sounder of aggressive boars has been trampling the outer fields. Recommended for level 6 players."
+type: KILL
+level: 6
+objectives:
+  - npcType: boar
+    requiredCount: 8
+rewards:
+  xp: 450
+  items:
+    - type: GRAVEL
+      count: 10
+dependsOn: [zone_tier1_owls.yaml]
+repeatable: false
+cooldownSeconds: 0

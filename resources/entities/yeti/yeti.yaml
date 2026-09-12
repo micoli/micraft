@@ -20,3 +20,6 @@ tameable: false
 attacks:
   - attackId: yeti_slam
     level: 1
+armorLoot:
+  - armor: tier5_plate_helmet
+    dropRate: 8

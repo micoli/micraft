@@ -214,6 +214,11 @@ class QuestManager(
             }
             session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         }
+        val newArmors = def.rewards.armorRewards.filterNot { it in session.state.ownedArmors }
+        if (newArmors.isNotEmpty()) {
+            session.state = session.state.copy(ownedArmors = session.state.ownedArmors + newArmors)
+            savePlayer(session)
+        }
 
         session.send(
             ServerMessage.Notification(
@@ -224,6 +229,10 @@ class QuestManager(
             if (def.rewards.items.isNotEmpty()) {
                 if (isNotEmpty()) append(", ")
                 append(def.rewards.items.joinToString(", ") { "${it.count}x ${it.type}" })
+            }
+            if (newArmors.isNotEmpty()) {
+                if (isNotEmpty()) append(", ")
+                append(newArmors.joinToString(", "))
             }
         }
         session.send(

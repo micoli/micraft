@@ -1,0 +1,22 @@
+wearable:
+  head: true
+  body: true
+  cape: true
+  rightBiceps: true
+  rightForearm: true
+  rightHand: true
+  leftBiceps: true
+  leftForearm: true
+  leftHand: true
+  rightThigh: true
+  rightCalf: true
+  rightFoot: true
+  leftThigh: true
+  leftCalf: true
+  leftFoot: true
+statBonus:
+  str: 3
+  con: 4
+  acBonus: 2
+armorType: MAIL
+requiredLevel: 16

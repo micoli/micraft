@@ -1,0 +1,17 @@
+title: "Silent Wings"
+description: "Owls hunting near the farms are spooking the livestock at night. Drive them off. Recommended for level 4 players."
+type: KILL
+level: 4
+objectives:
+  - npcType: owl
+    requiredCount: 5
+rewards:
+  xp: 300
+  items:
+    - type: COBBLESTONE
+      count: 10
+  armorRewards:
+    - tier1_cloth_chest
+dependsOn: [zone_tier1_rabbits.yaml]
+repeatable: false
+cooldownSeconds: 0

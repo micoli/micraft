@@ -1,0 +1,15 @@
+title: "Desert Stingers"
+description: "Scorpions in the deep desert have grown bold. Cull them before they reach the outposts. Recommended for level 11 players."
+type: KILL
+level: 11
+objectives:
+  - npcType: scorpion
+    requiredCount: 10
+rewards:
+  xp: 950
+  items:
+    - type: SANDSTONE
+      count: 15
+dependsOn: [zone_tier2_spiders.yaml]
+repeatable: false
+cooldownSeconds: 0

@@ -1,0 +1,15 @@
+title: "Rabbit Overpopulation"
+description: "Rabbits are overrunning the fields. Cull a few to keep the crops safe. Recommended for level 2 players."
+type: KILL
+level: 2
+objectives:
+  - npcType: rabbit
+    requiredCount: 8
+rewards:
+  xp: 200
+  items:
+    - type: SAND
+      count: 5
+dependsOn: [zone_tier1_foxes.yaml]
+repeatable: false
+cooldownSeconds: 0

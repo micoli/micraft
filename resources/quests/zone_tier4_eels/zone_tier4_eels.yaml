@@ -1,0 +1,17 @@
+title: "Shocking Waters"
+description: "Electric eels are attacking fishers along the deep waters. Clear them out. Recommended for level 20 players."
+type: KILL
+level: 20
+objectives:
+  - npcType: eel
+    requiredCount: 10
+rewards:
+  xp: 2700
+  items:
+    - type: SANDSTONE
+      count: 25
+  armorRewards:
+    - tier4_mail_chest
+dependsOn: [zone_tier4_ghosts.yaml]
+repeatable: false
+cooldownSeconds: 0

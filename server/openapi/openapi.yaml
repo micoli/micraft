@@ -4841,6 +4841,12 @@ components:
     org.micoli.micraft.game.quest.QuestReward:
       type: object
       properties:
+        armorRewards:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
         items:
           type: array
           items:
@@ -4851,6 +4857,7 @@ components:
           format: int32
           title: Int
       required:
+      - armorRewards
       - items
       - xp
       title: QuestReward

@@ -1,0 +1,6 @@
+wearable:
+  head: true
+statBonus:
+  wis: 1
+armorType: CLOTH
+requiredLevel: 1

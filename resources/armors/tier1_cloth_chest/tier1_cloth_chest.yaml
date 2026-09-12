@@ -1,0 +1,15 @@
+wearable:
+  head: true
+  body: true
+  cape: true
+  rightBiceps: true
+  rightForearm: true
+  rightHand: true
+  leftBiceps: true
+  leftForearm: true
+  leftHand: true
+statBonus:
+  con: 1
+  wis: 1
+armorType: CLOTH
+requiredLevel: 1

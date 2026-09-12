@@ -29,6 +29,54 @@ classes:
         attacks:
           - attack: heavy_slash
             level: 2
+      5:
+        attacks:
+          - attack: slash
+            level: 2
+          - attack: charge
+            level: 1
+      7:
+        attacks:
+          - attack: heavy_slash
+            level: 3
+          - attack: charge
+            level: 2
+      9:
+        attacks:
+          - attack: slash
+            level: 3
+          - attack: polar_bear_crush
+            level: 1
+      11:
+        attacks:
+          - attack: heavy_slash
+            level: 4
+          - attack: charge
+            level: 3
+      13:
+        attacks:
+          - attack: slash
+            level: 4
+          - attack: polar_bear_crush
+            level: 2
+      15:
+        attacks:
+          - attack: heavy_slash
+            level: 5
+          - attack: polar_bear_crush
+            level: 3
+      18:
+        attacks:
+          - attack: charge
+            level: 4
+          - attack: slash
+            level: 5
+      20:
+        attacks:
+          - attack: polar_bear_crush
+            level: 4
+          - attack: wolf_pounce
+            level: 5
   MAGE:
     strBonus: 0
     dexBonus: 0
@@ -84,6 +132,48 @@ classes:
             level: 5
         spells:
           - miasme_3
+      7:
+        attacks:
+          - attack: lightning_strike
+            level: 1
+          - attack: frozen_in_time
+            level: 3
+      9:
+        attacks:
+          - attack: fireball
+            level: 4
+          - attack: lightning_strike
+            level: 2
+      11:
+        attacks:
+          - attack: freeze
+            level: 5
+          - attack: frozen_in_time
+            level: 4
+      13:
+        attacks:
+          - attack: ice_claw
+            level: 1
+          - attack: lightning_strike
+            level: 3
+      15:
+        attacks:
+          - attack: fireball
+            level: 5
+          - attack: frozen_in_time
+            level: 5
+      18:
+        attacks:
+          - attack: ice_claw
+            level: 3
+          - attack: lightning_strike
+            level: 4
+      20:
+        attacks:
+          - attack: dragon_fire_breath
+            level: 3
+          - attack: lightning_strike
+            level: 5
   RANGER:
     strBonus: 0
     dexBonus: 2
@@ -109,6 +199,54 @@ classes:
         attacks:
           - attack: slash
             level: 2
+      5:
+        attacks:
+          - attack: poison_bite
+            level: 3
+          - attack: wolf_bite
+            level: 1
+      7:
+        attacks:
+          - attack: wolf_bite
+            level: 2
+          - attack: slash
+            level: 3
+      9:
+        attacks:
+          - attack: venomous_fang
+            level: 1
+          - attack: poison_bite
+            level: 4
+      11:
+        attacks:
+          - attack: wolf_bite
+            level: 3
+          - attack: venomous_fang
+            level: 2
+      13:
+        attacks:
+          - attack: slash
+            level: 4
+          - attack: venomous_fang
+            level: 3
+      15:
+        attacks:
+          - attack: wolf_bite
+            level: 4
+          - attack: poison_bite
+            level: 5
+      18:
+        attacks:
+          - attack: venomous_fang
+            level: 4
+          - attack: wolf_bite
+            level: 5
+      20:
+        attacks:
+          - attack: slash
+            level: 5
+          - attack: venomous_fang
+            level: 5
   ROGUE:
     strBonus: 0
     dexBonus: 2
@@ -132,6 +270,58 @@ classes:
             level: 2
           - attack: poison_bite
             level: 2
+      3:
+        attacks:
+          - attack: poison_bite
+            level: 3
+      5:
+        attacks:
+          - attack: wolf_pounce
+            level: 1
+          - attack: slash
+            level: 3
+      7:
+        attacks:
+          - attack: venomous_fang
+            level: 1
+          - attack: poison_bite
+            level: 4
+      9:
+        attacks:
+          - attack: wolf_pounce
+            level: 2
+          - attack: slash
+            level: 4
+      11:
+        attacks:
+          - attack: venomous_fang
+            level: 2
+          - attack: poison_bite
+            level: 5
+      13:
+        attacks:
+          - attack: wolf_pounce
+            level: 3
+          - attack: shadow_claw
+            level: 1
+      15:
+        attacks:
+          - attack: venomous_fang
+            level: 3
+          - attack: shadow_claw
+            level: 2
+      18:
+        attacks:
+          - attack: wolf_pounce
+            level: 4
+          - attack: shadow_claw
+            level: 3
+      20:
+        attacks:
+          - attack: slash
+            level: 5
+          - attack: shadow_claw
+            level: 4
   CLERIC:
     strBonus: 0
     dexBonus: 0
@@ -160,3 +350,37 @@ classes:
       5:
         spells:
           - miasme_3
+      7:
+        attacks:
+          - attack: fireball
+            level: 3
+      9:
+        attacks:
+          - attack: slash
+            level: 3
+          - attack: ice_claw
+            level: 1
+      11:
+        attacks:
+          - attack: fireball
+            level: 4
+      13:
+        attacks:
+          - attack: slash
+            level: 4
+          - attack: ice_claw
+            level: 2
+      15:
+        attacks:
+          - attack: fireball
+            level: 5
+      18:
+        attacks:
+          - attack: ice_claw
+            level: 3
+          - attack: slash
+            level: 5
+      20:
+        attacks:
+          - attack: ice_claw
+            level: 4
