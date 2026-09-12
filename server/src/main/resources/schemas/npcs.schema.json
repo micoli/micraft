@@ -10,7 +10,8 @@
         "random_movable",
         "interactionable",
         "animal",
-        "seller"
+        "seller",
+        "quest_giver"
       ]
     },
     "width": {
@@ -455,6 +456,32 @@
           "WALKING",
           "SWIMMING",
           "FLYING"
+        ]
+      }
+    },
+    "offersQuests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "armorLoot": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "armor": {
+            "type": "string"
+          },
+          "dropRate": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "armor"
         ]
       }
     }

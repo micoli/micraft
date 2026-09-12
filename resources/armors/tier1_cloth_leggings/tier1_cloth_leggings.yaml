@@ -1,0 +1,11 @@
+wearable:
+  rightThigh: true
+  rightCalf: true
+  rightFoot: true
+  leftThigh: true
+  leftCalf: true
+  leftFoot: true
+statBonus:
+  con: 1
+armorType: CLOTH
+requiredLevel: 1

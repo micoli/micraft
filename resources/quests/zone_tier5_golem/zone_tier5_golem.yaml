@@ -1,0 +1,17 @@
+title: "Heart of Stone"
+description: "An ancient golem guards the ruins, smashing anyone who dares approach. End its vigil. Recommended for level 25 players."
+type: BOSS
+level: 25
+objectives:
+  - npcType: golem
+    requiredCount: 1
+rewards:
+  xp: 6500
+  items:
+    - type: GRAVEL
+      count: 50
+  armorRewards:
+    - tier5_plate_robe
+dependsOn: [zone_tier5_cobblestone_haul.yaml]
+repeatable: false
+cooldownSeconds: 0

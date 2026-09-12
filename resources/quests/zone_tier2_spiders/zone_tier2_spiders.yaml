@@ -1,0 +1,17 @@
+title: "Web of Trouble"
+description: "Venomous spiders have nested too close to the forest trails. Clear them out. Recommended for level 10 players."
+type: KILL
+level: 10
+objectives:
+  - npcType: spider
+    requiredCount: 8
+rewards:
+  xp: 750
+  items:
+    - type: COBBLESTONE
+      count: 15
+  armorRewards:
+    - tier2_leather_chest
+dependsOn: [zone_tier2_sandstone_collection.yaml]
+repeatable: false
+cooldownSeconds: 0

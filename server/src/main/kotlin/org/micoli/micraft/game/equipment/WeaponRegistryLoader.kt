@@ -18,7 +18,8 @@ private fun WeaponYamlEntry.applyOverride(o: WeaponYamlOverride) =
     copy(
         category = o.category ?: category,
         statBonus = o.statBonus ?: statBonus,
-        rotate = o.rotate ?: rotate)
+        rotate = o.rotate ?: rotate,
+        requiredLevel = o.requiredLevel ?: requiredLevel)
 
 class WeaponRegistryLoader(
     private val weaponsPath: Path = ConfigPaths.resourcesDir("weapons"),
@@ -84,7 +85,8 @@ class WeaponRegistryLoader(
                                 WeaponDefinition(
                                     category = merged.category,
                                     statBonus = merged.statBonus,
-                                    rotate = merged.rotate)
+                                    rotate = merged.rotate,
+                                    requiredLevel = merged.requiredLevel)
                         }
                 }
                 .toMap()

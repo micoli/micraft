@@ -533,6 +533,7 @@ declare global {
     setNpcScale(model: McPlayerModel, scale: number): void;
     disposeNpcModel(model: McPlayerModel): void;
     openNpcDialog(json: string): void;
+    openQuestGiverDialog(json: string): void;
     // Vehicle
     initVehicleModels(vehicleTypesJson: string): void;
     isVehicleModelsReady(): boolean;

@@ -1,0 +1,16 @@
+title: "Sandstone Collection"
+description: "The mason needs sandstone blocks for the new watchtower. Recommended for level 9 players."
+type: FETCH
+level: 9
+itemType: SANDSTONE
+requiredCount: 15
+rewards:
+  xp: 650
+  items:
+    - type: SAND
+      count: 10
+  armorRewards:
+    - tier2_leather_robe
+dependsOn: [zone_tier2_jackals.yaml]
+repeatable: false
+cooldownSeconds: 0

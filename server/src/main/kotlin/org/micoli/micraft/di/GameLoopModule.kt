@@ -11,6 +11,7 @@ import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.SharedGameServices
 import org.micoli.micraft.game.armor.ArmorDefinition
+import org.micoli.micraft.game.armor.ArmorLootGranter
 import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.auction.AuctionConfigLoader
 import org.micoli.micraft.game.auction.AuctionManager
@@ -228,6 +229,12 @@ class GameLoopModule {
         experienceProcessor: ExperienceProcessor,
         questManager: QuestManager,
         worldItemManager: WorldItemManager,
+        // A concrete class, not Map<String, ArmorDefinition>: Koin was observed resolving that
+        // bare Map type to the weapon registry instead on an equivalent wiring — see
+        // GameWorldFactory's ArmorLootGranter call for the repro notes.
+        armorRegistryLoader: ArmorRegistryLoader,
+        playerPersister: PlayerPersister,
+        i18nConfig: I18nConfig,
     ): NpcSubsystemHooks =
         NpcSubsystemHooks(
             broadcast = sessionRegistry::broadcast,
@@ -241,6 +248,12 @@ class GameLoopModule {
                     experienceProcessor.onNpcKilled(npc)
                     questManager.onNpcKilled(npc)
                     worldItemManager.spawnNpcLoot(npc.state.pos, npc.definition.loot)
+                    ArmorLootGranter.grant(
+                        npc,
+                        armorRegistryLoader.load(),
+                        sessionRegistry::all,
+                        playerPersister::save,
+                        i18nConfig)
                 }
             },
             broadcastCombatLog = { msg ->
@@ -254,6 +267,7 @@ class GameLoopModule {
             grantNpcKillXp = { predator, prey ->
                 experienceProcessor.grantXpToNpcForKill(predator, prey)
             },
+            getQuestManager = { questManager },
         )
 
     @Single

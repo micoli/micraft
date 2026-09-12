@@ -1,0 +1,15 @@
+title: "Beneath the Dunes"
+description: "A colossal sand worm lurks beneath the deep desert, swallowing caravans whole. Slay it. Recommended for level 23 players."
+type: BOSS
+level: 23
+objectives:
+  - npcType: sand_worm
+    requiredCount: 1
+rewards:
+  xp: 5000
+  items:
+    - type: SANDSTONE
+      count: 40
+dependsOn: [zone_tier5_sandstone_haul.yaml]
+repeatable: false
+cooldownSeconds: 0

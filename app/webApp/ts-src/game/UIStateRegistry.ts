@@ -20,6 +20,7 @@ import {
   PlayerStatusData,
   PreferencesData,
   PreferencesSaveData,
+  QuestGiverDialogData,
   QuestProgress,
   RecipeDefinition,
   ShortcutSlot,
@@ -60,6 +61,7 @@ export interface UiState {
   activeLayout: string;
   layoutEditorOpen: boolean;
   npcDialog: NpcDialogData | null;
+  questGiverDialog: QuestGiverDialogData | null;
   codexOpen: boolean;
   craftOpen: boolean;
   craftRecipes: Record<string, RecipeDefinition>;
@@ -261,6 +263,15 @@ const componentVisibilityRegistry = {
     hotbarVisible: payload.data.type === "seller" ? false : state.hotbarVisible,
   }),
   npc_dialog_close: (state: UiState) => ({ ...state, npcDialog: null }),
+  quest_giver_dialog_open: (state: UiState, payload: { data: QuestGiverDialogData }) => ({
+    ...state,
+    questGiverDialog: payload.data,
+    hotbarVisible: false,
+  }),
+  quest_giver_dialog_close: (state: UiState) => ({
+    ...state,
+    questGiverDialog: null,
+  }),
   codex_open: (state: UiState) => ({ ...state, codexOpen: true }),
   codex_close: (state: UiState) => ({ ...state, codexOpen: false }),
   craft_open: (state: UiState) => ({ ...state, craftOpen: true }),

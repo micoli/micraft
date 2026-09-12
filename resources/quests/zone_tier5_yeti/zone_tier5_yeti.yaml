@@ -1,0 +1,15 @@
+title: "The White Terror"
+description: "A yeti has been spotted at high altitude, crushing everything in its path. Bring it down. Recommended for level 21 players."
+type: BOSS
+level: 21
+objectives:
+  - npcType: yeti
+    requiredCount: 1
+rewards:
+  xp: 4000
+  items:
+    - type: COBBLESTONE
+      count: 40
+dependsOn: [zone_tier4_eels.yaml]
+repeatable: false
+cooldownSeconds: 0

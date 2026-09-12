@@ -1,0 +1,15 @@
+title: "Restless Bones"
+description: "Skeletons are rising from the old ruins and harassing patrols. Put them back down. Recommended for level 13 players."
+type: KILL
+level: 13
+objectives:
+  - npcType: skeleton
+    requiredCount: 10
+rewards:
+  xp: 1200
+  items:
+    - type: GRAVEL
+      count: 20
+dependsOn: [zone_tier3_sandstone_deep_run.yaml]
+repeatable: false
+cooldownSeconds: 0

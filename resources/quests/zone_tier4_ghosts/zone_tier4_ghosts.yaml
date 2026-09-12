@@ -1,0 +1,15 @@
+title: "Restless Spirits"
+description: "Vengeful ghosts haunt the old ruins, cursing any who pass by. Put them to rest. Recommended for level 18 players."
+type: KILL
+level: 18
+objectives:
+  - npcType: ghost
+    requiredCount: 8
+rewards:
+  xp: 2200
+  items:
+    - type: GRAVEL
+      count: 25
+dependsOn: [zone_tier4_snow_gathering.yaml]
+repeatable: false
+cooldownSeconds: 0

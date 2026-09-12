@@ -1,0 +1,14 @@
+title: "Flint Run"
+description: "The village toolmaker is short on flint. Bring some back. Recommended for level 1 players."
+type: FETCH
+level: 1
+itemType: FLINT
+requiredCount: 10
+rewards:
+  xp: 130
+  items:
+    - type: COBBLESTONE
+      count: 8
+dependsOn: [zone_tier1_foxes.yaml]
+repeatable: false
+cooldownSeconds: 0

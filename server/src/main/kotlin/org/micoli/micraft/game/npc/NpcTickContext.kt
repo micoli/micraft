@@ -10,6 +10,8 @@ import kotlin.random.Random
 data class NpcTickContext(
     val tuning: NpcTuning = NpcConstants.live,
     val random: Random = Random,
+    /** Set only for the one [NpcManager.handleInteract] call routed to a quest-giver behavior. */
+    val questManager: org.micoli.micraft.game.quest.QuestManager? = null,
 ) {
     companion object {
         /** Context backed by the live server tunables. */

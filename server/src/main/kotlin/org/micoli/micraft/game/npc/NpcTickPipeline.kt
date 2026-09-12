@@ -28,6 +28,7 @@ class NpcTickPipeline(
     private val ctxOf: () -> NpcTickContext = { NpcTickContext.live },
     /** Veto on auto-spawning; the admin simulator refuses past its population ceiling. */
     private val canSpawn: () -> Boolean = { true },
+    private val questGiverSpawner: QuestGiverSpawner? = null,
 ) {
     private var visibilityTickCounter = 0
 
@@ -68,13 +69,9 @@ class NpcTickPipeline(
     /** Slow lane (every few seconds): drop NPCs nobody can see, then auto-spawn near players. */
     suspend fun lifecycle(world: WorldState, sessions: Collection<PlayerSession>) {
         npcManager.despawnOrphanedNpcs(sessions)
-        npcSpawner.trySpawn(
-            world,
-            npcManager,
-            npcManager.getDefinitions(),
-            nearChunks(world, sessions),
-            ctx,
-            canSpawn)
+        val chunks = nearChunks(world, sessions)
+        npcSpawner.trySpawn(world, npcManager, npcManager.getDefinitions(), chunks, ctx, canSpawn)
+        questGiverSpawner?.trySpawn(world, npcManager, npcManager.getDefinitions(), chunks, ctx)
     }
 
     /** Zone cell a world position falls into. */
@@ -102,6 +99,8 @@ class NpcTickPipeline(
         if (adjacentChunks.isNotEmpty()) {
             npcSpawner.trySpawn(
                 world, npcManager, npcManager.getDefinitions(), adjacentChunks, ctx, canSpawn)
+            questGiverSpawner?.trySpawn(
+                world, npcManager, npcManager.getDefinitions(), adjacentChunks, ctx)
         }
     }
 

@@ -16,7 +16,13 @@ enum class QuestType {
 
 @Serializable data class RewardItem(val type: String, val count: Int)
 
-@Serializable data class QuestReward(val xp: Int = 0, val items: List<RewardItem> = emptyList())
+@Serializable
+data class QuestReward(
+    val xp: Int = 0,
+    val items: List<RewardItem> = emptyList(),
+    /** Armor piece names (resources/armors/<name>) granted to ownedArmors on completion. */
+    val armorRewards: List<String> = emptyList(),
+)
 
 data class QuestDefinition(
     val id: String,

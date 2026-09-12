@@ -1,0 +1,14 @@
+title: "Sand Collection"
+description: "The glassblower needs fine sand from the dunes. Recommended for level 3 players."
+type: FETCH
+level: 3
+itemType: SAND
+requiredCount: 12
+rewards:
+  xp: 220
+  items:
+    - type: FLINT
+      count: 5
+dependsOn: [zone_tier1_rabbits.yaml]
+repeatable: false
+cooldownSeconds: 0

@@ -1,7 +1,15 @@
 import { useEffect, useLayoutEffect, useRef, useReducer, useState, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { getApiItemsMeta, getApiAttacks, getApiClasses, getApiSpells, getApiQuests } from "../generated/api/requests";
-import { GameLayout, NpcDialogData, PreferencesData, ChannelSubscription, ShortcutSlot, QuestProgress } from "./types";
+import {
+  GameLayout,
+  NpcDialogData,
+  QuestGiverDialogData,
+  PreferencesData,
+  ChannelSubscription,
+  ShortcutSlot,
+  QuestProgress,
+} from "./types";
 import { UiState, reducer, makeUiDispatch } from "./UIReducer";
 import { Tab } from "./hooks/usePreferences";
 import { GameContext } from "./GameContext";
@@ -66,6 +74,7 @@ const initial: UiState = {
   activeLayout: "default",
   layoutEditorOpen: false,
   npcDialog: null,
+  questGiverDialog: null,
   codexOpen: false,
   craftOpen: false,
   craftRecipes: {},
@@ -327,7 +336,8 @@ export function GameUI() {
       state.claimPanelOpen ||
       state.trade !== null ||
       state.actionBlockForm !== null ||
-      state.npcDialog !== null;
+      state.npcDialog !== null ||
+      state.questGiverDialog !== null;
 
     // Any modal takes over the screen: close the pause menu and always release pointer lock.
     if (anyModalOpen && state.pauseMenuOpen) dispatch("pause_menu_hide");
@@ -356,6 +366,7 @@ export function GameUI() {
     state.trade,
     state.actionBlockForm,
     state.npcDialog,
+    state.questGiverDialog,
     dispatch,
   ]);
 
@@ -707,6 +718,11 @@ export function GameUI() {
       const data = JSON.parse(json) as NpcDialogData;
       if (data.type === "seller") document.exitPointerLock();
       dispatch("npc_dialog_open", { data });
+    };
+    window.mc.openQuestGiverDialog = (json: string) => {
+      const data = JSON.parse(json) as QuestGiverDialogData;
+      document.exitPointerLock();
+      dispatch("quest_giver_dialog_open", { data });
     };
 
     window.mc.consumeLayoutUpdate = () => {

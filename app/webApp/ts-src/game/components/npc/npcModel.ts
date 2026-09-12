@@ -61,6 +61,7 @@ export function registerNpcModel(): Pick<
   | "setNpcScale"
   | "disposeNpcModel"
   | "openNpcDialog"
+  | "openQuestGiverDialog"
 > {
   return {
     initNpcModels: (npcTypesJson: string): void => {
@@ -214,6 +215,15 @@ export function registerNpcModel(): Pick<
       try {
         const data = JSON.parse(json);
         window.mcState.dispatch?.({ type: "npc_dialog_open", payload: data });
+      } catch {
+        /* ignore */
+      }
+    },
+
+    openQuestGiverDialog: (json: string): void => {
+      try {
+        const data = JSON.parse(json);
+        window.mcState.dispatch?.({ type: "quest_giver_dialog_open", payload: data });
       } catch {
         /* ignore */
       }

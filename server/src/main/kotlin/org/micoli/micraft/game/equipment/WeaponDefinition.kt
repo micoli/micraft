@@ -9,4 +9,5 @@ data class WeaponDefinition(
     val category: EquipmentCategory,
     val statBonus: StatBonus = StatBonus(),
     val rotate: Rotation = Rotation(),
+    val requiredLevel: Int = 1,
 )

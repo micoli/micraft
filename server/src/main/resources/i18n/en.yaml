@@ -179,11 +179,16 @@ equip:
     overlap: "Slot conflict: {0} is already covered by {1}."
     equipped: "Equipped {0}."
     not_owned: "You do not own {0}."
+    level_too_low: "{0} requires level {1} (you are level {2})."
+    wrong_armor_type: "Your class cannot wear {0} armor."
 unequip:
   server:
     usage: "Usage: /unequip <armorName>"
     not_wearing: "You are not wearing {0}."
     unequipped: "Unequipped {0}."
+loot:
+  server:
+    armor_dropped: "You found {0}!"
 wield:
   server:
     usage: "Usage: /wield <name> [hand]"

@@ -1,0 +1,12 @@
+wearable:
+  rightThigh: true
+  rightCalf: true
+  rightFoot: true
+  leftThigh: true
+  leftCalf: true
+  leftFoot: true
+statBonus:
+  str: 1
+  con: 2
+armorType: MAIL
+requiredLevel: 11

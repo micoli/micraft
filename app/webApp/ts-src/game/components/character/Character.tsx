@@ -51,6 +51,24 @@ export interface ArmorStatBonus {
 interface ArmorDefinition {
   wearable: ArmorSlots;
   statBonus: ArmorStatBonus;
+  armorType: string;
+  requiredLevel: number;
+}
+
+// Mirrors server/.../game/armor/ArmorClassRules.kt — kept in sync manually, there is no generated
+// type for it yet. A class not listed here may wear anything (server falls back the same way).
+const ARMOR_CLASS_RULES: Record<string, string[]> = {
+  MAGE: ["CLOTH"],
+  CLERIC: ["CLOTH", "MAIL"],
+  ROGUE: ["LEATHER", "MAIL"],
+  RANGER: ["LEATHER", "MAIL"],
+  WARRIOR: ["MAIL", "PLATE"],
+};
+
+function canWearArmorType(characterClass: string | undefined, armorType: string): boolean {
+  if (!characterClass) return true;
+  const allowed = ARMOR_CLASS_RULES[characterClass];
+  return !allowed || allowed.includes(armorType);
 }
 
 const SLOT_LABELS: { key: keyof ArmorSlots; label: string }[] = [
@@ -218,24 +236,43 @@ export function Character({ open, onClose, onCommand, characterSyncData, attackM
                   {sortedArmors.map((name) => {
                     const armorDef = available[name];
                     const isEquipped = equipped.includes(name);
+                    const playerLevel = characterSyncData?.character.level;
+                    const characterClass = characterSyncData?.character.characterClass;
+                    const levelOk = playerLevel === undefined || playerLevel >= (armorDef?.requiredLevel ?? 1);
+                    const typeOk = canWearArmorType(characterClass, armorDef?.armorType ?? "CLOTH");
+                    const blocked = !isEquipped && (!levelOk || !typeOk);
                     return (
                       <div
                         key={name}
                         className={cn(
                           "flex items-center gap-3 px-3 py-3 mb-2.5 rounded border",
-                          isEquipped ? "bg-green-950/60 border-green-700/60" : "bg-black/40 border-white/15",
+                          isEquipped
+                            ? "bg-green-950/60 border-green-700/60"
+                            : blocked
+                              ? "bg-black/40 border-white/15 opacity-50"
+                              : "bg-black/40 border-white/15",
                         )}
                       >
                         <div className="flex-1">
                           <div className={cn("text-xs mb-1.5", isEquipped ? "text-green-400" : "text-white/80")}>
                             {name}
                           </div>
-                          {armorDef && <ArmorBonusLine bonus={armorDef.statBonus} wearable={armorDef.wearable} />}
+                          {armorDef && (
+                            <>
+                              <div className="text-[10px] text-white/40 mb-1">
+                                {armorDef.armorType} · Niv. {armorDef.requiredLevel}
+                                {!levelOk && <span className="text-red-400"> — niveau insuffisant</span>}
+                                {levelOk && !typeOk && <span className="text-red-400"> — classe incompatible</span>}
+                              </div>
+                              <ArmorBonusLine bonus={armorDef.statBonus} wearable={armorDef.wearable} />
+                            </>
+                          )}
                         </div>
                         <Button
                           variant={isEquipped ? "ghost" : "secondary"}
                           size="sm"
                           onClick={() => toggleArmor(name)}
+                          disabled={blocked}
                           className={cn(
                             "font-mono text-xs whitespace-nowrap",
                             isEquipped && "text-green-400 hover:text-red-400",

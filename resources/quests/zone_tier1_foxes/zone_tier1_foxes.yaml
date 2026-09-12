@@ -1,0 +1,15 @@
+title: "Fox Trouble"
+description: "Foxes keep raiding the henhouses near the village. Thin out their numbers. Recommended for level 1 players."
+type: KILL
+level: 1
+objectives:
+  - npcType: fox
+    requiredCount: 5
+rewards:
+  xp: 150
+  items:
+    - type: FLINT
+      count: 5
+dependsOn: []
+repeatable: false
+cooldownSeconds: 0

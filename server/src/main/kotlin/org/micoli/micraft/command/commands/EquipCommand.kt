@@ -3,6 +3,7 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.game.armor.ArmorClassRules
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
@@ -55,6 +56,25 @@ class EquipCommand : CommandHandler {
         if (name in session.state.armors) {
             session.send(Notification(i18n.t(lang, "equip:server:already", name)))
             return
+        }
+
+        session.characterData?.let { char ->
+            if (char.level < armorDef.requiredLevel) {
+                session.send(
+                    Notification(
+                        i18n.t(
+                            lang,
+                            "equip:server:level_too_low",
+                            name,
+                            armorDef.requiredLevel,
+                            char.level)))
+                return
+            }
+            if (!ArmorClassRules.canWear(char.characterClass, armorDef.armorType)) {
+                session.send(
+                    Notification(i18n.t(lang, "equip:server:wrong_armor_type", armorDef.armorType)))
+                return
+            }
         }
 
         val conflict =

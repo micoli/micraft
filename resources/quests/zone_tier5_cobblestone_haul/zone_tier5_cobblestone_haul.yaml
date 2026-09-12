@@ -1,0 +1,14 @@
+title: "Cobblestone Haul"
+description: "Reinforce the ruins' defenses with hauled cobblestone before facing the golem. Recommended for level 24 players."
+type: FETCH
+level: 24
+itemType: COBBLESTONE
+requiredCount: 40
+rewards:
+  xp: 5500
+  items:
+    - type: GRAVEL
+      count: 30
+dependsOn: [zone_tier5_sandworm.yaml]
+repeatable: false
+cooldownSeconds: 0

@@ -1,0 +1,15 @@
+wearable:
+  head: true
+  body: true
+  cape: true
+  rightBiceps: true
+  rightForearm: true
+  rightHand: true
+  leftBiceps: true
+  leftForearm: true
+  leftHand: true
+statBonus:
+  dex: 2
+  con: 1
+armorType: LEATHER
+requiredLevel: 6

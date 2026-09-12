@@ -9,6 +9,7 @@ data class WeaponYamlEntry(
     val category: EquipmentCategory,
     val statBonus: StatBonus = StatBonus(),
     val rotate: Rotation = Rotation(),
+    val requiredLevel: Int = 1,
 )
 
 /**
@@ -21,4 +22,5 @@ data class WeaponYamlOverride(
     val category: EquipmentCategory? = null,
     val statBonus: StatBonus? = null,
     val rotate: Rotation? = null,
+    val requiredLevel: Int? = null,
 )

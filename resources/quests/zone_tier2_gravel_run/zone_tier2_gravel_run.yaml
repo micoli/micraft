@@ -1,0 +1,14 @@
+title: "Gravel Run"
+description: "The road crew needs gravel to repair the outer paths. Recommended for level 6 players."
+type: FETCH
+level: 6
+itemType: GRAVEL
+requiredCount: 15
+rewards:
+  xp: 500
+  items:
+    - type: COBBLESTONE
+      count: 10
+dependsOn: [zone_tier2_boars.yaml]
+repeatable: false
+cooldownSeconds: 0

@@ -20,3 +20,6 @@ tameable: false
 attacks:
   - attackId: sand_worm_burrow_slam
     level: 1
+armorLoot:
+  - armor: tier5_plate_leggings
+    dropRate: 8

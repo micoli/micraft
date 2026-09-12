@@ -1,0 +1,7 @@
+wearable:
+  head: true
+statBonus:
+  str: 1
+  con: 2
+armorType: MAIL
+requiredLevel: 11

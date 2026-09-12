@@ -590,6 +590,16 @@ sealed class ServerMessage {
         @EncodeDefault(ALWAYS) val active: Boolean = true,
         @EncodeDefault(ALWAYS) val hasTarget: Boolean = true,
     ) : ServerMessage()
+
+    /** Sent when interacting with a `quest_giver` NPC: what it can offer or take back. */
+    @ProtoId(89)
+    @Serializable
+    data class QuestGiverDialog(
+        val npcId: String,
+        val npcType: String,
+        val offerable: List<org.micoli.micraft.quest.QuestOfferSummary>,
+        val turnInable: List<String>,
+    ) : ServerMessage()
 }
 
 @Serializable

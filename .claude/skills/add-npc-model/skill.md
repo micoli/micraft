@@ -236,7 +236,10 @@ statsVariance,hpRegenPerSec,hungerRatePerDay,hungerThresholdToHunt,hungerThresho
 maxLocalDensity,densityRadius,fleeRadius,starvation*,gestation*}, pack{extendPackType,callRadius,
 relayHops,maxSize,minSizeToEngage,callCooldownSec,rallyTimeoutSec,chaseRadius,hostileTypes},
 hibernation, shopItems[{itemType,buyPrice,sellPrice}], loot[{item,dropRate,minCount,maxCount}],
-tameable, tameBaseChance`.
+tameable, tameBaseChance, offersQuests (quest ids, `behavior: quest_giver` only — one roster NPC
+per zone tier, auto-spawned one-per-zone-cell, never placed manually), armorLoot[{armor,dropRate}]
+(armor piece names from `resources/armors/`, capped 5 levels above this NPC's `maxLevel` by
+`NpcLootValidator`)`.
 
 **Enum-valued fields must be a real, currently-valid constant — never guessed.** `behavior`,
 `aggroMode`, `characterClass`, and `animal.diet` are all closed sets; an invalid string fails to
@@ -244,7 +247,7 @@ decode, and the loader swallows that failure into a `npcLog.warn` and silently d
 (no crash, no build error — it just never appears in `NPC registry loaded: N NPC types`, the exact
 kind of silent miss that's easy to lose an afternoon to). Current values as of this writing —
 **still grep the source before relying on them, they can change**:
-- `behavior`: `NpcBehaviorRegistry.keys()` in `server/src/main/kotlin/org/micoli/micraft/game/npc/NpcBehaviorRegistry.kt` — currently `static, random_movable, interactionable, animal, seller`
+- `behavior`: `NpcBehaviorRegistry.keys()` in `server/src/main/kotlin/org/micoli/micraft/game/npc/NpcBehaviorRegistry.kt` — currently `static, random_movable, interactionable, animal, seller, quest_giver`
 - `aggroMode`: enum `AggroMode` in `server/src/main/kotlin/org/micoli/micraft/game/npc/AggroMode.kt` — currently `AGGRESSIVE, PASSIVE, PASSIVE_COOPERATIVE`
 - `characterClass`: enum `CharacterClass` in `core/src/commonMain/kotlin/org/micoli/micraft/player/rpg/CharacterClass.kt` — currently `WARRIOR, MAGE, RANGER, ROGUE, CLERIC`
 - `animal.diet`: enum `NpcDiet` in `server/src/main/kotlin/org/micoli/micraft/game/npc/animal/NpcDiet.kt` — currently `HERBIVORE, CARNIVORE, OMNIVORE`

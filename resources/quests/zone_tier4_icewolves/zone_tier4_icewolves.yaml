@@ -1,0 +1,15 @@
+title: "Frost Pack"
+description: "Ice wolves have descended from the high peaks and are raiding mountain camps. Recommended for level 16 players."
+type: KILL
+level: 16
+objectives:
+  - npcType: ice_wolf
+    requiredCount: 10
+rewards:
+  xp: 1800
+  items:
+    - type: SNOWBALL
+      count: 20
+dependsOn: [zone_tier3_bandits.yaml]
+repeatable: false
+cooldownSeconds: 0

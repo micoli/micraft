@@ -13,6 +13,9 @@ spawn:
   maxTotal: 80
   minTotal: 50
 tameable: false
+armorLoot:
+  - armor: tier1_cloth_robe
+    dropRate: 10
 walkBoneAliases:
   rightArm: frontLegR
   leftArm: frontLegL

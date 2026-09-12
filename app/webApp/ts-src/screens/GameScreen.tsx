@@ -5,6 +5,7 @@ import { getStoredToken, getLastLang, getAccountEmail, getLastPlayer, getPlayerE
 import { GameLayout, ChannelSubscription } from "../game/types";
 import { NpcDialog } from "../game/components/npc/NpcDialog";
 import { NpcShopDialog } from "../game/components/npc/NpcShopDialog";
+import { NpcQuestDialog } from "../game/components/npc/NpcQuestDialog";
 import { LoadingOverlay } from "../game/overlays/LoadingOverlay";
 import { Preferences } from "../game/components/preferences/Preferences";
 import { HUD } from "../game/components/hud/HUD";
@@ -424,6 +425,16 @@ export function GameScreen() {
             ) : (
               <NpcDialog data={state.npcDialog} onClose={() => dispatch("npc_dialog_close")} />
             ))}
+          {state.questGiverDialog && (
+            <NpcQuestDialog
+              data={state.questGiverDialog}
+              onClose={() => dispatch("quest_giver_dialog_close")}
+              onAccept={(questId) => {
+                window.mcState.events.push(`cmd:/quest accept ${questId}`);
+                dispatch("quest_giver_dialog_close");
+              }}
+            />
+          )}
           {state.codexOpen && (
             <CodexModal
               open={state.codexOpen}

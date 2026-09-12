@@ -70,6 +70,8 @@ class NpcManager(
      */
     private var onNpcDamagedByNpc: (victim: NpcInstance, attacker: NpcInstance) -> Unit = { _, _ ->
     },
+    /** Quest manager for the quest-giver behavior's dialog. Null hosts get no quest offers. */
+    private val getQuestManager: () -> org.micoli.micraft.game.quest.QuestManager? = { null },
 ) {
     private val ctx: NpcTickContext
         get() = ctxOf()
@@ -573,7 +575,13 @@ class NpcManager(
 
     suspend fun handleInteract(session: PlayerSession, npcId: String) {
         val instance = npcs[npcId] ?: return
-        instance.definition.behavior.onInteract(instance, session, ctx) { msg -> session.send(msg) }
+        val interactCtx =
+            if (instance.definition.behaviorKey == "quest_giver")
+                ctx.copy(questManager = getQuestManager())
+            else ctx
+        instance.definition.behavior.onInteract(instance, session, interactCtx) { msg ->
+            session.send(msg)
+        }
     }
 
     fun getSellerItems(npcId: String): List<ShopItemEntry>? {
