@@ -577,6 +577,7 @@ sealed class ServerMessage {
      * (toggled by Alt+B / `/compass toggle`).
      */
     @ProtoId(88)
+    @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
     @Serializable
     data class CompassUpdate(
         val x: Float,
