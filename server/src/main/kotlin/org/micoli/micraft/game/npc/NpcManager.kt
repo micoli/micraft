@@ -237,7 +237,7 @@ class NpcManager(
         val headBlock =
             world.getBlock(
                 Math.floor(pos.x.toDouble()).toInt(),
-                Math.floor((pos.y + instance.definition.height - 0.1).toDouble()).toInt(),
+                Math.floor(pos.y + instance.definition.height - 0.1).toInt(),
                 Math.floor(pos.z.toDouble()).toInt(),
             )
         if (!headBlock.isLiquid) {

@@ -113,6 +113,15 @@ class GotoCommandTest {
     }
 
     @Test
+    fun questGiver_appearsInAutocompleteLabelledAndPrioritized() = runBlocking {
+        val npcManager =
+            testNpcManager("VILLAGER" to staticDef("VILLAGER").copy(behaviorKey = "quest_giver"))
+        npcManager.spawnNpc("Elder", "VILLAGER", Vec3(1f, 1f, 1f))
+        val result = cmd.completions(0, "Elder", testContext(npcManager = npcManager))
+        assertTrue(result.any { it.label == "Elder (quest giver)" && it.value == "Elder" })
+    }
+
+    @Test
     fun namedPoint_teleportsToPoint() = runBlocking {
         val session = testSession()
         val points = mapOf("cavern - forest_0" to Vec3(300f, 20f, 400f))

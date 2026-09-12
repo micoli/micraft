@@ -25,11 +25,18 @@ class GotoCommand : PluginCommand {
         session: PlayerSession?,
         context: CommandContext
     ): List<Completion> {
-        val npcs = context.npcManager?.getAll()?.map { it.state.name } ?: emptyList()
+        val liveNpcs = context.npcManager?.getAll()?.filterNot { it.isDead } ?: emptyList()
+        val questGivers =
+            liveNpcs
+                .filter { it.definition.behaviorKey == "quest_giver" }
+                .filter { it.state.name.contains(partial, ignoreCase = true) }
+                .map { Completion("${it.state.name} (quest giver)", it.state.name) }
+        val npcs =
+            liveNpcs.filterNot { it.definition.behaviorKey == "quest_giver" }.map { it.state.name }
         val named = context.namedPoints().keys.toList()
         val rest =
             (npcs + named).filter { it.contains(partial, ignoreCase = true) }.map { Completion(it) }
-        return context.playerCompletions(partial) + rest
+        return context.playerCompletions(partial) + questGivers + rest
     }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
