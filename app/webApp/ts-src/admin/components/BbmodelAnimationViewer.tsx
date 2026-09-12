@@ -178,9 +178,99 @@ function buildModel(
   return { root, pivotNodes, equippedWeapons: { LEFT: null, RIGHT: null }, equippedArmors: {} };
 }
 
+// Small height (Y) ticked scale gizmo (half-block graduations, 5-block arm), parented to the
+// model root so it spins and tilts along with it. Origin sits at ground level (model-local y=0,
+// behind and to the left of the model), running upward from there.
+// GL line width is ignored by most desktop browsers (always 1px), so whole-block ticks can't be
+// "thicker" than half-block ones by line width alone — they're drawn as thin cylinders instead.
+function quatFromTo(B: any, from: any, to: any): any {
+  const dot = B.Vector3.Dot(from, to);
+  if (dot > 0.9999) return B.Quaternion.Identity();
+  if (dot < -0.9999) {
+    let axis = B.Vector3.Cross(B.Axis.X, from);
+    if (axis.lengthSquared() < 1e-6) axis = B.Vector3.Cross(B.Axis.Y, from);
+    return B.Quaternion.RotationAxis(axis.normalize(), Math.PI);
+  }
+  return B.Quaternion.RotationAxis(B.Vector3.Cross(from, to).normalize(), Math.acos(dot));
+}
+
+function buildAxesGizmo(B: any, scene: any, parent: any): any {
+  const LENGTH = 5;
+  const TICK_SPACING = 0.5;
+  const TICK_SIZE = 0.04;
+  const WHOLE_TICK_DIAMETER = 0.03;
+
+  const gizmo = new B.TransformNode("axesGizmo", scene);
+  gizmo.parent = parent;
+  gizmo.position = new B.Vector3(-0.8, 0, -0.8);
+
+  const axisDefs: Array<{ dir: [number, number, number]; color: any; tickDir: [number, number, number] }> = [
+    { dir: [0, 1, 0], color: new B.Color3(0.3, 0.65, 0.35), tickDir: [1, 0, 0] },
+  ];
+
+  for (const { dir, color, tickDir } of axisDefs) {
+    const [dx, dy, dz] = dir;
+    const [tx, ty, tz] = tickDir;
+    const tickAxis = new B.Vector3(tx, ty, tz);
+    const lines: any[] = [[new B.Vector3(0, 0, 0), new B.Vector3(dx * LENGTH, dy * LENGTH, dz * LENGTH)]];
+
+    let mat: any = null;
+    for (let m = TICK_SPACING; m <= LENGTH + 1e-6; m += TICK_SPACING) {
+      const center = new B.Vector3(dx * m, dy * m, dz * m);
+      const isWholeBlock = Math.abs(Math.round(m) - m) < 1e-6;
+      if (isWholeBlock) {
+        if (!mat) {
+          mat = new B.StandardMaterial(`axesGizmoMat_${dx}_${dy}_${dz}`, scene);
+          mat.emissiveColor = color;
+          mat.disableLighting = true;
+        }
+        const tick = B.MeshBuilder.CreateCylinder(
+          `axesGizmoTick_${dx}_${dy}_${dz}_${m}`,
+          { height: TICK_SIZE * 2, diameter: WHOLE_TICK_DIAMETER, tessellation: 6 },
+          scene,
+        );
+        tick.material = mat;
+        tick.position = center;
+        tick.rotationQuaternion = quatFromTo(B, B.Axis.Y, tickAxis);
+        tick.isPickable = false;
+        tick.parent = gizmo;
+      } else {
+        const offset = new B.Vector3(tx * TICK_SIZE, ty * TICK_SIZE, tz * TICK_SIZE);
+        lines.push([center.subtract(offset), center.add(offset)]);
+      }
+    }
+    const mesh = B.MeshBuilder.CreateLineSystem(`axesGizmo_${dx}_${dy}_${dz}`, { lines }, scene);
+    mesh.color = color;
+    mesh.isPickable = false;
+    mesh.parent = gizmo;
+  }
+  return gizmo;
+}
+
+// Virtual floor grid at model-local y=0, quarter-block cells, translucent gray. Parented to the
+// model root so it spins/tilts along with it, same as the axes gizmo.
+function buildGroundGrid(B: any, scene: any, parent: any): any {
+  const HALF_EXTENT = 5;
+  const CELL = 0.25;
+
+  const lines: any[] = [];
+  for (let i = -HALF_EXTENT; i <= HALF_EXTENT + 1e-6; i += CELL) {
+    lines.push([new B.Vector3(i, 0, -HALF_EXTENT), new B.Vector3(i, 0, HALF_EXTENT)]);
+    lines.push([new B.Vector3(-HALF_EXTENT, 0, i), new B.Vector3(HALF_EXTENT, 0, i)]);
+  }
+  const mesh = B.MeshBuilder.CreateLineSystem("groundGrid", { lines }, scene);
+  // alpha and visibility both scale opacity multiplicatively — only alpha is used here so the
+  // grid stays faint but actually visible (stacking both drove it down to ~0.003, invisible).
+  mesh.color = new B.Color3(0.35, 0.35, 0.35);
+  mesh.alpha = 0.2;
+  mesh.isPickable = false;
+  mesh.parent = parent;
+  return mesh;
+}
+
 const DEG = Math.PI / 180;
 const MIN_RADIUS = 1.0;
-const MAX_RADIUS = 8.0;
+const MAX_RADIUS = 16.0;
 const WHEEL_ZOOM_STEP = 0.06;
 const BUTTON_ZOOM_STEP = 0.3;
 const MIN_DIM = 100;
@@ -194,6 +284,7 @@ export function BbmodelAnimationViewer({
   paused = false,
   initialZoom,
   initialAngle,
+  angle = null,
   onCameraChange,
   rightHandItem = null,
   leftHandItem = null,
@@ -202,17 +293,34 @@ export function BbmodelAnimationViewer({
   armors = [],
   standaloneItem = false,
   npcWalkAliases,
+  showAxes = false,
+  showGround = false,
+  hideUI = false,
+  background = true,
   width = 200,
   height = 280,
 }: {
   bbmodel: BbModel | null;
   animFullName: string;
   paused?: boolean;
+  // Shows a red/green/blue X/Y/Z axes gizmo next to the model.
+  showAxes?: boolean;
+  // Shows a translucent quarter-block floor grid at world y=0.
+  showGround?: boolean;
+  // Hides the zoom buttons, resize handle and ortho-view buttons — just the model + drag/wheel
+  // interaction. For embedding the raw preview (e.g. a Storybook screenshot) without the chrome.
+  hideUI?: boolean;
+  // true (default) = opaque dark canvas background; false = transparent (for compositing over
+  // another background, e.g. a doc page).
+  background?: boolean;
   // Standard walk bone -> real bbmodel bone, for the synthetic "npc_walk" animation.
   npcWalkAliases?: Record<string, string>;
   // Camera radius (zoom) and model spin angle (radians) to restore on mount.
   initialZoom?: number;
   initialAngle?: number;
+  // Fixes the model's yaw and disables the auto-rotate spin entirely (unlike initialAngle, which
+  // only seeds the starting angle — auto-rotate still kicks in after the idle timeout).
+  angle?: number | null;
   // Fired after a user interaction changes zoom and/or angle, so the caller can persist it.
   onCameraChange?: (zoom: number, angle: number) => void;
   rightHandItem?: string | null;
@@ -232,8 +340,18 @@ export function BbmodelAnimationViewer({
   const engineRef = useRef<any>(null);
   const cameraRef = useRef<any>(null);
   // Set inside the scene effect below; lets the ortho-view buttons drive the camera/model yaw
-  // from outside the closure that owns `angle`/`autoRotate`.
+  // from outside the closure that owns `yaw`/`autoRotate`.
   const setOrthoViewRef = useRef<((view: OrthoView) => void) | null>(null);
+  // Lets the showAxes-toggle effect below drive the axes gizmo from outside the closure that
+  // owns the scene/axesViewer, the same pattern as setOrthoViewRef.
+  const setAxesVisibleRef = useRef<((visible: boolean) => void) | null>(null);
+  useEffect(() => {
+    setAxesVisibleRef.current?.(showAxes);
+  }, [showAxes]);
+  const setGroundVisibleRef = useRef<((visible: boolean) => void) | null>(null);
+  useEffect(() => {
+    setGroundVisibleRef.current?.(showGround);
+  }, [showGround]);
   // User-driven resize via the bottom-right handle overrides the width/height props; reset
   // whenever the caller passes new props (e.g. switching to a differently-shaped preview).
   const [size, setSize] = useState({ width, height });
@@ -272,7 +390,7 @@ export function BbmodelAnimationViewer({
   useEffect(() => {
     engineRef.current?.resize();
   }, [size.width, size.height]);
-  const angleRef = useRef(initialAngle ?? 0);
+  const angleRef = useRef(angle ?? initialAngle ?? 0);
   const animRef = useRef(animFullName);
   const pausedRef = useRef(paused);
   const npcWalkAliasesRef = useRef(npcWalkAliases);
@@ -304,6 +422,8 @@ export function BbmodelAnimationViewer({
     pausedRef.current = paused;
   }, [paused]);
 
+  const armorsKey = armors.join(",");
+
   useEffect(() => {
     if (!bbmodel) return;
     const canvas = canvasRef.current;
@@ -318,7 +438,11 @@ export function BbmodelAnimationViewer({
         if (disposed) return;
         const B = (window as any).BABYLON;
 
-        const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, antialias: true });
+        const engine = new B.Engine(canvas, true, {
+          preserveDrawingBuffer: true,
+          antialias: true,
+          alpha: !background,
+        });
         const scene = new B.Scene(engine);
         scene.clearColor = new B.Color4(0.08, 0.08, 0.08, 0);
         const camera = new B.ArcRotateCamera(
@@ -330,6 +454,10 @@ export function BbmodelAnimationViewer({
           scene,
         );
         camera.inputs.clear();
+        // Babylon's default minZ (~1) sits at or past MIN_RADIUS for a small/close-up model —
+        // the near clip plane then cuts through the geometry near its center, exposing the far
+        // inner (back-culling-disabled) faces instead of the model's outside.
+        camera.minZ = 0.01;
         cameraRef.current = camera;
         const light = new B.HemisphericLight("light", new B.Vector3(1, 2, 0.5), scene);
         light.intensity = 1.1;
@@ -346,42 +474,112 @@ export function BbmodelAnimationViewer({
         }
         armors.forEach((a) => window.mc.attachArmor?.(model as unknown as McPlayerModel, a, scene));
 
+        // Fit the camera to the model's actual bounds instead of a fixed target/radius tuned for
+        // player-sized skins — otherwise a much taller or wider NPC gets cropped by the viewport.
+        // Also re-root the spin/tilt rotation on the model's own bounding-box center: many NPC
+        // bbmodels aren't authored centered on (0,0) horizontally, so spinning model.root in place
+        // would otherwise swing the whole body off-center as it rotates.
+        let spinPivot = model.root;
+        if (!standaloneItem) {
+          // false = recurse through the group-node hierarchy, not just direct children (which are
+          // TransformNodes for the bbmodel's groups, not meshes).
+          const meshes = model.root.getChildMeshes(false);
+          meshes.forEach((m: any) => m.computeWorldMatrix(true));
+          let minX = Infinity,
+            maxX = -Infinity,
+            minY = Infinity,
+            maxY = -Infinity,
+            minZ = Infinity,
+            maxZ = -Infinity;
+          for (const m of meshes) {
+            const bb = m.getBoundingInfo().boundingBox;
+            minX = Math.min(minX, bb.minimumWorld.x);
+            maxX = Math.max(maxX, bb.maximumWorld.x);
+            minY = Math.min(minY, bb.minimumWorld.y);
+            maxY = Math.max(maxY, bb.maximumWorld.y);
+            minZ = Math.min(minZ, bb.minimumWorld.z);
+            maxZ = Math.max(maxZ, bb.maximumWorld.z);
+          }
+          if (meshes.length > 0) {
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+            const centerZ = (minZ + maxZ) / 2;
+
+            spinPivot = new B.TransformNode("spinPivot", scene);
+            spinPivot.position = new B.Vector3(centerX, 0, centerZ);
+            model.root.parent = spinPivot;
+            model.root.position.x -= centerX;
+            model.root.position.z -= centerZ;
+
+            camera.target.x = centerX;
+            camera.target.y = centerY;
+            camera.target.z = centerZ;
+
+            if (initialZoom === undefined) {
+              // camera.fov is vertical; a wide/deep model (e.g. an elephant) needs the horizontal
+              // fov derived from the canvas aspect ratio, or it gets cropped left/right even
+              // though its height fits fine.
+              const halfHeight = Math.max((maxY - minY) / 2, 0.1);
+              const halfWidth = Math.max((maxX - minX) / 2, (maxZ - minZ) / 2, 0.1);
+              const vFov = camera.fov ?? 0.8;
+              const aspect = aspectRef.current || 1;
+              const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
+              const radiusForHeight = halfHeight / Math.sin(vFov / 2);
+              const radiusForWidth = halfWidth / Math.sin(hFov / 2);
+              const fitRadius = Math.max(radiusForHeight, radiusForWidth) * 1.15;
+              camera.radius = Math.min(MAX_RADIUS, Math.max(MIN_RADIUS, fitRadius));
+            }
+          }
+        }
+
         const uuidToName: Record<string, string> = {};
         bbmodel.groups.forEach((g: any) => {
           uuidToName[g.uuid] = g.name;
         });
 
-        let angle = angleRef.current,
-          autoRotate = initialAngle === undefined,
+        // Renamed from the prop-shadowing "angle" — this tracks the live yaw each frame.
+        let yaw = angleRef.current,
+          autoRotate = angle == null && initialAngle === undefined,
           lastInteraction = 0;
         let isDragging = false,
+          isRotateDrag = false,
           dragStartX = 0,
           dragStartY = 0,
           dragStartAngle = 0,
           dragStartHeight = 0,
-          heightOffset = 0;
+          dragStartPitch = 0,
+          heightOffset = 0,
+          pitch = 0;
         let wheelDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
         const onMouseDown = (e: MouseEvent) => {
           isDragging = true;
+          isRotateDrag = e.shiftKey;
           dragStartX = e.clientX;
           dragStartY = e.clientY;
-          dragStartAngle = angle;
+          dragStartAngle = yaw;
           dragStartHeight = heightOffset;
+          dragStartPitch = pitch;
           lastInteraction = Date.now();
           autoRotate = false;
-          overlay.style.cursor = "grabbing";
+          overlay.style.cursor = isRotateDrag ? "alias" : "grabbing";
         };
         const onMouseMove = (e: MouseEvent) => {
           if (!isDragging) return;
-          angle = dragStartAngle - (e.clientX - dragStartX) * 0.02;
-          // Dragging up moves the model up (screen Y decreases while moving up).
-          heightOffset = dragStartHeight - (e.clientY - dragStartY) * 0.02;
-          model.root.position.y = heightOffset;
+          yaw = dragStartAngle - (e.clientX - dragStartX) * 0.02;
+          if (isRotateDrag) {
+            // Shift + drag: vertical movement rotates the model instead of moving it.
+            pitch = dragStartPitch - (e.clientY - dragStartY) * 0.02;
+            spinPivot.rotation.x = pitch;
+          } else {
+            // Dragging up moves the model up (screen Y decreases while moving up).
+            heightOffset = dragStartHeight - (e.clientY - dragStartY) * 0.02;
+            model.root.position.y = heightOffset;
+          }
           lastInteraction = Date.now();
         };
         const onMouseUp = () => {
-          if (isDragging) onCameraChangeRef.current?.(camera.radius, angle);
+          if (isDragging) onCameraChangeRef.current?.(camera.radius, yaw);
           isDragging = false;
           lastInteraction = Date.now();
           overlay.style.cursor = "grab";
@@ -393,7 +591,7 @@ export function BbmodelAnimationViewer({
           zoomBy(Math.sign(e.deltaY) * WHEEL_ZOOM_STEP);
           if (wheelDebounceTimer) clearTimeout(wheelDebounceTimer);
           wheelDebounceTimer = setTimeout(() => {
-            onCameraChangeRef.current?.(camera.radius, angle);
+            onCameraChangeRef.current?.(camera.radius, yaw);
           }, 250);
         };
         overlay.addEventListener("mousedown", onMouseDown);
@@ -427,10 +625,11 @@ export function BbmodelAnimationViewer({
         }
 
         scene.onBeforeRenderObservable.add(() => {
-          if (autoRotate && !pausedRef.current) angle += 0.015;
-          else if (!pausedRef.current && Date.now() - lastInteraction > 30000) autoRotate = true;
-          model.root.rotation.y = angle;
-          angleRef.current = angle;
+          if (autoRotate && !pausedRef.current) yaw += 0.015;
+          // A fixed `angle` prop keeps the model still forever — no resuming spin after idle.
+          else if (angle == null && !pausedRef.current && Date.now() - lastInteraction > 30000) autoRotate = true;
+          spinPivot.rotation.y = yaw;
+          angleRef.current = yaw;
 
           for (const boneName of Object.keys(model.pivotNodes)) {
             const entry = model.pivotNodes[boneName];
@@ -494,14 +693,36 @@ export function BbmodelAnimationViewer({
           }
         });
 
+        let axesGizmo: any = null;
+        setAxesVisibleRef.current = (visible: boolean) => {
+          if (visible && !axesGizmo) {
+            axesGizmo = buildAxesGizmo(B, scene, model.root);
+          } else if (!visible && axesGizmo) {
+            axesGizmo.dispose();
+            axesGizmo = null;
+          }
+        };
+        setAxesVisibleRef.current(showAxes);
+
+        let groundGrid: any = null;
+        setGroundVisibleRef.current = (visible: boolean) => {
+          if (visible && !groundGrid) {
+            groundGrid = buildGroundGrid(B, scene, model.root);
+          } else if (!visible && groundGrid) {
+            groundGrid.dispose();
+            groundGrid = null;
+          }
+        };
+        setGroundVisibleRef.current(showGround);
+
         setOrthoViewRef.current = (view: OrthoView) => {
           autoRotate = false;
           lastInteraction = Date.now();
           camera.alpha = -Math.PI / 2;
-          [angle, camera.beta] = ORTHO_YAW[view];
-          model.root.rotation.y = angle;
-          angleRef.current = angle;
-          onCameraChangeRef.current?.(camera.radius, angle);
+          [yaw, camera.beta] = ORTHO_YAW[view];
+          spinPivot.rotation.y = yaw;
+          angleRef.current = yaw;
+          onCameraChangeRef.current?.(camera.radius, yaw);
         };
 
         engine.runRenderLoop(() => scene.render());
@@ -509,9 +730,11 @@ export function BbmodelAnimationViewer({
 
         if (disposed) {
           removeListeners?.();
-          model.root.getChildMeshes(true).forEach((m: any) => m.dispose());
+          axesGizmo?.dispose();
+          groundGrid?.dispose();
+          spinPivot.getChildMeshes(false).forEach((m: any) => m.dispose());
           Object.values(model.pivotNodes).forEach((p: any) => (p as any).node.dispose());
-          model.root.dispose();
+          spinPivot.dispose();
           engine.dispose();
           engineRef.current = null;
         }
@@ -523,6 +746,8 @@ export function BbmodelAnimationViewer({
       removeListeners?.();
       cameraRef.current = null;
       setOrthoViewRef.current = null;
+      setAxesVisibleRef.current = null;
+      setGroundVisibleRef.current = null;
       if (engineRef.current) {
         engineRef.current.dispose();
         engineRef.current = null;
@@ -532,7 +757,7 @@ export function BbmodelAnimationViewer({
     // including them would rebuild (and visibly reset/jump) the scene on every camera-change
     // persist round-trip, since that round-trip changes the URL these props are derived from.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bbmodel, rightHandItem, leftHandItem, rightHandRotate, leftHandRotate, standaloneItem, armors.join(",")]);
+  }, [bbmodel, rightHandItem, leftHandItem, rightHandRotate, leftHandRotate, standaloneItem, armorsKey, background]);
 
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
@@ -540,58 +765,78 @@ export function BbmodelAnimationViewer({
         ref={canvasRef}
         width={size.width * 2}
         height={size.height * 2}
-        style={{ display: "block", width: size.width, height: size.height, borderRadius: 6, background: "#0e1726" }}
+        style={{
+          display: "block",
+          width: size.width,
+          height: size.height,
+          borderRadius: 6,
+          background: background ? "#0e1726" : "transparent",
+        }}
       />
       <div
         ref={overlayRef}
         style={{ position: "absolute", inset: 0, cursor: "grab", userSelect: "none", borderRadius: 6 }}
       />
-      <div style={{ position: "absolute", top: 6, right: 6, display: "flex", flexDirection: "column", gap: 4 }}>
-        <button type="button" onClick={() => zoomBy(-BUTTON_ZOOM_STEP)} style={zoomButtonStyle} aria-label="Zoom in">
-          +
-        </button>
-        <button type="button" onClick={() => zoomBy(BUTTON_ZOOM_STEP)} style={zoomButtonStyle} aria-label="Zoom out">
-          −
-        </button>
-      </div>
-      <div
-        onPointerDown={onResizePointerDown}
-        onPointerMove={onResizePointerMove}
-        onPointerUp={onResizePointerUp}
-        style={resizeHandleStyle}
-        aria-label="Resize preview"
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: 6,
-          left: 6,
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 4,
-          width: 48,
-        }}
-      >
-        <div>
-          <OrthoViewButton view={"T"} setOrthoViewRef={setOrthoViewRef} />
-        </div>
-        <div>
-          <OrthoViewButton view={"N"} setOrthoViewRef={setOrthoViewRef} />
-        </div>
-        <div>
-          <OrthoViewButton view={"B"} setOrthoViewRef={setOrthoViewRef} />
-        </div>
+      {!hideUI && (
+        <>
+          <div style={{ position: "absolute", top: 6, right: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+            <button
+              type="button"
+              onClick={() => zoomBy(-BUTTON_ZOOM_STEP)}
+              style={zoomButtonStyle}
+              aria-label="Zoom in"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              onClick={() => zoomBy(BUTTON_ZOOM_STEP)}
+              style={zoomButtonStyle}
+              aria-label="Zoom out"
+            >
+              −
+            </button>
+          </div>
+          <div
+            onPointerDown={onResizePointerDown}
+            onPointerMove={onResizePointerMove}
+            onPointerUp={onResizePointerUp}
+            style={resizeHandleStyle}
+            aria-label="Resize preview"
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: 6,
+              left: 6,
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 4,
+              width: 48,
+            }}
+          >
+            <div>
+              <OrthoViewButton view={"T"} setOrthoViewRef={setOrthoViewRef} />
+            </div>
+            <div>
+              <OrthoViewButton view={"N"} setOrthoViewRef={setOrthoViewRef} />
+            </div>
+            <div>
+              <OrthoViewButton view={"B"} setOrthoViewRef={setOrthoViewRef} />
+            </div>
 
-        <div>
-          <OrthoViewButton view={"W"} setOrthoViewRef={setOrthoViewRef} />
-        </div>
-        <div>
-          <OrthoViewButton view={"S"} setOrthoViewRef={setOrthoViewRef} />
-        </div>
-        <div>
-          <OrthoViewButton view={"E"} setOrthoViewRef={setOrthoViewRef} />
-        </div>
-      </div>
+            <div>
+              <OrthoViewButton view={"W"} setOrthoViewRef={setOrthoViewRef} />
+            </div>
+            <div>
+              <OrthoViewButton view={"S"} setOrthoViewRef={setOrthoViewRef} />
+            </div>
+            <div>
+              <OrthoViewButton view={"E"} setOrthoViewRef={setOrthoViewRef} />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

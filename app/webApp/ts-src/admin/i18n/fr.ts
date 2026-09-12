@@ -321,6 +321,8 @@ export const fr: Record<TranslationKey, string> = {
   "administration.speed": "Vitesse",
   "administration.autoSpawn": "Auto-spawn",
   "administration.selectNpcType": "Sélectionner un type de NPC",
+  "administration.showAxes": "Afficher l'échelle",
+  "administration.showGround": "Afficher le quadrillage du sol",
   "administration.reloadNpcTypes": "Recharger les modèles",
   "administration.reloadNpcTypesDone": "{0} types de NPC rechargés",
   "administration.reloadNpcTypesFailed": "Échec du rechargement des NPC",

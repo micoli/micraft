@@ -326,6 +326,8 @@ export const en = {
   "administration.speed": "Speed",
   "administration.autoSpawn": "Auto-spawn",
   "administration.selectNpcType": "Select an NPC type",
+  "administration.showAxes": "Show scale",
+  "administration.showGround": "Show ground grid",
   "administration.reloadNpcTypes": "Reload models",
   "administration.reloadNpcTypesDone": "Reloaded {0} NPC types",
   "administration.reloadNpcTypesFailed": "NPC reload failed",

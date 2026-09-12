@@ -13,6 +13,9 @@ type BestiaryTabProps = {
   onSelectKey: (key: string | null) => void;
 };
 
+const SHOW_AXES_STORAGE_KEY = "admin.bestiary.showAxes";
+const SHOW_GROUND_STORAGE_KEY = "admin.bestiary.showGround";
+
 export function BestiaryTab({ selectedKey, onSelectKey }: BestiaryTabProps) {
   const t = useT();
   const [types, setTypes] = useState<Record<string, NpcTypeDto>>({});
@@ -84,11 +87,24 @@ export function BestiaryTab({ selectedKey, onSelectKey }: BestiaryTabProps) {
   }, [entries, selectedKey, onSelectKey]);
 
   const [selectedAnim, setSelectedAnim] = useState<string | null>(null);
+  const [showAxes, setShowAxes] = useState(() => localStorage.getItem(SHOW_AXES_STORAGE_KEY) === "1");
+  const [showGround, setShowGround] = useState(() => localStorage.getItem(SHOW_GROUND_STORAGE_KEY) === "1");
+
+  const toggleShowAxes = useCallback((value: boolean) => {
+    setShowAxes(value);
+    localStorage.setItem(SHOW_AXES_STORAGE_KEY, value ? "1" : "0");
+  }, []);
+  const toggleShowGround = useCallback((value: boolean) => {
+    setShowGround(value);
+    localStorage.setItem(SHOW_GROUND_STORAGE_KEY, value ? "1" : "0");
+  }, []);
   const anims = useMemo(() => (bbmodel ? animationsFromBbmodel(bbmodel) : []), [bbmodel]);
 
   useEffect(() => {
-    if (anims.length > 0) setSelectedAnim(anims[0].fullName);
-    else setSelectedAnim(null);
+    setSelectedAnim((current) => {
+      if (current && anims.some((a) => a.fullName === current)) return current;
+      return anims.length > 0 ? anims[0].fullName : null;
+    });
   }, [anims]);
 
   return (
@@ -127,6 +143,8 @@ export function BestiaryTab({ selectedKey, onSelectKey }: BestiaryTabProps) {
                 bbmodel={bbmodel}
                 animFullName={selectedAnim ?? ""}
                 npcWalkAliases={selected.dto.walkBoneAliases}
+                showAxes={showAxes}
+                showGround={showGround}
                 width={360}
                 height={460}
               />
@@ -143,6 +161,16 @@ export function BestiaryTab({ selectedKey, onSelectKey }: BestiaryTabProps) {
                   ))}
                 </select>
               )}
+              <div className="mt-2 flex items-center gap-4">
+                <label className="flex items-center gap-2 text-xs text-[#8A99AF]">
+                  <input type="checkbox" checked={showAxes} onChange={(e) => toggleShowAxes(e.target.checked)} />
+                  {t("administration.showAxes")}
+                </label>
+                <label className="flex items-center gap-2 text-xs text-[#8A99AF]">
+                  <input type="checkbox" checked={showGround} onChange={(e) => toggleShowGround(e.target.checked)} />
+                  {t("administration.showGround")}
+                </label>
+              </div>
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-white font-semibold text-base mb-4">{selected.name}</h2>
