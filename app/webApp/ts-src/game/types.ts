@@ -77,6 +77,20 @@ export interface NpcDialogData {
   shopItems?: ShopItemData[];
 }
 
+export interface QuestOfferSummary {
+  id: string;
+  title: string;
+  description: string;
+  level: number;
+}
+
+export interface QuestGiverDialogData {
+  npcId: string;
+  npcType: string;
+  offerable: QuestOfferSummary[];
+  turnInable: string[];
+}
+
 export interface ActionBlockHudData {
   name: string;
   values: Record<string, string>;
