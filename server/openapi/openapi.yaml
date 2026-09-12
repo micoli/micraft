@@ -4254,14 +4254,30 @@ components:
     org.micoli.micraft.game.armor.ArmorDefinition:
       type: object
       properties:
+        armorType:
+          $ref: "#/components/schemas/org.micoli.micraft.game.armor.ArmorType"
+        requiredLevel:
+          type: integer
+          format: int32
+          title: Int
         statBonus:
           $ref: "#/components/schemas/org.micoli.micraft.game.rpg.StatBonus"
         wearable:
           $ref: "#/components/schemas/org.micoli.micraft.game.armor.WearableSlots"
       required:
+      - armorType
+      - requiredLevel
       - statBonus
       - wearable
       title: ArmorDefinition
+    org.micoli.micraft.game.armor.ArmorType:
+      type: string
+      enum:
+      - CLOTH
+      - LEATHER
+      - MAIL
+      - PLATE
+      title: ArmorType
     org.micoli.micraft.game.rpg.StatBonus:
       type: object
       properties:
@@ -4372,12 +4388,17 @@ components:
       properties:
         category:
           $ref: "#/components/schemas/org.micoli.micraft.game.world.EquipmentCategory"
+        requiredLevel:
+          type: integer
+          format: int32
+          title: Int
         rotate:
           $ref: "#/components/schemas/org.micoli.micraft.game.equipment.Rotation"
         statBonus:
           $ref: "#/components/schemas/org.micoli.micraft.game.rpg.StatBonus"
       required:
       - category
+      - requiredLevel
       - rotate
       - statBonus
       title: WeaponDefinition

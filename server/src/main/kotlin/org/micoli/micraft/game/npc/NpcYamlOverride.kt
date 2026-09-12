@@ -41,4 +41,6 @@ data class NpcYamlOverride(
     val tameable: Boolean? = null,
     val tameBaseChance: Float? = null,
     val movementMode: List<MovementMode>? = null,
+    val offersQuests: List<String>? = null,
+    val armorLoot: List<org.micoli.micraft.game.armor.ArmorDropEntry>? = null,
 )

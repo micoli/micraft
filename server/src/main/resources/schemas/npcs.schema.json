@@ -10,7 +10,8 @@
         "random_movable",
         "interactionable",
         "animal",
-        "seller"
+        "seller",
+        "quest_giver"
       ]
     },
     "width": {
@@ -456,6 +457,12 @@
           "SWIMMING",
           "FLYING"
         ]
+      }
+    },
+    "offersQuests": {
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     }
   }

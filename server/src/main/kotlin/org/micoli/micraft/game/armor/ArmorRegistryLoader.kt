@@ -14,7 +14,11 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger(ArmorRegistryLoader::class.java)
 
 private fun ArmorYamlEntry.applyOverride(o: ArmorYamlOverride) =
-    copy(wearable = o.wearable ?: wearable, statBonus = o.statBonus ?: statBonus)
+    copy(
+        wearable = o.wearable ?: wearable,
+        statBonus = o.statBonus ?: statBonus,
+        armorType = o.armorType ?: armorType,
+        requiredLevel = o.requiredLevel ?: requiredLevel)
 
 class ArmorRegistryLoader(
     private val armorsPath: Path = org.micoli.micraft.config.ConfigPaths.resourcesDir("armors"),
@@ -79,7 +83,10 @@ class ArmorRegistryLoader(
                                 } else entry
                             name to
                                 ArmorDefinition(
-                                    wearable = merged.wearable, statBonus = merged.statBonus)
+                                    wearable = merged.wearable,
+                                    statBonus = merged.statBonus,
+                                    armorType = merged.armorType,
+                                    requiredLevel = merged.requiredLevel)
                         }
                 }
                 .toMap()

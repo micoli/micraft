@@ -195,6 +195,12 @@ fun buildGameWorld(
                     experienceProcessor.onNpcKilled(npc)
                     questManager.onNpcKilled(npc)
                     worldItems.spawnNpcLoot(npc.state.pos, npc.definition.loot)
+                    org.micoli.micraft.game.armor.ArmorLootGranter.grant(
+                        npc,
+                        shared.armorRegistry,
+                        sessions::all,
+                        playerPersister::save,
+                        shared.i18n)
                 }
             },
             broadcastCombatLog = combatLog,
@@ -202,6 +208,7 @@ fun buildGameWorld(
                 experienceProcessor.grantXpToNpcForKill(predator, prey)
             },
             canSpawn = { opts.npcAutoSpawn },
+            getQuestManager = { questManager },
         )
     val hooks = opts.npcHooksDecorator(baseHooks)
     val npcSubsystemFactory =

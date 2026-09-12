@@ -11,4 +11,6 @@ import org.micoli.micraft.game.rpg.StatBonus
 data class ArmorYamlOverride(
     val wearable: WearableSlots? = null,
     val statBonus: StatBonus? = null,
+    val armorType: ArmorType? = null,
+    val requiredLevel: Int? = null,
 )

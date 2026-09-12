@@ -188,7 +188,11 @@ Voir `SECURITY.md`. Règles :
 - GitHub Actions épinglées au SHA de commit ; Dependabot (`.github/dependabot.yml`) gère les bumps.
 
 ## Zone/npc tier per skill level
-Skill level → zone tier mapping for future zone-tiered entities:
+Skill level → zone tier mapping, implemented as `core/.../game/world/ZoneTier.kt`
+(`ZoneTier.fromZoneLevel`), a pure mapping over `WorldState.zoneLevelAt` (distance-to-spawn based).
+Consumed by `NpcSpawnConfig.minZoneTier`/`maxZoneTier`-equivalent filtering (existing
+`NpcDefinition.minLevel`/`maxLevel` against `zoneLevelAt`) and by `QuestGiverSpawner` to pick the
+right quest-giver NPC per zone cell:
 
 | skill level | npc/zone level |
 |-------------|----------------|

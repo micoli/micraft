@@ -7,4 +7,6 @@ import org.micoli.micraft.game.rpg.StatBonus
 data class ArmorDefinition(
     val wearable: WearableSlots = WearableSlots(),
     val statBonus: StatBonus = StatBonus(),
+    val armorType: ArmorType = ArmorType.CLOTH,
+    val requiredLevel: Int = 1,
 )

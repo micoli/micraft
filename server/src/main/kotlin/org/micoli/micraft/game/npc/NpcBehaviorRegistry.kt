@@ -2,6 +2,7 @@ package org.micoli.micraft.game.npc
 
 import org.micoli.micraft.game.npc.animal.AnimalNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.InteractionableNpcBehavior
+import org.micoli.micraft.game.npc.behaviors.QuestGiverNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.SellerNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.StaticNpcBehavior
@@ -14,6 +15,7 @@ object NpcBehaviorRegistry {
             "interactionable" to InteractionableNpcBehavior(),
             "animal" to AnimalNpcBehavior(),
             "seller" to SellerNpcBehavior(),
+            "quest_giver" to QuestGiverNpcBehavior(),
         )
 
     fun get(key: String): NpcBehavior = behaviors[key] ?: error("Unknown NPC behavior: '$key'")

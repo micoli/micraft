@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.npc
 
+import org.micoli.micraft.game.armor.ArmorDropEntry
 import org.micoli.micraft.game.npc.animal.AnimalYamlEntry
 import org.micoli.micraft.game.npc.pack.PackConfig
 import org.micoli.micraft.game.world.block.DropEntry
@@ -36,6 +37,13 @@ data class NpcDefinition(
     val loot: List<DropEntry> = emptyList(),
     val tameable: Boolean = false,
     val tameBaseChance: Float = 0.5f,
+    /** Quest ids a `quest_giver` behavior NPC can offer. Ignored by every other behavior. */
+    val offersQuests: List<String> = emptyList(),
+    /**
+     * Armor pieces this NPC may drop on death — capped 5 levels above [maxLevel], see
+     * NpcLootValidator.
+     */
+    val armorLoot: List<ArmorDropEntry> = emptyList(),
     /** How this NPC moves — see [MovementMode]. Defaults to a plain land walker. */
     val movementMode: List<MovementMode> = listOf(MovementMode.WALKING),
 ) {

@@ -48,6 +48,8 @@ data class NpcSubsystemHooks(
     val canSpawn: () -> Boolean = { true },
     val onAnimalEvent: (AnimalEvent) -> Unit = {},
     val onPackEvent: (PackEvent) -> Unit = {},
+    /** Quest manager for the quest-giver behavior's dialog. Null hosts get no quest offers. */
+    val getQuestManager: () -> org.micoli.micraft.game.quest.QuestManager? = { null },
 )
 
 /** The wired NPC subsystem. Held together so a host cannot keep half of it. */
@@ -90,9 +92,12 @@ class NpcSubsystemFactory(
             broadcastCombatLog = hooks.broadcastCombatLog,
             grantNpcKillXp = hooks.grantNpcKillXp,
             ctxOf = hooks.ctxOf,
+            getQuestManager = hooks.getQuestManager,
         )
 
     val npcSpawner: NpcSpawner = NpcSpawner()
+
+    val questGiverSpawner: QuestGiverSpawner = QuestGiverSpawner()
 
     val gameTimeService: GameTimeService = GameTimeService(gameDayDurationSecondsOf)
 
@@ -144,6 +149,7 @@ class NpcSubsystemFactory(
                     pets = petCoordinator,
                     ctxOf = hooks.ctxOf,
                     canSpawn = hooks.canSpawn,
+                    questGiverSpawner = questGiverSpawner,
                 ),
         )
     }

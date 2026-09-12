@@ -60,6 +60,7 @@ import org.micoli.micraft.game.mail.MailManager
 import org.micoli.micraft.game.mail.MailPersistence
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcConstants
+import org.micoli.micraft.game.npc.NpcLootValidator
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
@@ -1439,7 +1440,9 @@ class GameLoop(
         RecipeRegistry.load(recipeRegistryLoader.load())
         armorRegistry = armorRegistryLoader.load()
         npcConfigLoader.load()
-        npcManager.loadDefinitions(npcRegistryLoader.load())
+        val npcDefinitions = npcRegistryLoader.load()
+        NpcLootValidator.validate(npcDefinitions, armorRegistry)
+        npcManager.loadDefinitions(npcDefinitions)
         questRegistryLoader?.load()?.let { questManager?.reloadDefinitions(it) }
         gameWorld.loadPersistedState()
         app.launch {
