@@ -1,0 +1,16 @@
+title: "Cobblestone from the Ruins"
+description: "Salvage cobblestone from the old ruins for the rebuilding effort. Recommended for level 14 players."
+type: FETCH
+level: 14
+itemType: COBBLESTONE
+requiredCount: 30
+rewards:
+  xp: 1350
+  items:
+    - type: GRAVEL
+      count: 20
+  armorRewards:
+    - tier3_mail_robe
+dependsOn: [zone_tier3_skeletons.yaml]
+repeatable: false
+cooldownSeconds: 0

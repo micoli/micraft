@@ -12,6 +12,6 @@ rewards:
       count: 10
   armorRewards:
     - tier1_cloth_chest
-dependsOn: [zone_tier1_rabbits.yaml]
+dependsOn: [zone_tier1_sand.yaml]
 repeatable: false
 cooldownSeconds: 0

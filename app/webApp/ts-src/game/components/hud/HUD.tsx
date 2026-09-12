@@ -2,6 +2,15 @@ import { ActionBlockHudData, HudData } from "../../types";
 import { cn } from "../../../primitives/cn";
 import { HudRow } from "./HudRow";
 
+// Mirrors core/.../game/world/ZoneTier.kt's npcLevelRange brackets — kept in sync manually.
+function zoneTierFor(zoneLevel: number): number {
+  if (zoneLevel <= 5) return 1;
+  if (zoneLevel <= 10) return 2;
+  if (zoneLevel <= 15) return 3;
+  if (zoneLevel <= 20) return 4;
+  return 5;
+}
+
 export function HUD({
   data,
   actionBlock,
@@ -27,7 +36,12 @@ export function HUD({
         <HudRow label={"Weather"} value={weather ?? ""} />
         <HudRow label={"Stance"} value={stance} />
         <HudRow label={"Block"} value={targetBlock ?? ""} />
-        <HudRow label={"Zone Lv"} value={zoneLevel ?? ""} />
+        <HudRow
+          label={"Zone"}
+          value={
+            zoneLevel !== undefined && zoneLevel !== null ? `Lv ${zoneLevel} · Tier ${zoneTierFor(zoneLevel)}` : ""
+          }
+        />
         {actionBlock && (
           <>
             <HudRow label={"ActionBlock"} value={actionBlock.name} />

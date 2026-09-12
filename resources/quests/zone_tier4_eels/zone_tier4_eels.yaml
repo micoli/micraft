@@ -12,6 +12,6 @@ rewards:
       count: 25
   armorRewards:
     - tier4_mail_chest
-dependsOn: [zone_tier4_ghosts.yaml]
+dependsOn: [zone_tier4_gravel_peaks.yaml]
 repeatable: false
 cooldownSeconds: 0

@@ -12,6 +12,6 @@ rewards:
       count: 15
   armorRewards:
     - tier2_leather_chest
-dependsOn: [zone_tier2_jackals.yaml]
+dependsOn: [zone_tier2_sandstone_collection.yaml]
 repeatable: false
 cooldownSeconds: 0

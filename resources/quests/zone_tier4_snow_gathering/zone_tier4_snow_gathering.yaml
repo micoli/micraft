@@ -1,0 +1,14 @@
+title: "Mountain Snow Gathering"
+description: "The alchemist needs fresh mountain snow for a cooling brew. Recommended for level 17 players."
+type: FETCH
+level: 17
+itemType: SNOWBALL
+requiredCount: 20
+rewards:
+  xp: 2000
+  items:
+    - type: GRAVEL
+      count: 15
+dependsOn: [zone_tier4_icewolves.yaml]
+repeatable: false
+cooldownSeconds: 0

@@ -1,0 +1,16 @@
+title: "Gravel from the Peaks"
+description: "Haul gravel down from the high peaks for the mountain pass repairs. Recommended for level 19 players."
+type: FETCH
+level: 19
+itemType: GRAVEL
+requiredCount: 25
+rewards:
+  xp: 2450
+  items:
+    - type: COBBLESTONE
+      count: 20
+  armorRewards:
+    - tier4_mail_robe
+dependsOn: [zone_tier4_ghosts.yaml]
+repeatable: false
+cooldownSeconds: 0

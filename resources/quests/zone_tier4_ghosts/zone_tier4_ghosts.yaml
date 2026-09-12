@@ -10,6 +10,6 @@ rewards:
   items:
     - type: GRAVEL
       count: 25
-dependsOn: [zone_tier4_icewolves.yaml]
+dependsOn: [zone_tier4_snow_gathering.yaml]
 repeatable: false
 cooldownSeconds: 0

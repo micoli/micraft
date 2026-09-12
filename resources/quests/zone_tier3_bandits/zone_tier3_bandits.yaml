@@ -12,6 +12,6 @@ rewards:
       count: 25
   armorRewards:
     - tier3_mail_chest
-dependsOn: [zone_tier3_skeletons.yaml]
+dependsOn: [zone_tier3_cobblestone_ruins.yaml]
 repeatable: false
 cooldownSeconds: 0

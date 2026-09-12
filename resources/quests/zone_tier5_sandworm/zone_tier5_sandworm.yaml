@@ -10,6 +10,6 @@ rewards:
   items:
     - type: SANDSTONE
       count: 40
-dependsOn: [zone_tier5_yeti.yaml]
+dependsOn: [zone_tier5_sandstone_haul.yaml]
 repeatable: false
 cooldownSeconds: 0

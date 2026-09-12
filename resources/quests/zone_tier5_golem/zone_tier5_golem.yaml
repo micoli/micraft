@@ -12,6 +12,6 @@ rewards:
       count: 50
   armorRewards:
     - tier5_plate_robe
-dependsOn: [zone_tier5_sandworm.yaml]
+dependsOn: [zone_tier5_cobblestone_haul.yaml]
 repeatable: false
 cooldownSeconds: 0

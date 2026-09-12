@@ -17,17 +17,27 @@ spawn:
 tameable: false
 offersQuests:
   - zone_tier1_foxes.yaml
+  - zone_tier1_flint.yaml
   - zone_tier1_rabbits.yaml
+  - zone_tier1_sand.yaml
   - zone_tier1_owls.yaml
   - zone_tier2_boars.yaml
+  - zone_tier2_gravel_run.yaml
   - zone_tier2_jackals.yaml
+  - zone_tier2_sandstone_collection.yaml
   - zone_tier2_spiders.yaml
   - zone_tier3_scorpions.yaml
+  - zone_tier3_sandstone_deep_run.yaml
   - zone_tier3_skeletons.yaml
+  - zone_tier3_cobblestone_ruins.yaml
   - zone_tier3_bandits.yaml
   - zone_tier4_icewolves.yaml
+  - zone_tier4_snow_gathering.yaml
   - zone_tier4_ghosts.yaml
+  - zone_tier4_gravel_peaks.yaml
   - zone_tier4_eels.yaml
   - zone_tier5_yeti.yaml
+  - zone_tier5_sandstone_haul.yaml
   - zone_tier5_sandworm.yaml
+  - zone_tier5_cobblestone_haul.yaml
   - zone_tier5_golem.yaml

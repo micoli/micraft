@@ -10,6 +10,6 @@ rewards:
   items:
     - type: SAND
       count: 5
-dependsOn: [zone_tier1_foxes.yaml]
+dependsOn: [zone_tier1_flint.yaml]
 repeatable: false
 cooldownSeconds: 0

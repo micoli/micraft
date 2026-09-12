@@ -10,6 +10,6 @@ rewards:
   items:
     - type: SANDSTONE
       count: 10
-dependsOn: [zone_tier2_boars.yaml]
+dependsOn: [zone_tier2_gravel_run.yaml]
 repeatable: false
 cooldownSeconds: 0

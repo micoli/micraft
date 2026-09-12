@@ -1,0 +1,16 @@
+title: "Deep Sandstone Run"
+description: "The desert outpost needs sandstone hauled from deep in the dunes. Recommended for level 12 players."
+type: FETCH
+level: 12
+itemType: SANDSTONE
+requiredCount: 25
+rewards:
+  xp: 1050
+  items:
+    - type: SAND
+      count: 20
+    - type: FLINT
+      count: 10
+dependsOn: [zone_tier3_scorpions.yaml]
+repeatable: false
+cooldownSeconds: 0

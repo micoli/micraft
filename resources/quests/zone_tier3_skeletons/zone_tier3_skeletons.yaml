@@ -10,6 +10,6 @@ rewards:
   items:
     - type: GRAVEL
       count: 20
-dependsOn: [zone_tier3_scorpions.yaml]
+dependsOn: [zone_tier3_sandstone_deep_run.yaml]
 repeatable: false
 cooldownSeconds: 0
