@@ -78,20 +78,22 @@ export function StackedByType({
           inset: 0.5,
         }),
       ],
-      x: {
-        scale: () => scaleBand<number>().domain(domain).padding(0.1),
-        axis: {
-          ticks: {
-            format: (value: number) => {
-              const day = dayBySlot.get(value);
-              return day === undefined ? "" : dayLabel(day, dayAbbrev);
+      scales: {
+        x: {
+          scale: () => scaleBand<number>().domain(domain).padding(0.1),
+          axis: {
+            ticks: {
+              format: (value: number) => {
+                const day = dayBySlot.get(value);
+                return day === undefined ? "" : dayLabel(day, dayAbbrev);
+              },
             },
           },
         },
-      },
-      y: {
-        scale: () => scaleLinear().domain([0, top]),
-        grid: true,
+        y: {
+          scale: () => scaleLinear().domain([0, top]),
+          grid: true,
+        },
       },
       color: { domain: keys, range: keys.map((key) => npcColor(key)) },
       focus: "group-x",

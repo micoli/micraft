@@ -64,20 +64,22 @@ export function Counters({ buckets, slots }: { buckets: SimMetricBucket[]; slots
           strokeWidth: 1,
         }),
       ],
-      x: {
-        scale: () => scalePoint<number>().domain(domain).padding(0.05),
-        axis: {
-          ticks: {
-            format: (value: number) => {
-              const day = dayBySlot.get(value);
-              return day === undefined ? "" : dayLabel(day, dayAbbrev);
+      scales: {
+        x: {
+          scale: () => scalePoint<number>().domain(domain).padding(0.05),
+          axis: {
+            ticks: {
+              format: (value: number) => {
+                const day = dayBySlot.get(value);
+                return day === undefined ? "" : dayLabel(day, dayAbbrev);
+              },
             },
           },
         },
-      },
-      y: {
-        scale: () => scaleLinear().domain([0, top]),
-        grid: true,
+        y: {
+          scale: () => scaleLinear().domain([0, top]),
+          grid: true,
+        },
       },
       color: { domain: lines.map((series) => series.key), range: lines.map((series) => series.color) },
       focus: "group-x",

@@ -31,6 +31,7 @@ export function PieChart({ keys, buckets, pick }: { keys: string[]; buckets: Sim
       marks: [
         polar({
           inset: 2,
+          scales: { angle: null, radius: null },
           marks: [
             radialArc(pieData, {
               key: (slice) => slice.key,
@@ -42,8 +43,7 @@ export function PieChart({ keys, buckets, pick }: { keys: string[]; buckets: Sim
         }),
       ],
       guides: false,
-      x: null,
-      y: null,
+      scales: { x: null, y: null },
       keyboard: false,
     });
   }, [slices]);

@@ -87,11 +87,13 @@ export function TickChart({
           lineY(rows, { x: "slot", y: "value", z: "phase", color: "phase", strokeWidth: 1 }),
           ...(showBudget ? [ruleY([budgetMs], { stroke: BUDGET_COLOR, strokeDasharray: "4,3", strokeWidth: 1 })] : []),
         ],
-        x: {
-          scale: () => scalePoint<number>().domain(domain).padding(0.05),
-          axis: { ticks: { format: () => "" } },
+        scales: {
+          x: {
+            scale: () => scalePoint<number>().domain(domain).padding(0.05),
+            axis: { ticks: { format: () => "" } },
+          },
+          y: { scale: () => scaleLinear().domain([0, top]), grid: true },
         },
-        y: { scale: () => scaleLinear().domain([0, top]), grid: true },
         color: { domain: names, range: names.map((n) => PHASE_COLORS[n] ?? FALLBACK_COLOR) },
         focus: "group-x",
         tooltip,
