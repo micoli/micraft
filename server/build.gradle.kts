@@ -57,8 +57,15 @@ tasks.test {
     workingDir = rootProject.projectDir
     environment("MICRAFT_WORLD_NAME", "test_world")
     jvmArgs("-Xmx512m")
-    val testWorldDir = rootProject.projectDir.resolve("data/world/test_world")
-    doFirst { testWorldDir.deleteRecursively() }
+    // Half the cores: each fork is a full JVM (Xmx512m) and tests are I/O-light, so more forks
+    // than that just thrashes without a matching CPU speedup.
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+    val worldsDir = rootProject.projectDir.resolve("data/world")
+    doFirst {
+        worldsDir
+            .listFiles { f -> f.isDirectory && f.name.startsWith("test_world") }
+            ?.forEach { it.deleteRecursively() }
+    }
     //    testLogging {
     //        events("passed", "skipped", "failed")
     //        showStandardStreams = true

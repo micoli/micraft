@@ -23,8 +23,11 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(WorldModule::class.java)
 
+// `org.gradle.test.worker` is set by Gradle in each forked test JVM (only when tests run with
+// maxParallelForks > 1) — appending it keeps concurrent test workers from sharing one world dir.
 fun worldName(): String =
-    System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world"
+    (System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world") +
+        (System.getProperty("org.gradle.test.worker")?.let { "-worker$it" } ?: "")
 
 @Module
 class WorldModule {

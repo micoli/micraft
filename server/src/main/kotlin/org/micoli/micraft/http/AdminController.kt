@@ -425,8 +425,7 @@ class AdminController(
     private fun toolRegistry() = org.micoli.micraft.game.equipment.ToolRegistryLoader().load()
 
     private val worldsDir = org.micoli.micraft.config.ConfigPaths.dataRoot.resolve("world")
-    private val activeWorldName: String =
-        System.getenv("MICRAFT_WORLD_NAME")?.takeIf { it.isNotBlank() } ?: "default_world"
+    private val activeWorldName: String = org.micoli.micraft.di.worldName()
 
     // Chunks eligible for an instance zone: in-memory (this run) union persisted-to-disk (any
     // prior run) — WorldState.discoveredChunks() alone misses chunks generated before the last
