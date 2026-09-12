@@ -1,5 +1,6 @@
 import type { Scene } from "@babylonjs/core";
 import { interpAxis } from "../../lib/player/playerModel";
+import { collectLimbBones } from "../../lib/player/limbBones";
 
 interface NpcBbmodels {
   [type: string]: BbModel;
@@ -142,7 +143,7 @@ export function registerNpcModel(): Pick<
       const wa = model.animations?.walking_forward ?? {};
 
       const PROC_AMP = 30;
-      const PROC_PHASE: Record<string, number> = { rightArm: 0, leftArm: Math.PI, rightLeg: Math.PI, leftLeg: 0 };
+      const limbs = collectLimbBones(pn);
 
       const restWings = (): void => {
         for (const bname of ["rightWing", "leftWing"] as const) {
@@ -169,7 +170,7 @@ export function registerNpcModel(): Pick<
           b.node.rotation.x = rest[0];
           b.node.rotation.z = rest[2] + sign * flap;
         }
-        for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
+        for (const { name: bname } of limbs) {
           if (pn[bname]) pn[bname].node.rotation.x = pn[bname].restRotation?.[0] ?? 0;
         }
         return;
@@ -182,19 +183,18 @@ export function registerNpcModel(): Pick<
         // interpAxis samples in clip seconds; the procedural fallback wants a normalised 0..1 phase.
         const tSec = (Date.now() % (animLen * 1000)) / 1000;
         const phase = tSec / animLen;
-        for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
-          if (!pn[bname]) continue;
+        for (const { name: bname, phase: procPhase } of limbs) {
           const restX = pn[bname].restRotation?.[0] ?? 0;
           pn[bname].node.rotation.x =
             restX +
             (wa[bname]
               ? interpAxis(wa[bname].keyframes, tSec, "x") * DEG
-              : PROC_AMP * DEG * Math.sin(phase * 2 * Math.PI + (PROC_PHASE[bname] ?? 0)));
+              : PROC_AMP * DEG * Math.sin(phase * 2 * Math.PI + procPhase));
         }
         return;
       }
-      for (const bname of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
-        if (pn[bname]) pn[bname].node.rotation.x = pn[bname].restRotation?.[0] ?? 0;
+      for (const { name: bname } of limbs) {
+        pn[bname].node.rotation.x = pn[bname].restRotation?.[0] ?? 0;
       }
     },
 

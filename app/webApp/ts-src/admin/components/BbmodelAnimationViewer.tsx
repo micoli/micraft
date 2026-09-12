@@ -9,17 +9,13 @@ import {
   placeElements,
   resolveTextureDims,
 } from "../../game/lib/player/bbmodelMesh";
+import { collectLimbBones } from "../../game/lib/player/limbBones";
 import { ORTHO_YAW, OrthoView, OrthoViewButton } from "./OrthoViewButton";
 import { NPC_WALK_ANIM_NAME } from "../../lib/animationHelpers";
 
-// Mirrors the procedural walk in game/components/npc/npcModel.ts (setNpcTransform).
+// Mirrors the procedural walk in game/components/npc/npcModel.ts (setNpcTransform) — same
+// collectLimbBones, so a many-legged creature's rightLegN/leftLegN bones animate here too.
 const NPC_WALK_AMP_DEG = 30;
-const NPC_WALK_PHASE: Record<string, number> = {
-  rightArm: 0,
-  leftArm: Math.PI,
-  rightLeg: Math.PI,
-  leftLeg: 0,
-};
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -87,6 +83,9 @@ function buildModel(
   // "handle" element's longest axis aligned to world Y, camera orbiting the barycenter of all
   // elements (rather than the player-skin default eye-height target).
   standaloneItem = false,
+  // Standard walk-bone role -> real bbmodel bone name (NPC preview only), so buildGroupHierarchy
+  // registers each pivot under its role name too and collectLimbBones can find it by role.
+  boneAliases?: Record<string, string>,
 ): {
   root: any;
   pivotNodes: Record<string, { node: any; origin: [number, number, number]; restRotation: [number, number, number] }>;
@@ -173,7 +172,7 @@ function buildModel(
     topParent = centerNode;
   }
 
-  const { pivotNodes, allGroupNodes, elToGroupUuid } = buildGroupHierarchy(bbmodel, scene, topParent);
+  const { pivotNodes, allGroupNodes, elToGroupUuid } = buildGroupHierarchy(bbmodel, scene, topParent, boneAliases);
   placeElements(bbmodel, scene, { elToGroupUuid, allGroupNodes }, topParent, materials, textureDims);
 
   return { root, pivotNodes, equippedWeapons: { LEFT: null, RIGHT: null }, equippedArmors: {} };
@@ -336,7 +335,7 @@ export function BbmodelAnimationViewer({
         light.intensity = 1.1;
         light.groundColor = new B.Color3(0.2, 0.2, 0.2);
 
-        const model = buildModel(B, bbmodel, scene, standaloneItem);
+        const model = buildModel(B, bbmodel, scene, standaloneItem, npcWalkAliasesRef.current);
         if (rightHandItem) {
           if (rightHandRotate) window.mcState.weaponRotations[rightHandItem] = rightHandRotate;
           window.mc.attachWeapon?.(model as unknown as McPlayerModel, rightHandItem, scene, "RIGHT");
@@ -453,14 +452,12 @@ export function BbmodelAnimationViewer({
               tSec = (Date.now() % (len * 1000)) / 1000;
             }
             const phase = tSec / len;
-            const aliases = npcWalkAliasesRef.current ?? {};
-            for (const std of ["rightArm", "leftArm", "rightLeg", "leftLeg"] as const) {
-              const pivot = model.pivotNodes[aliases[std] ?? std];
+            for (const { name: bname, phase: limbPhase } of collectLimbBones(model.pivotNodes)) {
+              const pivot = model.pivotNodes[bname];
               if (!pivot) continue;
               pivot.node.rotationQuaternion = null;
               pivot.node.rotation.x =
-                (pivot.restRotation?.[0] ?? 0) +
-                NPC_WALK_AMP_DEG * DEG * Math.sin(phase * 2 * Math.PI + (NPC_WALK_PHASE[std] ?? 0));
+                (pivot.restRotation?.[0] ?? 0) + NPC_WALK_AMP_DEG * DEG * Math.sin(phase * 2 * Math.PI + limbPhase);
             }
             return;
           }
