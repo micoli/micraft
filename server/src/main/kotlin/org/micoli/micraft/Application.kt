@@ -14,6 +14,7 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import java.io.File
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.seconds
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 import org.koin.ksp.generated.module
@@ -166,7 +167,10 @@ internal fun applyE2eWorldOverrides(groundY: Int) {
 @kotlinx.serialization.Serializable data class PlayerByEmailEntry(val name: String, val id: String)
 
 fun Application.module() {
-    install(WebSockets) {}
+    install(WebSockets) {
+        pingPeriodMillis = 15.seconds.inWholeMilliseconds
+        timeoutMillis = 30.seconds.inWholeMilliseconds
+    }
     install(Koin) { modules(AppModule().module) }
     install(OpenApi) {
         info {

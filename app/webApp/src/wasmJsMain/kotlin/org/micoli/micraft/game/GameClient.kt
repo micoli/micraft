@@ -6,6 +6,7 @@ import io.ktor.client.plugins.websocket.*
 import io.ktor.websocket.*
 import kotlin.math.abs
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.seconds
 import kotlin.reflect.KClass
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -349,7 +350,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 try {
                     uiState.disconnectMessage = null
                     jsLog("WS connecting to ws://$serverHost:$serverPort/game")
-                    val client = HttpClient(Js) { install(WebSockets) }
+                    val client =
+                        HttpClient(Js) { install(WebSockets) { pingInterval = 15.seconds } }
                     client.webSocket(
                         host = serverHost,
                         port = serverPort,
