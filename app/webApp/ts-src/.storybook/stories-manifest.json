@@ -429,6 +429,26 @@
     "name": "With Attachments",
     "source": ".stories/game/window/MailboxOverlay.stories.tsx"
   },
+  "game-windows-npcquestdialog--closed": {
+    "title": "Game/Windows/NpcQuestDialog",
+    "name": "Closed",
+    "source": ".stories/game/window/NpcQuestDialog.stories.tsx"
+  },
+  "game-windows-npcquestdialog--default": {
+    "title": "Game/Windows/NpcQuestDialog",
+    "name": "Default",
+    "source": ".stories/game/window/NpcQuestDialog.stories.tsx"
+  },
+  "game-windows-npcquestdialog--no-offerable": {
+    "title": "Game/Windows/NpcQuestDialog",
+    "name": "Rien à offrir",
+    "source": ".stories/game/window/NpcQuestDialog.stories.tsx"
+  },
+  "game-windows-npcquestdialog--no-turn-ins": {
+    "title": "Game/Windows/NpcQuestDialog",
+    "name": "Sans quête à rendre",
+    "source": ".stories/game/window/NpcQuestDialog.stories.tsx"
+  },
   "game-windows-npcshopdialog--basic": {
     "title": "Game/Windows/NpcShopDialog",
     "name": "Basic",
@@ -493,6 +513,31 @@
     "title": "Game/Windows/Preferences",
     "name": "Keybindings Tab",
     "source": ".stories/game/window/Preferences.stories.tsx"
+  },
+  "game-windows-questjournal--closed": {
+    "title": "Game/Windows/QuestJournal",
+    "name": "Closed",
+    "source": ".stories/game/window/QuestJournal.stories.tsx"
+  },
+  "game-windows-questjournal--default": {
+    "title": "Game/Windows/QuestJournal",
+    "name": "Default",
+    "source": ".stories/game/window/QuestJournal.stories.tsx"
+  },
+  "game-windows-questjournal--dependency-locked": {
+    "title": "Game/Windows/QuestJournal",
+    "name": "Dépendance non remplie (Accept désactivé)",
+    "source": ".stories/game/window/QuestJournal.stories.tsx"
+  },
+  "game-windows-questjournal--no-quests": {
+    "title": "Game/Windows/QuestJournal",
+    "name": "Aucune quête disponible",
+    "source": ".stories/game/window/QuestJournal.stories.tsx"
+  },
+  "game-windows-questjournal--on-cooldown": {
+    "title": "Game/Windows/QuestJournal",
+    "name": "Répétable en cooldown",
+    "source": ".stories/game/window/QuestJournal.stories.tsx"
   },
   "game-windows-sceneeplaceconfirmdialog--closed": {
     "title": "Game/Windows/SceneePlaceConfirmDialog",
