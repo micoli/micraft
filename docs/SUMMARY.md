@@ -46,6 +46,7 @@
     - [Pets](entities/pets.md)
     - [Animal lifecycle](entities/animal-lifecycle.md)
     - [Vehicles, Siege weapons & Furnitures](entities/placeable.md)
+    - [Entities](entities/list.md)
 - Social
     - [Chat](social/chat.md)
     - [Player trade](social/trade.md)

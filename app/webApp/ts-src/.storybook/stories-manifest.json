@@ -1,4 +1,34 @@
 {
+  "game-components-bbmodelanimationviewer--all-entities": {
+    "title": "Game/Components/BbmodelAnimationViewer",
+    "name": "All Entities",
+    "source": ".stories/game/components/BbmodelAnimationViewer.stories.tsx"
+  },
+  "game-components-bbmodelanimationviewer--elephant": {
+    "title": "Game/Components/BbmodelAnimationViewer",
+    "name": "Elephant",
+    "source": ".stories/game/components/BbmodelAnimationViewer.stories.tsx"
+  },
+  "game-components-bbmodelanimationviewer--fixed-angle": {
+    "title": "Game/Components/BbmodelAnimationViewer",
+    "name": "Fixed Angle",
+    "source": ".stories/game/components/BbmodelAnimationViewer.stories.tsx"
+  },
+  "game-components-bbmodelanimationviewer--hidden-ui": {
+    "title": "Game/Components/BbmodelAnimationViewer",
+    "name": "Hidden UI",
+    "source": ".stories/game/components/BbmodelAnimationViewer.stories.tsx"
+  },
+  "game-components-bbmodelanimationviewer--transparent-background": {
+    "title": "Game/Components/BbmodelAnimationViewer",
+    "name": "Transparent Background",
+    "source": ".stories/game/components/BbmodelAnimationViewer.stories.tsx"
+  },
+  "game-components-bbmodelanimationviewer--with-scale-and-ground": {
+    "title": "Game/Components/BbmodelAnimationViewer",
+    "name": "With Scale And Ground",
+    "source": ".stories/game/components/BbmodelAnimationViewer.stories.tsx"
+  },
   "game-layout-aggroindicators--crowd": {
     "title": "Game/Layout/AggroIndicators",
     "name": "Crowd",

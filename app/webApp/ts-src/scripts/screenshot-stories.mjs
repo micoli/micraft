@@ -7,6 +7,14 @@
 //   {{ story "story/game-layout-playerstatusbar--caster" }}
 //   {{ story "game-layout-playerstatusbar--caster" caption="…" }}
 //
+// The id may also carry a Storybook URL args override (`id&args=key:value;…`,
+// Storybook's own permalink serialization) to snapshot one story under several
+// control values without a named export per variant — the base id (before
+// `&`) must still be real/registered; only its args are overridden. Each
+// distinct full tag string gets its own screenshot, named after the
+// sanitized full string (see sanitizeKey below) — kept in sync with
+// scripts/docs/hooks.py's `_sanitize`.
+//
 // The MkDocs hook (scripts/docs/hooks.py) turns each tag into an <img> pointing at
 // the committed PNG — the docs CI never runs a browser, so these are regenerated
 // here (`make docs-screenshots`) and committed.
@@ -47,6 +55,19 @@ function normId(raw) {
     .replace(/^\/+/, "");
 }
 
+// Splits "<base-id>&args=…" into { id, argsQuery } — argsQuery is "" when absent.
+function splitTag(raw) {
+  const cleaned = normId(raw);
+  const i = cleaned.indexOf("&");
+  return i === -1 ? { id: cleaned, argsQuery: "" } : { id: cleaned.slice(0, i), argsQuery: cleaned.slice(i + 1) };
+}
+
+// Filesystem/URL-safe filename stem for a full tag string (id, or id&args=…) — must match
+// scripts/docs/hooks.py's `_sanitize`.
+function sanitizeKey(key) {
+  return key.replace(/[^A-Za-z0-9._-]+/g, "_");
+}
+
 const args = new Set(process.argv.slice(2));
 const CHECK = args.has("--check");
 const ALL = args.has("--all");
@@ -61,14 +82,17 @@ function die(msg) {
 }
 
 async function collectTags() {
-  const ids = new Set();
+  const tags = new Map(); // key (normalized full tag) -> { id, argsQuery }
   const files = await readdir(DOCS_DIR, { recursive: true });
   for (const rel of files) {
     if (!rel.endsWith(".md")) continue;
     const text = await readFile(path.join(DOCS_DIR, rel), "utf8");
-    for (const m of text.matchAll(TAG_SCAN_RE)) ids.add(normId(m[1]));
+    for (const m of text.matchAll(TAG_SCAN_RE)) {
+      const key = normId(m[1]);
+      if (!tags.has(key)) tags.set(key, splitTag(m[1]));
+    }
   }
-  return [...ids];
+  return tags;
 }
 
 // { "<story-id>": { title, name, source } } — keyed by the id used in the tags.
@@ -86,9 +110,12 @@ function buildManifest(entries) {
   return manifest;
 }
 
-function resolveTargets(ids, manifest) {
-  const targets = new Map(); // id -> label
-  for (const id of ids) {
+// tags: Map<key (full normalized tag, used for the filename), { id, argsQuery }>.
+// Returns Map<key, { id, argsQuery, label }> — only `id` (the base story, args stripped) is
+// validated against the manifest; `argsQuery` (if any) is passed through unchecked to Storybook.
+function resolveTargets(tags, manifest) {
+  const targets = new Map();
+  for (const [key, { id, argsQuery }] of tags) {
     const entry = manifest[id];
     if (!entry) {
       const stem = id.split("--")[0];
@@ -100,7 +127,7 @@ function resolveTargets(ids, manifest) {
           (near.length ? ` — did you mean: ${near.join(", ")}` : " (see Storybook URL ?path=/story/<id>)"),
       );
     }
-    targets.set(id, `${entry.title} / ${entry.name}`);
+    targets.set(key, { id, argsQuery, label: `${entry.title} / ${entry.name}` });
   }
   return targets;
 }
@@ -141,10 +168,13 @@ async function shoot(targets, outDir) {
   });
   const written = [];
   try {
-    for (const [id, label] of targets) {
+    for (const [key, { id, argsQuery, label }] of targets) {
       const page = await context.newPage();
       try {
-        const url = `${SB_URL}/iframe.html?id=${encodeURIComponent(id)}&viewMode=story&globals=backgrounds.value:transparent`;
+        const url =
+          `${SB_URL}/iframe.html?id=${encodeURIComponent(id)}&viewMode=story` +
+          (argsQuery ? `&${argsQuery}` : "") +
+          `&globals=backgrounds.value:transparent`;
         await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
         await page.waitForSelector("#storybook-root", { state: "attached", timeout: 60_000 });
         /* eslint-disable no-undef -- runs in the page, not in Node */
@@ -176,7 +206,7 @@ async function shoot(targets, outDir) {
             ? t.replace(/\s+/g, " ").slice(0, 160)
             : "";
         });
-        if (errText) die(`story ${id} errored during render/play — fix the story: ${errText}`);
+        if (errText) die(`story ${key} errored during render/play — fix the story: ${errText}`);
         /* eslint-enable no-undef */
         await page.addStyleTag({
           content: "html,body,.sb-show-main,#storybook-root{background:transparent !important}",
@@ -195,14 +225,15 @@ async function shoot(targets, outDir) {
         });
         /* eslint-enable no-undef */
         await page.waitForTimeout(200);
-        const file = path.join(outDir, `${id}.png`);
+        const filename = `${sanitizeKey(key)}.png`;
+        const file = path.join(outDir, filename);
 
         // #storybook-root collapses (position:fixed HUD) or fills the viewport
         // (fullscreen layout, portalled dialog overlay) — clip to the union of the
         // actually-painted content instead.
         const clip = await contentClip(page);
         await page.screenshot({ path: file, clip, omitBackground: true, animations: "disabled" });
-        written.push(`${id}.png`);
+        written.push(filename);
         log(`✓ ${label}  →  ${path.relative(REPO_ROOT, file)}`);
       } finally {
         await page.close();
@@ -277,8 +308,8 @@ async function readIfExists(p) {
 }
 
 async function main() {
-  const tags = ALL ? [] : await collectTags();
-  if (!ALL && tags.length === 0) {
+  const tags = ALL ? new Map() : await collectTags();
+  if (!ALL && tags.size === 0) {
     log('no {{ story "…" }} tags found under docs/ — nothing to do');
   }
 
@@ -289,7 +320,7 @@ async function main() {
     const manifestJson = JSON.stringify(manifest, null, 2) + "\n";
 
     const targets = ALL
-      ? new Map(Object.keys(manifest).map((id) => [id, `${manifest[id].title} / ${manifest[id].name}`]))
+      ? resolveTargets(new Map(Object.keys(manifest).map((id) => [id, { id, argsQuery: "" }])), manifest)
       : resolveTargets(tags, manifest);
 
     if (CHECK) {
@@ -310,10 +341,11 @@ async function main() {
       } finally {
         await rm(tmp, { recursive: true, force: true });
       }
-      for (const [id, label] of targets) {
-        const png = await readIfExists(path.join(ASSETS_DIR, `${id}.png`));
-        if (!png || png.length < 256) problems.push(`missing/empty docs/assets/stories/${id}.png for ${label}`);
-        committed.delete(`${id}.png`);
+      for (const [key, { label }] of targets) {
+        const filename = `${sanitizeKey(key)}.png`;
+        const png = await readIfExists(path.join(ASSETS_DIR, filename));
+        if (!png || png.length < 256) problems.push(`missing/empty docs/assets/stories/${filename} for ${label}`);
+        committed.delete(filename);
       }
       for (const orphan of committed) {
         problems.push(`orphan docs/assets/stories/${orphan} — no tag references it`);

@@ -26,7 +26,7 @@ function HarnessRender(args: Partial<HarnessProps>) {
 }
 
 const meta: Meta<typeof HarnessRender> = {
-  title: "Admin/Components/BbmodelAnimationViewer",
+  title: "Game/Components/BbmodelAnimationViewer",
   parameters: { layout: "centered" },
   argTypes: {
     modelName: { control: "text" },
