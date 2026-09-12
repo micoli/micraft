@@ -4,6 +4,7 @@ import java.util.ArrayList
 import java.util.HashMap
 import org.apache.commons.jexl3.JexlBuilder
 import org.apache.commons.jexl3.MapContext
+import org.apache.commons.jexl3.introspection.JexlPermissions
 import org.apache.commons.jexl3.introspection.JexlSandbox
 import org.micoli.micraft.macro.MacroFunctionsJava
 
@@ -28,6 +29,9 @@ class MacroExecutor {
         JexlBuilder()
             .namespaces(mapOf("mc" to MacroFunctionsJava::class.java))
             .loader(MacroFunctionsJava::class.java.classLoader)
+            // JEXL 3.3+ defaults to a restricted permission set that blocks custom namespace
+            // methods regardless of the sandbox; the sandbox above is our actual allow-list.
+            .permissions(JexlPermissions.UNRESTRICTED)
             .sandbox(sandbox)
             .silent(false)
             .strict(true)

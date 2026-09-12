@@ -34,3 +34,9 @@ dependencies { add("kspCommonMainMetadata", project(":codec-processor")) }
 tasks.withType<KotlinCompilationTask<*>>().configureEach {
     if (name != "kspCommonMainKotlinMetadata") dependsOn("kspCommonMainKotlinMetadata")
 }
+
+// Per-target KSP tasks aren't KotlinCompilationTask themselves but also consume the generated
+// commonMain metadata sources, so Gradle 9.7+'s implicit-dependency validation flags them too.
+tasks
+    .matching { it.name.startsWith("ksp") && it.name != "kspCommonMainKotlinMetadata" }
+    .configureEach { dependsOn("kspCommonMainKotlinMetadata") }
