@@ -13,6 +13,16 @@ updates:
       koin:
         patterns:
           - "io.insert-koin*"
+      other-minor-patch:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "org.jetbrains.kotlin*"
+          - "io.ktor*"
+          - "io.insert-koin*"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: npm
     directory: "/app/webApp/ts-src"
@@ -39,11 +49,39 @@ updates:
           - "react-dom"
           - "@types/react"
           - "@types/react-dom"
+      other-minor-patch:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@storybook/*"
+          - "storybook"
+          - "eslint*"
+          - "@eslint/*"
+          - "typescript-eslint"
+          - "prettier*"
+          - "vitest"
+          - "@vitest/*"
+          - "vite"
+          - "@vitejs/*"
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: pip
     directory: "/docs"
