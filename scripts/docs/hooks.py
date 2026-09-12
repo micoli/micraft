@@ -7,6 +7,12 @@ figure showing the committed Storybook snapshot.
     {{ story "story/game-layout-playerstatusbar--caster" }}
     {{ story "game-layout-playerstatusbar--caster" caption="Caster HUD" }}
 
+Add ``onlyIfMissing`` to skip re-rendering an expensive story (e.g. full entity/NPC
+previews) once its PNG is committed — ``screenshot-stories.mjs`` then only (re)renders
+it the first time, and under ``--check`` only verifies the file is present::
+
+    {{ story "admin-components-npcpreview--wolf" onlyIfMissing }}
+
 ``<id>`` may also carry a Storybook URL args override (``id&args=key:value;…``,
 the same serialization Storybook itself uses for permalinks) to snapshot one
 story under several control values without a named export per variant, e.g.::
@@ -37,6 +43,7 @@ REPO_BLOB = "https://github.com/micoli/micraft/blob/main/app/webApp/ts-src"
 
 TAG_RE = re.compile(
     r'\{\{\s*story\s+"(?P<id>[^"]+)"'
+    r"(?:\s+onlyIfMissing)?"
     r'(?:\s+caption="(?P<caption>[^"]*)")?'
     r"\s*\}\}"
 )

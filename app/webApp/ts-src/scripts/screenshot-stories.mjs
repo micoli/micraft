@@ -23,6 +23,15 @@
 //   node scripts/screenshot-stories.mjs --all     also snapshot every story
 //   node scripts/screenshot-stories.mjs --check    fail if committed assets are stale
 //
+// A tag can opt out of re-rendering on every run with `onlyIfMissing`:
+//
+//   {{ story "id" onlyIfMissing }}
+//   {{ story "id" onlyIfMissing caption="…" }}
+//
+// Such a tag is only rendered when its PNG isn't committed yet (slow stories, e.g.
+// full entity/NPC previews); once present it's left untouched by later runs. Under
+// `--check` it's likewise only checked for presence, not re-rendered/error-checked.
+//
 // Run with cwd = app/webApp/ts-src.
 
 import { spawn } from "node:child_process";
@@ -44,7 +53,7 @@ const DOCS_DIR = path.join(REPO_ROOT, "docs");
 const ASSETS_DIR = path.join(DOCS_DIR, "assets/stories");
 const MANIFEST_PATH = path.join(TS_SRC, ".storybook/stories-manifest.json");
 
-const TAG_SCAN_RE = /\{\{\s*story\s+"([^"]+)"/g;
+const TAG_SCAN_RE = /\{\{\s*story\s+"([^"]+)"(?:\s+(onlyIfMissing))?[^}]*\}\}/g;
 
 // Accepts the value copied from Storybook's URL (`story/<id>`, `/story/<id>`) or a
 // bare story id.
@@ -82,14 +91,18 @@ function die(msg) {
 }
 
 async function collectTags() {
-  const tags = new Map(); // key (normalized full tag) -> { id, argsQuery }
+  const tags = new Map(); // key (normalized full tag) -> { id, argsQuery, onlyIfMissing }
   const files = await readdir(DOCS_DIR, { recursive: true });
   for (const rel of files) {
     if (!rel.endsWith(".md")) continue;
     const text = await readFile(path.join(DOCS_DIR, rel), "utf8");
     for (const m of text.matchAll(TAG_SCAN_RE)) {
       const key = normId(m[1]);
-      if (!tags.has(key)) tags.set(key, splitTag(m[1]));
+      const onlyIfMissing = !!m[2];
+      const existing = tags.get(key);
+      // A tag id can appear more than once (different pages) — onlyIfMissing wins if any occurrence sets it.
+      if (!existing) tags.set(key, { ...splitTag(m[1]), onlyIfMissing });
+      else if (onlyIfMissing) existing.onlyIfMissing = true;
     }
   }
   return tags;
@@ -110,12 +123,13 @@ function buildManifest(entries) {
   return manifest;
 }
 
-// tags: Map<key (full normalized tag, used for the filename), { id, argsQuery }>.
-// Returns Map<key, { id, argsQuery, label }> — only `id` (the base story, args stripped) is
-// validated against the manifest; `argsQuery` (if any) is passed through unchecked to Storybook.
+// tags: Map<key (full normalized tag, used for the filename), { id, argsQuery, onlyIfMissing }>.
+// Returns Map<key, { id, argsQuery, onlyIfMissing, label }> — only `id` (the base story, args
+// stripped) is validated against the manifest; `argsQuery` (if any) is passed through unchecked
+// to Storybook.
 function resolveTargets(tags, manifest) {
   const targets = new Map();
-  for (const [key, { id, argsQuery }] of tags) {
+  for (const [key, { id, argsQuery, onlyIfMissing }] of tags) {
     const entry = manifest[id];
     if (!entry) {
       const stem = id.split("--")[0];
@@ -127,7 +141,7 @@ function resolveTargets(tags, manifest) {
           (near.length ? ` — did you mean: ${near.join(", ")}` : " (see Storybook URL ?path=/story/<id>)"),
       );
     }
-    targets.set(key, { id, argsQuery, label: `${entry.title} / ${entry.name}` });
+    targets.set(key, { id, argsQuery, onlyIfMissing: !!onlyIfMissing, label: `${entry.title} / ${entry.name}` });
   }
   return targets;
 }
@@ -324,10 +338,10 @@ async function main() {
       : resolveTargets(tags, manifest);
 
     if (CHECK) {
-      // Re-render every tagged story (shoot() aborts on a render/play error) but
-      // don't pixel-compare — PNG output isn't reproducible across OS / font
-      // stacks. Guards: manifest fresh, no orphan, every tag resolves & renders,
-      // committed PNG present.
+      // Re-render every tagged story except onlyIfMissing ones (shoot() aborts on a
+      // render/play error) but don't pixel-compare — PNG output isn't reproducible
+      // across OS / font stacks. Guards: manifest fresh, no orphan, every non-exempt
+      // tag resolves & renders, every tagged PNG present.
       const problems = [];
       if ((await readIfExists(MANIFEST_PATH))?.toString() !== manifestJson) {
         problems.push(`${path.relative(REPO_ROOT, MANIFEST_PATH)} is stale`);
@@ -335,9 +349,10 @@ async function main() {
       const committed = new Set(
         (existsSync(ASSETS_DIR) ? await readdir(ASSETS_DIR) : []).filter((f) => f.endsWith(".png")),
       );
+      const toRender = new Map([...targets].filter(([, t]) => !t.onlyIfMissing));
       const tmp = await mkdtemp(path.join(tmpdir(), "sb-shots-"));
       try {
-        await shoot(targets, tmp);
+        await shoot(toRender, tmp);
       } finally {
         await rm(tmp, { recursive: true, force: true });
       }
@@ -358,10 +373,22 @@ async function main() {
 
     await mkdir(ASSETS_DIR, { recursive: true });
     await writeFile(MANIFEST_PATH, manifestJson);
-    const written = await shoot(targets, ASSETS_DIR);
+
+    const toShoot = new Map();
+    const skipped = [];
+    for (const [key, target] of targets) {
+      const filename = `${sanitizeKey(key)}.png`;
+      if (target.onlyIfMissing && (await readIfExists(path.join(ASSETS_DIR, filename)))) {
+        skipped.push(filename);
+      } else {
+        toShoot.set(key, target);
+      }
+    }
+    if (skipped.length) log(`skipping ${skipped.length} already-present onlyIfMissing target(s)`);
+    const written = await shoot(toShoot, ASSETS_DIR);
 
     // prune orphans
-    const keep = new Set(written);
+    const keep = new Set([...written, ...skipped]);
     for (const f of existsSync(ASSETS_DIR) ? await readdir(ASSETS_DIR) : []) {
       if (f.endsWith(".png") && !keep.has(f)) {
         await rm(path.join(ASSETS_DIR, f));
