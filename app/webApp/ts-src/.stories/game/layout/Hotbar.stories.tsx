@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Hotbar } from "../../../game/components/Hotbar";
 
 const meta: Meta<typeof Hotbar> = {

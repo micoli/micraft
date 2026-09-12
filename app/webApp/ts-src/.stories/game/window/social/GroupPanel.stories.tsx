@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { GroupPanel } from "../../../../game/components/social/GroupPanel";
 import type { GroupInfo } from "../../../../game/types";
 import { stubMcState } from "../../../_support/mcState";

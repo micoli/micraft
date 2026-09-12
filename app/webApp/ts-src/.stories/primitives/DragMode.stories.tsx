@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DragMode, type dragMode } from "../../primitives/DragMode";
 
 const meta: Meta<typeof DragMode> = {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Dialog, DialogTrigger, DialogClose } from "../../primitives/Dialog";
 import { DialogContent } from "../../primitives/DialogContent";
 import { DialogTitle } from "../../primitives/DialogTitle";

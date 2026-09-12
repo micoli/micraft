@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { AttackPanel } from "../../../game/components/AttackPanel";
 import type { AttackMeta, SpellMeta } from "../../../game/types";
 import { stubMcState } from "../../_support/mcState";

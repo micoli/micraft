@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { PlayerStatusBar } from "../../../game/components/playerStatus/PlayerStatusBar";
 import type { PlayerStatusData } from "../../../game/types";
 import { stubMcState } from "../../_support/mcState";

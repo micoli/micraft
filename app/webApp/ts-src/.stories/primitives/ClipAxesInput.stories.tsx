@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ClipAxesInput } from "../../primitives/clipAxesInput";
 import type { ClipAxis, ClipPlaneState } from "../../admin/pages/shared/voxelEditor/clipAxis";
 

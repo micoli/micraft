@@ -3,7 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 const config: StorybookConfig = {
   stories: ["../.stories/**/*.stories.@(ts|tsx)"],
-  addons: ["@storybook/addon-essentials"],
+  addons: ["@storybook/addon-docs"],
   // Serve block/entity models+textures exactly like the server's
   // staticFiles("/api/models", File("resources")), so initBlockDefs() and BbmodelAnimationViewer
   // stories can fetch real .bbmodel/texture files for real 3D previews (see

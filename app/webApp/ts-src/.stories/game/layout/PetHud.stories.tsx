@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { PetHud } from "../../../game/components/pet/PetHud";
 import type { PetInfo } from "../../../game/types";
 

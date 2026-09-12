@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CurrencyDisplay } from "../../game/components/auction/CurrencyDisplay";
 
 const meta: Meta<typeof CurrencyDisplay> = {

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { QuestTracker } from "../../../game/components/quest/QuestTracker";
 import type { QuestProgress } from "../../../game/types";
 import { mockApi } from "../../_support/mockApi";
