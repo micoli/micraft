@@ -147,7 +147,7 @@ class ExperienceProcessor(
                 NpcTier.COMMON -> config.sources.commonPerLevel
                 NpcTier.ELITE -> config.sources.elitePerLevel
                 NpcTier.BOSS -> config.sources.bossPerLevel
-            } * prey.definition.minLevel
+            } * prey.instanceLevel
         grantXpToNpc(predator, baseXp)
     }
 
@@ -156,7 +156,7 @@ class ExperienceProcessor(
             "onNpcKilled: npc={} tier={} lv={} contributors={}",
             npc.state.id.take(8),
             npc.definition.tier,
-            npc.definition.minLevel,
+            npc.instanceLevel,
             npc.damageContributors.keys,
         )
         val thresholds = config.progression.thresholds
@@ -165,7 +165,7 @@ class ExperienceProcessor(
                 NpcTier.COMMON -> config.sources.commonPerLevel
                 NpcTier.ELITE -> config.sources.elitePerLevel
                 NpcTier.BOSS -> config.sources.bossPerLevel
-            } * npc.definition.minLevel
+            } * npc.instanceLevel
 
         val contributors = npc.damageContributors.toMap()
         if (contributors.isEmpty()) {
@@ -183,7 +183,7 @@ class ExperienceProcessor(
                 "NPC {} (tier={} lv={}) killed solo by {}, baseXp={}",
                 npc.state.id,
                 npc.definition.tier,
-                npc.definition.minLevel,
+                npc.instanceLevel,
                 contributors.keys.first(),
                 baseXp,
             )
@@ -194,7 +194,7 @@ class ExperienceProcessor(
                 "NPC {} (tier={} lv={}) killed by {} players, baseXp={} shareXp={} (bonus={:.0f}%)",
                 npc.state.id,
                 npc.definition.tier,
-                npc.definition.minLevel,
+                npc.instanceLevel,
                 count,
                 baseXp,
                 shareXp,

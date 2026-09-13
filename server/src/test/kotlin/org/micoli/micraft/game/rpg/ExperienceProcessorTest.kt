@@ -166,6 +166,25 @@ class ExperienceProcessorTest {
         assertTrue(session.sent.filterIsInstance<ServerMessage.XpGained>().isEmpty())
     }
 
+    @Test
+    fun `onNpcKilled uses instanceLevel not definition minLevel for base xp`() = runBlocking {
+        val session = testSession(id = "solo")
+        session.state = session.state.copy(rpgOptOut = false)
+        session.characterData = charData()
+
+        // A passive-fauna definition typically leaves minLevel at its default (0, no zone-tier
+        // filtering) while the spawned instance is scaled to the zone's actual level — the xp
+        // formula must follow the latter, or every such kill silently grants 0 xp.
+        val npc = makeNpc(level = 0, tier = NpcTier.COMMON)
+        npc.instanceLevel = 4
+        npc.damageContributors["solo"] = 100
+
+        processor(listOf(session)).onNpcKilled(npc)
+
+        val xpMsg = session.sent.filterIsInstance<ServerMessage.XpGained>().last()
+        assertEquals(200, xpMsg.xpGained) // 50 * instanceLevel=4 = 200, not 50 * minLevel=0
+    }
+
     // ── sendXpState ───────────────────────────────────────────────────────────
 
     @Test
@@ -287,18 +306,18 @@ class ExperienceProcessorTest {
     }
 
     @Test
-    fun `grantXpToNpcForKill commonTier gives commonPerLevel times minLevel`() = runBlocking {
+    fun `grantXpToNpcForKill commonTier gives commonPerLevel times instanceLevel`() = runBlocking {
         val predator = makeNpc(level = 1)
         val prey = makeNpc(level = 3, tier = NpcTier.COMMON)
         processor().grantXpToNpcForKill(predator, prey)
-        assertEquals(150, predator.xp) // commonPerLevel=50 * minLevel=3
+        assertEquals(150, predator.xp) // commonPerLevel=50 * instanceLevel=3
     }
 
     @Test
-    fun `grantXpToNpcForKill eliteTier gives elitePerLevel times minLevel`() = runBlocking {
+    fun `grantXpToNpcForKill eliteTier gives elitePerLevel times instanceLevel`() = runBlocking {
         val predator = makeNpc(level = 1)
         val prey = makeNpc(level = 2, tier = NpcTier.ELITE)
         processor().grantXpToNpcForKill(predator, prey)
-        assertEquals(400, predator.xp) // elitePerLevel=200 * minLevel=2
+        assertEquals(400, predator.xp) // elitePerLevel=200 * instanceLevel=2
     }
 }
