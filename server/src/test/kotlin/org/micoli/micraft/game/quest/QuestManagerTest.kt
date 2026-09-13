@@ -21,6 +21,7 @@ private fun killDef(
     repeatable: Boolean = false,
     cooldownSeconds: Long = 0,
     dependsOn: List<String> = emptyList(),
+    autoLoot: Boolean = true,
 ) =
     QuestDefinition(
         id = id,
@@ -33,6 +34,7 @@ private fun killDef(
         dependsOn = dependsOn,
         repeatable = repeatable,
         cooldownSeconds = cooldownSeconds,
+        autoLoot = autoLoot,
     )
 
 private fun npcDef(type: String = "wolf"): NpcDefinition =
@@ -179,6 +181,69 @@ class QuestManagerTest {
         assertEquals(QuestStatus.TODO, session.state.quests["q1"]?.status)
         val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
         assertEquals(1, notifs.size)
+    }
+
+    @Test
+    fun onNpcKilled_nonAutoLoot_readyToTurnInWithoutGrantingXpYet() = runBlocking {
+        val session = testSession(id = "player-1")
+        val xpGranted = mutableListOf<Int>()
+        val qm = testQuestManager(session, xpGranted)
+        qm.reloadDefinitions(
+            mapOf("q1" to killDef(objectives = listOf(KillObjective("wolf", 1)), autoLoot = false)))
+        qm.accept(session, "q1")
+        val npc = npcInstance(type = "wolf", contributorId = "player-1")
+        qm.onNpcKilled(npc)
+        assertEquals(QuestStatus.READY_TO_TURN_IN, session.state.quests["q1"]?.status)
+        assertEquals(emptyList(), xpGranted)
+    }
+
+    @Test
+    fun turnIn_grantsRewardAndCompletesQuest() = runBlocking {
+        val session = testSession(id = "player-1")
+        val xpGranted = mutableListOf<Int>()
+        val qm = testQuestManager(session, xpGranted)
+        qm.reloadDefinitions(
+            mapOf("q1" to killDef(objectives = listOf(KillObjective("wolf", 1)), autoLoot = false)))
+        qm.accept(session, "q1")
+        val npc = npcInstance(type = "wolf", contributorId = "player-1")
+        qm.onNpcKilled(npc)
+
+        qm.turnIn(session, "q1")
+
+        assertEquals(QuestStatus.COMPLETED, session.state.quests["q1"]?.status)
+        assertEquals(listOf(100), xpGranted)
+    }
+
+    @Test
+    fun turnIn_beforeReady_doesNothing() = runBlocking {
+        val session = testSession(id = "player-1")
+        val xpGranted = mutableListOf<Int>()
+        val qm = testQuestManager(session, xpGranted)
+        qm.reloadDefinitions(
+            mapOf("q1" to killDef(objectives = listOf(KillObjective("wolf", 3)), autoLoot = false)))
+        qm.accept(session, "q1")
+
+        qm.turnIn(session, "q1")
+
+        assertEquals(QuestStatus.IN_PROGRESS, session.state.quests["q1"]?.status)
+        assertEquals(emptyList(), xpGranted)
+    }
+
+    @Test
+    fun accept_whileReadyToTurnIn_sendsNotificationInstead() = runBlocking {
+        val session = testSession(id = "player-1")
+        val qm = testQuestManager(session)
+        qm.reloadDefinitions(
+            mapOf("q1" to killDef(objectives = listOf(KillObjective("wolf", 1)), autoLoot = false)))
+        qm.accept(session, "q1")
+        val npc = npcInstance(type = "wolf", contributorId = "player-1")
+        qm.onNpcKilled(npc)
+        session.sent.clear()
+
+        qm.accept(session, "q1")
+
+        assertEquals(QuestStatus.READY_TO_TURN_IN, session.state.quests["q1"]?.status)
+        assertEquals(1, session.sent.filterIsInstance<ServerMessage.Notification>().size)
     }
 
     @Test

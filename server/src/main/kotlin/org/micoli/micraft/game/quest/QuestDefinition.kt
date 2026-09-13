@@ -38,4 +38,6 @@ data class QuestDefinition(
     val dependsOn: List<String> = emptyList(),
     val repeatable: Boolean = false,
     val cooldownSeconds: Long = 0L,
+    /** False: objective completion only marks the quest ready — reward is claimed at the giver. */
+    val autoLoot: Boolean = true,
 )

@@ -12,3 +12,4 @@ rewards:
 dependsOn: [zone_tier1_foxes.yaml]
 repeatable: false
 cooldownSeconds: 0
+autoLoot: false

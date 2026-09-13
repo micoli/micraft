@@ -13,9 +13,11 @@ import org.micoli.micraft.quest.QuestStatus
 
 /**
  * Offers the quests listed in [org.micoli.micraft.game.npc.NpcDefinition.offersQuests], filtered to
- * what the player can actually accept (level, `dependsOn`, cooldown, not already active). Does not
- * accept quests itself — the dialog's "accept" action replays through the existing `/quest accept`
- * path (`QuestManager.accept`) so there is one acceptance code path, not two.
+ * what the player can actually accept (level, `dependsOn`, cooldown, not already active), and lists
+ * ones [org.micoli.micraft.quest.QuestStatus.READY_TO_TURN_IN] (a non-autoloot quest whose
+ * objective is met) as claimable here. Does not accept or claim quests itself — the dialog's
+ * actions replay through the existing `/quest accept`/`/quest turnin` paths
+ * (`QuestManager.accept`/`turnIn`) so there is one code path for each, not two.
  */
 class QuestGiverNpcBehavior : NpcBehavior {
     override fun tick(instance: NpcInstance, world: WorldState, ctx: NpcTickContext): Boolean =
@@ -38,7 +40,10 @@ class QuestGiverNpcBehavior : NpcBehavior {
             instance.definition.offersQuests.mapNotNull { questId ->
                 val def = definitions[questId] ?: return@mapNotNull null
                 val current = playerQuests[questId]
-                if (current?.status == QuestStatus.IN_PROGRESS) return@mapNotNull null
+                if (current?.status == QuestStatus.IN_PROGRESS ||
+                    current?.status == QuestStatus.READY_TO_TURN_IN) {
+                    return@mapNotNull null
+                }
                 if (current?.status == QuestStatus.COMPLETED && !def.repeatable) {
                     return@mapNotNull null
                 }
@@ -57,7 +62,7 @@ class QuestGiverNpcBehavior : NpcBehavior {
 
         val turnInable =
             instance.definition.offersQuests.filter { questId ->
-                playerQuests[questId]?.status == QuestStatus.IN_PROGRESS
+                playerQuests[questId]?.status == QuestStatus.READY_TO_TURN_IN
             }
 
         send(

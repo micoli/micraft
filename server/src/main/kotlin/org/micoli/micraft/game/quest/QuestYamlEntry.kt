@@ -16,6 +16,7 @@ data class QuestYamlEntry(
     val dependsOn: List<String> = emptyList(),
     val repeatable: Boolean = false,
     val cooldownSeconds: Long = 0L,
+    val autoLoot: Boolean = true,
 ) {
     fun toDefinition(id: String) =
         QuestDefinition(
@@ -32,5 +33,6 @@ data class QuestYamlEntry(
             dependsOn = dependsOn,
             repeatable = repeatable,
             cooldownSeconds = cooldownSeconds,
+            autoLoot = autoLoot,
         )
 }

@@ -363,6 +363,8 @@ quest:
     completed: "Quête accomplie : {0} !"
     abandoned: "Quête abandonnée : {0}."
     already_done: "Quête déjà complétée (non répétable)."
+    ready_to_turn_in: "Objectif atteint — retournez voir le donneur de quête : {0}"
+    nothing_to_turn_in: "Rien à récupérer pour cette quête."
 
 give_money:
   server:

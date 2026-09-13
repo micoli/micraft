@@ -8,9 +8,10 @@ interface Props {
   data: QuestGiverDialogData | null;
   onClose: () => void;
   onAccept: (questId: string) => void;
+  onTurnIn: (questId: string) => void;
 }
 
-export function NpcQuestDialog({ data, onClose, onAccept }: Props) {
+export function NpcQuestDialog({ data, onClose, onAccept, onTurnIn }: Props) {
   if (!data) return null;
 
   return (
@@ -23,10 +24,20 @@ export function NpcQuestDialog({ data, onClose, onAccept }: Props) {
 
         {data.turnInable.length > 0 && (
           <div className="flex flex-col gap-1 mb-3">
-            <div className="text-[10px] text-white/45 uppercase tracking-wider">En cours</div>
+            <div className="text-[10px] text-white/45 uppercase tracking-wider">À récupérer</div>
             {data.turnInable.map((questId) => (
-              <div key={questId} className="bg-white/5 rounded px-2 py-1 text-xs text-white/60">
-                {questId}
+              <div
+                key={questId}
+                className="flex items-center justify-between gap-2 bg-white/5 rounded px-2 py-1 text-xs text-white/60"
+              >
+                <span>{questId}</span>
+                <Button
+                  variant="secondary"
+                  className="text-[9px] px-2 py-0.5 h-auto font-mono flex-shrink-0"
+                  onClick={() => onTurnIn(questId)}
+                >
+                  Récupérer
+                </Button>
               </div>
             ))}
           </div>

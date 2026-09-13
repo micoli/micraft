@@ -27,7 +27,7 @@ const meta: Meta<typeof NpcQuestDialog> = {
   title: "Game/Windows/NpcQuestDialog",
   component: NpcQuestDialog,
   parameters: { layout: "centered" },
-  args: { onClose: fn(), onAccept: fn() },
+  args: { onClose: fn(), onAccept: fn(), onTurnIn: fn() },
 };
 export default meta;
 

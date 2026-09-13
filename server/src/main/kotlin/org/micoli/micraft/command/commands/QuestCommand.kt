@@ -12,7 +12,7 @@ class QuestCommand : CommandHandler {
     override val id: UUID = UUID.fromString("a3e1c0d2-7f4b-4a89-b256-1e3f8c9d0e5a")
     override val name = "quest"
     override val description = "Manage your quests."
-    override val usage = "$command [list|accept|abandon|status] [id]"
+    override val usage = "$command [list|accept|abandon|turnin|status] [id]"
     override val autocompleteArgs = listOf(0, 1)
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
@@ -62,6 +62,13 @@ class QuestCommand : CommandHandler {
                 }
                 qm.abandon(session, rest)
             }
+            "turnin" -> {
+                if (rest.isBlank()) {
+                    session.send(ServerMessage.Notification("Usage: /quest turnin <id>"))
+                    return
+                }
+                qm.turnIn(session, rest)
+            }
             "status" -> {
                 val questId = rest.ifBlank { null }
                 if (questId == null) {
@@ -99,7 +106,7 @@ class QuestCommand : CommandHandler {
             else ->
                 session.send(
                     ServerMessage.Notification(
-                        "Usage: /quest [list|accept|abandon|status|ui] [id]"))
+                        "Usage: /quest [list|accept|abandon|turnin|status|ui] [id]"))
         }
     }
 
@@ -112,7 +119,7 @@ class QuestCommand : CommandHandler {
         val qm = context.questManager ?: return emptyList()
         return when (argIndex) {
             0 ->
-                listOf("list", "accept", "abandon", "status", "ui").filter {
+                listOf("list", "accept", "abandon", "turnin", "status", "ui").filter {
                     it.contains(partial, ignoreCase = true)
                 }
             1 -> qm.getDefinitions().keys.filter { it.contains(partial, ignoreCase = true) }

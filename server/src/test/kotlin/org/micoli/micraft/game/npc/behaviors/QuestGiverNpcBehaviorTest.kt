@@ -96,6 +96,27 @@ class QuestGiverNpcBehaviorTest {
             }
         val dialog = sent.filterIsInstance<ServerMessage.QuestGiverDialog>().first()
         assertTrue(dialog.offerable.isEmpty())
+        assertTrue(dialog.turnInable.isEmpty(), "still in progress — nothing to turn in yet")
+    }
+
+    @Test
+    fun listsQuestReadyToTurnIn() = runBlocking {
+        val quest =
+            QuestDefinition(
+                id = "q1", title = "Q1", description = "d", type = QuestType.EXPLORE, level = 1)
+        val qm = questManagerWith(quest)
+        val instance = instanceOffering("q1")
+        val session = testSession(pos = Vec3(8f, 4f, 8f))
+        session.state =
+            session.state.copy(
+                quests = mapOf("q1" to QuestProgress(status = QuestStatus.READY_TO_TURN_IN)))
+        val sent = mutableListOf<ServerMessage>()
+        instance.definition.behavior.onInteract(
+            instance, session, NpcTickContext.live.copy(questManager = qm)) {
+                sent.add(it)
+            }
+        val dialog = sent.filterIsInstance<ServerMessage.QuestGiverDialog>().first()
+        assertTrue(dialog.offerable.isEmpty())
         assertEquals(listOf("q1"), dialog.turnInable)
     }
 

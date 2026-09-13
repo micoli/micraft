@@ -450,6 +450,10 @@ export function GameScreen() {
                 window.mcState.events.push(`cmd:/quest accept ${questId}`);
                 dispatch("quest_giver_dialog_close");
               }}
+              onTurnIn={(questId) => {
+                window.mcState.events.push(`cmd:/quest turnin ${questId}`);
+                dispatch("quest_giver_dialog_close");
+              }}
             />
           )}
           {state.codexOpen && (

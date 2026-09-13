@@ -15,3 +15,4 @@ rewards:
 dependsOn: [zone_tier1_sand.yaml]
 repeatable: false
 cooldownSeconds: 0
+autoLoot: false

@@ -363,6 +363,8 @@ quest:
     completed: "Quest completed: {0}!"
     abandoned: "Quest abandoned: {0}."
     already_done: "Quest already completed (not repeatable)."
+    ready_to_turn_in: "Quest objective complete — return to the quest giver: {0}"
+    nothing_to_turn_in: "Nothing to turn in for this quest."
 
 give_money:
   server:

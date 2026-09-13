@@ -42,7 +42,8 @@ class QuestManager(
         }
         val current = session.state.quests[questId]
         when (current?.status) {
-            QuestStatus.IN_PROGRESS -> {
+            QuestStatus.IN_PROGRESS,
+            QuestStatus.READY_TO_TURN_IN -> {
                 session.send(
                     ServerMessage.Notification(
                         i18n?.t(session.state.language, "quest:server:already_active")
@@ -117,6 +118,20 @@ class QuestManager(
             ServerMessage.Notification(
                 i18n?.t(session.state.language, "quest:server:abandoned", def.title)
                     ?: "Quest abandoned: ${def.title}."))
+    }
+
+    /** Claims a non-autoloot quest's reward — objective already met, player at the quest giver. */
+    suspend fun turnIn(session: PlayerSession, questId: String) {
+        val def = definitions[questId]
+        val progress = session.state.quests[questId]
+        if (def == null || progress == null || progress.status != QuestStatus.READY_TO_TURN_IN) {
+            session.send(
+                ServerMessage.Notification(
+                    i18n?.t(session.state.language, "quest:server:nothing_to_turn_in")
+                        ?: "Nothing to turn in for this quest."))
+            return
+        }
+        grantQuestReward(session, questId, def, progress)
     }
 
     suspend fun onNpcKilled(npc: NpcInstance) {
@@ -198,6 +213,24 @@ class QuestManager(
             }
         if (!completed) return
 
+        if (!def.autoLoot) {
+            updateQuestState(session, questId, progress.copy(status = QuestStatus.READY_TO_TURN_IN))
+            session.send(
+                ServerMessage.Notification(
+                    i18n?.t(session.state.language, "quest:server:ready_to_turn_in", def.title)
+                        ?: "Quest objective complete — return to the quest giver: ${def.title}"))
+            return
+        }
+        grantQuestReward(session, questId, def, progress)
+    }
+
+    /** Called on objective completion for an autoloot quest, or on manual turn-in otherwise. */
+    private suspend fun grantQuestReward(
+        session: PlayerSession,
+        questId: String,
+        def: QuestDefinition,
+        progress: QuestProgress,
+    ) {
         val now = System.currentTimeMillis()
         val finalProgress =
             progress.copy(

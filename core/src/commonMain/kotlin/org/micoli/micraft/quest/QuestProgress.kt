@@ -8,6 +8,10 @@ enum class QuestStatus {
     TODO,
     IN_PROGRESS,
     ABANDONED,
+    /**
+     * Objective met on a non-autoloot quest — reward not yet claimed, needs turn-in at the giver.
+     */
+    READY_TO_TURN_IN,
     COMPLETED,
     FAILED
 }

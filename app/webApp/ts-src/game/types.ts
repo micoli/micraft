@@ -456,7 +456,7 @@ export type ClassDefinitions = Record<string, Record<string, ClassLevelEntry>>;
 
 export type NpcProximityEntry = { id: string; name: string; relAngle: number; dist: number; aggro: boolean };
 
-export type QuestStatus = "TODO" | "IN_PROGRESS" | "COMPLETED" | "ABANDONED" | "FAILED";
+export type QuestStatus = "TODO" | "IN_PROGRESS" | "READY_TO_TURN_IN" | "COMPLETED" | "ABANDONED" | "FAILED";
 export type QuestProgress = {
   status: QuestStatus;
   progress: Record<string, number>;

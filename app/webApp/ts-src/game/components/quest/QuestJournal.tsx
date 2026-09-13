@@ -39,6 +39,7 @@ interface Props {
 const STATUS_LABEL: Record<QuestStatus, string> = {
   TODO: "Available",
   IN_PROGRESS: "In Progress",
+  READY_TO_TURN_IN: "Ready to turn in",
   COMPLETED: "Completed",
   ABANDONED: "Abandoned",
   FAILED: "Failed",
@@ -47,6 +48,7 @@ const STATUS_LABEL: Record<QuestStatus, string> = {
 const STATUS_COLOR: Record<QuestStatus, string> = {
   TODO: "text-gray-400",
   IN_PROGRESS: "text-yellow-400",
+  READY_TO_TURN_IN: "text-orange-400",
   COMPLETED: "text-green-400",
   ABANDONED: "text-red-400",
   FAILED: "text-red-600",
@@ -60,7 +62,15 @@ const TYPE_COLOR: Record<QuestType, string> = {
   EXPLORE: "bg-teal-800/60",
 };
 
-const STATUS_FILTERS: (QuestStatus | "ALL")[] = ["ALL", "IN_PROGRESS", "TODO", "COMPLETED", "ABANDONED", "FAILED"];
+const STATUS_FILTERS: (QuestStatus | "ALL")[] = [
+  "ALL",
+  "IN_PROGRESS",
+  "READY_TO_TURN_IN",
+  "TODO",
+  "COMPLETED",
+  "ABANDONED",
+  "FAILED",
+];
 
 function cooldownRemaining(def: QuestDef, progress: QuestProgress): number {
   if (!def.repeatable || !progress.lastCompletedAt) return 0;
