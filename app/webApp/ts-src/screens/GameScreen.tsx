@@ -132,7 +132,7 @@ export function GameScreen() {
     const unlocked = new Set<string>();
     for (const [lvlStr, entry] of Object.entries(classDef)) {
       if (parseInt(lvlStr) <= charData.level) {
-        for (const { attack, level } of entry.attacks) {
+        for (const { attack, level } of entry.attacks ?? []) {
           unlocked.add(`${attack}:${level}`);
         }
       }
@@ -150,7 +150,7 @@ export function GameScreen() {
     const unlocked = new Set<string>();
     for (const [lvlStr, entry] of Object.entries(classDef)) {
       if (parseInt(lvlStr) <= charData.level) {
-        for (const spellId of entry.spells) unlocked.add(spellId);
+        for (const spellId of entry.spells ?? []) unlocked.add(spellId);
       }
     }
     return unlocked;

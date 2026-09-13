@@ -11,6 +11,10 @@ import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.classes.ClassLevelEntry
 
 class AttacksController(private val gameLoop: GameLoop) {
+    // Default Json omits fields at their default value (e.g. an empty `spells` list on an
+    // attacks-only class level) — the client's ClassLevelEntry type expects both arrays present.
+    private val classJson = Json { encodeDefaults = true }
+
     fun register(route: Route) =
         route.apply {
             get(
@@ -67,7 +71,7 @@ class AttacksController(private val gameLoop: GameLoop) {
                             }
                         }
                     call.respondText(
-                        Json.encodeToString(classSer, classes), ContentType.Application.Json)
+                        classJson.encodeToString(classSer, classes), ContentType.Application.Json)
                 }
             get(
                 "/api/spells",
