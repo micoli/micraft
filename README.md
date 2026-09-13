@@ -88,7 +88,7 @@ make test                     # all test suites
 | `/pet` | `/pet <list\|spawn\|dismiss\|resurrect\|rename> [name] [newName]` | Manage your tamed pets (list, spawn, dismiss, resurrect, rename). | dynamic |
 | `/preferences` | `/preferences` | Opens the preferences panel. | — |
 | `/pump` | `/pump` | Remove all connected liquid blocks in sight. | — |
-| `/quest` | `/quest [list\|accept\|abandon\|status] [id]` | Manage your quests. | dynamic |
+| `/quest` | `/quest [list\|accept\|abandon\|turnin\|status] [id]` | Manage your quests. | dynamic |
 | `/refetch` | `/refetch` | Reloads all chunks around the player. | — |
 | `/reload` | `/reload` | Reloads configuration files without restarting the server. | resources/blocks/*.yaml — block properties + drop tables, biomes.yaml — biome definitions, i18n/*.yaml — translations |
 | `/rest` | `/rest` | Take a short rest: restore rage and tokens to maximum. | — |

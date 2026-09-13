@@ -24,6 +24,13 @@ animations with configurable bone aliases in `walkBoneAliases`
 `NpcSpawner.trySpawn` runs every 200 ticks, capped per biome by the biome's
 `maxNpcs`.
 
+**Names** — every auto-spawned NPC gets a randomly generated name, unique
+across every live NPC *and* every player (connected or not). An animal type
+(one with an `animal:` block, e.g. `fox`, `wolf`) gets a single plain name
+("Rusty"); anything else gets a two-part fantasy name ("Aldric Ironforge"),
+with race (orc/elf/dwarf/human) inferred from the type key. `/goto`
+autocomplete lists every live NPC as `Name (Type)`.
+
 **Movement modes** — a definition lists one or more `movementMode` values
 (`WALKING` default, `SWIMMING`, `FLYING`):
 

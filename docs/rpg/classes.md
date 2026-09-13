@@ -33,7 +33,7 @@ classes:
         attacks:
           - { attack: slash, level: 1 }
           - { attack: heavy_slash, level: 1 }
-        spells: [tokenRageConsume]
+        spells: [tokenRageConsume, quickStrike]
       3:
         attacks:
           - { attack: heavy_slash, level: 2 }

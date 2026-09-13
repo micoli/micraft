@@ -10,7 +10,11 @@ title: Combat
   `CombatTargetFrame` shows the focused entity's HP.
 - **Attack** — `combat_attack` (`R`) triggers the selected action.
 - **Action bar** (`AttackPanel`) — draggable slots for attacks and spells, each
-  with its own cooldown and resource cost.
+  with its own cooldown and resource cost. A spell the player's class hasn't
+  unlocked yet at their current level stays visible but greyed out with a lock
+  badge.
+- **Global cooldown** — every attack and spell cast also shares a short fixed
+  cooldown (`GcdBar`, `globalCooldownMs` below), on top of that ability's own.
 - **Aggro indicators** — angular markers show nearby hostile NPCs.
 - **Downed / respawn** — `PlayerDownedOverlay`; `/resurect [playerName]` revives.
 - **`/god:on` / `/god:off`** *(admin)* — damage immunity.
@@ -37,6 +41,7 @@ maxCombatRange: 10.0
 npcMaxAttackRange: 3.0
 downingRollIntervalMs: 3000
 maxRage: 100
+globalCooldownMs: 1500
 ```
 
 **Attacks** — `resources/config/skills/attacks/<id>.yaml` (schema
@@ -59,6 +64,22 @@ cooldownMs: 6000
 aoeRadius: 3.0
 maxRange: 20.0
 ```
+
+Spell types: `TOKEN_RAGE_CONSUME` (resource conversion, no damage),
+`NECROTIC_AOE` (area status effect), and `DIRECT_DAMAGE` (single-target,
+guaranteed hit against the caster's locked combat target — no to-hit roll, no
+armor mitigation):
+
+```yaml
+type: DIRECT_DAMAGE
+power: 4
+cooldownMs: 0
+maxRange: 15.0
+```
+
+Every class has one level-1 `DIRECT_DAMAGE` filler spell with `cooldownMs: 0`
+(only the global cooldown applies): `quickStrike` (WARRIOR), `sparkBolt`
+(MAGE), `huntersShot` (RANGER), `swiftStab` (ROGUE), `smite` (CLERIC).
 
 Which class gets which attack/spell at which level is in
 [`classes.yaml`](classes.md). Served at `GET /api/attacks`, `GET /api/spells`.
