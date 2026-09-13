@@ -829,11 +829,23 @@ class NpcManager(
         }
     }
 
-    fun applyStatusEffect(npcId: String, levelDef: AttackLevelDefinition, now: Long) {
+    fun applyStatusEffect(
+        npcId: String,
+        levelDef: AttackLevelDefinition,
+        now: Long,
+        attackerId: String
+    ) {
         val instance = npcs[npcId] ?: return
         val effect = levelDef.statusEffect ?: return
         val durationSec = levelDef.durationSec ?: effect.durationSec
         applyStatusEffectDirectly(npcId, effect, durationSec, now)
+        // A DoT tick (tickEffects) can finish the kill on its own, well after this hit — without
+        // this, that death carries an empty damageContributors and silently drops both XP and quest
+        // credit for whoever set the status effect in the first place.
+        if (getSessions().any { it.id == attackerId }) {
+            instance.damageContributors[attackerId] =
+                (instance.damageContributors[attackerId] ?: 0) + 1
+        }
     }
 
     fun applyStatusEffectDirectly(

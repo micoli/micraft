@@ -278,7 +278,7 @@ class CombatProcessor(
 
         if (hit) {
             npcManager.applyDamage(msg.targetId, damage, session.id)
-            npcManager.applyStatusEffect(msg.targetId, levelDef, now)
+            npcManager.applyStatusEffect(msg.targetId, levelDef, now, session.id)
         }
 
         broadcastCombatLog(
