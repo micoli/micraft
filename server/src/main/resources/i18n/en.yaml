@@ -382,6 +382,7 @@ npc:
     not_enough_items: "You don't have enough {0}."
     buy_done: "Purchased {0}x {1}."
     sell_done: "Sold {0}x {1}."
+    too_far: "Too far away to interact."
 
 mail:
   server:

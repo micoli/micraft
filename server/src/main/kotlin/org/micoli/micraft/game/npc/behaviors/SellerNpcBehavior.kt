@@ -7,6 +7,7 @@ import org.micoli.micraft.game.npc.NpcBehavior
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcPhysics
 import org.micoli.micraft.game.npc.NpcTickContext
+import org.micoli.micraft.game.npc.tooFarToInteract
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.protocol.ServerMessage
@@ -21,13 +22,7 @@ class SellerNpcBehavior : NpcBehavior {
         ctx: NpcTickContext,
         send: suspend (ServerMessage) -> Unit,
     ) {
-        val playerPos = session.state.pos
-        val npcPos = instance.state.pos
-        val dx = playerPos.x - npcPos.x
-        val dy = playerPos.y - npcPos.y
-        val dz = playerPos.z - npcPos.z
-        val distSq = dx * dx + dy * dy + dz * dz
-        if (distSq > ctx.tuning.interactionRange * ctx.tuning.interactionRange) return
+        if (ctx.tooFarToInteract(instance, session, send)) return
 
         val shopItemsJson = buildJsonArray {
             instance.definition.shopItems.forEach { item ->

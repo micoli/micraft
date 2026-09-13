@@ -1945,7 +1945,7 @@ class GameLoop(
                                             savePlayer(session)
                                         }
                                         is ClientMessage.NpcInteract ->
-                                            npcManager.handleInteract(session, msg.npcId)
+                                            npcManager.handleInteract(session, msg.npcId, i18n)
                                         is ClientMessage.VehicleInteract ->
                                             vehicleManager.handleInteract(msg.vehicleId)
                                         is ClientMessage.PlaceableInteract -> {

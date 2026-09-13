@@ -18,3 +18,16 @@ interface NpcBehavior {
         send: suspend (ServerMessage) -> Unit,
     ) {}
 }
+
+suspend fun NpcTickContext.tooFarToInteract(
+    instance: NpcInstance,
+    session: PlayerSession,
+    send: suspend (ServerMessage) -> Unit,
+): Boolean {
+    val distSq = session.state.pos.distanceSquaredTo(instance.state.pos)
+    if (distSq <= tuning.interactionRange * tuning.interactionRange) return false
+    i18n?.let {
+        send(ServerMessage.Notification(it.t(session.state.language, "npc:server:too_far")))
+    }
+    return true
+}

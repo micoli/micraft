@@ -569,12 +569,18 @@ class NpcManager(
         lastSentToPlayer.remove(sessionId)
     }
 
-    suspend fun handleInteract(session: PlayerSession, npcId: String) {
+    suspend fun handleInteract(
+        session: PlayerSession,
+        npcId: String,
+        i18n: org.micoli.micraft.I18nConfig? = null,
+    ) {
         val instance = npcs[npcId] ?: return
         val interactCtx =
-            if (instance.definition.behaviorKey == "quest_giver")
-                ctx.copy(questManager = getQuestManager())
-            else ctx
+            ctx.copy(
+                questManager =
+                    if (instance.definition.behaviorKey == "quest_giver") getQuestManager()
+                    else null,
+                i18n = i18n)
         instance.definition.behavior.onInteract(instance, session, interactCtx) { msg ->
             session.send(msg)
         }

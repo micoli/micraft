@@ -12,6 +12,12 @@ data class NpcTickContext(
     val random: Random = Random,
     /** Set only for the one [NpcManager.handleInteract] call routed to a quest-giver behavior. */
     val questManager: org.micoli.micraft.game.quest.QuestManager? = null,
+    /**
+     * Set only by [NpcManager.handleInteract] — lets an interact behavior notify the player when it
+     * silently no-ops (e.g. out of range), instead of the player seeing nothing happen. Null in
+     * tick contexts and in tests that don't care about that feedback.
+     */
+    val i18n: org.micoli.micraft.I18nConfig? = null,
 ) {
     companion object {
         /** Context backed by the live server tunables. */
