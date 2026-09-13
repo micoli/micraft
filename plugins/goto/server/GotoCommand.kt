@@ -6,6 +6,7 @@ import org.micoli.micraft.command.Completion
 import org.micoli.micraft.command.PluginCommand
 import org.micoli.micraft.command.playerCompletions
 import org.micoli.micraft.command.resolvePlayerSession
+import org.micoli.micraft.game.npc.humanizeNpcType
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.plugins.teleport.safeTeleportPos
 import org.micoli.micraft.protocol.ServerMessage
@@ -26,17 +27,20 @@ class GotoCommand : PluginCommand {
         context: CommandContext
     ): List<Completion> {
         val liveNpcs = context.npcManager?.getAll()?.filterNot { it.isDead } ?: emptyList()
-        val questGivers =
+        val npcCompletions =
             liveNpcs
-                .filter { it.definition.behaviorKey == "quest_giver" }
                 .filter { it.state.name.contains(partial, ignoreCase = true) }
-                .map { Completion("${it.state.name} (quest giver)", it.state.name) }
-        val npcs =
-            liveNpcs.filterNot { it.definition.behaviorKey == "quest_giver" }.map { it.state.name }
-        val named = context.namedPoints().keys.toList()
-        val rest =
-            (npcs + named).filter { it.contains(partial, ignoreCase = true) }.map { Completion(it) }
-        return context.playerCompletions(partial) + questGivers + rest
+                .map {
+                    Completion(
+                        "${it.state.name} (${humanizeNpcType(it.state.type)})", it.state.name)
+                }
+        val named =
+            context
+                .namedPoints()
+                .keys
+                .filter { it.contains(partial, ignoreCase = true) }
+                .map { Completion(it) }
+        return context.playerCompletions(partial) + npcCompletions + named
     }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {

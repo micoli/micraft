@@ -113,12 +113,20 @@ class GotoCommandTest {
     }
 
     @Test
-    fun questGiver_appearsInAutocompleteLabelledAndPrioritized() = runBlocking {
+    fun questGiver_appearsInAutocompleteLabelledWithType() = runBlocking {
         val npcManager =
             testNpcManager("VILLAGER" to staticDef("VILLAGER").copy(behaviorKey = "quest_giver"))
         npcManager.spawnNpc("Elder", "VILLAGER", Vec3(1f, 1f, 1f))
         val result = cmd.completions(0, "Elder", testContext(npcManager = npcManager))
-        assertTrue(result.any { it.label == "Elder (quest giver)" && it.value == "Elder" })
+        assertTrue(result.any { it.label == "Elder (Villager)" && it.value == "Elder" })
+    }
+
+    @Test
+    fun anyNpc_appearsInAutocompleteLabelledWithType() = runBlocking {
+        val npcManager = testNpcManager("SELLER" to staticDef())
+        npcManager.spawnNpc("Guard", "SELLER", Vec3(1f, 1f, 1f))
+        val result = cmd.completions(0, "Guard", testContext(npcManager = npcManager))
+        assertTrue(result.any { it.label == "Guard (Seller)" && it.value == "Guard" })
     }
 
     @Test
