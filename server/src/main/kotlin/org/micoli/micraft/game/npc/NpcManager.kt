@@ -693,7 +693,8 @@ class NpcManager(
 
     /** Unique across every live NPC and, via [isPlayerName], every player too. */
     fun generateUniqueName(type: String): String =
-        NpcNameGenerator.generate(type) { candidate ->
+        NpcNameGenerator.generate(type, isAnimal = definitions[type]?.animalConfig != null) {
+            candidate ->
             hasNpcNamed(candidate) || isPlayerName(candidate)
         }
 

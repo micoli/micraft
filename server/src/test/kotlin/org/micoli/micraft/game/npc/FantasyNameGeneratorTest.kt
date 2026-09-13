@@ -51,10 +51,27 @@ class FantasyNameGeneratorTest {
     }
 
     @Test
-    fun generate_animalType_fallsBackToHuman() {
+    fun generate_withoutAnimalFlag_fallsBackToHuman() {
         val name = FantasyNameGenerator.generate("polar_bear")
         val parts = name.split(" ")
-        assertEquals(2, parts.size, "Animal NPC falls back to human naming: $name")
+        assertEquals(2, parts.size, "Non-flagged NPC falls back to human naming: $name")
+    }
+
+    @Test
+    fun generate_animalFlag_returnsOneWordName() {
+        repeat(20) {
+            val name = FantasyNameGenerator.generate("polar_bear", isAnimal = true)
+            assertEquals(1, name.split(" ").size, "Animal name should be a single word: $name")
+            assertTrue(name.isNotBlank())
+        }
+    }
+
+    @Test
+    fun generate_animalFlag_firstLetterCapitalized() {
+        repeat(20) {
+            val name = FantasyNameGenerator.generate("fox", isAnimal = true)
+            assertTrue(name.first().isUpperCase(), "Name should start with uppercase: $name")
+        }
     }
 
     @Test

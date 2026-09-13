@@ -113,5 +113,19 @@
 			"the Cleaver", "Rageheart", "the Cruel", "Fleshrender", "the Unyielding", "Skullbiter", "the Tormented", "Deathhand", "the Butcher", "Bloodreaver",
 			"the Vicious", "Stormscar", "the Impaler", "Fangmaw", "the Ruthless", "Doomspear", "the Wicked", "Gorefang", "the Savageborn", "Ironbreaker"
 		]
+	},
+	"animal": {
+		"first_start": [
+			"rus", "bram", "wag", "fluf", "spot", "biscu", "pep", "clo", "pip", "nug",
+			"bis", "wob", "scam", "tuf", "snif", "wig", "chomp", "bun", "twig", "puf",
+			"das", "hop", "buz", "flit", "whis", "pat", "nib", "scur", "grum", "muf",
+			"tot", "wis", "brin", "chir", "dap", "flop", "gum", "hus", "jig", "kib"
+		],
+		"first_end": [
+			"ty", "ble", "gles", "fy", "kins", "it", "per", "vy", "pin", "get",
+			"cuit", "dles", "per", "fy", "fles", "gle", "py", "let", "kers", "sy",
+			"her", "zzy", "zle", "fin", "orn", "dy", "bles", "on", "wig", "gy",
+			"tail", "ker", "ny", "rper", "ples", "ffy", "bo", "let", "bit", "sy"
+		]
 	}
 }

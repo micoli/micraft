@@ -27,22 +27,28 @@ object FantasyNameGenerator {
         }
     }
 
-    private fun race(npcType: String): String =
+    private fun race(npcType: String, isAnimal: Boolean): String =
         when {
+            isAnimal -> "animal"
             "orc" in npcType || "goblin" in npcType || "troll" in npcType -> "orc"
             "elf" in npcType || "elven" in npcType -> "elf"
             "dwarf" in npcType || "dwarven" in npcType -> "dwarf"
             else -> "human"
         }
 
-    fun generate(npcType: String): String {
-        val r = race(npcType)
+    fun generate(npcType: String, isAnimal: Boolean = false): String {
+        val r = race(npcType, isAnimal)
         val d = data[r] ?: data["human"]!!
         return when (r) {
             "orc" -> {
                 val first = d["first_start"]!!.random() + d["first_end"]!!.random()
                 val title = d["titles"]!!.random()
                 "${first.replaceFirstChar { it.uppercase() }} $title"
+            }
+            // A pet gets one plain name, not a "First Last" fantasy name.
+            "animal" -> {
+                val first = d["first_start"]!!.random() + d["first_end"]!!.random()
+                first.replaceFirstChar { it.uppercase() }
             }
             else -> {
                 val first = d["first_start"]!!.random() + d["first_end"]!!.random()

@@ -677,6 +677,24 @@ class NpcManagerTest {
     }
 
     @Test
+    fun generateUniqueName_animalDefinition_returnsOneWordName() {
+        val animalDef =
+            staticDef("FOX")
+                .copy(
+                    animalConfig =
+                        org.micoli.micraft.game.npc.animal.AnimalYamlEntry(
+                            diet = org.micoli.micraft.game.npc.animal.NpcDiet.HERBIVORE,
+                            lifespanDays = 20.0,
+                            preyTypes = emptyList(),
+                            canReproduce = true,
+                            hungerRatePerDay = 0.1,
+                        ))
+        val (m, _) = testNpcManager(defs = mapOf("FOX" to animalDef))
+        val name = m.generateUniqueName("FOX")
+        assertEquals(1, name.split(" ").size, "animal NPC should get a single-word name: $name")
+    }
+
+    @Test
     fun generateUniqueName_avoidsPlayerNames() = runBlocking {
         val broadcasts = mutableListOf<ServerMessage>()
         val m =
