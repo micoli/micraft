@@ -72,6 +72,8 @@ class NpcManager(
     },
     /** Quest manager for the quest-giver behavior's dialog. Null hosts get no quest offers. */
     private val getQuestManager: () -> org.micoli.micraft.game.quest.QuestManager? = { null },
+    /** Host-provided check so a generated NPC name never collides with a player's. */
+    private val isPlayerName: (String) -> Boolean = { false },
 ) {
     private val ctx: NpcTickContext
         get() = ctxOf()
@@ -685,6 +687,15 @@ class NpcManager(
 
     fun findByNameOrId(query: String): NpcInstance? =
         npcs[query] ?: npcs.values.firstOrNull { it.state.name.equals(query, ignoreCase = true) }
+
+    fun hasNpcNamed(name: String): Boolean =
+        npcs.values.any { it.state.name.equals(name, ignoreCase = true) }
+
+    /** Unique across every live NPC and, via [isPlayerName], every player too. */
+    fun generateUniqueName(type: String): String =
+        NpcNameGenerator.generate(type) { candidate ->
+            hasNpcNamed(candidate) || isPlayerName(candidate)
+        }
 
     fun getDefinitions(): Map<String, NpcDefinition> = definitions
 

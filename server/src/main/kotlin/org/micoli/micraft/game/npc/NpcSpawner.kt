@@ -92,8 +92,7 @@ class NpcSpawner {
                 val instanceLevel =
                     (zoneLevel + ctx.random.nextInt(-3, 4)).coerceIn(
                         1, WorldConstants.RPG_LEVEL_MAX)
-                val name =
-                    "${type.lowercase().replaceFirstChar { it.uppercase() }.replace('_',' ')} - ${FantasyNameGenerator.generate(type)}"
+                val name = npcManager.generateUniqueName(type)
                 // the animal record comes with the spawn now — see NpcManager.spawnNpc
                 npcManager.spawnNpc(name, type, spawnPos, instanceLevel)
                 density.recordSpawn(chunkPos, type, zk)

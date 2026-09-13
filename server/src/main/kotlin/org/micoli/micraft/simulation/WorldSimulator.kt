@@ -20,7 +20,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.game.SharedGameServices
-import org.micoli.micraft.game.npc.FantasyNameGenerator
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
@@ -738,8 +737,7 @@ class WorldSimulator(
     }
 
     private suspend fun spawnAt(type: String, pos: Vec3, level: Int?) {
-        val label = type.replace('_', ' ').replaceFirstChar { it.uppercase() }
-        spawnNamed("$label - ${FantasyNameGenerator.generate(type)}", type, pos, level)
+        spawnNamed(npcManager.generateUniqueName(type), type, pos, level)
     }
 
     private fun clamp(v: Float): Float =

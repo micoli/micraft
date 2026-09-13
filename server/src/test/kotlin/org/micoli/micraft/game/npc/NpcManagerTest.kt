@@ -659,4 +659,33 @@ class NpcManagerTest {
         m.applyDamage(prey.state.id, prey.currentHp, session.id)
         assertFalse(called)
     }
+
+    @Test
+    fun hasNpcNamed_matchesCaseInsensitively() = runBlocking {
+        val (m, _) = testNpcManager(defs = mapOf("SELLER" to staticDef()))
+        m.spawnNpc("Elder", "SELLER", Vec3(0f, 0f, 0f))
+        assertTrue(m.hasNpcNamed("elder"))
+        assertFalse(m.hasNpcNamed("Nobody"))
+    }
+
+    @Test
+    fun generateUniqueName_neverCollidesWithLiveNpcs() = runBlocking {
+        val (m, _) = testNpcManager(defs = mapOf("SELLER" to staticDef()))
+        repeat(20) { m.spawnNpc(m.generateUniqueName("SELLER"), "SELLER", Vec3(0f, 0f, 0f)) }
+        val names = m.getAll().map { it.state.name }
+        assertEquals(names.size, names.toSet().size, "every spawned NPC should have a unique name")
+    }
+
+    @Test
+    fun generateUniqueName_avoidsPlayerNames() = runBlocking {
+        val broadcasts = mutableListOf<ServerMessage>()
+        val m =
+            NpcManager(
+                broadcast = { broadcasts.add(it) },
+                isPlayerName = { it == "Elder" },
+            )
+        m.loadDefinitions(mapOf("SELLER" to staticDef()))
+        val name = m.generateUniqueName("SELLER")
+        assertFalse(name.equals("Elder", ignoreCase = true))
+    }
 }

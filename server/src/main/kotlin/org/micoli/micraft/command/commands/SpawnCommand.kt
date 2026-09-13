@@ -85,8 +85,7 @@ class SpawnCommand : CommandHandler {
             return
         }
 
-        val name =
-            "${type.lowercase().replaceFirstChar { it.uppercase() }} #${UUID.randomUUID().toString().take(4)}"
+        val name = npcManager.generateUniqueName(type)
         val pos = Vec3(x + 0.5f, y.toFloat(), z + 0.5f)
         npcManager.spawnNpc(name, type, pos)
 

@@ -77,9 +77,11 @@ class QuestGiverSpawner {
             }
             val y = surfaceY ?: continue
             val spawnPos = Vec3(wx + 0.5f, y.toFloat(), wz + 0.5f)
-            npcManager.spawnNpc(candidate.key, candidate.key, spawnPos, tier.npcLevelRange.first)
+            val name = npcManager.generateUniqueName(candidate.key)
+            npcManager.spawnNpc(name, candidate.key, spawnPos, tier.npcLevelRange.first)
             log.info(
-                "Quest giver '{}' auto-spawned in zone cell {} (tier {})",
+                "Quest giver '{}' ({}) auto-spawned in zone cell {} (tier {})",
+                name,
                 candidate.key,
                 cell,
                 tier.tier)

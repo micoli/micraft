@@ -50,6 +50,8 @@ data class NpcSubsystemHooks(
     val onPackEvent: (PackEvent) -> Unit = {},
     /** Quest manager for the quest-giver behavior's dialog. Null hosts get no quest offers. */
     val getQuestManager: () -> org.micoli.micraft.game.quest.QuestManager? = { null },
+    /** Host-provided check so a generated NPC name never collides with a player's. */
+    val isPlayerName: (String) -> Boolean = { false },
 )
 
 /** The wired NPC subsystem. Held together so a host cannot keep half of it. */
@@ -93,6 +95,7 @@ class NpcSubsystemFactory(
             grantNpcKillXp = hooks.grantNpcKillXp,
             ctxOf = hooks.ctxOf,
             getQuestManager = hooks.getQuestManager,
+            isPlayerName = hooks.isPlayerName,
         )
 
     val npcSpawner: NpcSpawner = NpcSpawner()

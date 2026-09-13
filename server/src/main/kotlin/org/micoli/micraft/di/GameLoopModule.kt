@@ -235,11 +235,19 @@ class GameLoopModule {
         armorRegistryLoader: ArmorRegistryLoader,
         playerPersister: PlayerPersister,
         i18nConfig: I18nConfig,
+        optionalWorldPersistence: OptionalWorldPersistence,
     ): NpcSubsystemHooks =
         NpcSubsystemHooks(
             broadcast = sessionRegistry::broadcast,
             broadcastWorldUpdate = sessionRegistry::broadcast,
             getSessions = sessionRegistry::all,
+            // A generated NPC name must never collide with a player's — connected or not.
+            isPlayerName = { name ->
+                sessionRegistry.all().any { it.state.name.equals(name, ignoreCase = true) } ||
+                    optionalWorldPersistence.value?.listPlayers()?.any {
+                        it.equals(name, ignoreCase = true)
+                    } == true
+            },
             // XP, quest credit and loot only for a death someone actually caused: an animal that a
             // player wounded and then outlived must not pay out when it dies of old age or
             // starvation.

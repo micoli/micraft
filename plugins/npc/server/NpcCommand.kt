@@ -51,7 +51,6 @@ class NpcCommand : PluginCommand {
             return
         }
         val type = parts[0].uppercase()
-        val name = if (parts.size >= 2) parts[1].trim() else type
         val defs = npcManager.getDefinitions()
         if (type !in defs) {
             session.send(
@@ -59,6 +58,7 @@ class NpcCommand : PluginCommand {
                     i18n.t(lang, "npc:server:unknown_type", type, defs.keys.joinToString(", "))))
             return
         }
+        val name = if (parts.size >= 2) parts[1].trim() else npcManager.generateUniqueName(type)
         val pos = session.state.pos
         npcManager.spawnNpc(name, type, pos)
         session.send(

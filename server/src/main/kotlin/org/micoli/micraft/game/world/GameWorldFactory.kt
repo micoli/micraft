@@ -190,6 +190,11 @@ fun buildGameWorld(
             broadcast = sessions::broadcast,
             broadcastWorldUpdate = sessions::broadcast,
             getSessions = sessions::all,
+            isPlayerName = { name ->
+                sessions.all().any { it.state.name.equals(name, ignoreCase = true) } ||
+                    opts.persistence?.listPlayers()?.any { it.equals(name, ignoreCase = true) } ==
+                        true
+            },
             onNpcKilled = { npc, cause, _ ->
                 if (cause == NpcDeathCause.KILLED) {
                     experienceProcessor.onNpcKilled(npc)

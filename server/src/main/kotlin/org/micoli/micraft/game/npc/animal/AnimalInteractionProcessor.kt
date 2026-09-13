@@ -3,7 +3,6 @@ package org.micoli.micraft.game.npc.animal
 import org.micoli.micraft.game.GameTimeService
 import org.micoli.micraft.game.TICK_SECONDS
 import org.micoli.micraft.game.combat.CombatProcessor
-import org.micoli.micraft.game.npc.FantasyNameGenerator
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcTickContext
@@ -606,8 +605,7 @@ class AnimalInteractionProcessor(
                     motherLevel = mother.instanceLevel,
                     random = random,
                 )
-            val name =
-                "${offspringType.replace('_', ' ').replaceFirstChar { it.uppercase() }} - ${FantasyNameGenerator.generate(offspringType)}"
+            val name = npcManager.generateUniqueName(offspringType)
             val offset =
                 org.micoli.micraft.player.Vec3(
                     mother.state.pos.x + random.nextFloat() * 2f - 1f,
