@@ -11,7 +11,26 @@ import org.micoli.micraft.schema.JsonSchemaOpen
 import org.micoli.micraft.ui.GameLayout
 import org.micoli.micraft.ui.defaultLayout
 
-@Serializable data class Vec3(val x: Float, val y: Float, val z: Float)
+@Serializable
+data class Vec3(val x: Float, val y: Float, val z: Float) {
+    fun distanceSquaredTo(other: Vec3): Float {
+        val dx = x - other.x
+        val dy = y - other.y
+        val dz = z - other.z
+        return dx * dx + dy * dy + dz * dz
+    }
+
+    fun distanceTo(other: Vec3): Float = kotlin.math.sqrt(distanceSquaredTo(other))
+
+    /** Horizontal-only distance — ignores the y axis (height difference). */
+    fun distanceSquaredXZTo(other: Vec3): Float {
+        val dx = x - other.x
+        val dz = z - other.z
+        return dx * dx + dz * dz
+    }
+
+    fun distanceXZTo(other: Vec3): Float = kotlin.math.sqrt(distanceSquaredXZTo(other))
+}
 
 @Serializable
 data class CompassTargetState(

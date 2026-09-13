@@ -3,7 +3,6 @@ package org.micoli.micraft.game.trade
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.iterator
-import kotlin.math.sqrt
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ItemType
@@ -178,10 +177,6 @@ class TradeManager(
             ))
     }
 
-    private fun distance(a: PlayerSession, b: PlayerSession): Float {
-        val dx = a.state.pos.x - b.state.pos.x
-        val dy = a.state.pos.y - b.state.pos.y
-        val dz = a.state.pos.z - b.state.pos.z
-        return sqrt((dx * dx + dy * dy + dz * dz).toDouble()).toFloat()
-    }
+    private fun distance(a: PlayerSession, b: PlayerSession): Float =
+        a.state.pos.distanceTo(b.state.pos)
 }

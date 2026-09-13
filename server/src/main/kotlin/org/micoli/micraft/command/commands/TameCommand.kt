@@ -55,11 +55,8 @@ class TameCommand : CommandHandler {
             session.send(notify("tame:server:roster_full"))
             return
         }
-        val dx = npc.state.pos.x - session.state.pos.x
-        val dy = npc.state.pos.y - session.state.pos.y
-        val dz = npc.state.pos.z - session.state.pos.z
         val range = NpcConstants.live.interactionRange
-        if (dx * dx + dy * dy + dz * dz > range * range) {
+        if (npc.state.pos.distanceSquaredTo(session.state.pos) > range * range) {
             session.send(notify("tame:server:out_of_range"))
             return
         }

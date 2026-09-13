@@ -488,9 +488,7 @@ class NpcManager(
 
             for (instance in npcs.values) {
                 if (known.containsKey(instance.state.id)) continue
-                val dx = playerPos.x - instance.state.pos.x
-                val dz = playerPos.z - instance.state.pos.z
-                if (dx * dx + dz * dz <= rangesq) {
+                if (playerPos.distanceSquaredXZTo(instance.state.pos) <= rangesq) {
                     val state = instance.state.round1().copy(aggroTargetId = instance.aggroTarget)
                     known[instance.state.id] = state
                     session.send(ServerMessage.NpcSpawned(state))
@@ -500,9 +498,7 @@ class NpcManager(
             val toRemove =
                 known.keys.filter { npcId ->
                     val npc = npcs[npcId] ?: return@filter true
-                    val dx = playerPos.x - npc.state.pos.x
-                    val dz = playerPos.z - npc.state.pos.z
-                    dx * dx + dz * dz > rangesq
+                    playerPos.distanceSquaredXZTo(npc.state.pos) > rangesq
                 }
             toRemove.forEach { npcId ->
                 known.remove(npcId)
@@ -597,9 +593,7 @@ class NpcManager(
         val playerStates = lastSentToPlayer.getOrPut(session.id) { ConcurrentHashMap() }
         var sent = 0
         for (instance in npcs.values) {
-            val dx = playerPos.x - instance.state.pos.x
-            val dz = playerPos.z - instance.state.pos.z
-            if (dx * dx + dz * dz > rangesq) continue
+            if (playerPos.distanceSquaredXZTo(instance.state.pos) > rangesq) continue
             val roundedState = instance.state.round1()
             val stateWithAggro = roundedState.copy(aggroTargetId = instance.aggroTarget)
             playerStates[instance.state.id] = stateWithAggro

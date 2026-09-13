@@ -308,10 +308,7 @@ class CombatProcessor(
             val levelDef: AttackLevelDefinition,
         )
 
-        val dx = target.state.pos.x - npc.state.pos.x
-        val dy = target.state.pos.y - npc.state.pos.y
-        val dz = target.state.pos.z - npc.state.pos.z
-        val distSq = dx * dx + dy * dy + dz * dz
+        val distSq = target.state.pos.distanceSquaredTo(npc.state.pos)
 
         val resolved =
             slots.shuffled().firstNotNullOfOrNull { slot ->
@@ -436,9 +433,8 @@ class CombatProcessor(
                         ?: aDef.levels.entries.maxByOrNull { it.key }?.value
                         ?: return@firstNotNullOfOrNull null
                 val range = lDef.rangeOverride ?: config.npcMaxAttackRange
-                val dx = prey.state.pos.x - predator.state.pos.x
-                val dz = prey.state.pos.z - predator.state.pos.z
-                if (dx * dx + dz * dz > range * range) return@firstNotNullOfOrNull null
+                if (prey.state.pos.distanceSquaredXZTo(predator.state.pos) > range * range)
+                    return@firstNotNullOfOrNull null
                 Resolved(slot, lDef)
             } ?: return
 

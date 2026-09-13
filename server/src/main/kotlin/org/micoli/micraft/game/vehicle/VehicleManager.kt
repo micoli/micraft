@@ -150,9 +150,7 @@ class VehicleManager(private val broadcast: suspend (ServerMessage) -> Unit) {
             if (moved) {
                 val state = instance.toState()
                 for (session in sessions) {
-                    val dx = session.state.pos.x - state.pos.x
-                    val dz = session.state.pos.z - state.pos.z
-                    if (dx * dx + dz * dz <= rangeSq)
+                    if (session.state.pos.distanceSquaredXZTo(state.pos) <= rangeSq)
                         session.send(ServerMessage.VehicleUpdate(state))
                 }
             }

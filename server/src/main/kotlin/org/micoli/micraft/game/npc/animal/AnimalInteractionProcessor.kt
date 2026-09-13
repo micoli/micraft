@@ -267,9 +267,7 @@ class AnimalInteractionProcessor(
             var nearestSq = Float.MAX_VALUE
             for (candidate in allAnimal) {
                 if (candidate.state.type !in predators || candidate.isDead) continue
-                val dx = candidate.state.pos.x - pos.x
-                val dz = candidate.state.pos.z - pos.z
-                val distSq = dx * dx + dz * dz
+                val distSq = candidate.state.pos.distanceSquaredXZTo(pos)
                 if (distSq <= fleeSq && distSq < nearestSq) {
                     nearestSq = distSq
                     nearest = candidate
@@ -417,9 +415,7 @@ class AnimalInteractionProcessor(
             }
 
             val config = instance.definition.animalConfig ?: continue
-            val dx = prey.state.pos.x - instance.state.pos.x
-            val dz = prey.state.pos.z - instance.state.pos.z
-            val distSq = dx * dx + dz * dz
+            val distSq = prey.state.pos.distanceSquaredXZTo(instance.state.pos)
             val attackRange = instance.definition.aggroRange
 
             animal.preyTargetPos = prey.state.pos
@@ -531,9 +527,7 @@ class AnimalInteractionProcessor(
             }
             val mateAnimal = mate.animalData ?: continue
 
-            val dx = mate.state.pos.x - instance.state.pos.x
-            val dz = mate.state.pos.z - instance.state.pos.z
-            val distSq = dx * dx + dz * dz
+            val distSq = mate.state.pos.distanceSquaredXZTo(instance.state.pos)
 
             mate.animalData?.mateTargetPos = mate.state.pos
 

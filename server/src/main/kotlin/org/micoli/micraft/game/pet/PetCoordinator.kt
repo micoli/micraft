@@ -110,9 +110,7 @@ class PetCoordinator(
         var bestSq = Float.MAX_VALUE
         for (n in npcManager.getAll()) {
             if (n.isDead || n.ownerId != null || n.aggroTarget != owner.id) continue
-            val dx = n.state.pos.x - pet.state.pos.x
-            val dz = n.state.pos.z - pet.state.pos.z
-            val d = dx * dx + dz * dz
+            val d = n.state.pos.distanceSquaredXZTo(pet.state.pos)
             if (d < bestSq) {
                 bestSq = d
                 best = n

@@ -284,11 +284,8 @@ class PackCoordinator(
         instance.lastPackCallMs > 0L &&
             now - instance.lastPackCallMs < config.callCooldownSec * 1000
 
-    private fun distSq(a: NpcInstance, b: NpcInstance): Float {
-        val dx = a.state.pos.x - b.state.pos.x
-        val dz = a.state.pos.z - b.state.pos.z
-        return dx * dx + dz * dz
-    }
+    private fun distSq(a: NpcInstance, b: NpcInstance): Float =
+        a.state.pos.distanceSquaredXZTo(b.state.pos)
 
     private fun emit(
         type: PackEventType,
