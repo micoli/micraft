@@ -771,24 +771,28 @@ class NpcManager(
             }
             onNpcDamagedByNpc(instance, attackerNpcInstance)
         } else if (instance.aggroTarget == null && !instance.hibernating) {
-            // A hibernating NPC that keeps sleeping through the hit retaliates against nobody.
             val attackerSession = getSessions().find { it.id == attackerId }
-            if (attackerSession?.state?.godMode == true) return
-            instance.aggroTarget = attackerId
-            val attackerName = attackerSession?.state?.name ?: "?"
-            broadcastCombatLog("[m:${instance.state.name}] targets [p:$attackerName]!")
-            if (instance.definition.aggroMode == AggroMode.PASSIVE_COOPERATIVE) {
-                val npcPos = instance.state.pos
-                val rangeSq = instance.definition.aggroRange * instance.definition.aggroRange
-                npcs.values.forEach { peer ->
-                    if (peer.state.id != npcId &&
-                        peer.state.type == instance.state.type &&
-                        peer.aggroTarget == null) {
-                        val dx = peer.state.pos.x - npcPos.x
-                        val dz = peer.state.pos.z - npcPos.z
-                        if (dx * dx + dz * dz <= rangeSq) {
-                            peer.aggroTarget = attackerId
-                            broadcastCombatLog("[m:${peer.state.name}] targets [p:$attackerName]!")
+            // A hibernating NPC that keeps sleeping through the hit retaliates against nobody, and
+            // a god-mode attacker can't be hurt back either — but the hit itself must still land:
+            // this only skips aggro, it must never skip the damage/HP/kill handling below.
+            if (attackerSession?.state?.godMode != true) {
+                instance.aggroTarget = attackerId
+                val attackerName = attackerSession?.state?.name ?: "?"
+                broadcastCombatLog("[m:${instance.state.name}] targets [p:$attackerName]!")
+                if (instance.definition.aggroMode == AggroMode.PASSIVE_COOPERATIVE) {
+                    val npcPos = instance.state.pos
+                    val rangeSq = instance.definition.aggroRange * instance.definition.aggroRange
+                    npcs.values.forEach { peer ->
+                        if (peer.state.id != npcId &&
+                            peer.state.type == instance.state.type &&
+                            peer.aggroTarget == null) {
+                            val dx = peer.state.pos.x - npcPos.x
+                            val dz = peer.state.pos.z - npcPos.z
+                            if (dx * dx + dz * dz <= rangeSq) {
+                                peer.aggroTarget = attackerId
+                                broadcastCombatLog(
+                                    "[m:${peer.state.name}] targets [p:$attackerName]!")
+                            }
                         }
                     }
                 }

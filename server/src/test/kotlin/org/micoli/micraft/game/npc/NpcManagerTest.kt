@@ -661,6 +661,21 @@ class NpcManagerTest {
     }
 
     @Test
+    fun applyDamage_fromGodModeAttacker_stillDamagesAndCanKillTheNpc() = runBlocking {
+        val session = testSession(id = "player1", pos = Vec3(0f, 5f, 0f))
+        session.state = session.state.copy(godMode = true)
+        val (m, _) = testNpcManager(defs = mapOf("GOAT" to wanderDef()), nearbySession = session)
+        val prey = m.spawnNpc("G", "GOAT", Vec3(0f, 5f, 0f))
+        val maxHp = prey.currentHp
+
+        m.applyDamage(prey.state.id, 1, session.id)
+        assertEquals(maxHp - 1, prey.state.currentHp, "a god-mode attacker's hit must still land")
+
+        m.applyDamage(prey.state.id, maxHp, session.id)
+        assertTrue(prey.isDead, "a god-mode attacker must still be able to kill")
+    }
+
+    @Test
     fun hasNpcNamed_matchesCaseInsensitively() = runBlocking {
         val (m, _) = testNpcManager(defs = mapOf("SELLER" to staticDef()))
         m.spawnNpc("Elder", "SELLER", Vec3(0f, 0f, 0f))
