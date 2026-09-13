@@ -57,6 +57,10 @@ class SpellProcessor(
         }
 
         val now = System.currentTimeMillis()
+        if (now < session.combatState.attackCooldownUntilMs) {
+            session.send(ServerMessage.Notification("On global cooldown"))
+            return
+        }
         val cdKey = "${session.id}:${msg.spellId}"
         val cdUntil = cooldowns[cdKey] ?: 0L
         if (now < cdUntil) {
@@ -98,10 +102,48 @@ class SpellProcessor(
                         currentRage = newRage,
                     )
             }
+            SpellType.DIRECT_DAMAGE -> {
+                val targetId = session.combatState.targetId
+                if (targetId == null) {
+                    session.send(ServerMessage.Notification("No target selected"))
+                    return
+                }
+                val sourceLabel = "s:${charData.name}"
+                if (session.combatState.targetIsNpc) {
+                    val npc = getNpcs().find { it.state.id == targetId && !it.isDead }
+                    if (npc == null) {
+                        session.send(ServerMessage.Notification("Target not found"))
+                        return
+                    }
+                    if (session.state.pos.distanceTo(npc.state.pos) > spell.maxRange) {
+                        session.send(
+                            ServerMessage.Notification(
+                                "Target out of range (max ${spell.maxRange.toInt()} m)"))
+                        return
+                    }
+                    combatProcessor.applyDirectDamageToNpc(
+                        session.id, npc.state.id, spell.power, sourceLabel)
+                } else {
+                    val target = getSessions().find { it.id == targetId }
+                    if (target == null) {
+                        session.send(ServerMessage.Notification("Target not found"))
+                        return
+                    }
+                    if (session.state.pos.distanceTo(target.state.pos) > spell.maxRange) {
+                        session.send(
+                            ServerMessage.Notification(
+                                "Target out of range (max ${spell.maxRange.toInt()} m)"))
+                        return
+                    }
+                    combatProcessor.applyDirectDamage(target, spell.power, sourceLabel)
+                }
+            }
             SpellType.NECROTIC_AOE -> {}
         }
 
         session.characterData = updated
+        session.combatState =
+            session.combatState.copy(attackCooldownUntilMs = now + combatConfig.globalCooldownMs)
         if (spell.cooldownMs > 0) cooldowns[cdKey] = now + spell.cooldownMs
 
         val armors = session.state.equipmentBonuses(armorRegistry, weaponRegistry, toolRegistry)
@@ -145,6 +187,10 @@ class SpellProcessor(
         }
 
         val now = System.currentTimeMillis()
+        if (now < session.combatState.attackCooldownUntilMs) {
+            session.send(ServerMessage.Notification("On global cooldown"))
+            return
+        }
         val cdKey = "${session.id}:${msg.spellId}"
         val cdUntil = cooldowns[cdKey] ?: 0L
         if (now < cdUntil) {
@@ -224,9 +270,12 @@ class SpellProcessor(
                 for (s in getSessions()) s.send(aoeMsg)
             }
             SpellType.TOKEN_RAGE_CONSUME -> {}
+            SpellType.DIRECT_DAMAGE -> {}
         }
 
         session.characterData = updated
+        session.combatState =
+            session.combatState.copy(attackCooldownUntilMs = now + combatConfig.globalCooldownMs)
         if (spell.cooldownMs > 0) cooldowns[cdKey] = now + spell.cooldownMs
 
         val armors = session.state.equipmentBonuses(armorRegistry, weaponRegistry, toolRegistry)

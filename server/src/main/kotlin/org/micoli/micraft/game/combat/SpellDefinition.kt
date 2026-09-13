@@ -7,6 +7,8 @@ import org.micoli.micraft.schema.JsonSchemaRoot
 enum class SpellType {
     TOKEN_RAGE_CONSUME,
     NECROTIC_AOE,
+    /** Single-target, guaranteed-hit damage — no to-hit roll, no armor mitigation. */
+    DIRECT_DAMAGE,
 }
 
 @Serializable
@@ -21,6 +23,8 @@ data class SpellDefinition(
     val cooldownMs: Long = 0L,
     val aoeRadius: Float = 0f,
     val maxRange: Float = 15f,
+    /** [type] DIRECT_DAMAGE only — flat damage dealt, no dice roll. */
+    val power: Int = 0,
     /**
      * [type] NECROTIC_AOE only — name of a [StatusEffect] data object (e.g. "Frozen", "Stunned"),
      * resolved by [resolveStatusEffect]; defaults to [StatusEffect.Withering] when unset or

@@ -7,7 +7,8 @@
       "type": "string",
       "enum": [
         "TOKEN_RAGE_CONSUME",
-        "NECROTIC_AOE"
+        "NECROTIC_AOE",
+        "DIRECT_DAMAGE"
       ]
     },
     "enabled": {
@@ -33,6 +34,9 @@
     },
     "maxRange": {
       "type": "number"
+    },
+    "power": {
+      "type": "integer"
     },
     "statusEffect": {
       "type": [

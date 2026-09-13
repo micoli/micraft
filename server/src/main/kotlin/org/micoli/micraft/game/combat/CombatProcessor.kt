@@ -202,7 +202,7 @@ class CombatProcessor(
             resolveAttack(attackDef, levelDef, myDerived, theirDerived.armorClass)
         session.combatState =
             session.combatState.copy(
-                attackCooldownUntilMs = now + levelDef.cooldownMs,
+                attackCooldownUntilMs = now + config.globalCooldownMs,
                 attackCooldownsUntilMs =
                     session.combatState.attackCooldownsUntilMs +
                         (cooldownKey to now + levelDef.cooldownMs),
@@ -270,7 +270,7 @@ class CombatProcessor(
         val (hit, isCrit, damage) = resolveAttack(attackDef, levelDef, myDerived, npcAc)
         session.combatState =
             session.combatState.copy(
-                attackCooldownUntilMs = now + levelDef.cooldownMs,
+                attackCooldownUntilMs = now + config.globalCooldownMs,
                 attackCooldownsUntilMs =
                     session.combatState.attackCooldownsUntilMs +
                         (cooldownKey to now + levelDef.cooldownMs),
@@ -672,6 +672,20 @@ class CombatProcessor(
             "[$sourceLabel] → [p:${targetChar.name}]: ${getHitMessage(true, false, damage)}")
         if (newTargetChar.currentHp <= 0) handlePlayerDowned(target)
         sendStatusUpdate(target, newTargetChar, theirDerived)
+    }
+
+    /** NPC-target counterpart to [applyDirectDamage] — same guaranteed-hit, no-roll contract. */
+    suspend fun applyDirectDamageToNpc(
+        attackerId: String,
+        npcId: String,
+        damage: Int,
+        sourceLabel: String
+    ) {
+        val npc = npcManager.getInstance(npcId) ?: return
+        if (npc.isDead) return
+        npcManager.applyDamage(npcId, damage, attackerId)
+        broadcastCombatLog(
+            "[$sourceLabel] → [m:${npc.state.name}]: ${getHitMessage(true, false, damage)}")
     }
 
     internal suspend fun broadcastHealthUpdate(

@@ -247,6 +247,44 @@ class CombatProcessorTest {
         assertEquals(1, combatLog.size)
     }
 
+    @Test
+    fun `global cooldown blocks a different zero-cooldown attack right after another attack`() =
+        runBlocking {
+            val attacker = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+            val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+            attacker.characterData = testChar("a", "Alice")
+            target.characterData = testChar("b", "Bob", hp = 100)
+
+            val combatLog = mutableListOf<String>()
+            val zeroCooldownAttack =
+                AttackDefinition(
+                    damageType = DamageType.PHYSICAL,
+                    levels = mapOf(1 to AttackLevelDefinition(power = 0, weaponDice = "1d4")))
+            val processor =
+                buildProcessor(
+                    sessions = { listOf(attacker, target) },
+                    attackRegistry =
+                        mapOf(
+                            "basic_attack" to guaranteedHitAttack,
+                            "other_attack" to zeroCooldownAttack,
+                        ),
+                    combatLog = combatLog,
+                )
+
+            processor.handleAttack(
+                attacker,
+                ClientMessage.AttackTarget(
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1))
+            // other_attack has its own cooldownMs = 0, but the shared global cooldown still blocks
+            // it
+            processor.handleAttack(
+                attacker,
+                ClientMessage.AttackTarget(
+                    attackId = "other_attack", targetId = "b", isNpc = false, attackLevel = 1))
+
+            assertEquals(1, combatLog.size)
+        }
+
     // ── Class level gate ──────────────────────────────────────────────────────
 
     @Test
