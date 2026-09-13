@@ -4,6 +4,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.game.mail.MailManager
+import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.protocol.AuctionBid
@@ -20,6 +21,7 @@ class AuctionManager(
     private val persistence: AuctionPersistence,
     private val mailManager: MailManager?,
     private val config: AuctionConfig,
+    private val questManager: QuestManager? = null,
 ) {
     private val listings = ConcurrentHashMap<String, AuctionListing>()
     private val filters = ConcurrentHashMap<String, AuctionFilter>()
@@ -355,6 +357,7 @@ class AuctionManager(
             online.inventory.merge(itemType, quantity, Int::plus)
             savePlayer(online)
             online.send(ServerMessage.InventoryUpdate(online.inventory.toMap()))
+            questManager?.onItemCollected(online, itemType, quantity)
             return
         }
         mailManager?.deliverSystemMail(

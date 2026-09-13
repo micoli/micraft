@@ -9,12 +9,16 @@ import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.game.mail.MailManager
 import org.micoli.micraft.game.mail.MailPersistence
+import org.micoli.micraft.game.quest.QuestDefinition
+import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.quest.QuestType
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.protocol.AuctionDuration
 import org.micoli.micraft.protocol.AuctionFilter
 import org.micoli.micraft.protocol.AuctionStatus
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.quest.QuestStatus
 import org.micoli.micraft.support.testI18n
 import org.micoli.micraft.support.testSession
 
@@ -25,6 +29,7 @@ class AuctionManagerTest {
         sessions: List<PlayerSession>,
         mailManager: MailManager? = null,
         config: AuctionConfig = AuctionConfig(),
+        questManager: QuestManager? = null,
     ) =
         AuctionManager(
             getSessions = { sessions },
@@ -33,6 +38,7 @@ class AuctionManagerTest {
             persistence = AuctionPersistence(Files.createTempDirectory("auction-manager")),
             mailManager = mailManager,
             config = config,
+            questManager = questManager,
         )
 
     @Test
@@ -177,6 +183,34 @@ class AuctionManagerTest {
         assertEquals(90L, alice.state.wallet) // 100 - 10% tax
         assertEquals(1, bob.inventory[dirt])
         assertEquals(AuctionStatus.SOLD, mgr.getAll().first().status)
+    }
+
+    @Test
+    fun buyNow_updatesFetchQuestProgress() = runBlocking {
+        val alice = testSession(id = "alice-id", name = "Alice")
+        alice.inventory[dirt] = 1
+        val bob = testSession(id = "bob-id", name = "Bob")
+        bob.state = bob.state.copy(wallet = 200L)
+        val qm = QuestManager(getSessions = { listOf(alice, bob) }, savePlayer = {})
+        qm.reloadDefinitions(
+            mapOf(
+                "dirt_run" to
+                    QuestDefinition(
+                        id = "dirt_run",
+                        title = "Dirt Run",
+                        description = "Collect dirt.",
+                        type = QuestType.FETCH,
+                        itemType = "DIRT",
+                        requiredCount = 1,
+                    )))
+        qm.accept(bob, "dirt_run")
+        val mgr = manager(listOf(alice, bob), questManager = qm)
+        mgr.createListing(alice, dirt, 1, AuctionDuration.H12, 10L, 100L)
+        val listingId = mgr.getAll().first().id
+
+        mgr.buyNow(bob, listingId)
+
+        assertEquals(QuestStatus.COMPLETED, bob.state.quests["dirt_run"]?.status)
     }
 
     @Test

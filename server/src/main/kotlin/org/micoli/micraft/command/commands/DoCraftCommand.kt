@@ -73,6 +73,7 @@ class DoCraftCommand : CommandHandler {
         session.inventory.merge(resultType, resultCount, Int::plus)
         context.savePlayer(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+        context.questManager?.onItemCollected(session, resultType, resultCount)
         session.send(
             ServerMessage.Notification(
                 context.i18n.t(lang, "craft:server:done", resultCount, recipe.giveId.lowercase())))

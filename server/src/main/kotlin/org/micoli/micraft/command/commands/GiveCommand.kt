@@ -56,6 +56,7 @@ class GiveCommand : CommandHandler {
             session.inventory.merge(itemType, n, Int::plus)
             context.savePlayer(session)
             session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+            context.questManager?.onItemCollected(session, itemType, n)
             session.send(
                 Notification(context.i18n.t(lang, "give:server:done", n, itemType.id.lowercase())))
             return

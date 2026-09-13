@@ -57,10 +57,12 @@ class NpcBuyCommand : CommandHandler {
                     return
                 }
 
-        session.inventory.merge(ItemType(entry.itemType.uppercase()), quantity, Int::plus)
+        val boughtType = ItemType(entry.itemType.uppercase())
+        session.inventory.merge(boughtType, quantity, Int::plus)
         session.state = session.state.copy(wallet = newWallet)
         context.savePlayer(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
+        context.questManager?.onItemCollected(session, boughtType, quantity)
         session.send(ServerMessage.WalletUpdate(newWallet))
         session.send(
             ServerMessage.Notification(

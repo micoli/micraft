@@ -522,12 +522,14 @@ class GameLoopModule {
         i18nConfig: I18nConfig,
         playerPersister: PlayerPersister,
         tradeConfigLoader: TradeConfigLoader,
+        questManager: QuestManager,
     ): TradeManager =
         TradeManager(
             getSessions = sessionRegistry::all,
             i18n = i18nConfig,
             savePlayer = playerPersister::save,
             maxDistance = tradeConfigLoader.load().maxDistance,
+            questManager = questManager,
         )
 
     @Single
@@ -536,6 +538,7 @@ class GameLoopModule {
         i18nConfig: I18nConfig,
         playerPersister: PlayerPersister,
         optionalWorldPersistence: OptionalWorldPersistence,
+        questManager: QuestManager,
     ): OptionalMailManager =
         OptionalMailManager(
             optionalWorldPersistence.value?.worldDir?.resolve("players")?.let { playersDir ->
@@ -544,6 +547,7 @@ class GameLoopModule {
                     sessionRegistry = sessionRegistry,
                     i18n = i18nConfig,
                     savePlayer = playerPersister::save,
+                    questManager = questManager,
                 )
             })
 
@@ -557,6 +561,7 @@ class GameLoopModule {
         optionalWorldPersistence: OptionalWorldPersistence,
         optionalMailManager: OptionalMailManager,
         auctionConfigLoader: AuctionConfigLoader,
+        questManager: QuestManager,
     ): OptionalAuctionManager =
         OptionalAuctionManager(
             optionalWorldPersistence.value?.worldDir?.let { worldDir ->
@@ -567,6 +572,7 @@ class GameLoopModule {
                     persistence = AuctionPersistence(worldDir),
                     mailManager = optionalMailManager.value,
                     config = auctionConfigLoader.load(),
+                    questManager = questManager,
                 )
             })
 

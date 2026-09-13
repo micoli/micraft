@@ -8,10 +8,14 @@ import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.armor.WearableSlots
 import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.equipment.WeaponDefinition
+import org.micoli.micraft.game.quest.QuestDefinition
+import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.quest.QuestType
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.quest.QuestStatus
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 
@@ -136,6 +140,26 @@ class GiveCommandTest {
         val notifs = session.sent.filterIsInstance<ServerMessage.Notification>()
         assertTrue(notifs.any { it.message.contains("iron_helmet") })
         assertEquals(1, session.state.ownedArmors.size)
+    }
+
+    @Test
+    fun give_updatesFetchQuestProgress() = runBlocking {
+        val session = testSession(id = "player-1")
+        val qm = QuestManager(getSessions = { listOf(session) }, savePlayer = {})
+        qm.reloadDefinitions(
+            mapOf(
+                "flint_run" to
+                    QuestDefinition(
+                        id = "flint_run",
+                        title = "Flint Run",
+                        description = "Collect flint.",
+                        type = QuestType.FETCH,
+                        itemType = "FLINT",
+                        requiredCount = 10,
+                    )))
+        qm.accept(session, "flint_run")
+        cmd.execute(session, "flint 10", testContext(questManager = qm))
+        assertEquals(QuestStatus.COMPLETED, session.state.quests["flint_run"]?.status)
     }
 
     @Test

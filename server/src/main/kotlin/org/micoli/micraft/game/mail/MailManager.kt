@@ -3,6 +3,7 @@ package org.micoli.micraft.game.mail
 import java.util.UUID
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.di.SessionRegistry
+import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.protocol.ClientMessage
@@ -17,6 +18,7 @@ class MailManager(
     private val sessionRegistry: SessionRegistry,
     private val i18n: I18nConfig,
     private val savePlayer: (PlayerSession) -> Unit,
+    private val questManager: QuestManager? = null,
 ) {
     fun loadForPlayer(name: String): List<MailMessage> = persistence.loadMails(name)
 
@@ -189,6 +191,7 @@ class MailManager(
     ) {
         for ((type, count) in attachments) {
             session.inventory.merge(type, count, Int::plus)
+            questManager?.onItemCollected(session, type, count)
         }
         if (copperAmount > 0) {
             session.state = session.state.copy(wallet = session.state.wallet + copperAmount)

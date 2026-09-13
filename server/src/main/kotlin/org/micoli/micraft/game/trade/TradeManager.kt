@@ -4,6 +4,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.iterator
 import org.micoli.micraft.I18nConfig
+import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.protocol.ServerMessage
@@ -13,6 +14,7 @@ class TradeManager(
     private val i18n: I18nConfig,
     private val savePlayer: (PlayerSession) -> Unit,
     private val maxDistance: Float = 10f,
+    private val questManager: QuestManager? = null,
 ) {
     private val trades = ConcurrentHashMap<String, PendingTrade>()
 
@@ -114,12 +116,14 @@ class TradeManager(
             if (remaining <= 0) initiator.inventory.remove(type)
             else initiator.inventory[type] = remaining
             target.inventory.merge(type, count, Int::plus)
+            questManager?.onItemCollected(target, type, count)
         }
         for ((type, count) in trade.targetOffer) {
             val remaining = (target.inventory[type] ?: 0) - count
             if (remaining <= 0) target.inventory.remove(type)
             else target.inventory[type] = remaining
             initiator.inventory.merge(type, count, Int::plus)
+            questManager?.onItemCollected(initiator, type, count)
         }
         savePlayer(initiator)
         savePlayer(target)

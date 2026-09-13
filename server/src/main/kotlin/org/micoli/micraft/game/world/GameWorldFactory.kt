@@ -357,6 +357,7 @@ fun buildGameWorld(
             i18n = shared.i18n,
             savePlayer = playerPersister::save,
             maxDistance = shared.tradeConfigLoader.load().maxDistance,
+            questManager = questManager,
         )
     val claimManager =
         org.micoli.micraft.game.world.claim.ClaimManager(
@@ -439,10 +440,12 @@ fun buildGameWorld(
         mailManager =
             opts.persistence?.let {
                 MailManager(
-                    MailPersistence(it.worldDir.resolve("players")),
-                    sessions,
-                    shared.i18n,
-                    playerPersister::save)
+                    persistence = MailPersistence(it.worldDir.resolve("players")),
+                    sessionRegistry = sessions,
+                    i18n = shared.i18n,
+                    savePlayer = playerPersister::save,
+                    questManager = questManager,
+                )
             },
         claimManager = claimManager,
         claimRegistry = claimRegistry,

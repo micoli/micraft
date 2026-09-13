@@ -5,21 +5,26 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.game.quest.QuestDefinition
+import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.quest.QuestType
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.quest.QuestStatus
 import org.micoli.micraft.support.testContext
 import org.micoli.micraft.support.testSession
 
 class TradeManagerTest {
 
-    private fun makeManager(sessions: List<PlayerSession>) =
+    private fun makeManager(sessions: List<PlayerSession>, questManager: QuestManager? = null) =
         TradeManager(
             getSessions = { sessions },
             i18n = testContext().i18n,
             savePlayer = {},
             maxDistance = 10f,
+            questManager = questManager,
         )
 
     @Test
@@ -124,6 +129,35 @@ class TradeManagerTest {
             })
         assertTrue(
             bob.sent.filterIsInstance<ServerMessage.TradeClosed>().any { it.reason == "completed" })
+    }
+
+    @Test
+    fun executeTrade_updatesFetchQuestProgress() = runBlocking {
+        val alice = testSession(name = "Alice", id = "alice-id", pos = Vec3(0f, 0f, 0f))
+        val bob = testSession(id = "bob-id", name = "Bob", pos = Vec3(5f, 0f, 0f))
+        alice.inventory[ItemType("DIRT")] = 5
+        bob.inventory[ItemType("SAND")] = 3
+        val qm = QuestManager(getSessions = { listOf(alice, bob) }, savePlayer = {})
+        qm.reloadDefinitions(
+            mapOf(
+                "sand_run" to
+                    QuestDefinition(
+                        id = "sand_run",
+                        title = "Sand Run",
+                        description = "Collect sand.",
+                        type = QuestType.FETCH,
+                        itemType = "SAND",
+                        requiredCount = 1,
+                    )))
+        qm.accept(alice, "sand_run")
+        val manager = makeManager(listOf(alice, bob), questManager = qm)
+        manager.initiate(alice, "Bob")
+        val tradeId = alice.sent.filterIsInstance<ServerMessage.OpenTrade>().first().tradeId
+        manager.updateOffer(alice, tradeId, mapOf(ItemType("DIRT") to 2))
+        manager.updateOffer(bob, tradeId, mapOf(ItemType("SAND") to 1))
+        manager.accept(alice, tradeId)
+        manager.accept(bob, tradeId)
+        assertEquals(QuestStatus.COMPLETED, alice.state.quests["sand_run"]?.status)
     }
 
     @Test

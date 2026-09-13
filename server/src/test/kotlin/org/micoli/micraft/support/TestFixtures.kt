@@ -16,6 +16,7 @@ import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
 import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
@@ -282,6 +283,7 @@ fun testContext(
     vehicleManager: VehicleManager? = null,
     petManager: org.micoli.micraft.game.pet.PetManager? = null,
     actionBlockRegistry: org.micoli.micraft.game.world.actionblock.ActionBlockRegistry? = null,
+    questManager: QuestManager? = null,
 ) =
     CommandContext(
         world = world,
@@ -318,6 +320,7 @@ fun testContext(
         scenes = scenes,
         vehicleManager = vehicleManager,
         actionBlockRegistry = actionBlockRegistry,
+        questManager = questManager,
     )
 
 /** Resolves a command's completions the way `GameLoop.autocomplete` does (rich, then string). */
