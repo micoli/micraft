@@ -205,7 +205,7 @@ export function AuctionHouse({
       }}
       modal={modal}
     >
-      <DialogContent className="flex flex-col" windowMode="maximized">
+      <DialogContent className="flex flex-col" windowMode="maximized" onEscapeKeyDown={(e) => e.preventDefault()}>
         {body}
       </DialogContent>
     </Dialog>

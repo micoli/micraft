@@ -94,7 +94,7 @@ export function ClaimPanel({
       }}
       modal={modal}
     >
-      <DialogContent className="w-[480px] max-w-[95vw]" movable>
+      <DialogContent className="w-[480px] max-w-[95vw]" movable onEscapeKeyDown={(e) => e.preventDefault()}>
         {body}
       </DialogContent>
     </Dialog>

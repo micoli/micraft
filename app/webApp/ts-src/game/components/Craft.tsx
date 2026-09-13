@@ -63,7 +63,10 @@ export function Craft({ open, onClose, recipes, knownRecipes, inventory, itemMet
         if (!v) onClose();
       }}
     >
-      <DialogContent className="w-[760px] max-w-[95vw] max-h-[80vh] flex flex-col gap-4">
+      <DialogContent
+        className="w-[760px] max-w-[95vw] max-h-[80vh] flex flex-col gap-4"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogTitle>Crafting</DialogTitle>
 
         <div className="flex gap-4 flex-1 min-h-0 overflow-hidden">

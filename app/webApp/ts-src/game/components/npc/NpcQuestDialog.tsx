@@ -19,6 +19,7 @@ export function NpcQuestDialog({ data, onClose, onAccept, onTurnIn }: Props) {
       <DialogContent
         windowMode="floating"
         className="w-[480px] max-w-[95vw] font-mono shadow-[0_8px_32px_rgba(0,0,0,0.7)]"
+        onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogTitle className="text-base font-bold mb-3">{data.npcType}</DialogTitle>
 

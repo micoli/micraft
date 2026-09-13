@@ -22,7 +22,7 @@ export function FactionPanel({ open, faction, onClose }: Props) {
         if (!v) onClose();
       }}
     >
-      <DialogContent className="w-[380px] max-w-[95vw]" movable>
+      <DialogContent className="w-[380px] max-w-[95vw]" movable onEscapeKeyDown={(e) => e.preventDefault()}>
         <DialogTitle>Factions</DialogTitle>
         {!faction?.enabled ? (
           <p style={{ marginTop: 12, fontSize: 12, opacity: 0.7 }}>Les factions sont désactivées sur ce serveur.</p>

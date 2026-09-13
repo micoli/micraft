@@ -98,7 +98,11 @@ export function Trade({
         if (!v) handleClose();
       }}
     >
-      <DialogContent className="w-[680px] max-w-[95vw]" windowMode="floating">
+      <DialogContent
+        className="w-[680px] max-w-[95vw]"
+        windowMode="floating"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogTitle>Trade with {otherPlayer}</DialogTitle>
 
         <div style={{ display: "flex", gap: 16, marginTop: 16 }}>

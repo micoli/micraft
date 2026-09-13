@@ -114,6 +114,7 @@ export function NpcShopDialog({ data, wallet, itemMeta, inventory, onClose, onBu
       <DialogContent
         windowMode="floating"
         className="w-[680px] max-w-[95vw] font-mono shadow-[0_8px_32px_rgba(0,0,0,0.7)]"
+        onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <div className="flex items-baseline justify-between mb-3">
           <DialogTitle className="text-base font-bold">{data.name}</DialogTitle>

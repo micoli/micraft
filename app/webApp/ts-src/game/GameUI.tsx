@@ -179,6 +179,14 @@ export function GameUI() {
   const macroEditorOpenRef = useRef(false);
   const actionBlockFormOpenRef = useRef(false);
   const ingameMapOpenRef = useRef(false);
+  const layoutEditorOpenRef = useRef(false);
+  const auctionHouseOpenRef = useRef(false);
+  const claimPanelOpenRef = useRef(false);
+  const groupPanelOpenRef = useRef(false);
+  const guildPanelOpenRef = useRef(false);
+  const factionPanelOpenRef = useRef(false);
+  const npcDialogOpenRef = useRef(false);
+  const questGiverDialogOpenRef = useRef(false);
   const hudDataRef = useRef<import("./types").HudData | null>(null);
   const chunkLoadingRef = useRef(false);
   const preferencesRef = useRef<import("./types").PreferencesData | null>(null);
@@ -322,6 +330,30 @@ export function GameUI() {
   useLayoutEffect(() => {
     ingameMapOpenRef.current = state.ingameMapVisible;
   }, [state.ingameMapVisible]);
+  useLayoutEffect(() => {
+    layoutEditorOpenRef.current = state.layoutEditorOpen;
+  }, [state.layoutEditorOpen]);
+  useLayoutEffect(() => {
+    auctionHouseOpenRef.current = state.auctionHouseOpen;
+  }, [state.auctionHouseOpen]);
+  useLayoutEffect(() => {
+    claimPanelOpenRef.current = state.claimPanelOpen;
+  }, [state.claimPanelOpen]);
+  useLayoutEffect(() => {
+    groupPanelOpenRef.current = state.groupPanelOpen;
+  }, [state.groupPanelOpen]);
+  useLayoutEffect(() => {
+    guildPanelOpenRef.current = state.guildPanelOpen;
+  }, [state.guildPanelOpen]);
+  useLayoutEffect(() => {
+    factionPanelOpenRef.current = state.factionPanelOpen;
+  }, [state.factionPanelOpen]);
+  useLayoutEffect(() => {
+    npcDialogOpenRef.current = state.npcDialog !== null;
+  }, [state.npcDialog]);
+  useLayoutEffect(() => {
+    questGiverDialogOpenRef.current = state.questGiverDialog !== null;
+  }, [state.questGiverDialog]);
 
   useEffect(() => {
     const anyModalOpen =
@@ -336,6 +368,9 @@ export function GameUI() {
       state.layoutEditorOpen ||
       state.auctionHouseOpen ||
       state.claimPanelOpen ||
+      state.groupPanelOpen ||
+      state.guildPanelOpen ||
+      state.factionPanelOpen ||
       state.trade !== null ||
       state.actionBlockForm !== null ||
       state.npcDialog !== null ||
@@ -365,6 +400,9 @@ export function GameUI() {
     state.layoutEditorOpen,
     state.auctionHouseOpen,
     state.claimPanelOpen,
+    state.groupPanelOpen,
+    state.guildPanelOpen,
+    state.factionPanelOpen,
     state.trade,
     state.actionBlockForm,
     state.npcDialog,
@@ -1223,6 +1261,46 @@ export function GameUI() {
         }
         if (ingameMapOpenRef.current) {
           dispatch("ingame_map_close");
+          resumeGame();
+          return;
+        }
+        if (layoutEditorOpenRef.current) {
+          dispatch("layout_editor_hide");
+          resumeGame();
+          return;
+        }
+        if (auctionHouseOpenRef.current) {
+          dispatch("auction_close");
+          resumeGame();
+          return;
+        }
+        if (claimPanelOpenRef.current) {
+          dispatch("claim_panel_close");
+          resumeGame();
+          return;
+        }
+        if (groupPanelOpenRef.current) {
+          dispatch("group_panel_toggle");
+          resumeGame();
+          return;
+        }
+        if (guildPanelOpenRef.current) {
+          dispatch("guild_panel_close");
+          resumeGame();
+          return;
+        }
+        if (factionPanelOpenRef.current) {
+          dispatch("faction_panel_close");
+          resumeGame();
+          return;
+        }
+        if (npcDialogOpenRef.current) {
+          dispatch("npc_dialog_close");
+          resumeGame();
+          return;
+        }
+        if (questGiverDialogOpenRef.current) {
+          dispatch("quest_giver_dialog_close");
           resumeGame();
           return;
         }

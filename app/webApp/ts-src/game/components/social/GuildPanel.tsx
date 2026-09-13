@@ -41,7 +41,7 @@ export function GuildPanel({ open, guild, invite, myPlayerId, onClose }: Props) 
         if (!v) onClose();
       }}
     >
-      <DialogContent className="w-[520px] max-w-[95vw]" movable>
+      <DialogContent className="w-[520px] max-w-[95vw]" movable onEscapeKeyDown={(e) => e.preventDefault()}>
         <DialogTitle>Guilde{guild ? ` — ${guild.name} [${guild.tag}]` : ""}</DialogTitle>
         {!guild ? (
           <div style={{ marginTop: 12 }}>

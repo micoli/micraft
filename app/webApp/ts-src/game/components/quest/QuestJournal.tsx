@@ -137,7 +137,10 @@ export function QuestJournal({ open, quests, playerLevel, onClose, onCommand }: 
         if (!v) onClose();
       }}
     >
-      <DialogContent className="w-[min(900px,95vw)] h-[min(600px,90vh)] p-0 flex flex-col overflow-hidden">
+      <DialogContent
+        className="w-[min(900px,95vw)] h-[min(600px,90vh)] p-0 flex flex-col overflow-hidden"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <DialogTitle>Quest Journal</DialogTitle>
           <button onClick={onClose} className="text-white/50 hover:text-white text-lg leading-none">

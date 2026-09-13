@@ -26,7 +26,7 @@ export function GroupPanel({ open, group, invite, myPlayerId, onClose }: Props) 
         if (!v) onClose();
       }}
     >
-      <DialogContent className="w-[360px] max-w-[95vw]" movable>
+      <DialogContent className="w-[360px] max-w-[95vw]" movable onEscapeKeyDown={(e) => e.preventDefault()}>
         <DialogTitle>Groupe</DialogTitle>
         {!group ? (
           <div style={{ marginTop: 12 }}>
