@@ -381,7 +381,7 @@ fun Application.module() {
         PlayerHandsController(persistence, sessionRegistry).register(this)
         PlayerOwnedController(persistence, sessionRegistry).register(this)
         PlayerRpgController(persistence).register(this)
-        CharacterController(persistence).register(this)
+        CharacterController(persistence, gameLoop.getNpcManager()).register(this)
         SkinsController().register(this)
         VehiclesController().register(this)
         ArmorsController().register(this)

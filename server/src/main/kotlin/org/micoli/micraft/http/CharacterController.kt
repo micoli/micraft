@@ -11,6 +11,7 @@ import org.micoli.micraft.command.commands.availablePlayerSkins
 import org.micoli.micraft.game.SPAWN_X
 import org.micoli.micraft.game.SPAWN_Y
 import org.micoli.micraft.game.SPAWN_Z
+import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.rpg.character.RpgCharacterBuilder
 import org.micoli.micraft.game.rpg.character.RpgCharacterResult
 import org.micoli.micraft.game.world.WorldPersistence
@@ -54,7 +55,10 @@ private data class CreateRpgCharacterResponse(
     val id: String,
 )
 
-class CharacterController(private val persistence: WorldPersistence?) {
+class CharacterController(
+    private val persistence: WorldPersistence?,
+    private val npcManager: NpcManager? = null,
+) {
     fun register(route: Route) =
         route.apply {
             post(
@@ -69,6 +73,9 @@ class CharacterController(private val persistence: WorldPersistence?) {
                         }
                         code(HttpStatusCode.ServiceUnavailable) {
                             description = "No persistence backend"
+                        }
+                        code(HttpStatusCode.Conflict) {
+                            description = "Name already used by an NPC"
                         }
                     }
                 }) {
@@ -89,6 +96,8 @@ class CharacterController(private val persistence: WorldPersistence?) {
                     val p =
                         persistence ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
                     val existing = p.loadPlayerState(playerName)
+                    if (existing == null && npcManager?.hasNpcNamed(playerName) == true)
+                        return@post call.respond(HttpStatusCode.Conflict)
                     val base =
                         existing?.copy(skin = safeSkin)
                             ?: PlayerState(
@@ -118,7 +127,7 @@ class CharacterController(private val persistence: WorldPersistence?) {
                             description = "Invalid fields or stat budget"
                         }
                         code(HttpStatusCode.Conflict) {
-                            description = "RPG character already exists"
+                            description = "RPG character already exists, or name is taken by an NPC"
                         }
                         code(HttpStatusCode.ServiceUnavailable) {
                             description = "No persistence backend"
@@ -166,6 +175,8 @@ class CharacterController(private val persistence: WorldPersistence?) {
                         persistence ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
                     val existing = p.loadPlayerState(playerName)
                     if (existing?.characterData != null)
+                        return@post call.respond(HttpStatusCode.Conflict)
+                    if (existing == null && npcManager?.hasNpcNamed(playerName) == true)
                         return@post call.respond(HttpStatusCode.Conflict)
                     val character =
                         when (val r =

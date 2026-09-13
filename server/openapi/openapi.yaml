@@ -574,6 +574,9 @@ paths:
         "503":
           description: No persistence backend
           headers: {}
+        "409":
+          description: Name already used by an NPC
+          headers: {}
       deprecated: false
   /api/character/rpgcreate:
     post:
@@ -597,7 +600,7 @@ paths:
           description: Invalid fields or stat budget
           headers: {}
         "409":
-          description: RPG character already exists
+          description: "RPG character already exists, or name is taken by an NPC"
           headers: {}
         "503":
           description: No persistence backend
