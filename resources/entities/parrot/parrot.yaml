@@ -2,7 +2,7 @@ behavior: animal
 width: 0.5
 height: 0.8
 wanderSpeed: 1.8
-wanderRadius: 24.0
+wanderRadius: 124.0
 hp: 6
 aggroMode: PASSIVE
 tameable: true

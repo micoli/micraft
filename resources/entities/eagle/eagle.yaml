@@ -2,7 +2,7 @@ behavior: animal
 width: 0.7
 height: 0.7
 wanderSpeed: 3.0
-wanderRadius: 45.0
+wanderRadius: 145.0
 hp: 16
 aggroMode: PASSIVE
 movementMode:
