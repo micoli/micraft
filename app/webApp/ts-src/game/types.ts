@@ -473,6 +473,8 @@ export type SpellMeta = {
   rageCost: number;
   cooldownMs: number;
   aoeRadius: number;
+  maxRange: number;
+  power: number;
 };
 
 export type PreferencesSaveData = Omit<PreferencesData, "knownChannels" | "commands" | "defaultKeybindings">;

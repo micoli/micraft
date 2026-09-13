@@ -271,6 +271,8 @@ export function GameUI() {
               rageCost: parseInt(v.rageCost ?? "0"),
               cooldownMs: parseInt(v.cooldownMs ?? "0"),
               aoeRadius: parseFloat(v.aoeRadius ?? "0"),
+              maxRange: parseFloat(v.maxRange ?? "0"),
+              power: parseInt(v.power ?? "0"),
             },
           ]),
         );

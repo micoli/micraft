@@ -93,6 +93,8 @@ class AttacksController(private val gameLoop: GameLoop) {
                                     "rageCost" to def.rageCost.toString(),
                                     "cooldownMs" to def.cooldownMs.toString(),
                                     "aoeRadius" to def.aoeRadius.toString(),
+                                    "maxRange" to def.maxRange.toString(),
+                                    "power" to def.power.toString(),
                                 ))
                         }
                     }

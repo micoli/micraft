@@ -145,7 +145,7 @@ export function AttackPanel({
               onPointerMove={moveSpellDrag}
               onPointerUp={endSpellDrag}
               onPointerCancel={endSpellDrag}
-              title={`${id}${isLocked ? " · requires a higher level" : ""}${meta.tokenCost > 0 ? ` · ${meta.tokenCost} token` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}`}
+              title={`${id}${isLocked ? " · requires a higher level" : ""}${meta.power > 0 ? ` · power ${meta.power}` : ""}${meta.tokenCost > 0 ? ` · ${meta.tokenCost} token` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}`}
               className={cn(
                 "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-orange-400/60 bg-black/72 cursor-grab hover:border-orange-400 transition-colors touch-none",
                 (!hasRes || isLocked) && "opacity-50",
