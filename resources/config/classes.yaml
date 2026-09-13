@@ -25,6 +25,7 @@ classes:
             level: 1
         spells:
           - tokenRageConsume
+          - quickStrike
       3:
         attacks:
           - attack: heavy_slash
@@ -96,6 +97,7 @@ classes:
             level: 1
         spells:
           - miasme
+          - sparkBolt
       2:
         attacks:
           - attack: pyre
@@ -191,6 +193,8 @@ classes:
             level: 1
           - attack: poison_bite
             level: 1
+        spells:
+          - huntersShot
       2:
         attacks:
           - attack: poison_bite
@@ -264,6 +268,8 @@ classes:
             level: 1
           - attack: poison_bite
             level: 1
+        spells:
+          - swiftStab
       2:
         attacks:
           - attack: slash
@@ -341,6 +347,7 @@ classes:
             level: 1
         spells:
           - miasme
+          - smite
       3:
         attacks:
           - attack: fireball

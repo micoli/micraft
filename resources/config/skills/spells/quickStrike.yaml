@@ -1,0 +1,5 @@
+type: DIRECT_DAMAGE
+enabled: true
+power: 4
+cooldownMs: 0
+maxRange: 10.0
