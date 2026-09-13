@@ -6,6 +6,7 @@ import { PlayersPage } from "./pages/players/PlayersPage";
 import { NpcsPage } from "./pages/npcs/NpcsPage";
 import { ClassesPage } from "./pages/classes/ClassesPage";
 import { ConfigEditorPage } from "./pages/configEditor/ConfigEditorPage";
+import { LoggersPage } from "./pages/loggers/LoggersPage";
 import { WorldsPage } from "./pages/worlds/WorldsPage";
 import { GameAssetsViewerPage } from "./pages/gameAssetsViewer/GameAssetsViewerPage";
 import { CodexPage } from "./pages/codex/CodexPage";
@@ -25,6 +26,7 @@ export const ROUTES = [
   { path: "/admin/npcs", page: <NpcsPage /> },
   { path: "/admin/classes", page: <ClassesPage /> },
   { path: "/admin/config", page: <ConfigEditorPage /> },
+  { path: "/admin/loggers", page: <LoggersPage /> },
   { path: "/admin/worlds", page: <WorldsPage /> },
   { path: "/admin/game-assets", page: <GameAssetsViewerPage /> },
   { path: "/admin/codex", page: <CodexPage /> },
@@ -57,6 +59,7 @@ export const NAV: NavItem[] = [
   { path: "/admin/npcs", labelKey: "nav.npcs", pageLabelKey: "page.npcs", icon: ICONS.npcs },
   { path: "/admin/classes", labelKey: "nav.classes", pageLabelKey: "page.classes", icon: ICONS.classes },
   { path: "/admin/config", labelKey: "nav.config", pageLabelKey: "page.config", icon: ICONS.config },
+  { path: "/admin/loggers", labelKey: "nav.loggers", pageLabelKey: "page.loggers", icon: ICONS.loggers },
   { path: "/admin/instances", labelKey: "nav.instances", pageLabelKey: "page.instances", icon: ICONS.instances },
   { path: "/admin/scenes", labelKey: "nav.scenes", pageLabelKey: "page.scenes", icon: ICONS.scenes },
   {

@@ -85,9 +85,27 @@ Provider selected via `data/config/server.yaml` → `auth.provider` (`none` | `l
 
 **Login overlay** (`LoginOverlay.tsx`): fetches `/api/auth/config` on mount. Token stored in `sessionStorage`. OAuth token arrives in URL fragment `#auth_token=`. Result written to `loginResultRef.current` as `user\tplayerName\tlang\ttoken` — tab-separated, parsed in `main.kt`.
 
-**Admin API + E2E worlds**: world-scoped admin routes (`status`, `players/*`, `gametime`, `instances/*`, `claims/*`, `scenes/*`, `social/*`, `npcs`) honor an `X-Micraft-Game-Session` header (WS edit/npcs sockets: `?gameSession=`). Absent / `default` / outside `MICRAFT_E2E` => the default world; under `MICRAFT_E2E` a fresh id spawns a dedicated `GameWorld` (like the `/game` WS). Process-level routes (`restart`, `reload`, `users`, `configs`, `schemas`) ignore it. `AdminController.adminWorld()` resolves it via `GameWorldRegistry`.
+**Admin API + E2E worlds**: world-scoped admin routes (`status`, `players/*`, `gametime`, `instances/*`, `claims/*`, `scenes/*`, `social/*`, `npcs`) honor an `X-Micraft-Game-Session` header (WS edit/npcs sockets: `?gameSession=`). Absent / `default` / outside `MICRAFT_E2E` => the default world; under `MICRAFT_E2E` a fresh id spawns a dedicated `GameWorld` (like the `/game` WS). Process-level routes (`restart`, `reload`, `users`, `configs`, `schemas`, `loggers`) ignore it. `AdminController.adminWorld()` resolves it via `GameWorldRegistry`.
 
 `POST /api/admin/players` `{name, email?, characterClass?, str?…cha?}` reserves the player id (and, with `characterClass`, a fresh RPG character built by `RpgCharacterBuilder`) that `onConnect` consumes — `GameWorld.reservedPlayers`. So an E2E test's RPG player is ready before the browser connects and the client gets `CharacterSync`, never `CharacterCreationRequired` (no `/char-rpg-create`). Not persisted. E2E specs: `app/webApp/ts-src/e2e/helpers/admin.ts` (`admin()`, `createUser()`, `createPlayer()`); `connectClient()` calls `createPlayer` (default WARRIOR). RPG character construction (point-buy + class bonus + derived HP/mana) lives once in `RpgCharacterBuilder` — used by `/api/character/rpgcreate`, `/createcharacter`, `POST /api/admin/players`.
+
+## Debugging: runtime log levels
+
+Logging is SLF4J + Logback (`server/build.gradle.kts`, no `logback.xml` — zero-config default,
+console + INFO). Every logger any singleton creates (`LoggerFactory.getLogger(...)`) registers
+itself in Logback's own `LoggerContext` — there is no separate app-level registry to maintain, and
+none is needed for this to stay exhaustive.
+
+**HTTP routes** (process-level, admin-only — see `AdminController.kt` "Loggers" group):
+| Route | Purpose |
+|-------|---------|
+| `GET /api/admin/loggers` | All known loggers: `{name, level, effectiveLevel}` — `level` is `null` when inherited from a parent logger |
+| `PUT /api/admin/loggers/{name}` | `{level: "TRACE"\|"DEBUG"\|"INFO"\|"WARN"\|"ERROR"\|"OFF"\|null}` — `null` resets to inherited. Also works for a logger name that hasn't logged anything yet (creates it in Logback's registry). |
+
+**Admin UI**: `/admin/loggers` (`LoggersPage.tsx`) — filterable list, one dropdown per logger to
+change its level live, no restart needed. Useful to raise a noisy subsystem (e.g.
+`org.micoli.micraft.game.quest.QuestManager`) to `DEBUG` while reproducing a bug, then reset it.
+Level changes are in-memory only — gone on `make dev-restart-server`.
 
 ## Slash command
 - Every in-game action (except movement) can have slash command; each bindable to key via keybinding

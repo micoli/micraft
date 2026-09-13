@@ -2026,7 +2026,7 @@ export type OrgMicoliMicraftQuestQuestProgress = {
 /**
  * QuestStatus
  */
-export type OrgMicoliMicraftQuestQuestStatus = 'TODO' | 'IN_PROGRESS' | 'ABANDONED' | 'COMPLETED' | 'FAILED';
+export type OrgMicoliMicraftQuestQuestStatus = 'TODO' | 'IN_PROGRESS' | 'ABANDONED' | 'READY_TO_TURN_IN' | 'COMPLETED' | 'FAILED';
 
 /**
  * ShortcutSlot
@@ -2287,6 +2287,34 @@ export type OrgMicoliMicraftHttpCreateWorldRequest = {
      * Long
      */
     seed: number;
+};
+
+/**
+ * LoggerLevelDto
+ */
+export type OrgMicoliMicraftHttpLoggerLevelDto = {
+    /**
+     * String
+     */
+    effectiveLevel: string;
+    /**
+     * String
+     */
+    level?: null | string;
+    /**
+     * String
+     */
+    name: string;
+};
+
+/**
+ * SetLoggerLevelRequest
+ */
+export type OrgMicoliMicraftHttpSetLoggerLevelRequest = {
+    /**
+     * String
+     */
+    level?: null | string;
 };
 
 /**
@@ -5559,6 +5587,68 @@ export type PutApiAdminConfigsByResponses = {
 };
 
 export type PutApiAdminConfigsByResponse = PutApiAdminConfigsByResponses[keyof PutApiAdminConfigsByResponses];
+
+export type GetApiAdminLoggersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/loggers';
+};
+
+export type GetApiAdminLoggersErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminLoggersResponses = {
+    /**
+     * List<LoggerLevelDto>
+     */
+    200: Array<OrgMicoliMicraftHttpLoggerLevelDto>;
+};
+
+export type GetApiAdminLoggersResponse = GetApiAdminLoggersResponses[keyof GetApiAdminLoggersResponses];
+
+export type PutApiAdminLoggersByData = {
+    body?: OrgMicoliMicraftHttpSetLoggerLevelRequest;
+    path: {
+        /**
+         * String
+         *
+         * Logger name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/api/admin/loggers/{...}';
+};
+
+export type PutApiAdminLoggersByErrors = {
+    /**
+     * Unknown level name
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PutApiAdminLoggersByResponses = {
+    200: OrgMicoliMicraftHttpLoggerLevelDto;
+};
+
+export type PutApiAdminLoggersByResponse = PutApiAdminLoggersByResponses[keyof PutApiAdminLoggersByResponses];
 
 export type GetApiAdminClassesData = {
     body?: never;

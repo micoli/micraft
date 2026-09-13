@@ -2048,6 +2048,67 @@ paths:
           description: Missing or invalid token
           headers: {}
       deprecated: false
+  /api/admin/loggers:
+    get:
+      tags: []
+      description: All known loggers (Logback's registry) with their explicit and
+        effective level — useful to raise verbosity for live debugging
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.http.LoggerLevelDto"
+                title: List<LoggerLevelDto>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/loggers/{...}:
+    put:
+      tags: []
+      description: "Set a logger's level (TRACE/DEBUG/INFO/WARN/ERROR/OFF), or null\
+        \ to inherit from its parent again"
+      parameters:
+      - name: name
+        in: path
+        description: Logger name
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.SetLoggerLevelRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.LoggerLevelDto"
+        "400":
+          description: Unknown level name
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/admin/classes:
     get:
       tags: []
@@ -6519,6 +6580,33 @@ components:
       - name
       - seed
       title: CreateWorldRequest
+    org.micoli.micraft.http.LoggerLevelDto:
+      type: object
+      properties:
+        effectiveLevel:
+          type: string
+          title: String
+        level:
+          type:
+          - "null"
+          - string
+          title: String
+        name:
+          type: string
+          title: String
+      required:
+      - effectiveLevel
+      - name
+      title: LoggerLevelDto
+    org.micoli.micraft.http.SetLoggerLevelRequest:
+      type: object
+      properties:
+        level:
+          type:
+          - "null"
+          - string
+          title: String
+      title: SetLoggerLevelRequest
     org.micoli.micraft.game.classes.ClassDefinitionEntry:
       type: object
       properties:

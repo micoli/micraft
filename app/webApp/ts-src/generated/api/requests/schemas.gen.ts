@@ -3201,6 +3201,7 @@ export const org_micoli_micraft_quest_QuestStatusSchema = {
         'TODO',
         'IN_PROGRESS',
         'ABANDONED',
+        'READY_TO_TURN_IN',
         'COMPLETED',
         'FAILED'
     ],
@@ -3647,6 +3648,46 @@ export const org_micoli_micraft_http_CreateWorldRequestSchema = {
         'seed'
     ],
     title: 'CreateWorldRequest'
+} as const;
+
+export const org_micoli_micraft_http_LoggerLevelDtoSchema = {
+    type: 'object',
+    properties: {
+        effectiveLevel: {
+            type: 'string',
+            title: 'String'
+        },
+        level: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'effectiveLevel',
+        'name'
+    ],
+    title: 'LoggerLevelDto'
+} as const;
+
+export const org_micoli_micraft_http_SetLoggerLevelRequestSchema = {
+    type: 'object',
+    properties: {
+        level: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        }
+    },
+    title: 'SetLoggerLevelRequest'
 } as const;
 
 export const org_micoli_micraft_game_classes_ClassDefinitionEntrySchema = {

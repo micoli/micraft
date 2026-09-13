@@ -19,6 +19,7 @@ export const fr: Record<TranslationKey, string> = {
   "nav.npcs": "NPC",
   "nav.classes": "Classes",
   "nav.config": "Config",
+  "nav.loggers": "Loggers",
   "nav.worlds": "Mondes",
   "nav.gameAssets": "Visualisateur d'assets de jeu",
   "nav.codex": "Codex",
@@ -35,6 +36,7 @@ export const fr: Record<TranslationKey, string> = {
   "page.npcs": "NPC",
   "page.classes": "Classes & compétences",
   "page.config": "Éditeur de configEditor",
+  "page.loggers": "Niveaux de logs",
   "page.worlds": "Mondes",
   "page.gameAssets": "Assets de jeu",
   "page.codex": "Codex",
@@ -245,6 +247,15 @@ export const fr: Record<TranslationKey, string> = {
   "config.schema": "schéma",
   "config.selectFile": "Sélectionner un fichier de configEditor à modifier",
   "config.failedToLoad": "Échec du chargement du fichier",
+
+  // ── Loggers ─────────────────────────────────────────────────────────────────
+  "loggers.search": "Filtrer les loggers par nom…",
+  "loggers.explicit": "explicite",
+  "loggers.inherited": "hérité",
+  "loggers.reset": "Réinitialiser à hérité",
+  "loggers.empty": "Aucun logger ne correspond à ce filtre",
+  "loggers.failedToLoad": "Échec du chargement des loggers",
+  "loggers.failedToSet": "Échec du changement de niveau",
 
   // ── Worlds page ─────────────────────────────────────────────────────────────
   "worlds.created": "Créé le {0}",

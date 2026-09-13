@@ -174,6 +174,8 @@ never hand-edit either.
 | PUT | `/api/admin/instances/{id}/enabled` | Enable/disable an instance zone |
 | PUT | `/api/admin/instances/{id}/layout` | Update an instance zone's clip planes and shortcut bar layout |
 | GET | `/api/admin/items` | Item definitions, keyed by item type id |
+| GET | `/api/admin/loggers` | All known loggers (Logback's registry) with their explicit and effective level — useful to raise verbosity for live debugging |
+| PUT | `/api/admin/loggers/{...}` | Set a logger's level (TRACE/DEBUG/INFO/WARN/ERROR/OFF), or null to inherit from its parent again |
 | GET | `/api/admin/npc-types` | NPC type definitions (codex info), keyed by type id |
 | POST | `/api/admin/npc-types/reload` | Reload NPC type definitions from resources/entities and despawn live instances so the spawner recreates them with the new model. Use after editing an entity bbmodel/yaml. |
 | GET | `/api/admin/npcs` | Live NPC instances with full animal/combat state |

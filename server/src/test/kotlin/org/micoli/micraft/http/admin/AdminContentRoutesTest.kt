@@ -116,4 +116,60 @@ class AdminContentRoutesTest {
             }
         assertEquals(HttpStatusCode.OK, r.status)
     }
+
+    @Test
+    fun `api_admin_loggers_returns_200_with_known_logger`() = testApplication {
+        application { routing { controller().register(this) } }
+        val r = client.get("/api/admin/loggers")
+        assertEquals(HttpStatusCode.OK, r.status)
+        val body = r.bodyAsText()
+        assertTrue(body.startsWith("["), "Expected JSON array, got: ${body.take(40)}")
+        assertTrue(
+            body.contains("org.micoli.micraft.game.quest.QuestManager"),
+            "Expected a known logger name in the registry")
+    }
+
+    @Test
+    fun `api_admin_loggers_requires_auth_when_token_store_enabled`() = testApplication {
+        val store = TokenStore(scope)
+        application { routing { controller(store).register(this) } }
+        val r = client.get("/api/admin/loggers")
+        assertEquals(HttpStatusCode.Unauthorized, r.status)
+    }
+
+    @Test
+    fun `put_api_admin_loggers_sets_and_resets_level`() = testApplication {
+        application { routing { controller().register(this) } }
+        val loggerName = "org.micoli.micraft.game.quest.QuestManager"
+
+        val setResponse =
+            client.put("/api/admin/loggers/$loggerName") {
+                contentType(ContentType.Application.Json)
+                setBody("""{"level":"DEBUG"}""")
+            }
+        assertEquals(HttpStatusCode.OK, setResponse.status)
+        assertTrue(setResponse.bodyAsText().contains("\"level\":\"DEBUG\""))
+
+        val listAfterSet = client.get("/api/admin/loggers").bodyAsText()
+        assertTrue(listAfterSet.contains("\"name\":\"$loggerName\",\"level\":\"DEBUG\""))
+
+        val resetResponse =
+            client.put("/api/admin/loggers/$loggerName") {
+                contentType(ContentType.Application.Json)
+                setBody("""{"level":null}""")
+            }
+        assertEquals(HttpStatusCode.OK, resetResponse.status)
+        assertTrue(resetResponse.bodyAsText().contains("\"level\":null"))
+    }
+
+    @Test
+    fun `put_api_admin_loggers_unknown_level_returns_400`() = testApplication {
+        application { routing { controller().register(this) } }
+        val r =
+            client.put("/api/admin/loggers/some.logger") {
+                contentType(ContentType.Application.Json)
+                setBody("""{"level":"NOPE"}""")
+            }
+        assertEquals(HttpStatusCode.BadRequest, r.status)
+    }
 }

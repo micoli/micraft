@@ -1,5 +1,7 @@
 package org.micoli.micraft.http
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.LoggerContext
 import io.github.smiley4.ktoropenapi.config.RouteConfig
 import io.github.smiley4.ktoropenapi.delete
 import io.github.smiley4.ktoropenapi.get
@@ -70,6 +72,7 @@ import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.PlainColorInfo
 import org.micoli.micraft.protocol.RailInfo
 import org.micoli.micraft.protocol.ServerMessage
+import org.slf4j.LoggerFactory
 
 @Serializable
 data class UserDto(val email: String, val displayName: String, val groups: List<String>)
@@ -113,6 +116,11 @@ data class NpcAdminDto(
 @Serializable data class InstanceChunksRequest(val chunks: List<ChunkPos>)
 
 @Serializable data class InstanceEnabledRequest(val enabled: Boolean)
+
+@Serializable
+data class LoggerLevelDto(val name: String, val level: String?, val effectiveLevel: String)
+
+@Serializable data class SetLoggerLevelRequest(val level: String?)
 
 @Serializable
 data class InstanceLayoutRequest(
@@ -1708,6 +1716,77 @@ class AdminController(
                     val content = call.receiveText()
                     file.writeText(content)
                     call.respond(HttpStatusCode.NoContent)
+                }
+
+            // ── Loggers ──────────────────────────────────────────────────────
+            // Registry is Logback's own LoggerContext — every logger any singleton has ever
+            // created (via LoggerFactory.getLogger) is already tracked there, so this needs no
+            // separate bookkeeping to stay exhaustive.
+            get(
+                "/api/admin/loggers",
+                {
+                    description =
+                        "All known loggers (Logback's registry) with their explicit and " +
+                            "effective level — useful to raise verbosity for live debugging"
+                    response { code(HttpStatusCode.OK) { body<List<LoggerLevelDto>>() } }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    val context = LoggerFactory.getILoggerFactory() as LoggerContext
+                    val loggers =
+                        context.loggerList
+                            .map {
+                                LoggerLevelDto(
+                                    name = it.name,
+                                    level = it.level?.toString(),
+                                    effectiveLevel = it.effectiveLevel.toString(),
+                                )
+                            }
+                            .sortedBy { it.name }
+                    call.respondText(
+                        adminJson.encodeToString(
+                            ListSerializer(LoggerLevelDto.serializer()), loggers),
+                        ContentType.Application.Json)
+                }
+
+            put(
+                "/api/admin/loggers/{name...}",
+                {
+                    description =
+                        "Set a logger's level (TRACE/DEBUG/INFO/WARN/ERROR/OFF), or null to " +
+                            "inherit from its parent again"
+                    request {
+                        pathParameter<String>("name") { description = "Logger name" }
+                        body<SetLoggerLevelRequest>()
+                    }
+                    response {
+                        code(HttpStatusCode.OK) { body<LoggerLevelDto>() }
+                        code(HttpStatusCode.BadRequest) { description = "Unknown level name" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@put
+                    val name =
+                        call.parameters.getAll("name")?.joinToString("/")
+                            ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    val body = Json.decodeFromString<SetLoggerLevelRequest>(call.receiveText())
+                    val level =
+                        if (body.level == null) null
+                        else
+                            Level.toLevel(body.level, null)
+                                ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    val context = LoggerFactory.getILoggerFactory() as LoggerContext
+                    val logger = context.getLogger(name)
+                    logger.level = level
+                    call.respondText(
+                        adminJson.encodeToString(
+                            LoggerLevelDto.serializer(),
+                            LoggerLevelDto(
+                                name = logger.name,
+                                level = logger.level?.toString(),
+                                effectiveLevel = logger.effectiveLevel.toString(),
+                            )),
+                        ContentType.Application.Json)
                 }
 
             // ── Classes ──────────────────────────────────────────────────────

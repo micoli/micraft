@@ -24,6 +24,7 @@ export const en = {
   "nav.npcs": "NPCs",
   "nav.classes": "Classes",
   "nav.config": "Config",
+  "nav.loggers": "Loggers",
   "nav.worlds": "Worlds",
   "nav.gameAssets": "Game Assets viewer",
   "nav.codex": "Codex",
@@ -40,6 +41,7 @@ export const en = {
   "page.npcs": "NPCs",
   "page.classes": "Classes & Skills",
   "page.config": "Config Editor",
+  "page.loggers": "Log Levels",
   "page.worlds": "Worlds",
   "page.gameAssets": "Game Assets",
   "page.codex": "Codex",
@@ -250,6 +252,15 @@ export const en = {
   "config.schema": "schema",
   "config.selectFile": "Select a configEditor file to edit",
   "config.failedToLoad": "Failed to load file",
+
+  // ── Loggers ─────────────────────────────────────────────────────────────────
+  "loggers.search": "Filter loggers by name…",
+  "loggers.explicit": "explicit",
+  "loggers.inherited": "inherited",
+  "loggers.reset": "Reset to inherited",
+  "loggers.empty": "No logger matches this filter",
+  "loggers.failedToLoad": "Failed to load loggers",
+  "loggers.failedToSet": "Failed to change level",
 
   // ── Worlds page ─────────────────────────────────────────────────────────────
   "worlds.created": "Created {0}",
