@@ -83,7 +83,7 @@ export const getApiServerInfo = <ThrowOnError extends boolean = false>(options?:
 export const getApiAttacks = <ThrowOnError extends boolean = false>(options?: Options<GetApiAttacksData, ThrowOnError>): RequestResult<GetApiAttacksResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetApiAttacksResponses, unknown, ThrowOnError>({ url: '/api/attacks', ...options });
 
 /**
- * Attack ids accessible per RPG class, keyed by level
+ * Attacks and spells accessible per RPG class, keyed by level
  */
 export const getApiClasses = <ThrowOnError extends boolean = false>(options?: Options<GetApiClassesData, ThrowOnError>): RequestResult<GetApiClassesResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetApiClassesResponses, unknown, ThrowOnError>({ url: '/api/classes', ...options });
 

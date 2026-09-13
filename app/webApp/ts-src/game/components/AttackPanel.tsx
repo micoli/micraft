@@ -33,12 +33,21 @@ export function hasEnoughResources(meta: AttackMeta | SpellMeta, status: UiState
 interface Props {
   attackMeta: Record<string, AttackMeta>;
   spellMeta?: Record<string, SpellMeta>;
+  /** Spell ids the player's class has unlocked at their current level. Undefined = unknown yet (nothing greyed out). */
+  unlockedSpellIds?: Set<string>;
   layoutStyle?: React.CSSProperties;
   pinnedMacros?: string[];
   playerStatus?: UiState["playerStatus"];
 }
 
-export function AttackPanel({ attackMeta, spellMeta = {}, layoutStyle, pinnedMacros = [], playerStatus }: Props) {
+export function AttackPanel({
+  attackMeta,
+  spellMeta = {},
+  unlockedSpellIds,
+  layoutStyle,
+  pinnedMacros = [],
+  playerStatus,
+}: Props) {
   const attacks = Object.entries(attackMeta);
   const spells = Object.entries(spellMeta);
   const { startDrag, moveDrag, endDrag, guardClick } = useAttackDrag((id) =>
@@ -127,6 +136,7 @@ export function AttackPanel({ attackMeta, spellMeta = {}, layoutStyle, pinnedMac
         })}
         {spells.map(([id, meta]) => {
           const hasRes = hasEnoughResources(meta, playerStatus);
+          const isLocked = unlockedSpellIds !== undefined && !unlockedSpellIds.has(id);
           return (
             <div
               key={`spell-${id}`}
@@ -135,10 +145,11 @@ export function AttackPanel({ attackMeta, spellMeta = {}, layoutStyle, pinnedMac
               onPointerMove={moveSpellDrag}
               onPointerUp={endSpellDrag}
               onPointerCancel={endSpellDrag}
-              title={`${id}${meta.tokenCost > 0 ? ` · ${meta.tokenCost} token` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}`}
+              title={`${id}${isLocked ? " · requires a higher level" : ""}${meta.tokenCost > 0 ? ` · ${meta.tokenCost} token` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}`}
               className={cn(
                 "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-orange-400/60 bg-black/72 cursor-grab hover:border-orange-400 transition-colors touch-none",
-                !hasRes && "opacity-50",
+                (!hasRes || isLocked) && "opacity-50",
+                isLocked && "grayscale",
               )}
             >
               <div className="text-orange-400 text-lg leading-none">⚡</div>
@@ -149,6 +160,9 @@ export function AttackPanel({ attackMeta, spellMeta = {}, layoutStyle, pinnedMac
                 <div className="absolute top-0.5 right-1 text-orange-300 font-mono font-bold text-[8px]">
                   {meta.tokenCost}t
                 </div>
+              )}
+              {isLocked && (
+                <div className="absolute top-0.5 left-1 text-white/70 font-mono font-bold text-[9px]">🔒</div>
               )}
               <AttackCooldownOverlay id={id} meta={meta} playerStatus={playerStatus} />
             </div>

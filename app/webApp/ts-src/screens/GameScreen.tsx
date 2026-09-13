@@ -130,15 +130,31 @@ export function GameScreen() {
     const classDef = state.classDefinitions[charData.characterClass];
     if (!classDef) return {};
     const unlocked = new Set<string>();
-    for (const [lvlStr, attacks] of Object.entries(classDef)) {
+    for (const [lvlStr, entry] of Object.entries(classDef)) {
       if (parseInt(lvlStr) <= charData.level) {
-        for (const { attack, level } of attacks) {
+        for (const { attack, level } of entry.attacks) {
           unlocked.add(`${attack}:${level}`);
         }
       }
     }
     return Object.fromEntries(Object.entries(state.attackMeta).filter(([key]) => unlocked.has(key)));
   }, [state.attackMeta, state.characterSyncData, state.classDefinitions]);
+
+  // Spells aren't removed like locked attacks — AttackPanel greys them out instead, so a player
+  // can see what a future level unlocks.
+  const unlockedSpellIds = useMemo(() => {
+    const charData = state.characterSyncData?.character;
+    if (!charData || !state.classDefinitions) return undefined;
+    const classDef = state.classDefinitions[charData.characterClass];
+    if (!classDef) return new Set<string>();
+    const unlocked = new Set<string>();
+    for (const [lvlStr, entry] of Object.entries(classDef)) {
+      if (parseInt(lvlStr) <= charData.level) {
+        for (const spellId of entry.spells) unlocked.add(spellId);
+      }
+    }
+    return unlocked;
+  }, [state.characterSyncData, state.classDefinitions]);
 
   const setPendingPrefs = (partial: Partial<import("../game/types").PreferencesData>) => {
     if (!state.preferences) return;
@@ -309,6 +325,7 @@ export function GameScreen() {
             <AttackPanel
               attackMeta={filteredAttackMeta}
               spellMeta={state.spellMeta}
+              unlockedSpellIds={unlockedSpellIds}
               layoutStyle={widgetStyle(activeLayout, "ATTACK_PANEL")}
               pinnedMacros={state.preferences?.customCommands?.["__pinned_macros__"] ?? []}
               playerStatus={state.playerStatus ?? undefined}

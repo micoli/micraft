@@ -265,7 +265,7 @@ paths:
   /api/classes:
     get:
       tags: []
-      description: "Attack ids accessible per RPG class, keyed by level"
+      description: "Attacks and spells accessible per RPG class, keyed by level"
       parameters: []
       responses:
         "200":
@@ -277,12 +277,9 @@ paths:
                 additionalProperties:
                   type: object
                   additionalProperties:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/org.micoli.micraft.game.classes.ClassAttackAccess"
-                    title: List<ClassAttackAccess>
-                  title: "Map<String,List<ClassAttackAccess>>"
-                title: "Map<String,Map<String,List<ClassAttackAccess>>>"
+                    $ref: "#/components/schemas/org.micoli.micraft.game.classes.ClassLevelEntry"
+                  title: "Map<String,ClassLevelEntry>"
+                title: "Map<String,Map<String,ClassLevelEntry>>"
       deprecated: false
   /api/spells:
     get:
@@ -3951,6 +3948,24 @@ components:
       required:
       - buildTimestamp
       title: ServerInfo
+    org.micoli.micraft.game.classes.ClassLevelEntry:
+      type: object
+      properties:
+        attacks:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.game.classes.ClassAttackAccess"
+          title: List<ClassAttackAccess>
+        spells:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+      required:
+      - attacks
+      - spells
+      title: ClassLevelEntry
     org.micoli.micraft.game.classes.ClassAttackAccess:
       type: object
       properties:
@@ -6565,24 +6580,6 @@ components:
       - MANA
       - RAGE
       title: ClassResource
-    org.micoli.micraft.game.classes.ClassLevelEntry:
-      type: object
-      properties:
-        attacks:
-          type: array
-          items:
-            $ref: "#/components/schemas/org.micoli.micraft.game.classes.ClassAttackAccess"
-          title: List<ClassAttackAccess>
-        spells:
-          type: array
-          items:
-            type: string
-            title: String
-          title: List<String>
-      required:
-      - attacks
-      - spells
-      title: ClassLevelEntry
     org.micoli.micraft.http.SkillsResponse:
       type: object
       properties:

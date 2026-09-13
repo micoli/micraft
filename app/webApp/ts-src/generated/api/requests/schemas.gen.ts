@@ -169,6 +169,32 @@ export const org_micoli_micraft_http_ServerInfoSchema = {
     title: 'ServerInfo'
 } as const;
 
+export const org_micoli_micraft_game_classes_ClassLevelEntrySchema = {
+    type: 'object',
+    properties: {
+        attacks: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.game.classes.ClassAttackAccess'
+            },
+            title: 'List<ClassAttackAccess>'
+        },
+        spells: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        }
+    },
+    required: [
+        'attacks',
+        'spells'
+    ],
+    title: 'ClassLevelEntry'
+} as const;
+
 export const org_micoli_micraft_game_classes_ClassAttackAccessSchema = {
     type: 'object',
     properties: {
@@ -602,6 +628,14 @@ export const org_micoli_micraft_game_vehicle_VehicleModelDefinitionSchema = {
 export const org_micoli_micraft_game_armor_ArmorDefinitionSchema = {
     type: 'object',
     properties: {
+        armorType: {
+            $ref: '#/components/schemas/org.micoli.micraft.game.armor.ArmorType'
+        },
+        requiredLevel: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
         statBonus: {
             $ref: '#/components/schemas/org.micoli.micraft.game.rpg.StatBonus'
         },
@@ -610,10 +644,23 @@ export const org_micoli_micraft_game_armor_ArmorDefinitionSchema = {
         }
     },
     required: [
+        'armorType',
+        'requiredLevel',
         'statBonus',
         'wearable'
     ],
     title: 'ArmorDefinition'
+} as const;
+
+export const org_micoli_micraft_game_armor_ArmorTypeSchema = {
+    type: 'string',
+    enum: [
+        'CLOTH',
+        'LEATHER',
+        'MAIL',
+        'PLATE'
+    ],
+    title: 'ArmorType'
 } as const;
 
 export const org_micoli_micraft_game_rpg_StatBonusSchema = {
@@ -757,6 +804,11 @@ export const org_micoli_micraft_game_equipment_WeaponDefinitionSchema = {
         category: {
             $ref: '#/components/schemas/org.micoli.micraft.game.world.EquipmentCategory'
         },
+        requiredLevel: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
         rotate: {
             $ref: '#/components/schemas/org.micoli.micraft.game.equipment.Rotation'
         },
@@ -766,6 +818,7 @@ export const org_micoli_micraft_game_equipment_WeaponDefinitionSchema = {
     },
     required: [
         'category',
+        'requiredLevel',
         'rotate',
         'statBonus'
     ],
@@ -1357,6 +1410,14 @@ export const org_micoli_micraft_game_quest_KillObjectiveSchema = {
 export const org_micoli_micraft_game_quest_QuestRewardSchema = {
     type: 'object',
     properties: {
+        armorRewards: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
         items: {
             type: 'array',
             items: {
@@ -1371,6 +1432,7 @@ export const org_micoli_micraft_game_quest_QuestRewardSchema = {
         }
     },
     required: [
+        'armorRewards',
         'items',
         'xp'
     ],
@@ -2319,6 +2381,16 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             type: 'boolean',
             title: 'Boolean'
         },
+        compassTarget: {
+            oneOf: [
+                {
+                    type: 'null'
+                },
+                {
+                    $ref: '#/components/schemas/org.micoli.micraft.player.CompassTargetState'
+                }
+            ]
+        },
         continuousBreak: {
             type: 'boolean',
             title: 'Boolean'
@@ -2887,6 +2959,45 @@ export const org_micoli_micraft_player_rpg_CombatantDataSchema = {
         'xp'
     ],
     title: 'CombatantData'
+} as const;
+
+export const org_micoli_micraft_player_CompassTargetStateSchema = {
+    type: 'object',
+    properties: {
+        label: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        visible: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        x: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        y: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        z: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        }
+    },
+    required: [
+        'visible',
+        'x',
+        'y',
+        'z'
+    ],
+    title: 'CompassTargetState'
 } as const;
 
 export const org_micoli_micraft_player_EditModeSchema = {
@@ -3617,32 +3728,6 @@ export const org_micoli_micraft_player_rpg_ClassResourceSchema = {
         'RAGE'
     ],
     title: 'ClassResource'
-} as const;
-
-export const org_micoli_micraft_game_classes_ClassLevelEntrySchema = {
-    type: 'object',
-    properties: {
-        attacks: {
-            type: 'array',
-            items: {
-                $ref: '#/components/schemas/org.micoli.micraft.game.classes.ClassAttackAccess'
-            },
-            title: 'List<ClassAttackAccess>'
-        },
-        spells: {
-            type: 'array',
-            items: {
-                type: 'string',
-                title: 'String'
-            },
-            title: 'List<String>'
-        }
-    },
-    required: [
-        'attacks',
-        'spells'
-    ],
-    title: 'ClassLevelEntry'
 } as const;
 
 export const org_micoli_micraft_http_SkillsResponseSchema = {

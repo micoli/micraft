@@ -43,7 +43,7 @@ export const prefetchUseGetApiServerInfo = (queryClient: QueryClient, clientOpti
  */
 export const prefetchUseGetApiAttacks = (queryClient: QueryClient, clientOptions: Options<GetApiAttacksData, true> = {}, options?: Omit<FetchQueryOptions<Common.GetApiAttacksDefaultResponse>, "queryKey" | "queryFn">) => queryClient.prefetchQuery({ queryKey: Common.UseGetApiAttacksKeyFn(clientOptions), queryFn: ({ signal }) => getApiAttacks({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**
- * Attack ids accessible per RPG class, keyed by level
+ * Attacks and spells accessible per RPG class, keyed by level
  */
 export const prefetchUseGetApiClasses = (queryClient: QueryClient, clientOptions: Options<GetApiClassesData, true> = {}, options?: Omit<FetchQueryOptions<Common.GetApiClassesDefaultResponse>, "queryKey" | "queryFn">) => queryClient.prefetchQuery({ queryKey: Common.UseGetApiClassesKeyFn(clientOptions), queryFn: ({ signal }) => getApiClasses({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**

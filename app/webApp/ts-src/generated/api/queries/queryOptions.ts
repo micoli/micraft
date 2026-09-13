@@ -43,7 +43,7 @@ export const getApiServerInfoOptions = (clientOptions: Options<GetApiServerInfoD
  */
 export const getApiAttacksOptions = (clientOptions: Options<GetApiAttacksData, true> = {}, queryKey?: Array<unknown>) => queryOptions({ queryKey: Common.UseGetApiAttacksKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiAttacks({ ...clientOptions, signal, throwOnError: true }).then(response => response.data) });
 /**
- * Attack ids accessible per RPG class, keyed by level
+ * Attacks and spells accessible per RPG class, keyed by level
  */
 export const getApiClassesOptions = (clientOptions: Options<GetApiClassesData, true> = {}, queryKey?: Array<unknown>) => queryOptions({ queryKey: Common.UseGetApiClassesKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiClasses({ ...clientOptions, signal, throwOnError: true }).then(response => response.data) });
 /**

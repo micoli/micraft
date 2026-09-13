@@ -111,6 +111,20 @@ export type OrgMicoliMicraftHttpServerInfo = {
 };
 
 /**
+ * ClassLevelEntry
+ */
+export type OrgMicoliMicraftGameClassesClassLevelEntry = {
+    /**
+     * List<ClassAttackAccess>
+     */
+    attacks: Array<OrgMicoliMicraftGameClassesClassAttackAccess>;
+    /**
+     * List<String>
+     */
+    spells: Array<string>;
+};
+
+/**
  * ClassAttackAccess
  */
 export type OrgMicoliMicraftGameClassesClassAttackAccess = {
@@ -392,9 +406,19 @@ export type OrgMicoliMicraftGameVehicleVehicleModelDefinition = {
  * ArmorDefinition
  */
 export type OrgMicoliMicraftGameArmorArmorDefinition = {
+    armorType: OrgMicoliMicraftGameArmorArmorType;
+    /**
+     * Int
+     */
+    requiredLevel: number;
     statBonus: OrgMicoliMicraftGameRpgStatBonus;
     wearable: OrgMicoliMicraftGameArmorWearableSlots;
 };
+
+/**
+ * ArmorType
+ */
+export type OrgMicoliMicraftGameArmorArmorType = 'CLOTH' | 'LEATHER' | 'MAIL' | 'PLATE';
 
 /**
  * StatBonus
@@ -501,6 +525,10 @@ export type OrgMicoliMicraftGameArmorWearableSlots = {
  */
 export type OrgMicoliMicraftGameEquipmentWeaponDefinition = {
     category: OrgMicoliMicraftGameWorldEquipmentCategory;
+    /**
+     * Int
+     */
+    requiredLevel: number;
     rotate: OrgMicoliMicraftGameEquipmentRotation;
     statBonus: OrgMicoliMicraftGameRpgStatBonus;
 };
@@ -877,6 +905,10 @@ export type OrgMicoliMicraftGameQuestKillObjective = {
  * QuestReward
  */
 export type OrgMicoliMicraftGameQuestQuestReward = {
+    /**
+     * List<String>
+     */
+    armorRewards: Array<string>;
     /**
      * List<RewardItem>
      */
@@ -1510,6 +1542,7 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      * Boolean
      */
     chunkDebugVisible: boolean;
+    compassTarget?: null | OrgMicoliMicraftPlayerCompassTargetState;
     /**
      * Boolean
      */
@@ -1839,6 +1872,32 @@ export type OrgMicoliMicraftPlayerRpgCombatantData = {
      * Int
      */
     xp: number;
+};
+
+/**
+ * CompassTargetState
+ */
+export type OrgMicoliMicraftPlayerCompassTargetState = {
+    /**
+     * String
+     */
+    label?: null | string;
+    /**
+     * Boolean
+     */
+    visible: boolean;
+    /**
+     * Float
+     */
+    x: number;
+    /**
+     * Float
+     */
+    y: number;
+    /**
+     * Float
+     */
+    z: number;
 };
 
 /**
@@ -2283,20 +2342,6 @@ export type OrgMicoliMicraftGameClassesClassDefinitionEntry = {
  * ClassResource
  */
 export type OrgMicoliMicraftPlayerRpgClassResource = 'MANA' | 'RAGE';
-
-/**
- * ClassLevelEntry
- */
-export type OrgMicoliMicraftGameClassesClassLevelEntry = {
-    /**
-     * List<ClassAttackAccess>
-     */
-    attacks: Array<OrgMicoliMicraftGameClassesClassAttackAccess>;
-    /**
-     * List<String>
-     */
-    spells: Array<string>;
-};
 
 /**
  * SkillsResponse
@@ -3678,11 +3723,11 @@ export type GetApiClassesData = {
 
 export type GetApiClassesResponses = {
     /**
-     * Map<String,Map<String,List<ClassAttackAccess>>>
+     * Map<String,Map<String,ClassLevelEntry>>
      */
     200: {
         [key: string]: {
-            [key: string]: Array<OrgMicoliMicraftGameClassesClassAttackAccess>;
+            [key: string]: OrgMicoliMicraftGameClassesClassLevelEntry;
         };
     };
 };
@@ -3953,6 +3998,10 @@ export type PostApiCharacterCreateErrors = {
      */
     400: unknown;
     /**
+     * Name already used by an NPC
+     */
+    409: unknown;
+    /**
      * No persistence backend
      */
     503: unknown;
@@ -3977,7 +4026,7 @@ export type PostApiCharacterRpgcreateErrors = {
      */
     400: unknown;
     /**
-     * RPG character already exists
+     * RPG character already exists, or name is taken by an NPC
      */
     409: unknown;
     /**

@@ -245,7 +245,7 @@ never hand-edit either.
 | POST | `/api/character/create` | Create a new (non-RPG) character |
 | POST | `/api/character/rpgcreate` | Create a new RPG character (point-buy base stats + class) |
 | GET | `/api/chunks/{cx}/{cz}` | Binary-encoded chunk data (protocol.ServerMessage.ChunkData wire format). Not a JSON API — used by the game client, not by TanStack Query hooks. |
-| GET | `/api/classes` | Attack ids accessible per RPG class, keyed by level |
+| GET | `/api/classes` | Attacks and spells accessible per RPG class, keyed by level |
 | GET | `/api/furnitures` | List all furniture definitions |
 | GET | `/api/game-assets` | 3D game asset files discovered under resources/game-assets |
 | GET | `/api/game-assets/bbmodel-export/{...}` | Converts an OBJ/MTL mesh into a Blockbench-compatible mesh .bbmodel (cached). The generated mesh elements are not rendered by the admin viewer — open the result in Blockbench to edit it. |

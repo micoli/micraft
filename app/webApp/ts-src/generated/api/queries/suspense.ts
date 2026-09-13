@@ -43,7 +43,7 @@ export const useGetApiServerInfoSuspense = <TData = NonNullable<Common.GetApiSer
  */
 export const useGetApiAttacksSuspense = <TData = NonNullable<Common.GetApiAttacksDefaultResponse>, TError = unknown, TQueryKey extends Array<unknown> = unknown[]>(clientOptions: Options<GetApiAttacksData, true> = {}, queryKey?: TQueryKey, options?: Omit<UseSuspenseQueryOptions<TData, TError>, "queryKey" | "queryFn">) => useSuspenseQuery<TData, TError>({ queryKey: Common.UseGetApiAttacksKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiAttacks({ ...clientOptions, signal, throwOnError: true }).then(response => response.data as TData) as TData, ...options });
 /**
- * Attack ids accessible per RPG class, keyed by level
+ * Attacks and spells accessible per RPG class, keyed by level
  */
 export const useGetApiClassesSuspense = <TData = NonNullable<Common.GetApiClassesDefaultResponse>, TError = unknown, TQueryKey extends Array<unknown> = unknown[]>(clientOptions: Options<GetApiClassesData, true> = {}, queryKey?: TQueryKey, options?: Omit<UseSuspenseQueryOptions<TData, TError>, "queryKey" | "queryFn">) => useSuspenseQuery<TData, TError>({ queryKey: Common.UseGetApiClassesKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiClasses({ ...clientOptions, signal, throwOnError: true }).then(response => response.data as TData) as TData, ...options });
 /**

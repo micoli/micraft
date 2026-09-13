@@ -43,7 +43,7 @@ export const ensureUseGetApiServerInfoData = (queryClient: QueryClient, clientOp
  */
 export const ensureUseGetApiAttacksData = (queryClient: QueryClient, clientOptions: Options<GetApiAttacksData, true> = {}, options?: Omit<EnsureQueryDataOptions<Common.GetApiAttacksDefaultResponse>, "queryKey" | "queryFn">) => queryClient.ensureQueryData({ queryKey: Common.UseGetApiAttacksKeyFn(clientOptions), queryFn: ({ signal }) => getApiAttacks({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**
- * Attack ids accessible per RPG class, keyed by level
+ * Attacks and spells accessible per RPG class, keyed by level
  */
 export const ensureUseGetApiClassesData = (queryClient: QueryClient, clientOptions: Options<GetApiClassesData, true> = {}, options?: Omit<EnsureQueryDataOptions<Common.GetApiClassesDefaultResponse>, "queryKey" | "queryFn">) => queryClient.ensureQueryData({ queryKey: Common.UseGetApiClassesKeyFn(clientOptions), queryFn: ({ signal }) => getApiClasses({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**
