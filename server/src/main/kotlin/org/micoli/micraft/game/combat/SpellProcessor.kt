@@ -9,6 +9,7 @@ import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.player.rpg.ClassResource
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
@@ -103,40 +104,7 @@ class SpellProcessor(
                     )
             }
             SpellType.DIRECT_DAMAGE -> {
-                val targetId = session.combatState.targetId
-                if (targetId == null) {
-                    session.send(ServerMessage.Notification("No target selected"))
-                    return
-                }
-                val sourceLabel = "s:${charData.name}"
-                if (session.combatState.targetIsNpc) {
-                    val npc = getNpcs().find { it.state.id == targetId && !it.isDead }
-                    if (npc == null) {
-                        session.send(ServerMessage.Notification("Target not found"))
-                        return
-                    }
-                    if (session.state.pos.distanceTo(npc.state.pos) > spell.maxRange) {
-                        session.send(
-                            ServerMessage.Notification(
-                                "Target out of range (max ${spell.maxRange.toInt()} m)"))
-                        return
-                    }
-                    combatProcessor.applyDirectDamageToNpc(
-                        session.id, npc.state.id, spell.power, sourceLabel)
-                } else {
-                    val target = getSessions().find { it.id == targetId }
-                    if (target == null) {
-                        session.send(ServerMessage.Notification("Target not found"))
-                        return
-                    }
-                    if (session.state.pos.distanceTo(target.state.pos) > spell.maxRange) {
-                        session.send(
-                            ServerMessage.Notification(
-                                "Target out of range (max ${spell.maxRange.toInt()} m)"))
-                        return
-                    }
-                    combatProcessor.applyDirectDamage(target, spell.power, sourceLabel)
-                }
+                if (!castDirectDamage(session, charData, spell)) return
             }
             SpellType.NECROTIC_AOE -> {}
         }
@@ -157,6 +125,56 @@ class SpellProcessor(
                 session.combatState.attackCooldownsUntilMs,
                 session.state.godMode,
             ))
+    }
+
+    /**
+     * DIRECT_DAMAGE always resolves against the caster's locked combat target — never an AoE point
+     * — because the shortcut bar routes every spell cast (this type included) through
+     * [handleCastAoeSpell] with a computed point in front of the player, which a single-target
+     * spell has no use for.
+     */
+    private suspend fun castDirectDamage(
+        session: PlayerSession,
+        charData: CharacterData,
+        spell: SpellDefinition,
+    ): Boolean {
+        val targetId = session.combatState.targetId
+        if (targetId == null) {
+            session.send(ServerMessage.Notification("No target selected"))
+            return false
+        }
+        // "p:" (not a distinct "spell" prefix) — ServerLog's client-side renderer only recognizes
+        // p:/m: tokens; anything else shows up as a literal, unstyled "[x:Name]" bracket.
+        val sourceLabel = "p:${charData.name}"
+        if (session.combatState.targetIsNpc) {
+            val npc = getNpcs().find { it.state.id == targetId && !it.isDead }
+            if (npc == null) {
+                session.send(ServerMessage.Notification("Target not found"))
+                return false
+            }
+            if (session.state.pos.distanceTo(npc.state.pos) > spell.maxRange) {
+                session.send(
+                    ServerMessage.Notification(
+                        "Target out of range (max ${spell.maxRange.toInt()} m)"))
+                return false
+            }
+            combatProcessor.applyDirectDamageToNpc(
+                session.id, npc.state.id, spell.power, sourceLabel)
+        } else {
+            val target = getSessions().find { it.id == targetId }
+            if (target == null) {
+                session.send(ServerMessage.Notification("Target not found"))
+                return false
+            }
+            if (session.state.pos.distanceTo(target.state.pos) > spell.maxRange) {
+                session.send(
+                    ServerMessage.Notification(
+                        "Target out of range (max ${spell.maxRange.toInt()} m)"))
+                return false
+            }
+            combatProcessor.applyDirectDamage(target, spell.power, sourceLabel)
+        }
+        return true
     }
 
     suspend fun handleCastAoeSpell(session: PlayerSession, msg: ClientMessage.CastAoeSpell) {
@@ -198,15 +216,20 @@ class SpellProcessor(
             return
         }
 
-        val pos = session.state.pos
-        val dx = msg.targetX - pos.x
-        val dy = msg.targetY - pos.y
-        val dz = msg.targetZ - pos.z
-        val dist = sqrt(dx * dx + dy * dy + dz * dz)
-        if (dist > spell.maxRange) {
-            session.send(
-                ServerMessage.Notification("Target out of range (max ${spell.maxRange.toInt()} m)"))
-            return
+        // DIRECT_DAMAGE ignores the AoE point entirely — castDirectDamage range-checks the
+        // caster's actual locked target instead.
+        if (spell.type != SpellType.DIRECT_DAMAGE) {
+            val pos = session.state.pos
+            val dx = msg.targetX - pos.x
+            val dy = msg.targetY - pos.y
+            val dz = msg.targetZ - pos.z
+            val dist = sqrt(dx * dx + dy * dy + dz * dz)
+            if (dist > spell.maxRange) {
+                session.send(
+                    ServerMessage.Notification(
+                        "Target out of range (max ${spell.maxRange.toInt()} m)"))
+                return
+            }
         }
 
         val resource = charData.characterClass.classResource
@@ -270,7 +293,9 @@ class SpellProcessor(
                 for (s in getSessions()) s.send(aoeMsg)
             }
             SpellType.TOKEN_RAGE_CONSUME -> {}
-            SpellType.DIRECT_DAMAGE -> {}
+            SpellType.DIRECT_DAMAGE -> {
+                if (!castDirectDamage(session, charData, spell)) return
+            }
         }
 
         session.characterData = updated

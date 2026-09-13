@@ -161,6 +161,27 @@ class SpellProcessorDirectDamageTest {
         }
 
     @Test
+    fun `DIRECT_DAMAGE cast via the shortcut-bar CastAoeSpell path still hits the locked target`() =
+        runBlocking {
+            // The shortcut bar always sends CastAoeSpell with a computed point in front of the
+            // player, regardless of spell type — DIRECT_DAMAGE must ignore that point and use the
+            // caster's locked combat target instead.
+            val caster = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+            caster.characterData = testChar("Alice")
+            val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+            target.characterData = testChar("Bob")
+            caster.combatState = caster.combatState.copy(targetId = "b", targetIsNpc = false)
+
+            buildProcessor(sessions = listOf(caster, target))
+                .handleCastAoeSpell(
+                    caster,
+                    ClientMessage.CastAoeSpell(
+                        spellId = "quickStrike", targetX = 999f, targetY = 0f, targetZ = 999f))
+
+            assertEquals(96, target.characterData!!.currentHp)
+        }
+
+    @Test
     fun `an attack puts a following spell cast on global cooldown`() = runBlocking {
         val caster = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
         caster.characterData = testChar("Alice")
