@@ -263,8 +263,50 @@ function defaultLabel(code: string): string {
   return code;
 }
 
+// Some yaml default bindings are a raw unshifted character (e.g. "m", "=") rather than a
+// KeyboardEvent.code — reverse of FALLBACK_LABELS' single-char entries covers those directly.
+const CHAR_TO_CODE: Record<string, string> = Object.fromEntries(
+  Object.entries(FALLBACK_LABELS)
+    .filter(([, label]) => label.length === 1)
+    .map(([code, label]) => [label, code]),
+);
+
+// Shifted US-layout symbols a binding may also use as a raw character.
+const SHIFTED_SYMBOL_TO_CODE: Record<string, string> = {
+  ":": "Semicolon",
+  '"': "Quote",
+  "<": "Comma",
+  ">": "Period",
+  "?": "Slash",
+  _: "Minus",
+  "+": "Equal",
+  "~": "Backquote",
+  "{": "BracketLeft",
+  "}": "BracketRight",
+  "|": "Backslash",
+  "!": "Digit1",
+  "@": "Digit2",
+  "#": "Digit3",
+  $: "Digit4",
+  "%": "Digit5",
+  "^": "Digit6",
+  "&": "Digit7",
+  "*": "Digit8",
+  "(": "Digit9",
+  ")": "Digit0",
+};
+
+function charToCode(ch: string): string {
+  if (/^[a-zA-Z]$/.test(ch)) return `Key${ch.toUpperCase()}`;
+  if (/^[0-9]$/.test(ch)) return `Digit${ch}`;
+  return CHAR_TO_CODE[ch] ?? SHIFTED_SYMBOL_TO_CODE[ch] ?? ch;
+}
+
 function codesOf(binding: string): string[] {
-  return binding.split("+").filter((t) => t && !MODIFIER_TOKENS.has(t));
+  return binding
+    .split("+")
+    .filter((t) => t && !MODIFIER_TOKENS.has(t))
+    .map((t) => (t.length === 1 ? charToCode(t) : t));
 }
 
 function readStoredLayout(): string {
@@ -362,11 +404,12 @@ export function KeyboardLayout({
             title={isAssigned ? `${k.code}\n${actions!.join("\n")}` : `${k.code} — available`}
             style={{ width: `calc(${KEY_UNIT} * ${k.w ?? 1})`, height: KEY_UNIT }}
             className={cn(
-              "flex items-center justify-center rounded-sm border text-[10px] leading-none select-none overflow-hidden",
+              "relative flex items-center justify-center rounded-sm border text-[10px] leading-none select-none overflow-hidden",
               isAssigned ? "bg-sky-900/70 border-sky-500 text-sky-200" : "bg-[#2a2a2a] border-[#3d3d3d] text-[#666]",
             )}
           >
             {label(k.code)}
+            <span className="absolute bottom-[1px] right-[2px] text-[5px] leading-none opacity-60">{k.code}</span>
           </div>
         );
       })}
