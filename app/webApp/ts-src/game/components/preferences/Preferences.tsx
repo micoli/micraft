@@ -433,6 +433,18 @@ export function Preferences({
           {pref.tab === "keybindings" && (
             <div className="flex gap-4 items-start">
               <div className="flex-1 min-w-0">
+                {pref.conflicts.length > 0 && (
+                  <div className="mb-3 rounded-sm border border-amber-600/60 bg-amber-950/40 px-2 py-1.5">
+                    <div className="text-[11px] uppercase tracking-wide text-amber-400">
+                      ⚠ Key conflicts ({pref.conflicts.length})
+                    </div>
+                    {pref.conflicts.map((c) => (
+                      <div key={c} className="text-xs text-amber-200 font-mono">
+                        {c}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="flex gap-2 mb-3">
                   <input
                     type="text"

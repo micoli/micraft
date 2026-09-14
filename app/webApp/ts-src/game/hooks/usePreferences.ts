@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PreferencesData, CommandInfo, ChannelSubscription } from "../types";
 
 // Mirrors the compiled-in client defaults in GameClient.kt (DEFAULT_FORWARD_VIEW_RADIUS,
@@ -436,6 +436,11 @@ export function usePreferences({
     }
   };
 
+  const conflicts = useMemo(
+    () => reportDuplicateBindings(localBindings, localCustomCmds),
+    [localBindings, localCustomCmds],
+  );
+
   const sortedCommands = preferences
     ? [...preferences.commands].sort((a, b) => a.command.localeCompare(b.command))
     : [];
@@ -506,5 +511,6 @@ export function usePreferences({
     sortedCommands,
     groupedBindings,
     groups,
+    conflicts,
   };
 }
