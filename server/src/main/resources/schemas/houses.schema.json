@@ -76,6 +76,12 @@
           },
           "doorsMax": {
             "type": "integer"
+          },
+          "roofOverhang": {
+            "type": "integer"
+          },
+          "chimneyChance": {
+            "type": "number"
           }
         }
       }
@@ -91,6 +97,12 @@
           "type": "string"
         },
         "floorBlock": {
+          "type": "string"
+        },
+        "trimBlock": {
+          "type": "string"
+        },
+        "foundationBlock": {
           "type": "string"
         },
         "houseProbability": {
@@ -120,6 +132,12 @@
             "type": "string"
           },
           "floorBlock": {
+            "type": "string"
+          },
+          "trimBlock": {
+            "type": "string"
+          },
+          "foundationBlock": {
             "type": "string"
           },
           "houseProbability": {

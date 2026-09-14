@@ -179,6 +179,108 @@ class HouseGeneratorTest {
         assertTrue(found, "At probability=1.0, at least one house should be placed")
     }
 
+    private fun testHouse(
+        typeCfg: HouseTypeConfig,
+        biomeCfg: HouseBiomeConfig,
+        roofType: String,
+        width: Int = 7,
+        depth: Int = 7,
+        floors: Int = 1,
+    ) =
+        PlacedHouse(
+            anchorX = 4,
+            anchorZ = 4,
+            anchorY = 1,
+            width = width,
+            depth = depth,
+            floors = floors,
+            roofType = roofType,
+            typeCfg = typeCfg,
+            materials = biomeCfg,
+            houseSeed = 42L,
+        )
+
+    private fun renderedChunk(house: PlacedHouse): Chunk {
+        val chunk = Chunk.empty(ChunkPos(0, 0))
+        house.renderIntoChunk(chunk.blocks, 0, 0)
+        return chunk
+    }
+
+    @Test
+    fun trimAndFoundation_breakUpFlatWalls() {
+        val house = testHouse(cabinType.copy(roofOverhang = 0), plainsBiome, roofType = "flat")
+        val chunk = renderedChunk(house)
+
+        assertTrue(
+            chunk.getBlock(house.anchorX, house.anchorY + 1, house.anchorZ) == BlockType.STONE,
+            "Corner should be a trim pilaster, not the wall material",
+        )
+        assertTrue(
+            chunk.getBlock(house.anchorX + 2, house.anchorY, house.anchorZ) == BlockType.STONE,
+            "Foundation course should run under the perimeter",
+        )
+        val wallTop = house.anchorY + houseFloorBaseOffset(house.floors, 4)
+        assertTrue(
+            chunk.getBlock(house.anchorX + 2, wallTop - 1, house.anchorZ) == BlockType.STONE,
+            "Cornice row should run just under the roof",
+        )
+    }
+
+    @Test
+    fun gabledRoofOverhang_extendsPastFootprintWithFascia() {
+        val house =
+            testHouse(cabinType.copy(roofOverhang = 2), plainsBiome, roofType = "extended_gabled")
+        val chunk = renderedChunk(house)
+        val wallTop = house.anchorY + houseFloorBaseOffset(house.floors, 4)
+
+        assertTrue(
+            chunk.getBlock(house.anchorX - 1, wallTop, house.anchorZ + 1) == BlockType.OAK_LOG,
+            "Mid-overhang should still be roof material",
+        )
+        assertTrue(
+            chunk.getBlock(house.anchorX - 2, wallTop, house.anchorZ + 1) == BlockType.STONE,
+            "Outer overhang edge should be a distinct fascia trim",
+        )
+    }
+
+    @Test
+    fun chimney_presentOnlyWhenSeedClearsChance() {
+        val wallTop = 1 + houseFloorBaseOffset(1, 4)
+        val withChimney =
+            renderedChunk(
+                testHouse(cabinType.copy(chimneyChance = 1.0), plainsBiome, roofType = "flat"))
+        val withoutChimney =
+            renderedChunk(
+                testHouse(cabinType.copy(chimneyChance = 0.0), plainsBiome, roofType = "flat"))
+
+        assertTrue(
+            withChimney.getBlock(5, wallTop + 1, 5) == BlockType.STONE,
+            "Chimney stack should pierce the roof when chimneyChance guarantees it",
+        )
+        assertFalse(
+            withoutChimney.getBlock(5, wallTop + 1, 5) == BlockType.STONE,
+            "No chimney should be built when chimneyChance is 0",
+        )
+    }
+
+    @Test
+    fun circularTemple_roofIsBandedNotSingleMaterial() {
+        val templeType = cabinType.copy(id = "circular_temple", roofOverhang = 0)
+        val house =
+            testHouse(templeType, plainsBiome, roofType = "cone", width = 9, depth = 9, floors = 1)
+        val chunk = renderedChunk(house)
+        val wallTop = house.anchorY + houseFloorBaseOffset(house.floors, 4) + house.floors
+        val cx = house.anchorX + house.width / 2
+        val cz = house.anchorZ + house.depth / 2
+
+        val bandMaterials =
+            (0..2).map { rise -> chunk.getBlock(cx, wallTop + rise, cz - (4 - rise)) }.toSet()
+        assertTrue(
+            bandMaterials.size > 1,
+            "Cone roof should alternate roof/trim materials across rises, not be a single block",
+        )
+    }
+
     @Test
     fun houseZones_noHouseAtProbability0() {
         val zeroConfig =

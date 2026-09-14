@@ -17,6 +17,8 @@ houseTypes:
     roomsMax: 4
     doorsMin: 1
     doorsMax: 1
+    roofOverhang: 1
+    chimneyChance: 0.6
 
   - id: house
     widthMin: 7
@@ -30,6 +32,8 @@ houseTypes:
     roomsMax: 6
     doorsMin: 1
     doorsMax: 2
+    roofOverhang: 1
+    chimneyChance: 0.4
 
   - id: townhouse
     widthMin: 5
@@ -43,11 +47,15 @@ houseTypes:
     roomsMax: 8
     doorsMin: 1
     doorsMax: 1
+    roofOverhang: 1
+    chimneyChance: 0.2
 
 defaultBiome:
   wallBlock: STONE
   roofBlock: STONE
   floorBlock: STONE
+  trimBlock: STONEBRICK
+  foundationBlock: COBBLESTONE
   houseProbability: 0.0
   clusterBonus: 0.0
   typeRates: {}
@@ -57,6 +65,8 @@ biomes:
     wallBlock: OAK_LOG
     roofBlock: OAK_LOG
     floorBlock: DIRT
+    trimBlock: COBBLESTONE
+    foundationBlock: COBBLESTONE
     houseProbability: 0.15
     clusterBonus: 0.25
     typeRates:
@@ -67,6 +77,8 @@ biomes:
     wallBlock: SANDSTONE
     roofBlock: SANDSTONE
     floorBlock: SANDSTONE
+    trimBlock: STONEBRICK
+    foundationBlock: COBBLESTONE
     houseProbability: 0.08
     clusterBonus: 0.10
     typeRates:
@@ -76,6 +88,8 @@ biomes:
     wallBlock: OAK_LOG
     roofBlock: OAK_LOG
     floorBlock: DIRT
+    trimBlock: COBBLESTONE
+    foundationBlock: COBBLESTONE
     houseProbability: 0.04
     clusterBonus: 0.05
     typeRates:
@@ -84,6 +98,8 @@ biomes:
     wallBlock: STONE
     roofBlock: SNOW
     floorBlock: STONE
+    trimBlock: STONEBRICK
+    foundationBlock: COBBLESTONE
     houseProbability: 0.05
     clusterBonus: 0.10
     typeRates:
@@ -92,6 +108,8 @@ biomes:
     wallBlock: STONE
     roofBlock: STONE
     floorBlock: STONE
+    trimBlock: STONEBRICK
+    foundationBlock: COBBLESTONE
     houseProbability: 0.0
     clusterBonus: 0.0
     typeRates: {}

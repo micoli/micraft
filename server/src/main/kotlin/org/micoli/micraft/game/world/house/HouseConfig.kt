@@ -18,6 +18,8 @@ data class HouseTypeConfig(
     val roomsMax: Int,
     val doorsMin: Int,
     val doorsMax: Int,
+    val roofOverhang: Int = 1,
+    val chimneyChance: Double = 0.0,
 )
 
 @Serializable
@@ -25,6 +27,8 @@ data class HouseBiomeConfig(
     val wallBlock: BlockType = BlockType.STONE,
     val roofBlock: BlockType = BlockType.STONE,
     val floorBlock: BlockType = BlockType.STONE,
+    val trimBlock: BlockType = BlockType.STONE,
+    val foundationBlock: BlockType = BlockType.STONE,
     val houseProbability: Double = 0.0,
     val clusterBonus: Double = 0.0,
     val typeRates: Map<String, Double> = emptyMap(),

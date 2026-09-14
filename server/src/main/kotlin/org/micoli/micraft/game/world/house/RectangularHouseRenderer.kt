@@ -20,6 +20,8 @@ internal fun PlacedHouse.renderRectangular(blocks: ByteArray, ox: Int, oz: Int) 
         }
     }
 
+    placeFoundation(blocks, ox, oz)
+
     for (y in anchorY + 1 until wallTop) {
         for (dx in 0 until width) {
             setHouseBlock(blocks, ox, oz, anchorX + dx, y, anchorZ, materials.wallBlock)
@@ -30,6 +32,9 @@ internal fun PlacedHouse.renderRectangular(blocks: ByteArray, ox: Int, oz: Int) 
             setHouseBlock(blocks, ox, oz, anchorX + width - 1, y, anchorZ + dz, materials.wallBlock)
         }
     }
+
+    placeCornerPilasters(blocks, ox, oz, anchorY + 1, wallTop)
+    placeCornice(blocks, ox, oz, wallTop - 1)
 
     for (floor in 0 until floors) {
         val baseY = anchorY + houseFloorBaseOffset(floor, floorH) + 1
@@ -45,6 +50,58 @@ internal fun PlacedHouse.renderRectangular(blocks: ByteArray, ox: Int, oz: Int) 
         "extended_gabled" -> placeGabledRoof(blocks, ox, oz, wallTop, overhang = true)
         else -> placeFlatRoof(blocks, ox, oz, wallTop)
     }
+
+    placeChimney(blocks, ox, oz, wallTop)
+}
+
+private fun PlacedHouse.placeFoundation(blocks: ByteArray, ox: Int, oz: Int) {
+    for (dx in 0 until width) {
+        setHouseBlock(blocks, ox, oz, anchorX + dx, anchorY, anchorZ, materials.foundationBlock)
+        setHouseBlock(
+            blocks, ox, oz, anchorX + dx, anchorY, anchorZ + depth - 1, materials.foundationBlock)
+    }
+    for (dz in 1 until depth - 1) {
+        setHouseBlock(blocks, ox, oz, anchorX, anchorY, anchorZ + dz, materials.foundationBlock)
+        setHouseBlock(
+            blocks, ox, oz, anchorX + width - 1, anchorY, anchorZ + dz, materials.foundationBlock)
+    }
+}
+
+private fun PlacedHouse.placeCornerPilasters(
+    blocks: ByteArray,
+    ox: Int,
+    oz: Int,
+    fromY: Int,
+    toY: Int,
+) {
+    for (y in fromY until toY) {
+        setHouseBlock(blocks, ox, oz, anchorX, y, anchorZ, materials.trimBlock)
+        setHouseBlock(blocks, ox, oz, anchorX + width - 1, y, anchorZ, materials.trimBlock)
+        setHouseBlock(blocks, ox, oz, anchorX, y, anchorZ + depth - 1, materials.trimBlock)
+        setHouseBlock(
+            blocks, ox, oz, anchorX + width - 1, y, anchorZ + depth - 1, materials.trimBlock)
+    }
+}
+
+private fun PlacedHouse.placeCornice(blocks: ByteArray, ox: Int, oz: Int, y: Int) {
+    for (dx in 0 until width) {
+        setHouseBlock(blocks, ox, oz, anchorX + dx, y, anchorZ, materials.trimBlock)
+        setHouseBlock(blocks, ox, oz, anchorX + dx, y, anchorZ + depth - 1, materials.trimBlock)
+    }
+    for (dz in 1 until depth - 1) {
+        setHouseBlock(blocks, ox, oz, anchorX, y, anchorZ + dz, materials.trimBlock)
+        setHouseBlock(blocks, ox, oz, anchorX + width - 1, y, anchorZ + dz, materials.trimBlock)
+    }
+}
+
+private fun PlacedHouse.placeChimney(blocks: ByteArray, ox: Int, oz: Int, wallTop: Int) {
+    if (houseHash(houseSeed, 55, 66, 0) >= typeCfg.chimneyChance) return
+    val chimneyX = anchorX + 1
+    val chimneyZ = anchorZ + 1
+    for (y in wallTop..wallTop + 3) {
+        setHouseBlock(blocks, ox, oz, chimneyX, y, chimneyZ, materials.foundationBlock)
+    }
+    setHouseBlock(blocks, ox, oz, chimneyX, wallTop + 3, chimneyZ, BlockType.AIR)
 }
 
 private fun PlacedHouse.clearVolume(blocks: ByteArray, ox: Int, oz: Int, topY: Int) {
@@ -112,6 +169,12 @@ private fun PlacedHouse.placeExteriorDoors(blocks: ByteArray, ox: Int, oz: Int) 
     for (i in 1..numDoors) {
         val doorX = anchorX + (spacing * i).coerceIn(1, width - 3)
         for (dy in 1..3) {
+            setHouseBlock(blocks, ox, oz, doorX - 1, anchorY + dy, frontZ, materials.trimBlock)
+            setHouseBlock(blocks, ox, oz, doorX + 2, anchorY + dy, frontZ, materials.trimBlock)
+        }
+        setHouseBlock(blocks, ox, oz, doorX, anchorY + 3, frontZ, materials.trimBlock)
+        setHouseBlock(blocks, ox, oz, doorX + 1, anchorY + 3, frontZ, materials.trimBlock)
+        for (dy in 1..2) {
             setHouseBlock(blocks, ox, oz, doorX, anchorY + dy, frontZ, BlockType.AIR)
             setHouseBlock(blocks, ox, oz, doorX + 1, anchorY + dy, frontZ, BlockType.AIR)
         }
@@ -131,6 +194,8 @@ private fun PlacedHouse.placeWindows(blocks: ByteArray, ox: Int, oz: Int) {
         val zSpacing = (width - 2) / (numZWin + 1)
         for (i in 1..numZWin) {
             val wx = anchorX + (zSpacing * i).coerceIn(1, width - 2)
+            placeWindowFrame(blocks, ox, oz, wx - 1, wx + 1, windowY, frontZ, alongX = true)
+            placeWindowFrame(blocks, ox, oz, wx - 1, wx + 1, windowY, backZ, alongX = true)
             setHouseBlock(blocks, ox, oz, wx, windowY, frontZ, BlockType.AIR)
             setHouseBlock(blocks, ox, oz, wx, windowY, backZ, BlockType.AIR)
         }
@@ -140,27 +205,58 @@ private fun PlacedHouse.placeWindows(blocks: ByteArray, ox: Int, oz: Int) {
         val xSpacing = (depth - 2) / (numXWin + 1)
         for (i in 1..numXWin) {
             val wz = anchorZ + (xSpacing * i).coerceIn(1, depth - 2)
+            placeWindowFrame(blocks, ox, oz, wz - 1, wz + 1, windowY, anchorX, alongX = false)
+            placeWindowFrame(
+                blocks, ox, oz, wz - 1, wz + 1, windowY, anchorX + width - 1, alongX = false)
             setHouseBlock(blocks, ox, oz, anchorX, windowY, wz, BlockType.AIR)
             setHouseBlock(blocks, ox, oz, anchorX + width - 1, windowY, wz, BlockType.AIR)
         }
     }
 }
 
+// Frame drawn on the wall plane at `fixedCoord` (frontZ/backZ when alongX, else anchorX side):
+// sill below, lintel above, jambs either side of the opening at `low`/`high` (wx-1/wx+1 or
+// wz-1/wz+1).
+private fun PlacedHouse.placeWindowFrame(
+    blocks: ByteArray,
+    ox: Int,
+    oz: Int,
+    low: Int,
+    high: Int,
+    windowY: Int,
+    fixedCoord: Int,
+    alongX: Boolean,
+) {
+    fun block(varCoord: Int, y: Int) {
+        if (alongX) setHouseBlock(blocks, ox, oz, varCoord, y, fixedCoord, materials.trimBlock)
+        else setHouseBlock(blocks, ox, oz, fixedCoord, y, varCoord, materials.trimBlock)
+    }
+    for (varCoord in low..high) {
+        block(varCoord, windowY - 1) // sill
+        block(varCoord, windowY + 1) // lintel
+    }
+    block(low, windowY) // jamb
+    block(high, windowY) // jamb
+}
+
 private fun PlacedHouse.placeFlatRoof(blocks: ByteArray, ox: Int, oz: Int, topY: Int) {
-    for (dx in 0 until width) {
-        for (dz in 0 until depth) {
+    val overhang = typeCfg.roofOverhang.coerceAtLeast(0)
+    for (dx in -overhang until width + overhang) {
+        for (dz in -overhang until depth + overhang) {
             setHouseBlock(blocks, ox, oz, anchorX + dx, topY, anchorZ + dz, materials.roofBlock)
         }
     }
-    for (dx in 0 until width) {
-        setHouseBlock(blocks, ox, oz, anchorX + dx, topY + 1, anchorZ, materials.roofBlock)
-        setHouseBlock(
-            blocks, ox, oz, anchorX + dx, topY + 1, anchorZ + depth - 1, materials.roofBlock)
+    val frontZ = anchorZ - overhang
+    val backZ = anchorZ + depth - 1 + overhang
+    for (dx in -overhang until width + overhang) {
+        setHouseBlock(blocks, ox, oz, anchorX + dx, topY + 1, frontZ, materials.trimBlock)
+        setHouseBlock(blocks, ox, oz, anchorX + dx, topY + 1, backZ, materials.trimBlock)
     }
-    for (dz in 1 until depth - 1) {
-        setHouseBlock(blocks, ox, oz, anchorX, topY + 1, anchorZ + dz, materials.roofBlock)
-        setHouseBlock(
-            blocks, ox, oz, anchorX + width - 1, topY + 1, anchorZ + dz, materials.roofBlock)
+    val leftX = anchorX - overhang
+    val rightX = anchorX + width - 1 + overhang
+    for (dz in -overhang + 1 until depth + overhang - 1) {
+        setHouseBlock(blocks, ox, oz, leftX, topY + 1, anchorZ + dz, materials.trimBlock)
+        setHouseBlock(blocks, ox, oz, rightX, topY + 1, anchorZ + dz, materials.trimBlock)
     }
 }
 
@@ -171,8 +267,9 @@ private fun PlacedHouse.placeGabledRoof(
     baseY: Int,
     overhang: Boolean,
 ) {
-    val dzMin = if (overhang) -1 else 0
-    val dzMax = if (overhang) depth else depth - 1
+    val overhangAmt = if (overhang) typeCfg.roofOverhang.coerceAtLeast(1) else 0
+    val dzMin = -overhangAmt
+    val dzMax = depth - 1 + overhangAmt
 
     val halfW = width / 2
     for (rise in 0..halfW) {
@@ -180,10 +277,12 @@ private fun PlacedHouse.placeGabledRoof(
         val xStart = anchorX + rise
         val xEnd = anchorX + width - 1 - rise
         if (xStart > xEnd) break
+        val isRidge = xStart + 1 >= xEnd
+        val roofMaterial = if (isRidge) materials.trimBlock else materials.roofBlock
         for (dz in dzMin..dzMax) {
-            setHouseBlock(blocks, ox, oz, xStart, y, anchorZ + dz, materials.roofBlock)
+            setHouseBlock(blocks, ox, oz, xStart, y, anchorZ + dz, roofMaterial)
             if (xStart != xEnd) {
-                setHouseBlock(blocks, ox, oz, xEnd, y, anchorZ + dz, materials.roofBlock)
+                setHouseBlock(blocks, ox, oz, xEnd, y, anchorZ + dz, roofMaterial)
             }
         }
         if (rise > 0) {
@@ -200,10 +299,31 @@ private fun PlacedHouse.placeGabledRoof(
         }
     }
 
-    if (overhang) {
+    if (overhangAmt > 0) {
+        for (o in 1..overhangAmt) {
+            for (dz in dzMin..dzMax) {
+                setHouseBlock(blocks, ox, oz, anchorX - o, baseY, anchorZ + dz, materials.roofBlock)
+                setHouseBlock(
+                    blocks,
+                    ox,
+                    oz,
+                    anchorX + width - 1 + o,
+                    baseY,
+                    anchorZ + dz,
+                    materials.roofBlock)
+            }
+        }
         for (dz in dzMin..dzMax) {
-            setHouseBlock(blocks, ox, oz, anchorX - 1, baseY, anchorZ + dz, materials.roofBlock)
-            setHouseBlock(blocks, ox, oz, anchorX + width, baseY, anchorZ + dz, materials.roofBlock)
+            setHouseBlock(
+                blocks, ox, oz, anchorX - overhangAmt, baseY, anchorZ + dz, materials.trimBlock)
+            setHouseBlock(
+                blocks,
+                ox,
+                oz,
+                anchorX + width - 1 + overhangAmt,
+                baseY,
+                anchorZ + dz,
+                materials.trimBlock)
         }
     }
 }
