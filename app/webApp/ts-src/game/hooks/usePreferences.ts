@@ -514,3 +514,5 @@ export function usePreferences({
     conflicts,
   };
 }
+
+export type UsePreferences = ReturnType<typeof usePreferences>;
