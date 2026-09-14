@@ -40,94 +40,10 @@ export interface CustomCmdEntry {
 
 const PROTECTED_CHANNELS = new Set(["system", "game"]);
 
-const ACTION_GROUPS: Record<string, string[]> = {
-  movement: [
-    "forward",
-    "backward",
-    "strafe_left",
-    "strafe_right",
-    "rotate_left",
-    "rotate_right",
-    "rotate_up",
-    "rotate_down",
-    "sneak",
-    "crawl",
-    "auto_forward",
-  ],
-  combat: [
-    "combat_target_cycle",
-    "npc_interact",
-    "vehicle_mount",
-    "siege_weapon_rotate",
-    "siege_weapon_pitch",
-    "siege_weapon_power",
-    "siege_weapon_fire",
-  ],
-  building: [
-    "place_rotate",
-    "block_interact",
-    "actionblock_edit",
-    "scene_confirm",
-    "scene_cancel",
-    "claim_mark_corner",
-    "claim_cancel_selection",
-  ],
-  flight: ["fly_toggle", "ascend", "descend", "speed_up", "speed_down"],
-  ui: [
-    "view_toggle",
-    "statistics_toggle",
-    "chunk_debug_toggle",
-    "console_toggle",
-    "inventory",
-    "character",
-    "dump_stats",
-    "undo",
-    "minimap_zoom_in",
-    "minimap_zoom_out",
-    "ingame_map",
-    "toggle_compass",
-    "layout_editor",
-    "health_bar",
-    "screenshot",
-    "preferences",
-    "preferences_keybindings",
-    "preferences_debug",
-    "preferences_graphics",
-    "claim_panel",
-    "group_panel",
-    "guild_panel",
-    "faction_panel",
-  ],
-  hotbar: [
-    "slot_1",
-    "slot_2",
-    "slot_3",
-    "slot_4",
-    "slot_5",
-    "slot_6",
-    "slot_7",
-    "slot_8",
-    "slot_9",
-    "slot_10",
-    "shortcut_page_prev",
-    "shortcut_page_next",
-    "shortcut_page_1",
-    "shortcut_page_2",
-    "shortcut_page_3",
-    "shortcut_page_4",
-    "shortcut_page_5",
-    "shortcut_page_6",
-    "shortcut_page_7",
-    "shortcut_page_8",
-    "shortcut_page_9",
-    "shortcut_page_10",
-  ],
-};
-
-export function groupActions(keybindings: Record<string, string[]>) {
+export function groupActions(keybindings: Record<string, string[]>, groups: Record<string, string[]>) {
   const grouped: Array<{ group: string; action: string; keys: string[] }> = [];
   const placed = new Set<string>();
-  for (const [group, actions] of Object.entries(ACTION_GROUPS)) {
+  for (const [group, actions] of Object.entries(groups)) {
     for (const action of actions) {
       if (action in keybindings) {
         grouped.push({ group, action, keys: keybindings[action] });
@@ -523,7 +439,7 @@ export function usePreferences({
   const sortedCommands = preferences
     ? [...preferences.commands].sort((a, b) => a.command.localeCompare(b.command))
     : [];
-  const groupedBindings = groupActions(localBindings);
+  const groupedBindings = groupActions(localBindings, preferences?.keybindingGroups ?? {});
   const groups = [...new Set(groupedBindings.map((r) => r.group))];
 
   return {

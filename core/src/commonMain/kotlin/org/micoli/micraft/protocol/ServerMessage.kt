@@ -216,6 +216,7 @@ sealed class ServerMessage {
         val macros: Map<String, String> = emptyMap(),
         val fieldOfView: Int = 70,
         val defaultKeybindings: Map<String, List<String>> = emptyMap(),
+        val keybindingGroups: Map<String, List<String>> = emptyMap(),
         val dynamicFogEnabled: Boolean = true,
         val autoTargetEnabled: Boolean = true,
         val inventorySortA: String = "",

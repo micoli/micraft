@@ -59,6 +59,18 @@ class KeyBindingsConfigTest {
     }
 
     @Test
+    fun defaultKeyBindingGroups_groupsByYamlSection() {
+        val groups = defaultKeyBindingGroups()
+        assertTrue(groups["movement"]?.contains("forward") == true)
+        assertTrue(groups["hotbar"]?.contains("slot_1") == true)
+        // every default binding action must land in exactly one group
+        val allGrouped = groups.values.flatten()
+        assertEquals(
+            allGrouped.size, allGrouped.toSet().size, "an action must not appear in two groups")
+        assertEquals(defaultKeyBindings().keys, allGrouped.toSet())
+    }
+
+    @Test
     fun reload_isIdempotent_doesNotDuplicateComments() {
         val dir = createTempDirectory()
         val path = dir.resolve("keybindings.yaml")

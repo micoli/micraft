@@ -40,6 +40,15 @@ fun defaultKeyBindings(defaultsPath: Path = DEFAULT_RESOURCES_PATH): Map<String,
     }
 
 /**
+ * Group name -> action names, in yaml section order. Sole source of truth for how the Preferences
+ * keybindings panel groups actions — the yaml section an action lives under.
+ */
+fun defaultKeyBindingGroups(
+    defaultsPath: Path = DEFAULT_RESOURCES_PATH
+): Map<String, List<String>> =
+    loadDefaultSections(defaultsPath).mapValues { it.value.keys.toList() }
+
+/**
  * Two levels of dynamic maps (category -> action -> keys), not a fixed data class, so this builds
  * the [YamlSection] tree by hand instead of via
  * [org.micoli.micraft.config.yamlConfigSection]/[org.micoli.micraft.config.yamlMapSection].

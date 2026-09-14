@@ -159,7 +159,7 @@ export function GameScreen() {
   const setPendingPrefs = (partial: Partial<import("../game/types").PreferencesData>) => {
     if (!state.preferences) return;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { knownChannels, commands, defaultKeybindings, macroIcons, ...serverFields } = {
+    const { knownChannels, commands, defaultKeybindings, keybindingGroups, macroIcons, ...serverFields } = {
       ...state.preferences,
       ...partial,
     };

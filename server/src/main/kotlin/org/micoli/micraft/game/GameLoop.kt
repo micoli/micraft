@@ -53,6 +53,7 @@ import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryRegistryLoader
 import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.equipment.WeaponRegistryLoader
+import org.micoli.micraft.game.keybinding.defaultKeyBindingGroups
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
 import org.micoli.micraft.game.macro.MacroContext
 import org.micoli.micraft.game.macro.MacroExecutor
@@ -1038,6 +1039,7 @@ class GameLoop(
             macros = macros,
             fieldOfView = session.state.fieldOfView,
             defaultKeybindings = defaults,
+            keybindingGroups = defaultKeyBindingGroups(),
             dynamicFogEnabled = session.state.dynamicFogEnabled,
             autoTargetEnabled = session.state.autoTargetEnabled,
             inventorySortA = session.state.inventorySortA,

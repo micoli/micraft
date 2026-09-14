@@ -12,6 +12,11 @@ const keybindings: Record<string, string[]> = {
   open_chat: ["Enter"],
 };
 
+const keybindingGroups: Record<string, string[]> = {
+  movement: ["move_forward", "move_back", "jump"],
+  game: ["inventory", "open_chat"],
+};
+
 const preferences: PreferencesData = {
   subscribedChannels: [],
   knownChannels: ["global", "local", "trade", "system"],
@@ -29,6 +34,7 @@ const preferences: PreferencesData = {
   ],
   keybindings,
   defaultKeybindings: keybindings,
+  keybindingGroups,
   customCommands: {},
   macros: {},
   fieldOfView: 90,

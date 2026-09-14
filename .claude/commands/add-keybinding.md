@@ -39,16 +39,10 @@ Without this the key press is never turned into an event, even if the binding is
 
 ### 4. Preferences panel grouping
 
-`app/webApp/ts-src/game/hooks/usePreferences.ts` — add action name to the right array in `ACTION_GROUPS`:
-
-```typescript
-ui: [
-  ...
-  "my_action",
-],
-```
-
-Without this the action lands in "other" and won't appear grouped correctly.
+Nothing to do here — the yaml section from step 1 *is* the Preferences panel group
+(`keybindingGroups`, sent to the client in `ServerMessage.PreferencesSync`, derived from
+`resources/config/keybindings.yaml` by `defaultKeyBindingGroups()`). Put the action under the
+right yaml section and it's grouped correctly automatically.
 
 ### 5. McBindings type (only if action needs a new JS function)
 

@@ -6,60 +6,32 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 
 | Group | Action | Default keys |
 |---|---|---|
+| `movement` | `forward` | KeyW, ArrowUp |
+| `movement` | `backward` | KeyS, ArrowDown |
+| `movement` | `strafe_left` | KeyA, ArrowLeft |
+| `movement` | `strafe_right` | KeyD, ArrowRight |
+| `movement` | `rotate_left` | KeyQ, Ctrl+ArrowLeft |
+| `movement` | `rotate_right` | KeyE, Ctrl+ArrowRight |
+| `movement` | `rotate_up` | Alt+ArrowUp |
+| `movement` | `rotate_down` | Alt+ArrowDown |
+| `movement` | `sneak` | KeyZ |
+| `movement` | `crawl` | KeyC |
+| `movement` | `auto_forward` | KeyW+KeyW, ArrowUp+ArrowUp |
+| `movement` | `speed_up` | KeyP |
+| `movement` | `speed_down` | KeyO |
+| `flight` | `fly_toggle` | Space+Space |
+| `flight` | `ascend` | Space |
+| `flight` | `descend` | KeyZ |
 | `combat` | `combat_target_cycle` | Tab |
 | `combat` | `combat_attack` | KeyR |
 | `combat` | `npc_interact` | KeyX |
 | `combat` | `vehicle_mount` | Ctrl+KeyX |
 | `combat` | `tame` | Alt+KeyT |
 | `combat` | `pet_dismiss` | Alt+KeyP |
-| `combat` | `console_toggle` | KeyH |
 | `combat` | `siege_weapon_rotate` | KeyR |
 | `combat` | `siege_weapon_pitch` | Alt+KeyR |
 | `combat` | `siege_weapon_power` | Ctrl+KeyR |
 | `combat` | `siege_weapon_fire` | KeyZ |
-| `movement` | `forward` | KeyW, ArrowUp |
-| `movement` | `backward` | KeyS, ArrowDown |
-| `movement` | `strafe_right` | KeyD, ArrowRight |
-| `movement` | `strafe_left` | KeyA, ArrowLeft |
-| `movement` | `rotate_left` | KeyQ, Ctrl+ArrowLeft |
-| `movement` | `rotate_right` | KeyE, Ctrl+ArrowRight |
-| `movement` | `rotate_up` | Alt+ArrowUp |
-| `movement` | `rotate_down` | Alt+ArrowDown |
-| `movement` | `sneak` | ShiftLeft |
-| `movement` | `crawl` | ControlLeft |
-| `movement` | `auto_forward` | KeyW+KeyW, ArrowUp+ArrowUp |
-| `flight` | `fly_toggle` | Space+Space |
-| `flight` | `ascend` | Space |
-| `flight` | `descend` | ShiftLeft |
-| `flight` | `speed_up` | KeyP |
-| `flight` | `speed_down` | KeyO |
-| `ui` | `preferences` | Cmd+Shift+Comma, Ctrl+Shift+Comma |
-| `ui` | `preferences_keybindings` | Cmd+Shift+KeyK, Ctrl+Shift+KeyK |
-| `ui` | `preferences_debug` | Cmd+Shift+KeyD, Ctrl+Shift+KeyD |
-| `ui` | `preferences_graphics` | Cmd+Shift+KeyG, Ctrl+Shift+KeyG |
-| `ui` | `console_toggle` | KeyH |
-| `ui` | `view_toggle` | KeyF |
-| `ui` | `statistics_toggle` | KeyN |
-| `ui` | `attack_panel_toggle` | KeyU |
-| `ui` | `inventory` | KeyI |
-| `ui` | `character` | KeyY |
-| `ui` | `undo` | Ctrl+KeyZ, Cmd+KeyZ |
-| `ui` | `minimap_zoom_in` | k |
-| `ui` | `minimap_zoom_out` | l |
-| `ui` | `ingame_map` | m |
-| `ui` | `layout_editor` | KeyG |
-| `ui` | `dump_stats` | KeyV |
-| `ui` | `craft` | Alt+KeyC |
-| `ui` | `health_bar` | KeyB |
-| `ui` | `screenshot` | KeyJ |
-| `ui` | `quest_journal` | Alt+KeyQ |
-| `ui` | `quest_tracking` | KeyT |
-| `ui` | `chunk_debug_toggle` | Ctrl+KeyN |
-| `ui` | `claim_panel` | KeyK |
-| `ui` | `group_panel` | Alt+KeyG |
-| `ui` | `guild_panel` | KeyU |
-| `ui` | `faction_panel` | Alt+KeyF |
-| `ui` | `toggle_compass` | Alt+KeyB |
 | `building` | `place_rotate` | KeyR |
 | `building` | `block_interact` | KeyC |
 | `building` | `actionblock_edit` | Alt+KeyB |
@@ -67,6 +39,33 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 | `building` | `scene_cancel` | Escape |
 | `building` | `claim_mark_corner` | KeyL |
 | `building` | `claim_cancel_selection` | Escape |
+| `building` | `undo` | Ctrl+KeyZ, Cmd+KeyZ |
+| `preferences` | `preferences` | Cmd+Shift+Comma, Ctrl+Shift+Comma |
+| `preferences` | `preferences_keybindings` | Cmd+Shift+KeyK, Ctrl+Shift+KeyK |
+| `preferences` | `preferences_debug` | Cmd+Shift+KeyD, Ctrl+Shift+KeyD |
+| `preferences` | `preferences_graphics` | Cmd+Shift+KeyG, Ctrl+Shift+KeyG |
+| `preferences` | `layout_editor` | KeyG |
+| `debug` | `statistics_toggle` | KeyN |
+| `debug` | `dump_stats` | KeyV |
+| `debug` | `chunk_debug_toggle` | Ctrl+KeyN |
+| `game` | `view_toggle` | KeyF |
+| `game` | `console_toggle` | KeyH |
+| `game` | `inventory` | KeyI |
+| `game` | `character` | KeyY |
+| `game` | `health_bar` | KeyB |
+| `game` | `craft` | Alt+KeyC |
+| `game` | `attack_panel_toggle` | KeyU |
+| `game` | `ingame_map` | m |
+| `game` | `quest_journal` | Alt+KeyQ |
+| `game` | `quest_tracking` | KeyT |
+| `game` | `claim_panel` | KeyK |
+| `game` | `group_panel` | Alt+KeyG |
+| `game` | `guild_panel` | KeyU |
+| `game` | `faction_panel` | Alt+KeyF |
+| `game` | `toggle_compass` | Alt+KeyB |
+| `ui` | `minimap_zoom_in` | k |
+| `ui` | `minimap_zoom_out` | l |
+| `ui` | `screenshot` | KeyJ |
 | `hotbar` | `slot_1` | Digit1 |
 | `hotbar` | `slot_2` | Digit2 |
 | `hotbar` | `slot_3` | Digit3 |

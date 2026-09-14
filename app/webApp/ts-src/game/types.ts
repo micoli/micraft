@@ -372,6 +372,7 @@ export interface PreferencesData {
   commands: CommandInfo[];
   keybindings: Record<string, string[]>;
   defaultKeybindings: Record<string, string[]>;
+  keybindingGroups: Record<string, string[]>;
   customCommands: Record<string, string[]>;
   macros: Record<string, string>;
   macroIcons?: Record<string, string>;
@@ -477,4 +478,7 @@ export type SpellMeta = {
   power: number;
 };
 
-export type PreferencesSaveData = Omit<PreferencesData, "knownChannels" | "commands" | "defaultKeybindings">;
+export type PreferencesSaveData = Omit<
+  PreferencesData,
+  "knownChannels" | "commands" | "defaultKeybindings" | "keybindingGroups"
+>;

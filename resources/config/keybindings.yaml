@@ -1,64 +1,34 @@
+movement:
+  forward: [KeyW, ArrowUp]
+  backward: [KeyS, ArrowDown]
+  strafe_left: [KeyA, ArrowLeft]
+  strafe_right: [KeyD, ArrowRight]
+  rotate_left: [KeyQ, "Ctrl+ArrowLeft"]
+  rotate_right: [KeyE, "Ctrl+ArrowRight"]
+  rotate_up: ["Alt+ArrowUp"]
+  rotate_down: ["Alt+ArrowDown"]
+  sneak: [KeyZ]
+  crawl: [KeyC]
+  auto_forward: ["KeyW+KeyW", "ArrowUp+ArrowUp"]
+  speed_up: [KeyP]
+  speed_down: [KeyO]
+
+flight:
+  fly_toggle: ["Space+Space"]
+  ascend: [Space]
+  descend: [KeyZ]
+
 combat:
-  combat_target_cycle: ["Tab"]
+  combat_target_cycle: [Tab]
   combat_attack: [KeyR]
   npc_interact: [KeyX]
   vehicle_mount: ["Ctrl+KeyX"]
   tame: ["Alt+KeyT"]
   pet_dismiss: ["Alt+KeyP"]
-  console_toggle: [KeyH]
   siege_weapon_rotate: [KeyR]
   siege_weapon_pitch: ["Alt+KeyR"]
   siege_weapon_power: ["Ctrl+KeyR"]
   siege_weapon_fire: [KeyZ]
-
-movement:
-  forward: [KeyW, ArrowUp]
-  backward: [KeyS, ArrowDown]
-  strafe_right: [KeyD, ArrowRight]
-  strafe_left: [KeyA, ArrowLeft]
-  rotate_left: [KeyQ, "Ctrl+ArrowLeft"]
-  rotate_right: [KeyE, "Ctrl+ArrowRight"]
-  rotate_up: ["Alt+ArrowUp"]
-  rotate_down: ["Alt+ArrowDown"]
-  sneak: [ShiftLeft]
-  crawl: [ControlLeft]
-  auto_forward: ["KeyW+KeyW", "ArrowUp+ArrowUp"]
-
-flight:
-  fly_toggle: ["Space+Space"]
-  ascend: [Space]
-  descend: [ShiftLeft]
-  speed_up: [KeyP]
-  speed_down: [KeyO]
-
-ui:
-  preferences: ["Cmd+Shift+Comma", "Ctrl+Shift+Comma"]
-  preferences_keybindings: ["Cmd+Shift+KeyK", "Ctrl+Shift+KeyK"]
-  preferences_debug: ["Cmd+Shift+KeyD", "Ctrl+Shift+KeyD"]
-  preferences_graphics: ["Cmd+Shift+KeyG", "Ctrl+Shift+KeyG"]
-  console_toggle: [KeyH]
-  view_toggle: [KeyF]
-  statistics_toggle: [KeyN]
-  attack_panel_toggle: [KeyU]
-  inventory: [KeyI]
-  character: [KeyY]
-  undo: ["Ctrl+KeyZ", "Cmd+KeyZ"]
-  minimap_zoom_in: [k]
-  minimap_zoom_out: [l]
-  ingame_map: [m]
-  layout_editor: [KeyG]
-  dump_stats: [KeyV]
-  craft: ["Alt+KeyC"]
-  health_bar: [KeyB]
-  screenshot: [KeyJ]
-  quest_journal: ["Alt+KeyQ"]
-  quest_tracking: [KeyT]
-  chunk_debug_toggle: ["Ctrl+KeyN"]
-  claim_panel: [KeyK]
-  group_panel: ["Alt+KeyG"]
-  guild_panel: [KeyU]
-  faction_panel: ["Alt+KeyF"]
-  toggle_compass: ["Alt+KeyB"]
 
 building:
   place_rotate: [KeyR]
@@ -68,6 +38,41 @@ building:
   scene_cancel: [Escape]
   claim_mark_corner: [KeyL]
   claim_cancel_selection: [Escape]
+  undo: ["Ctrl+KeyZ", "Cmd+KeyZ"]
+
+game:
+  view_toggle: [KeyF]
+  console_toggle: [KeyH]
+  inventory: [KeyI]
+  character: [KeyY]
+  health_bar: [KeyB]
+  craft: ["Alt+KeyC"]
+  attack_panel_toggle: [KeyU]
+  ingame_map: [m]
+  quest_journal: ["Alt+KeyQ"]
+  quest_tracking: [KeyT]
+  claim_panel: [KeyK]
+  group_panel: ["Alt+KeyG"]
+  guild_panel: [KeyU]
+  faction_panel: ["Alt+KeyF"]
+  toggle_compass: ["Alt+KeyB"]
+
+ui:
+  minimap_zoom_in: [k]
+  minimap_zoom_out: [l]
+  screenshot: [KeyJ]
+
+preferences:
+  preferences: ["Cmd+Shift+Comma", "Ctrl+Shift+Comma"]
+  preferences_keybindings: ["Cmd+Shift+KeyK", "Ctrl+Shift+KeyK"]
+  preferences_debug: ["Cmd+Shift+KeyD", "Ctrl+Shift+KeyD"]
+  preferences_graphics: ["Cmd+Shift+KeyG", "Ctrl+Shift+KeyG"]
+  layout_editor: [KeyG]
+
+debug:
+  statistics_toggle: [KeyN]
+  dump_stats: [KeyV]
+  chunk_debug_toggle: ["Ctrl+KeyN"]
 
 hotbar:
   slot_1: [Digit1]
