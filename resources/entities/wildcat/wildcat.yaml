@@ -17,7 +17,7 @@ tameable: true
 tameBaseChance: 0.2
 attacks:
   - attackId: wildcat_pounce
-    level: 1
+    rank: 1
 walkBoneAliases:
   rightArm: frontLegR
   leftArm: frontLegL

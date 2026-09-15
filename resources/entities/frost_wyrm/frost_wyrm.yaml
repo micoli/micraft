@@ -20,7 +20,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: slash
-    level: 3
+    rank: 3
 spells:
   - frost_wyrm_breath
 walkBoneAliases:

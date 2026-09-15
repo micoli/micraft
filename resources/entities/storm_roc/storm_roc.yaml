@@ -20,7 +20,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: hawk_dive
-    level: 2
+    rank: 2
 spells:
   - storm_roc_gust
 walkBoneAliases:

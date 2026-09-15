@@ -1,6 +1,6 @@
 damageType: LIGHTNING
 enabled: true
-levels:
+ranks:
   1:
     power: 10
     weaponDice: 2d6

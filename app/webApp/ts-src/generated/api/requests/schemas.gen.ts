@@ -202,7 +202,7 @@ export const org_micoli_micraft_game_classes_ClassAttackAccessSchema = {
             type: 'string',
             title: 'String'
         },
-        level: {
+        rank: {
             type: 'integer',
             format: 'int32',
             title: 'Int'
@@ -3233,7 +3233,7 @@ export const org_micoli_micraft_combat_ShortcutSlot_AttackSchema = {
             type: 'string',
             title: 'String'
         },
-        level: {
+        rank: {
             type: 'integer',
             format: 'int32',
             title: 'Int'
@@ -3241,7 +3241,7 @@ export const org_micoli_micraft_combat_ShortcutSlot_AttackSchema = {
     },
     required: [
         'attackId',
-        'level'
+        'rank'
     ],
     title: 'ShortcutSlot.Attack'
 } as const;

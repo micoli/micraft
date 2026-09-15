@@ -281,6 +281,8 @@ export function GameUI() {
               aoeRadius: parseFloat(v.aoeRadius ?? "0"),
               maxRange: parseFloat(v.maxRange ?? "0"),
               power: parseInt(v.power ?? "0"),
+              spellId: v.spellId ?? k.split(":")[0],
+              rank: parseInt(v.rank ?? k.split(":")[1] ?? "1"),
             },
           ]),
         );

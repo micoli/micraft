@@ -135,7 +135,7 @@ export type OrgMicoliMicraftGameClassesClassAttackAccess = {
     /**
      * Int
      */
-    level: number;
+    rank: number;
 };
 
 /**
@@ -2044,7 +2044,7 @@ export type OrgMicoliMicraftCombatShortcutSlotAttack = {
     /**
      * Int
      */
-    level: number;
+    rank: number;
 };
 
 /**

@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class NpcAttackSlot(
     val attackId: String,
-    val level: Int = 1,
+    val rank: Int = 1,
 )

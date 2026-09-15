@@ -31,9 +31,9 @@ baseStats:
   cha: 10
 attacks:
   - attackId: shadow_claw
-    level: 1
+    rank: 1
   - attackId: poison_bite
-    level: 1
+    rank: 1
 animal:
   diet: CARNIVORE
   lifespanDays: 25.0

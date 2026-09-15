@@ -16,7 +16,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: crab_pinch
-    level: 1
+    rank: 1
 walkBoneAliases:
   rightLeg0: leg1
   leftLeg0: leg0

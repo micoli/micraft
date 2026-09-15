@@ -20,7 +20,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: octopus_ink
-    level: 1
+    rank: 1
 spells:
   - kraken_tentacle_slam
 walkBoneAliases:

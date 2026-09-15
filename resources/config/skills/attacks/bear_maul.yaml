@@ -1,6 +1,6 @@
-damageType: PHYSICAL
+wdamageType: PHYSICAL
 enabled: true
-levels:
+ranks:
   1:
     power: 9
     weaponDice: 2d6

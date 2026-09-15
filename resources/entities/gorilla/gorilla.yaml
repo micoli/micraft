@@ -13,9 +13,9 @@ characterClass: WARRIOR
 xpReward: 45
 attacks:
   - attackId: heavy_slash
-    level: 2
+    rank: 2
   - attackId: charge
-    level: 2
+    rank: 2
 spawn:
   autoSpawn: true
   maxPerChunk: 1

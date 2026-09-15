@@ -45,7 +45,7 @@ export function AttacksTab({
                   onPointerUp={endDrag}
                   onPointerCancel={endDrag}
                   onClick={() => guardClick(() => {})}
-                  title={`${displayName} (rank ${meta.level})\n${meta.damageType}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}${meta.power > 0 ? ` · power ${meta.power}` : ""}`}
+                  title={`${displayName} (rank ${meta.rank})\n${meta.damageType}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}${meta.power > 0 ? ` · power ${meta.power}` : ""}`}
                   onMouseDown={(e) => e.stopPropagation()}
                   className="w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-white/25 bg-black/72 cursor-grab hover:border-white/60 transition-colors touch-none select-none"
                 >

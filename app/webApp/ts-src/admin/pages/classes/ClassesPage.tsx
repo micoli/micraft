@@ -49,16 +49,19 @@ function buildMatrix(
         if (!row.byClass[className]) row.byClass[className] = [];
         const prog = row.byClass[className];
         const last = prog[prog.length - 1];
-        if (!last || last.skillLevel !== atk.level) {
-          prog.push({ playerLevel, skillLevel: atk.level });
+        if (!last || last.skillLevel !== atk.rank) {
+          prog.push({ playerLevel, skillLevel: atk.rank });
         }
       }
-      for (const spell of entry.spells) {
-        if (!skillMap.has(spell)) skillMap.set(spell, { name: spell, type: "spell", byClass: {} });
-        const row = skillMap.get(spell)!;
+      for (const spellAccess of entry.spells) {
+        const key = spellAccess.spell;
+        if (!skillMap.has(key)) skillMap.set(key, { name: key, type: "spell", byClass: {} });
+        const row = skillMap.get(key)!;
         if (!row.byClass[className]) row.byClass[className] = [];
-        if (row.byClass[className].length === 0) {
-          row.byClass[className].push({ playerLevel, skillLevel: 1 });
+        const prog = row.byClass[className];
+        const last = prog[prog.length - 1];
+        if (!last || last.skillLevel !== spellAccess.rank) {
+          prog.push({ playerLevel, skillLevel: spellAccess.rank });
         }
       }
     }

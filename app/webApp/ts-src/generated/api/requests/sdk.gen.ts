@@ -78,7 +78,7 @@ export const getApiItemsMeta = <ThrowOnError extends boolean = false>(options?: 
 export const getApiServerInfo = <ThrowOnError extends boolean = false>(options?: Options<GetApiServerInfoData, ThrowOnError>): RequestResult<GetApiServerInfoResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetApiServerInfoResponses, unknown, ThrowOnError>({ url: '/api/server/info', ...options });
 
 /**
- * Attack definitions, flattened by "attackId:level" key
+ * Attack definitions, flattened by "attackId:rank" key
  */
 export const getApiAttacks = <ThrowOnError extends boolean = false>(options?: Options<GetApiAttacksData, ThrowOnError>): RequestResult<GetApiAttacksResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetApiAttacksResponses, unknown, ThrowOnError>({ url: '/api/attacks', ...options });
 

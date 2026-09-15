@@ -31,7 +31,7 @@ baseStats:
   cha: 6
 attacks:
   - attackId: charge
-    level: 1
+    rank: 1
 animal:
   diet: HERBIVORE
   lifespanDays: 20.0

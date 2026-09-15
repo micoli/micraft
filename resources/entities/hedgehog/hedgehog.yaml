@@ -15,7 +15,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: hedgehog_spikes
-    level: 1
+    rank: 1
 animal:
   diet: HERBIVORE
   lifespanDays: 10.0

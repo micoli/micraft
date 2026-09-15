@@ -39,7 +39,7 @@ export const prefetchUseGetApiItemsMeta = (queryClient: QueryClient, clientOptio
  */
 export const prefetchUseGetApiServerInfo = (queryClient: QueryClient, clientOptions: Options<GetApiServerInfoData, true> = {}, options?: Omit<FetchQueryOptions<Common.GetApiServerInfoDefaultResponse>, "queryKey" | "queryFn">) => queryClient.prefetchQuery({ queryKey: Common.UseGetApiServerInfoKeyFn(clientOptions), queryFn: ({ signal }) => getApiServerInfo({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**
- * Attack definitions, flattened by "attackId:level" key
+ * Attack definitions, flattened by "attackId:rank" key
  */
 export const prefetchUseGetApiAttacks = (queryClient: QueryClient, clientOptions: Options<GetApiAttacksData, true> = {}, options?: Omit<FetchQueryOptions<Common.GetApiAttacksDefaultResponse>, "queryKey" | "queryFn">) => queryClient.prefetchQuery({ queryKey: Common.UseGetApiAttacksKeyFn(clientOptions), queryFn: ({ signal }) => getApiAttacks({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**

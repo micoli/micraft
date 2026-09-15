@@ -18,7 +18,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: jellyfish_sting
-    level: 1
+    rank: 1
 animal:
   diet: OMNIVORE
   lifespanDays: 12.0

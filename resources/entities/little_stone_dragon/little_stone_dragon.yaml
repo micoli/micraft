@@ -9,9 +9,9 @@ aggroRange: 14.0
 deaggroTimeSec: 12.0
 attacks:
   - attackId: dragon_fire_breath
-    level: 1
+    rank: 1
   - attackId: slash
-    level: 2
+    rank: 2
 characterClass: WARRIOR
 baseStats:
   str: 15

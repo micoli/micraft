@@ -19,6 +19,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: bear_maul
-    level: 2
+    rank: 2
   - attackId: frost_troll_slam
-    level: 1
+    rank: 1

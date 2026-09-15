@@ -17,7 +17,7 @@
     "enabled": {
       "type": "boolean"
     },
-    "levels": {
+    "ranks": {
       "type": "object",
       "additionalProperties": {
         "type": "object",

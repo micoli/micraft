@@ -39,7 +39,7 @@ export const ensureUseGetApiItemsMetaData = (queryClient: QueryClient, clientOpt
  */
 export const ensureUseGetApiServerInfoData = (queryClient: QueryClient, clientOptions: Options<GetApiServerInfoData, true> = {}, options?: Omit<EnsureQueryDataOptions<Common.GetApiServerInfoDefaultResponse>, "queryKey" | "queryFn">) => queryClient.ensureQueryData({ queryKey: Common.UseGetApiServerInfoKeyFn(clientOptions), queryFn: ({ signal }) => getApiServerInfo({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**
- * Attack definitions, flattened by "attackId:level" key
+ * Attack definitions, flattened by "attackId:rank" key
  */
 export const ensureUseGetApiAttacksData = (queryClient: QueryClient, clientOptions: Options<GetApiAttacksData, true> = {}, options?: Omit<EnsureQueryDataOptions<Common.GetApiAttacksDefaultResponse>, "queryKey" | "queryFn">) => queryClient.ensureQueryData({ queryKey: Common.UseGetApiAttacksKeyFn(clientOptions), queryFn: ({ signal }) => getApiAttacks({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**

@@ -30,9 +30,9 @@ baseStats:
   cha: 6
 attacks:
   - attackId: wolf_bite
-    level: 2
+    rank: 2
   - attackId: wolf_pounce
-    level: 2
+    rank: 2
 loot:
   - item: FLINT
     dropRate: 40

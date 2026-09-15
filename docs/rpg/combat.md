@@ -50,7 +50,7 @@ globalCooldownMs: 1500
 ```yaml
 damageType: PHYSICAL
 enabled: true
-levels:
+ranks:
   1: { power: 5, weaponDice: 1d8, cooldownMs: 800 }
 ```
 

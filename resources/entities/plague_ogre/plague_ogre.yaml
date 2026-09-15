@@ -19,6 +19,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: bear_maul
-    level: 3
+    rank: 3
 spells:
   - plague_ogre_burst

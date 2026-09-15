@@ -12,7 +12,7 @@ import kotlin.io.path.writeText
 import kotlin.math.abs
 import kotlinx.serialization.builtins.ListSerializer
 import org.micoli.micraft.combat.ActiveStatusEffect
-import org.micoli.micraft.combat.AttackLevelDefinition
+import org.micoli.micraft.combat.AttackRankDefinition
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.SpellProcessor
@@ -831,13 +831,13 @@ class NpcManager(
 
     fun applyStatusEffect(
         npcId: String,
-        levelDef: AttackLevelDefinition,
+        rankDef: AttackRankDefinition,
         now: Long,
         attackerId: String
     ) {
         val instance = npcs[npcId] ?: return
-        val effect = levelDef.statusEffect ?: return
-        val durationSec = levelDef.durationSec ?: effect.durationSec
+        val effect = rankDef.statusEffect ?: return
+        val durationSec = rankDef.durationSec ?: effect.durationSec
         applyStatusEffectDirectly(npcId, effect, durationSec, now)
         // A DoT tick (tickEffects) can finish the kill on its own, well after this hit — without
         // this, that death carries an empty damageContributors and silently drops both XP and quest

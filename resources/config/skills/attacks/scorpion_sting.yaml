@@ -1,6 +1,6 @@
 damageType: POISON
 enabled: true
-levels:
+ranks:
   1:
     power: 5
     weaponDice: 1d6

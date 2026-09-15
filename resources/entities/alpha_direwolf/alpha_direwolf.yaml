@@ -19,7 +19,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: wolf_bite
-    level: 3
+    rank: 3
 spells:
   - direwolf_howl_rally
 walkBoneAliases:

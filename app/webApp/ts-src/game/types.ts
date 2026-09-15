@@ -448,11 +448,12 @@ export type AttackMeta = {
   power: number;
   weaponDice: string;
   attackId: string;
-  level: number;
+  rank: number;
 };
 
-export type ClassAttackAccess = { attack: string; level: number };
-export type ClassLevelEntry = { attacks: ClassAttackAccess[]; spells: string[] };
+export type ClassAttackAccess = { attack: string; rank: number };
+export type ClassSpellAccess = { spell: string; rank: number };
+export type ClassLevelEntry = { attacks: ClassAttackAccess[]; spells: ClassSpellAccess[] };
 export type ClassDefinitions = Record<string, Record<string, ClassLevelEntry>>;
 
 export type NpcProximityEntry = { id: string; name: string; relAngle: number; dist: number; aggro: boolean };

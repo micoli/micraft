@@ -104,7 +104,7 @@ export function AttackPanel({
               onPointerMove={moveDrag}
               onPointerUp={endDrag}
               onPointerCancel={endDrag}
-              title={`${displayName} (rank ${meta.level})\n${meta.damageType}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}${meta.power > 0 ? ` · power ${meta.power}` : ""}`}
+              title={`${displayName} (rank ${meta.rank})\n${meta.damageType}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}${meta.power > 0 ? ` · power ${meta.power}` : ""}`}
               className={cn(
                 "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-white/25 bg-black/72 cursor-grab hover:border-white/60 transition-colors touch-none",
                 hasCd && "opacity-50",
@@ -120,9 +120,9 @@ export function AttackPanel({
               <div className="text-white/70 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
                 {displayName}
               </div>
-              {meta.level > 1 && (
+              {meta.rank > 1 && (
                 <div className="absolute top-0.5 left-1 text-yellow-300 font-mono font-bold text-[8px]">
-                  {meta.level}
+                  {meta.rank}
                 </div>
               )}
               {meta.manaCost > 0 && (

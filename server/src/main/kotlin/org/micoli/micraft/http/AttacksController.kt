@@ -31,7 +31,7 @@ class AttacksController(private val gameLoop: GameLoop) {
                             MapSerializer(String.serializer(), String.serializer()))
                     val flat = buildMap {
                         gameLoop.attackRegistry.forEach { (attackId, def) ->
-                            def.levels.forEach { (level, levelDef) ->
+                            def.ranks.forEach { (level, levelDef) ->
                                 put(
                                     "$attackId:$level",
                                     mapOf(

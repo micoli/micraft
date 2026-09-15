@@ -31,12 +31,12 @@ classes:
     levels:
       1:
         attacks:
-          - { attack: slash, level: 1 }
-          - { attack: heavy_slash, level: 1 }
+          - { attack: slash, rank: 1 }
+          - { attack: heavy_slash, rank: 1 }
         spells: [tokenRageConsume, quickStrike]
       3:
         attacks:
-          - { attack: heavy_slash, level: 2 }
+          - { attack: heavy_slash, rank: 2 }
 ```
 
 Formulas are JEXL-style expressions evaluated with `con`, `dt`, `inCombat`,

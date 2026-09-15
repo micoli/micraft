@@ -4,6 +4,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.combat.AttackDefinition
+import org.micoli.micraft.combat.AttackRankDefinition
+import org.micoli.micraft.combat.DamageType
 import org.micoli.micraft.game.npc.AggroMode
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
@@ -195,12 +198,12 @@ class SpellProcessorDirectDamageTest {
                 attackRegistry =
                     mapOf(
                         "basic_attack" to
-                            org.micoli.micraft.combat.AttackDefinition(
-                                damageType = org.micoli.micraft.combat.DamageType.PHYSICAL,
-                                levels =
+                            AttackDefinition(
+                                damageType = DamageType.PHYSICAL,
+                                ranks =
                                     mapOf(
                                         1 to
-                                            org.micoli.micraft.combat.AttackLevelDefinition(
+                                            AttackRankDefinition(
                                                 power = 0, weaponDice = "1d4", cooldownMs = 0)))),
                 armorRegistry = emptyMap(),
                 classRegistry = emptyMap(),
@@ -225,7 +228,7 @@ class SpellProcessorDirectDamageTest {
         combatProcessor.handleAttack(
             caster,
             ClientMessage.AttackTarget(
-                attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1))
+                attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1))
         val hpAfterAttack = target.characterData!!.currentHp
         spellProc.handleSpell(caster, ClientMessage.UseSpell("quickStrike"))
 

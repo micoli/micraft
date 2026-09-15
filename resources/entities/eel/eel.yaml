@@ -19,7 +19,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: eel_shock
-    level: 1
+    rank: 1
 animal:
   diet: CARNIVORE
   lifespanDays: 20.0

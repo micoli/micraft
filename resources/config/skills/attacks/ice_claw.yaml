@@ -1,6 +1,6 @@
 damageType: MAGIC
 enabled: true
-levels:
+ranks:
   1:
     power: 6
     weaponDice: 2d4

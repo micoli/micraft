@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=../../schemas/skill-attack.schema.json
 damageType: FIRE
 enabled: true
-levels:
+ranks:
   1:
     power: 7
     weaponDice: 2d6

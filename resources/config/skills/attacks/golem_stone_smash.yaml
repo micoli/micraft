@@ -1,6 +1,6 @@
 damageType: PHYSICAL
 enabled: true
-levels:
+ranks:
   1:
     power: 24
     weaponDice: 4d8

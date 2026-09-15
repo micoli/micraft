@@ -13,7 +13,7 @@ characterClass: ROGUE
 xpReward: 40
 attacks:
   - attackId: venomous_fang
-    level: 2
+    rank: 2
 baseStats:
   str: 9
   dex: 15

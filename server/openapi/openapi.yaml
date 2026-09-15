@@ -4033,13 +4033,13 @@ components:
         attack:
           type: string
           title: String
-        level:
+        rank:
           type: integer
           format: int32
           title: Int
       required:
       - attack
-      - level
+      - rank
       title: ClassAttackAccess
     org.micoli.micraft.game.macro.MacroContextVar:
       type: object
@@ -6287,13 +6287,13 @@ components:
         attackId:
           type: string
           title: String
-        level:
+        rank:
           type: integer
           format: int32
           title: Int
       required:
       - attackId
-      - level
+      - rank
       title: ShortcutSlot.Attack
     org.micoli.micraft.combat.ShortcutSlot.Item:
       type: object

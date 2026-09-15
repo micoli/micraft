@@ -18,5 +18,5 @@ enum class DamageType {
 data class AttackDefinition(
     val damageType: DamageType = DamageType.PHYSICAL,
     val enabled: Boolean = true,
-    val levels: Map<Int, AttackLevelDefinition> = emptyMap(),
+    val ranks: Map<Int, AttackRankDefinition> = emptyMap(),
 )

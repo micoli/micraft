@@ -20,4 +20,4 @@ spawn:
 tameable: false
 attacks:
   - attackId: skeleton_arrow
-    level: 1
+    rank: 1

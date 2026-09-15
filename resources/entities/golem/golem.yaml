@@ -19,7 +19,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: golem_stone_smash
-    level: 1
+    rank: 1
 armorLoot:
   - armor: tier5_plate_chest
     dropRate: 10

@@ -39,7 +39,7 @@ class SkillsConfigTest {
                 """
                 damageType: PHYSICAL
                 enabled: true
-                levels:
+                ranks:
                   1:
                     power: 5
                     weaponDice: 1d8
@@ -54,7 +54,7 @@ class SkillsConfigTest {
                 """
                 damageType: FIRE
                 enabled: true
-                levels:
+                ranks:
                   1:
                     power: 8
                     weaponDice: 3d6
@@ -101,7 +101,7 @@ class SkillsConfigTest {
             .resolve("slash.yaml")
             .writeText(
                 """
-            levels:
+            ranks:
               1:
                 power: 99
             """
@@ -109,10 +109,10 @@ class SkillsConfigTest {
         dataRoot.resolve("spells").createDirectories()
         val slash = SkillsConfig(resources, dataRoot).data.attacks["slash"]
         assertNotNull(slash)
-        assertEquals(99, slash.levels[1]?.power)
+        assertEquals(99, slash.ranks[1]?.power)
         assertEquals(
             1000,
-            slash.levels[1]
+            slash.ranks[1]
                 ?.cooldownMs) // Kotlin default; mergeConfig doesn't recurse into map values
     }
 
@@ -128,7 +128,7 @@ class SkillsConfigTest {
         dataRoot.resolve("spells").createDirectories()
         val slash = SkillsConfig(resources, dataRoot).data.attacks["slash"]
         assertNotNull(slash)
-        assertEquals(5, slash.levels[1]?.power)
+        assertEquals(5, slash.ranks[1]?.power)
     }
 
     @Test
@@ -139,10 +139,10 @@ class SkillsConfigTest {
         dataRoot.resolve("spells").createDirectories()
         val slash = SkillsConfig(resources, dataRoot).data.attacks["slash"]
         assertNotNull(slash)
-        assertEquals(2, slash.levels.size)
-        assertEquals(5, slash.levels[1]?.power)
-        assertEquals(8, slash.levels[2]?.power)
-        assertEquals(750, slash.levels[2]?.cooldownMs)
+        assertEquals(2, slash.ranks.size)
+        assertEquals(5, slash.ranks[1]?.power)
+        assertEquals(8, slash.ranks[2]?.power)
+        assertEquals(750, slash.ranks[2]?.cooldownMs)
     }
 
     @Test

@@ -31,7 +31,7 @@ data class SpellDefinition(
      * unrecognized. A plain string rather than [StatusEffect] itself: that sealed class has no
      * public constructor for the generic yaml merge/write-back reflection (`mergeConfig` in
      * YamlPatchWriter.kt) to default-instantiate when the field is null, unlike a field buried
-     * inside a `Map` value (e.g. `AttackLevelDefinition.statusEffect`) which that reflection never
+     * inside a `Map` value (e.g. `AttackRankDefinition.statusEffect`) which that reflection never
      * walks into.
      */
     val statusEffect: String? = null,

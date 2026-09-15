@@ -20,6 +20,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: ghost_curse
-    level: 3
+    rank: 3
 spells:
   - pharaoh_curse_of_sands

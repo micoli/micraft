@@ -31,13 +31,13 @@ class ClassesConfigTest {
                   1:
                     attacks:
                       - attack: slash
-                        level: 1
+                        rank: 1
                       - attack: heavy_slash
-                        level: 1
+                        rank: 1
                   2:
                     attacks:
                       - attack: slash
-                        level: 2
+                        rank: 2
               MAGE:
                 intelBonus: 2
                 wisBonus: 1
@@ -48,7 +48,7 @@ class ClassesConfigTest {
                   1:
                     attacks:
                       - attack: fireball
-                        level: 1
+                        rank: 1
             """
                 .trimIndent())
         return path
@@ -105,12 +105,12 @@ class ClassesConfigTest {
         val level1Attacks = warrior.levels[1]!!.attacks
         assertEquals(2, level1Attacks.size)
         assertEquals("slash", level1Attacks[0].attack)
-        assertEquals(1, level1Attacks[0].level)
+        assertEquals(1, level1Attacks[0].rank)
         assertEquals("heavy_slash", level1Attacks[1].attack)
         val level2Attacks = warrior.levels[2]!!.attacks
         assertEquals(1, level2Attacks.size)
         assertEquals("slash", level2Attacks[0].attack)
-        assertEquals(2, level2Attacks[0].level)
+        assertEquals(2, level2Attacks[0].rank)
     }
 
     @Test
@@ -152,7 +152,7 @@ class ClassesConfigTest {
                   1:
                     attacks:
                       - attack: slash
-                        level: 1
+                        rank: 1
             """
                 .trimIndent())
         val config = ClassesConfig(path, resourcesPath).data

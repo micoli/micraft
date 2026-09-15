@@ -16,7 +16,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: poison_bite
-    level: 2
+    rank: 2
 walkBoneAliases:
   rightArm: frontLegR
   leftArm: frontLegL

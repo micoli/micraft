@@ -1875,7 +1875,7 @@ class AdminController(
                                 zone = "$zoneX,$zoneZ",
                                 parentIds = ad?.parentIds?.toList() ?: emptyList(),
                                 skills =
-                                    npc.definition.attacks.map { "${it.attackId} lv${it.level}" },
+                                    npc.definition.attacks.map { "${it.attackId} rk${it.rank}" },
                                 ageGameDays = ad?.ageGameDays,
                                 hunger = ad?.hunger,
                                 gestationRemainingDays = ad?.gestationRemainingDays,

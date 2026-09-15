@@ -39,7 +39,7 @@ export const getApiItemsMetaOptions = (clientOptions: Options<GetApiItemsMetaDat
  */
 export const getApiServerInfoOptions = (clientOptions: Options<GetApiServerInfoData, true> = {}, queryKey?: Array<unknown>) => queryOptions({ queryKey: Common.UseGetApiServerInfoKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiServerInfo({ ...clientOptions, signal, throwOnError: true }).then(response => response.data) });
 /**
- * Attack definitions, flattened by "attackId:level" key
+ * Attack definitions, flattened by "attackId:rank" key
  */
 export const getApiAttacksOptions = (clientOptions: Options<GetApiAttacksData, true> = {}, queryKey?: Array<unknown>) => queryOptions({ queryKey: Common.UseGetApiAttacksKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiAttacks({ ...clientOptions, signal, throwOnError: true }).then(response => response.data) });
 /**

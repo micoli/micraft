@@ -16,7 +16,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: giant_toad_tongue
-    level: 1
+    rank: 1
 walkBoneAliases:
   rightArm: frontLegR
   leftArm: frontLegL

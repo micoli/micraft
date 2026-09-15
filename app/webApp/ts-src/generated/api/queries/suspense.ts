@@ -39,7 +39,7 @@ export const useGetApiItemsMetaSuspense = <TData = NonNullable<Common.GetApiItem
  */
 export const useGetApiServerInfoSuspense = <TData = NonNullable<Common.GetApiServerInfoDefaultResponse>, TError = unknown, TQueryKey extends Array<unknown> = unknown[]>(clientOptions: Options<GetApiServerInfoData, true> = {}, queryKey?: TQueryKey, options?: Omit<UseSuspenseQueryOptions<TData, TError>, "queryKey" | "queryFn">) => useSuspenseQuery<TData, TError>({ queryKey: Common.UseGetApiServerInfoKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiServerInfo({ ...clientOptions, signal, throwOnError: true }).then(response => response.data as TData) as TData, ...options });
 /**
- * Attack definitions, flattened by "attackId:level" key
+ * Attack definitions, flattened by "attackId:rank" key
  */
 export const useGetApiAttacksSuspense = <TData = NonNullable<Common.GetApiAttacksDefaultResponse>, TError = unknown, TQueryKey extends Array<unknown> = unknown[]>(clientOptions: Options<GetApiAttacksData, true> = {}, queryKey?: TQueryKey, options?: Omit<UseSuspenseQueryOptions<TData, TError>, "queryKey" | "queryFn">) => useSuspenseQuery<TData, TError>({ queryKey: Common.UseGetApiAttacksKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiAttacks({ ...clientOptions, signal, throwOnError: true }).then(response => response.data as TData) as TData, ...options });
 /**

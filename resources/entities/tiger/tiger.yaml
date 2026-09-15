@@ -32,11 +32,11 @@ baseStats:
   cha: 7
 attacks:
   - attackId: wolf_pounce
-    level: 3
+    rank: 3
   - attackId: shadow_claw
-    level: 3
+    rank: 3
   - attackId: heavy_slash
-    level: 2
+    rank: 2
 loot:
   - item: FLINT
     dropRate: 55

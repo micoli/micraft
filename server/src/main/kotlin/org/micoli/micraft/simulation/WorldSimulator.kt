@@ -664,7 +664,7 @@ class WorldSimulator(
             wanderSpeed = def.wanderSpeed,
             wanderRadius = def.wanderRadius,
             aggroRange = def.aggroRange,
-            attacks = def.attacks.map { "${it.attackId} lv${it.level}" },
+            attacks = def.attacks.map { "${it.attackId} rk${it.rank}" },
             spells = def.spells,
             baseStats = animal?.stats ?: def.baseStats,
             wanderPhase = instance.wanderPhase.toString(),

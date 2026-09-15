@@ -17,7 +17,7 @@ tameable: true
 tameBaseChance: 0.15
 attacks:
   - attackId: boar_charge
-    level: 1
+    rank: 1
 walkBoneAliases:
   rightArm: frontLegR
   leftArm: frontLegL

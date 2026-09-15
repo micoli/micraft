@@ -16,7 +16,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: giant_ant_bite
-    level: 1
+    rank: 1
 walkBoneAliases:
   rightLeg0: leg1
   leftLeg0: leg0

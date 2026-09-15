@@ -86,7 +86,7 @@
           "attackId": {
             "type": "string"
           },
-          "level": {
+          "rank": {
             "type": "integer"
           }
         }
@@ -448,17 +448,6 @@
       "minimum": 0,
       "maximum": 1
     },
-    "movementMode": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "enum": [
-          "WALKING",
-          "SWIMMING",
-          "FLYING"
-        ]
-      }
-    },
     "offersQuests": {
       "type": "array",
       "items": {
@@ -469,6 +458,9 @@
       "type": "array",
       "items": {
         "type": "object",
+        "required": [
+          "armor"
+        ],
         "additionalProperties": false,
         "properties": {
           "armor": {
@@ -479,9 +471,17 @@
             "minimum": 0,
             "maximum": 100
           }
-        },
-        "required": [
-          "armor"
+        }
+      }
+    },
+    "movementMode": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "WALKING",
+          "SWIMMING",
+          "FLYING"
         ]
       }
     }

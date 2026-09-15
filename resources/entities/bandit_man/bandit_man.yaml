@@ -21,7 +21,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: slash
-    level: 1
+    rank: 1
 armorLoot:
   - armor: tier3_mail_leggings
     dropRate: 12

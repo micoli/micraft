@@ -76,14 +76,14 @@
                     "type": "object",
                     "required": [
                       "attack",
-                      "level"
+                      "rank"
                     ],
                     "additionalProperties": false,
                     "properties": {
                       "attack": {
                         "type": "string"
                       },
-                      "level": {
+                      "rank": {
                         "type": "integer"
                       }
                     }

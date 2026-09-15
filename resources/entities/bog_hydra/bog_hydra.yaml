@@ -19,7 +19,7 @@ spawn:
 tameable: false
 attacks:
   - attackId: scorpion_sting
-    level: 3
+    rank: 3
 spells:
   - hydra_regrowth
 walkBoneAliases:

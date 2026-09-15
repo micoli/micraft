@@ -12,7 +12,7 @@ sealed class ShortcutSlot {
 
     @Serializable
     @SerialName("Attack")
-    data class Attack(val attackId: String, val level: Int = 1) : ShortcutSlot()
+    data class Attack(val attackId: String, val rank: Int = 1) : ShortcutSlot()
 
     @Serializable @SerialName("Macro") data class Macro(val macroName: String) : ShortcutSlot()
 

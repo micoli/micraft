@@ -3,7 +3,7 @@ package org.micoli.micraft.combat
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AttackLevelDefinition(
+data class AttackRankDefinition(
     val power: Int = 1,
     val cooldownMs: Long = 1000,
     val manaCost: Int = 0,

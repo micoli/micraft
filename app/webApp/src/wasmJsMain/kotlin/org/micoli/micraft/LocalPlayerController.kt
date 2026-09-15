@@ -589,7 +589,7 @@ class LocalPlayerController(
                         targetId = targetId,
                         isNpc = true,
                         attackId = slot.attackId,
-                        attackLevel = slot.level))
+                        attackRank = slot.rank))
             }
         }
     }
@@ -612,7 +612,7 @@ class LocalPlayerController(
                 when (slot) {
                     is ShortcutSlot.Item -> """{"kind":"item","id":"${slot.itemType.id}"}"""
                     is ShortcutSlot.Attack ->
-                        """{"kind":"attack","id":"${slot.attackId}:${slot.level}"}"""
+                        """{"kind":"attack","id":"${slot.attackId}:${slot.rank}"}"""
                     is ShortcutSlot.Macro -> """{"kind":"macro","id":"${slot.macroName}"}"""
                     is ShortcutSlot.Spell -> """{"kind":"spell","id":"${slot.spellId}"}"""
                     null -> "null"
@@ -1039,7 +1039,7 @@ class LocalPlayerController(
                             targetId = targetId,
                             isNpc = true,
                             attackId = slot?.attackId ?: "basic_attack",
-                            attackLevel = slot?.level ?: 1))
+                            attackRank = slot?.rank ?: 1))
                 }
                 event.startsWith("cmd:") ->
                     outMessages.trySend(ClientMessage.Command(event.removePrefix("cmd:")))
@@ -1175,14 +1175,14 @@ class LocalPlayerController(
                     val rest = event.removePrefix("attack:")
                     val lastColon = rest.lastIndexOf(':')
                     val attackId = if (lastColon > 0) rest.substring(0, lastColon) else rest
-                    val attackLevel =
+                    val attackRank =
                         if (lastColon > 0) rest.substring(lastColon + 1).toIntOrNull() ?: 1 else 1
                     outMessages.trySend(
                         ClientMessage.AttackTarget(
                             targetId = targetId,
                             isNpc = true,
                             attackId = attackId,
-                            attackLevel = attackLevel))
+                            attackRank = attackRank))
                 }
                 event.startsWith("spell:") -> {
                     val spellId = event.removePrefix("spell:")

@@ -27,11 +27,11 @@ baseStats:
   cha: 6
 attacks:
   - attackId: poison_bite
-    level: 3
+    rank: 3
   - attackId: heavy_slash
-    level: 2
+    rank: 2
   - attackId: charge
-    level: 2
+    rank: 2
 loot:
   - item: FLINT
     dropRate: 60

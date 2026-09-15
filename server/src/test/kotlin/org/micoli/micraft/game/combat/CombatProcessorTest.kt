@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.AttackDefinition
-import org.micoli.micraft.combat.AttackLevelDefinition
+import org.micoli.micraft.combat.AttackRankDefinition
 import org.micoli.micraft.combat.DamageType
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.classes.ClassAttackAccess
@@ -34,12 +34,11 @@ class CombatProcessorTest {
 
     private val config = CombatConfigData(maxCombatRange = 10f)
 
-    private val level1Stats =
-        AttackLevelDefinition(power = 0, weaponDice = "1d4", cooldownMs = 1000)
+    private val level1Stats = AttackRankDefinition(power = 0, weaponDice = "1d4", cooldownMs = 1000)
 
     // str=30 → meleeDmg=10; target AC ≤ 9 → roll(1..20)+10 always ≥ 9
     private val guaranteedHitAttack =
-        AttackDefinition(damageType = DamageType.PHYSICAL, levels = mapOf(1 to level1Stats))
+        AttackDefinition(damageType = DamageType.PHYSICAL, ranks = mapOf(1 to level1Stats))
 
     private fun testChar(
         id: String,
@@ -121,10 +120,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack",
-                    targetId = "missing",
-                    isNpc = false,
-                    attackLevel = 1),
+                    attackId = "basic_attack", targetId = "missing", isNpc = false, attackRank = 1),
             )
 
         assertTrue(
@@ -144,7 +140,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1),
             )
 
         assertTrue(
@@ -165,7 +161,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1),
             )
 
         assertTrue(target.characterData!!.currentHp < 20)
@@ -183,7 +179,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1),
             )
 
         assertTrue(subscribed.any { (s, ch) -> s.id == "b" && ch == "combat" })
@@ -201,7 +197,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1),
             )
 
         assertEquals(1, combatLog.size)
@@ -220,7 +216,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1),
             )
 
         assertTrue(target.isDowned)
@@ -240,7 +236,7 @@ class CombatProcessorTest {
 
         val msg =
             ClientMessage.AttackTarget(
-                attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1)
+                attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1)
         processor.handleAttack(attacker, msg)
         processor.handleAttack(attacker, msg) // blocked by cooldown
 
@@ -259,7 +255,7 @@ class CombatProcessorTest {
             val zeroCooldownAttack =
                 AttackDefinition(
                     damageType = DamageType.PHYSICAL,
-                    levels = mapOf(1 to AttackLevelDefinition(power = 0, weaponDice = "1d4")))
+                    ranks = mapOf(1 to AttackRankDefinition(power = 0, weaponDice = "1d4")))
             val processor =
                 buildProcessor(
                     sessions = { listOf(attacker, target) },
@@ -274,13 +270,13 @@ class CombatProcessorTest {
             processor.handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1))
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1))
             // other_attack has its own cooldownMs = 0, but the shared global cooldown still blocks
             // it
             processor.handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "other_attack", targetId = "b", isNpc = false, attackLevel = 1))
+                    attackId = "other_attack", targetId = "b", isNpc = false, attackRank = 1))
 
             assertEquals(1, combatLog.size)
         }
@@ -312,7 +308,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 2),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 2),
             )
 
         assertEquals(0, combatLog.size)
@@ -333,12 +329,10 @@ class CombatProcessorTest {
         val attack =
             AttackDefinition(
                 damageType = DamageType.PHYSICAL,
-                levels =
+                ranks =
                     mapOf(
-                        1 to
-                            AttackLevelDefinition(power = 0, weaponDice = "1d4", cooldownMs = 1000),
-                        2 to
-                            AttackLevelDefinition(power = 0, weaponDice = "1d4", cooldownMs = 1000),
+                        1 to AttackRankDefinition(power = 0, weaponDice = "1d4", cooldownMs = 1000),
+                        2 to AttackRankDefinition(power = 0, weaponDice = "1d4", cooldownMs = 1000),
                     ))
         val classRegistry =
             mapOf(
@@ -359,7 +353,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "slash", targetId = "b", isNpc = false, attackLevel = 2),
+                    attackId = "slash", targetId = "b", isNpc = false, attackRank = 2),
             )
 
         assertEquals(1, combatLog.size)
@@ -381,10 +375,10 @@ class CombatProcessorTest {
             val flatAttack =
                 AttackDefinition(
                     damageType = DamageType.PHYSICAL,
-                    levels =
+                    ranks =
                         mapOf(
                             1 to
-                                AttackLevelDefinition(
+                                AttackRankDefinition(
                                     // 1d1: the roll cannot vary, so the only variable is the
                                     // multiplier
                                     power = 100,
@@ -418,10 +412,10 @@ class CombatProcessorTest {
         val alwaysHits =
             AttackDefinition(
                 damageType = DamageType.PHYSICAL,
-                levels =
+                ranks =
                     mapOf(
                         1 to
-                            AttackLevelDefinition(
+                            AttackRankDefinition(
                                 power = 100, weaponDice = "1d4", cooldownMs = 1000)))
         val proc =
             buildProcessor(
@@ -446,10 +440,10 @@ class CombatProcessorTest {
         val highPower =
             AttackDefinition(
                 damageType = DamageType.PHYSICAL,
-                levels =
+                ranks =
                     mapOf(
                         1 to
-                            AttackLevelDefinition(
+                            AttackRankDefinition(
                                 power = 100, weaponDice = "1d4", cooldownMs = 1000)))
         val proc =
             buildProcessor(
@@ -471,10 +465,10 @@ class CombatProcessorTest {
         val highPower =
             AttackDefinition(
                 damageType = DamageType.PHYSICAL,
-                levels =
+                ranks =
                     mapOf(
                         1 to
-                            AttackLevelDefinition(
+                            AttackRankDefinition(
                                 power = 100, weaponDice = "1d4", cooldownMs = 1000)))
         val proc =
             buildProcessor(
@@ -516,7 +510,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1),
             )
 
         val statusUpdates = target.sent.filterIsInstance<ServerMessage.PlayerStatusUpdate>()
@@ -635,10 +629,10 @@ class CombatProcessorTest {
         val highPower =
             AttackDefinition(
                 damageType = DamageType.PHYSICAL,
-                levels =
+                ranks =
                     mapOf(
                         1 to
-                            AttackLevelDefinition(
+                            AttackRankDefinition(
                                 power = 100, weaponDice = "1d4", cooldownMs = 1000)))
         val npc = fakeNpc()
         npc.state = npc.state.copy(pos = Vec3(0f, 0f, 0f))
@@ -662,10 +656,9 @@ class CombatProcessorTest {
         val highPowerAttack =
             AttackDefinition(
                 damageType = DamageType.PHYSICAL,
-                levels =
+                ranks =
                     mapOf(
-                        1 to
-                            AttackLevelDefinition(power = 100, weaponDice = "1d4", cooldownMs = 0)),
+                        1 to AttackRankDefinition(power = 100, weaponDice = "1d4", cooldownMs = 0)),
             )
         val npc = fakeNpc()
         npc.state = npc.state.copy(pos = Vec3(0f, 0f, 0f))
@@ -696,7 +689,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1),
             )
 
         assertEquals(20, target.characterData!!.currentHp)
@@ -714,7 +707,7 @@ class CombatProcessorTest {
             .handleAttack(
                 attacker,
                 ClientMessage.AttackTarget(
-                    attackId = "basic_attack", targetId = "b", isNpc = false, attackLevel = 1),
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1),
             )
 
         assertFalse(target.isDowned)
@@ -725,10 +718,9 @@ class CombatProcessorTest {
         val highPowerAttack =
             AttackDefinition(
                 damageType = DamageType.PHYSICAL,
-                levels =
+                ranks =
                     mapOf(
-                        1 to
-                            AttackLevelDefinition(power = 100, weaponDice = "1d4", cooldownMs = 0)),
+                        1 to AttackRankDefinition(power = 100, weaponDice = "1d4", cooldownMs = 0)),
             )
         val target = testSession(id = "b", name = "Bob")
         target.characterData = testChar("b", "Bob", hp = 20)
@@ -774,10 +766,10 @@ class CombatProcessorTest {
         val highPower =
             AttackDefinition(
                 damageType = DamageType.PHYSICAL,
-                levels =
+                ranks =
                     mapOf(
                         1 to
-                            AttackLevelDefinition(
+                            AttackRankDefinition(
                                 power = 100, weaponDice = "1d4", cooldownMs = 1000)))
         val proc =
             buildProcessor(
@@ -809,10 +801,10 @@ class CombatProcessorTest {
         val killAttack =
             AttackDefinition(
                 damageType = DamageType.PHYSICAL,
-                levels =
+                ranks =
                     mapOf(
                         1 to
-                            AttackLevelDefinition(
+                            AttackRankDefinition(
                                 power = 100, weaponDice = "1d4", cooldownMs = 1000)),
             )
         buildProcessor(
