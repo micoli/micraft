@@ -1,5 +1,7 @@
 type: DIRECT_DAMAGE
 enabled: true
-power: 4
-cooldownMs: 0
-maxRange: 10.0
+ranks:
+  1:
+    cooldownMs: 0
+    maxRange: 10.0
+    power: 4

@@ -150,7 +150,7 @@ export function GameScreen() {
     const unlocked = new Set<string>();
     for (const [lvlStr, entry] of Object.entries(classDef)) {
       if (parseInt(lvlStr) <= charData.level) {
-        for (const spellId of entry.spells ?? []) unlocked.add(spellId);
+        for (const { spell, rank } of entry.spells ?? []) unlocked.add(`${spell}:${rank}`);
       }
     }
     return unlocked;

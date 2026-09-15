@@ -1,6 +1,18 @@
 type: NECROTIC_AOE
 enabled: true
-manaCost: 20
-cooldownMs: 6000
-aoeRadius: 3.0
-maxRange: 20.0
+ranks:
+  1:
+    manaCost: 20
+    cooldownMs: 6000
+    aoeRadius: 3.0
+    maxRange: 20.0
+  2:
+    manaCost: 30
+    cooldownMs: 5000
+    aoeRadius: 4.0
+    maxRange: 20.0
+  3:
+    manaCost: 45
+    cooldownMs: 4500
+    aoeRadius: 5.0
+    maxRange: 20.0

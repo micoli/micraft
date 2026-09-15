@@ -92,7 +92,20 @@
                 "spells": {
                   "type": "array",
                   "items": {
-                    "type": "string"
+                    "type": "object",
+                    "required": [
+                      "spell",
+                      "rank"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "spell": {
+                        "type": "string"
+                      },
+                      "rank": {
+                        "type": "integer"
+                      }
+                    }
                   }
                 }
               }

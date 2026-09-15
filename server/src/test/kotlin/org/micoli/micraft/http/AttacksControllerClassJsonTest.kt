@@ -5,6 +5,7 @@ import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.game.classes.ClassAttackAccess
 import org.micoli.micraft.game.classes.ClassLevelEntry
+import org.micoli.micraft.game.classes.ClassSpellAccess
 
 /**
  * The default kotlinx.serialization `Json` omits properties left at their default value, so an
@@ -25,7 +26,8 @@ class AttacksControllerClassJsonTest {
 
     @Test
     fun `spells-only level still serializes an empty attacks array`() {
-        val entry = ClassLevelEntry(attacks = emptyList(), spells = listOf("fireball"))
+        val entry =
+            ClassLevelEntry(attacks = emptyList(), spells = listOf(ClassSpellAccess("fireball", 1)))
         val json = classJson.encodeToString(ClassLevelEntry.serializer(), entry)
         assertTrue(json.contains("\"attacks\":[]"), "expected attacks key in $json")
     }

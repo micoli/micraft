@@ -25,7 +25,9 @@ import org.micoli.micraft.support.testSession
 class SpellProcessorDirectDamageTest {
 
     private val boltSpell =
-        SpellDefinition(type = SpellType.DIRECT_DAMAGE, power = 4, cooldownMs = 0, maxRange = 10f)
+        SpellDefinition(
+            type = SpellType.DIRECT_DAMAGE,
+            ranks = mapOf(1 to SpellRankDefinition(power = 4, cooldownMs = 0, maxRange = 10f)))
 
     private fun buildCombatProcessor(
         sessions: () -> List<PlayerSession>,

@@ -47,7 +47,7 @@ export const useGetApiAttacksSuspense = <TData = NonNullable<Common.GetApiAttack
  */
 export const useGetApiClassesSuspense = <TData = NonNullable<Common.GetApiClassesDefaultResponse>, TError = unknown, TQueryKey extends Array<unknown> = unknown[]>(clientOptions: Options<GetApiClassesData, true> = {}, queryKey?: TQueryKey, options?: Omit<UseSuspenseQueryOptions<TData, TError>, "queryKey" | "queryFn">) => useSuspenseQuery<TData, TError>({ queryKey: Common.UseGetApiClassesKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiClasses({ ...clientOptions, signal, throwOnError: true }).then(response => response.data as TData) as TData, ...options });
 /**
- * Spell definitions, keyed by spell id
+ * Spell definitions, flattened by "spellId:rank" key
  */
 export const useGetApiSpellsSuspense = <TData = NonNullable<Common.GetApiSpellsDefaultResponse>, TError = unknown, TQueryKey extends Array<unknown> = unknown[]>(clientOptions: Options<GetApiSpellsData, true> = {}, queryKey?: TQueryKey, options?: Omit<UseSuspenseQueryOptions<TData, TError>, "queryKey" | "queryFn">) => useSuspenseQuery<TData, TError>({ queryKey: Common.UseGetApiSpellsKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiSpells({ ...clientOptions, signal, throwOnError: true }).then(response => response.data as TData) as TData, ...options });
 /**

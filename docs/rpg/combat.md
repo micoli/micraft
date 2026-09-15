@@ -55,14 +55,15 @@ ranks:
 ```
 
 **Spells** — `resources/config/skills/spells/<id>.yaml` (schema
-`skill-spell.schema.json`):
+`skill-spell.schema.json`). Like attacks, multiple ranks of the same spell
+live in one file under `ranks:` rather than separate `<id>_2`, `<id>_3` files:
 
 ```yaml
 type: NECROTIC_AOE
-manaCost: 20
-cooldownMs: 6000
-aoeRadius: 3.0
-maxRange: 20.0
+enabled: true
+ranks:
+  1: { manaCost: 20, cooldownMs: 6000, aoeRadius: 3.0, maxRange: 20.0 }
+  2: { manaCost: 30, cooldownMs: 5000, aoeRadius: 4.0, maxRange: 20.0 }
 ```
 
 Spell types: `TOKEN_RAGE_CONSUME` (resource conversion, no damage),
@@ -72,9 +73,9 @@ armor mitigation):
 
 ```yaml
 type: DIRECT_DAMAGE
-power: 4
-cooldownMs: 0
-maxRange: 15.0
+enabled: true
+ranks:
+  1: { power: 4, cooldownMs: 0, maxRange: 15.0 }
 ```
 
 Every class has one level-1 `DIRECT_DAMAGE` filler spell with `cooldownMs: 0`

@@ -33,7 +33,9 @@ classes:
         attacks:
           - { attack: slash, rank: 1 }
           - { attack: heavy_slash, rank: 1 }
-        spells: [tokenRageConsume, quickStrike]
+        spells:
+          - { spell: tokenRageConsume, rank: 1 }
+          - { spell: quickStrike, rank: 1 }
       3:
         attacks:
           - { attack: heavy_slash, rank: 2 }

@@ -47,7 +47,7 @@ export const ensureUseGetApiAttacksData = (queryClient: QueryClient, clientOptio
  */
 export const ensureUseGetApiClassesData = (queryClient: QueryClient, clientOptions: Options<GetApiClassesData, true> = {}, options?: Omit<EnsureQueryDataOptions<Common.GetApiClassesDefaultResponse>, "queryKey" | "queryFn">) => queryClient.ensureQueryData({ queryKey: Common.UseGetApiClassesKeyFn(clientOptions), queryFn: ({ signal }) => getApiClasses({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**
- * Spell definitions, keyed by spell id
+ * Spell definitions, flattened by "spellId:rank" key
  */
 export const ensureUseGetApiSpellsData = (queryClient: QueryClient, clientOptions: Options<GetApiSpellsData, true> = {}, options?: Omit<EnsureQueryDataOptions<Common.GetApiSpellsDefaultResponse>, "queryKey" | "queryFn">) => queryClient.ensureQueryData({ queryKey: Common.UseGetApiSpellsKeyFn(clientOptions), queryFn: ({ signal }) => getApiSpells({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**

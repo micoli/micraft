@@ -29,10 +29,15 @@ class SpellProcessorAoeTest {
         SpellDefinition(
             type = SpellType.NECROTIC_AOE,
             enabled = true,
-            manaCost = 20,
-            cooldownMs = 6000L,
-            aoeRadius = 3f,
-            maxRange = 15f,
+            ranks =
+                mapOf(
+                    1 to
+                        SpellRankDefinition(
+                            manaCost = 20,
+                            cooldownMs = 6000L,
+                            aoeRadius = 3f,
+                            maxRange = 15f,
+                        )),
         )
 
     private fun buildCombatProcessor(sessions: () -> List<PlayerSession> = { emptyList() }) =
@@ -245,10 +250,15 @@ class SpellProcessorAoeTest {
         val frostSpell =
             SpellDefinition(
                 type = SpellType.NECROTIC_AOE,
-                aoeRadius = 4f,
-                maxRange = 15f,
-                cooldownMs = 5000L,
-                statusEffect = "Frozen",
+                ranks =
+                    mapOf(
+                        1 to
+                            SpellRankDefinition(
+                                aoeRadius = 4f,
+                                maxRange = 15f,
+                                cooldownMs = 5000L,
+                                statusEffect = "Frozen",
+                            )),
             )
         val boss = fakeBoss(listOf("frost_breath"))
         val target = testSession(id = "b", name = "Bob", pos = Vec3(2f, 0f, 0f))
@@ -276,10 +286,15 @@ class SpellProcessorAoeTest {
         val spell =
             SpellDefinition(
                 type = SpellType.NECROTIC_AOE,
-                aoeRadius = 4f,
-                maxRange = 15f,
-                cooldownMs = 60_000L,
-                statusEffect = "Stunned",
+                ranks =
+                    mapOf(
+                        1 to
+                            SpellRankDefinition(
+                                aoeRadius = 4f,
+                                maxRange = 15f,
+                                cooldownMs = 60_000L,
+                                statusEffect = "Stunned",
+                            )),
             )
         val boss = fakeBoss(listOf("slam"))
         val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
@@ -301,7 +316,10 @@ class SpellProcessorAoeTest {
 
     @Test
     fun `npc cast out of maxRange does nothing`() = runBlocking {
-        val spell = SpellDefinition(type = SpellType.NECROTIC_AOE, aoeRadius = 4f, maxRange = 5f)
+        val spell =
+            SpellDefinition(
+                type = SpellType.NECROTIC_AOE,
+                ranks = mapOf(1 to SpellRankDefinition(aoeRadius = 4f, maxRange = 5f)))
         val boss = fakeBoss(listOf("far_spell"))
         val target = testSession(id = "b", name = "Bob", pos = Vec3(50f, 0f, 0f))
         target.characterData = testChar("Bob")

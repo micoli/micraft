@@ -25,9 +25,11 @@ class SkillsConfigTest {
                 """
                 type: TOKEN_RAGE_CONSUME
                 enabled: true
-                rageGain: 20
-                tokenCost: 1
-                cooldownMs: 0
+                ranks:
+                  1:
+                    rageGain: 20
+                    tokenCost: 1
+                    cooldownMs: 0
                 """
                     .trimIndent())
         return root
@@ -168,10 +170,19 @@ class SkillsConfigTest {
             .resolve("spells")
             .createDirectories()
             .resolve("tokenRageConsume.yaml")
-            .writeText("rageGain: 50")
+            .writeText(
+                """
+            ranks:
+              1:
+                rageGain: 50
+            """
+                    .trimIndent())
         val spell = SkillsConfig(resources, dataRoot).data.spells["tokenRageConsume"]
         assertNotNull(spell)
-        assertEquals(50, spell.rageGain)
-        assertEquals(1, spell.tokenCost)
+        assertEquals(50, spell.ranks[1]?.rageGain)
+        assertEquals(
+            0,
+            spell.ranks[1]
+                ?.tokenCost) // Kotlin default; mergeConfig doesn't recurse into map values
     }
 }

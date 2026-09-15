@@ -239,7 +239,7 @@ never hand-edit either.
 | GET | `/api/armors` | List all armor definitions |
 | GET | `/api/assets/manifest` |  |
 | POST | `/api/assets/reload` |  |
-| GET | `/api/attacks` | Attack definitions, flattened by "attackId:level" key |
+| GET | `/api/attacks` | Attack definitions, flattened by "attackId:rank" key |
 | GET | `/api/auth/config` | Active auth provider, used by the client to pick the right login UI |
 | GET | `/api/autocomplete/{commandId}/{argIndex}` | Autocomplete suggestions for a slash command argument |
 | GET | `/api/biomes` | Grass color per biome id, as [r, g, b] in 0..1 |
@@ -284,7 +284,7 @@ never hand-edit either.
 | GET | `/api/siege-weapons` | List all siege weapon definitions |
 | GET | `/api/skins` | Names of all available player skins |
 | GET | `/api/skins/{name}/config` | Skin config (eye offset, hidden bones) for a named skin |
-| GET | `/api/spells` | Spell definitions, keyed by spell id |
+| GET | `/api/spells` | Spell definitions, flattened by "spellId:rank" key |
 | GET | `/api/tools` | List all tool definitions |
 | GET | `/api/vehicles/{name}/config` | Vehicle model config (speed, seat offset) for a named vehicle |
 | GET | `/api/weapons` | List all weapon definitions |

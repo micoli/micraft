@@ -477,6 +477,8 @@ export type SpellMeta = {
   aoeRadius: number;
   maxRange: number;
   power: number;
+  spellId: string;
+  rank: number;
 };
 
 export type PreferencesSaveData = Omit<

@@ -16,25 +16,7 @@ enum class SpellType {
 data class SpellDefinition(
     val type: SpellType = SpellType.TOKEN_RAGE_CONSUME,
     val enabled: Boolean = true,
-    val rageGain: Int = 20,
-    val tokenCost: Int = 0,
-    val manaCost: Int = 0,
-    val rageCost: Int = 0,
-    val cooldownMs: Long = 0L,
-    val aoeRadius: Float = 0f,
-    val maxRange: Float = 15f,
-    /** [type] DIRECT_DAMAGE only — flat damage dealt, no dice roll. */
-    val power: Int = 0,
-    /**
-     * [type] NECROTIC_AOE only — name of a [StatusEffect] data object (e.g. "Frozen", "Stunned"),
-     * resolved by [resolveStatusEffect]; defaults to [StatusEffect.Withering] when unset or
-     * unrecognized. A plain string rather than [StatusEffect] itself: that sealed class has no
-     * public constructor for the generic yaml merge/write-back reflection (`mergeConfig` in
-     * YamlPatchWriter.kt) to default-instantiate when the field is null, unlike a field buried
-     * inside a `Map` value (e.g. `AttackRankDefinition.statusEffect`) which that reflection never
-     * walks into.
-     */
-    val statusEffect: String? = null,
+    val ranks: Map<Int, SpellRankDefinition> = emptyMap(),
 )
 
 fun resolveStatusEffect(name: String?): StatusEffect =

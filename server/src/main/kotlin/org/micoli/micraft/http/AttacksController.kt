@@ -20,7 +20,7 @@ class AttacksController(private val gameLoop: GameLoop) {
             get(
                 "/api/attacks",
                 {
-                    description = "Attack definitions, flattened by \"attackId:level\" key"
+                    description = "Attack definitions, flattened by \"attackId:rank\" key"
                     response {
                         code(HttpStatusCode.OK) { body<Map<String, Map<String, String>>>() }
                     }
@@ -31,18 +31,18 @@ class AttacksController(private val gameLoop: GameLoop) {
                             MapSerializer(String.serializer(), String.serializer()))
                     val flat = buildMap {
                         gameLoop.attackRegistry.forEach { (attackId, def) ->
-                            def.ranks.forEach { (level, levelDef) ->
+                            def.ranks.forEach { (rank, rankDef) ->
                                 put(
-                                    "$attackId:$level",
+                                    "$attackId:$rank",
                                     mapOf(
                                         "damageType" to def.damageType.name,
-                                        "manaCost" to levelDef.manaCost.toString(),
-                                        "rageCost" to levelDef.rageCost.toString(),
-                                        "cooldownMs" to levelDef.cooldownMs.toString(),
-                                        "power" to levelDef.power.toString(),
-                                        "weaponDice" to levelDef.weaponDice,
+                                        "manaCost" to rankDef.manaCost.toString(),
+                                        "rageCost" to rankDef.rageCost.toString(),
+                                        "cooldownMs" to rankDef.cooldownMs.toString(),
+                                        "power" to rankDef.power.toString(),
+                                        "weaponDice" to rankDef.weaponDice,
                                         "attackId" to attackId,
-                                        "level" to level.toString(),
+                                        "rank" to rank.toString(),
                                     ))
                             }
                         }
@@ -76,7 +76,7 @@ class AttacksController(private val gameLoop: GameLoop) {
             get(
                 "/api/spells",
                 {
-                    description = "Spell definitions, keyed by spell id"
+                    description = "Spell definitions, flattened by \"spellId:rank\" key"
                     response {
                         code(HttpStatusCode.OK) { body<Map<String, Map<String, String>>>() }
                     }
@@ -87,19 +87,23 @@ class AttacksController(private val gameLoop: GameLoop) {
                             MapSerializer(String.serializer(), String.serializer()))
                     val flat = buildMap {
                         gameLoop.spellRegistry.forEach { (spellId, def) ->
-                            put(
-                                spellId,
-                                mapOf(
-                                    "type" to def.type.name,
-                                    "rageGain" to def.rageGain.toString(),
-                                    "tokenCost" to def.tokenCost.toString(),
-                                    "manaCost" to def.manaCost.toString(),
-                                    "rageCost" to def.rageCost.toString(),
-                                    "cooldownMs" to def.cooldownMs.toString(),
-                                    "aoeRadius" to def.aoeRadius.toString(),
-                                    "maxRange" to def.maxRange.toString(),
-                                    "power" to def.power.toString(),
-                                ))
+                            def.ranks.forEach { (rank, rankDef) ->
+                                put(
+                                    "$spellId:$rank",
+                                    mapOf(
+                                        "type" to def.type.name,
+                                        "rageGain" to rankDef.rageGain.toString(),
+                                        "tokenCost" to rankDef.tokenCost.toString(),
+                                        "manaCost" to rankDef.manaCost.toString(),
+                                        "rageCost" to rankDef.rageCost.toString(),
+                                        "cooldownMs" to rankDef.cooldownMs.toString(),
+                                        "aoeRadius" to rankDef.aoeRadius.toString(),
+                                        "maxRange" to rankDef.maxRange.toString(),
+                                        "power" to rankDef.power.toString(),
+                                        "spellId" to spellId,
+                                        "rank" to rank.toString(),
+                                    ))
+                            }
                         }
                     }
                     call.respondText(

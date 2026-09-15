@@ -17,13 +17,13 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 | `movement` | `sneak` | KeyZ |
 | `movement` | `crawl` | KeyC |
 | `movement` | `auto_forward` | KeyW+KeyW, ArrowUp+ArrowUp |
-| `movement` | `speed_up` | KeyP |
-| `movement` | `speed_down` | KeyO |
+| `movement` | `speed_up` | F3 |
+| `movement` | `speed_down` | F4 |
 | `flight` | `fly_toggle` | Space+Space |
 | `flight` | `ascend` | Space |
 | `flight` | `descend` | KeyZ |
 | `combat` | `combat_target_cycle` | Tab |
-| `combat` | `combat_attack` | KeyR |
+| `combat` | `combat_attack` | KeyV |
 | `combat` | `npc_interact` | KeyX |
 | `combat` | `vehicle_mount` | Ctrl+KeyX |
 | `combat` | `tame` | Alt+KeyT |
@@ -31,23 +31,15 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 | `combat` | `siege_weapon_rotate` | KeyR |
 | `combat` | `siege_weapon_pitch` | Alt+KeyR |
 | `combat` | `siege_weapon_power` | Ctrl+KeyR |
-| `combat` | `siege_weapon_fire` | KeyZ |
+| `combat` | `siege_weapon_fire` | KeyX |
 | `building` | `place_rotate` | KeyR |
-| `building` | `block_interact` | KeyC |
+| `building` | `block_interact` | KeyX |
 | `building` | `actionblock_edit` | Alt+KeyB |
 | `building` | `scene_confirm` | Enter |
 | `building` | `scene_cancel` | Escape |
 | `building` | `claim_mark_corner` | KeyL |
 | `building` | `claim_cancel_selection` | Escape |
 | `building` | `undo` | Ctrl+KeyZ, Cmd+KeyZ |
-| `preferences` | `preferences` | Cmd+Shift+Comma, Ctrl+Shift+Comma |
-| `preferences` | `preferences_keybindings` | Cmd+Shift+KeyK, Ctrl+Shift+KeyK |
-| `preferences` | `preferences_debug` | Cmd+Shift+KeyD, Ctrl+Shift+KeyD |
-| `preferences` | `preferences_graphics` | Cmd+Shift+KeyG, Ctrl+Shift+KeyG |
-| `preferences` | `layout_editor` | KeyG |
-| `debug` | `statistics_toggle` | KeyN |
-| `debug` | `dump_stats` | KeyV |
-| `debug` | `chunk_debug_toggle` | Ctrl+KeyN |
 | `game` | `view_toggle` | KeyF |
 | `game` | `console_toggle` | KeyH |
 | `game` | `inventory` | KeyI |
@@ -60,12 +52,20 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 | `game` | `quest_tracking` | KeyT |
 | `game` | `claim_panel` | KeyK |
 | `game` | `group_panel` | Alt+KeyG |
-| `game` | `guild_panel` | KeyU |
-| `game` | `faction_panel` | Alt+KeyF |
-| `game` | `toggle_compass` | Alt+KeyB |
-| `ui` | `minimap_zoom_in` | k |
-| `ui` | `minimap_zoom_out` | l |
-| `ui` | `screenshot` | KeyJ |
+| `game` | `guild_panel` | KeyG |
+| `game` | `faction_panel` | Ctrl+KeyG |
+| `game` | `toggle_compass` | F5 |
+| `ui` | `minimap_zoom_in` | F1 |
+| `ui` | `minimap_zoom_out` | F2 |
+| `ui` | `screenshot` | F7 |
+| `preferences` | `preferences` | Cmd+Shift+Comma, Ctrl+Shift+Comma |
+| `preferences` | `preferences_keybindings` | Cmd+Shift+KeyK, Ctrl+Shift+KeyK |
+| `preferences` | `preferences_debug` | Cmd+Shift+KeyD, Ctrl+Shift+KeyD |
+| `preferences` | `preferences_graphics` | Cmd+Shift+KeyG, Ctrl+Shift+KeyG |
+| `preferences` | `layout_editor` | F6 |
+| `debug` | `statistics_toggle` | F8 |
+| `debug` | `dump_stats` | F9 |
+| `debug` | `chunk_debug_toggle` | F10 |
 | `hotbar` | `slot_1` | Digit1 |
 | `hotbar` | `slot_2` | Digit2 |
 | `hotbar` | `slot_3` | Digit3 |

@@ -47,7 +47,7 @@ export const prefetchUseGetApiAttacks = (queryClient: QueryClient, clientOptions
  */
 export const prefetchUseGetApiClasses = (queryClient: QueryClient, clientOptions: Options<GetApiClassesData, true> = {}, options?: Omit<FetchQueryOptions<Common.GetApiClassesDefaultResponse>, "queryKey" | "queryFn">) => queryClient.prefetchQuery({ queryKey: Common.UseGetApiClassesKeyFn(clientOptions), queryFn: ({ signal }) => getApiClasses({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**
- * Spell definitions, keyed by spell id
+ * Spell definitions, flattened by "spellId:rank" key
  */
 export const prefetchUseGetApiSpells = (queryClient: QueryClient, clientOptions: Options<GetApiSpellsData, true> = {}, options?: Omit<FetchQueryOptions<Common.GetApiSpellsDefaultResponse>, "queryKey" | "queryFn">) => queryClient.prefetchQuery({ queryKey: Common.UseGetApiSpellsKeyFn(clientOptions), queryFn: ({ signal }) => getApiSpells({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**

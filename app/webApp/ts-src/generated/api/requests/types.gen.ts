@@ -119,9 +119,9 @@ export type OrgMicoliMicraftGameClassesClassLevelEntry = {
      */
     attacks: Array<OrgMicoliMicraftGameClassesClassAttackAccess>;
     /**
-     * List<String>
+     * List<ClassSpellAccess>
      */
-    spells: Array<string>;
+    spells: Array<OrgMicoliMicraftGameClassesClassSpellAccess>;
 };
 
 /**
@@ -136,6 +136,20 @@ export type OrgMicoliMicraftGameClassesClassAttackAccess = {
      * Int
      */
     rank: number;
+};
+
+/**
+ * ClassSpellAccess
+ */
+export type OrgMicoliMicraftGameClassesClassSpellAccess = {
+    /**
+     * Int
+     */
+    rank: number;
+    /**
+     * String
+     */
+    spell: string;
 };
 
 /**
@@ -2071,6 +2085,10 @@ export type OrgMicoliMicraftCombatShortcutSlotMacro = {
  * ShortcutSlot.Spell
  */
 export type OrgMicoliMicraftCombatShortcutSlotSpell = {
+    /**
+     * Int
+     */
+    rank: number;
     /**
      * String
      */

@@ -16,5 +16,7 @@ sealed class ShortcutSlot {
 
     @Serializable @SerialName("Macro") data class Macro(val macroName: String) : ShortcutSlot()
 
-    @Serializable @SerialName("Spell") data class Spell(val spellId: String) : ShortcutSlot()
+    @Serializable
+    @SerialName("Spell")
+    data class Spell(val spellId: String, val rank: Int = 1) : ShortcutSlot()
 }

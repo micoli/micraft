@@ -149,7 +149,9 @@ sealed class ClientMessage {
 
     @ProtoId(18) @Serializable data class RunMacroContent(val script: String) : ClientMessage()
 
-    @ProtoId(19) @Serializable data class UseSpell(val spellId: String) : ClientMessage()
+    @ProtoId(19)
+    @Serializable
+    data class UseSpell(val spellId: String, val spellRank: Int = 1) : ClientMessage()
 
     @ProtoId(20)
     @Serializable
@@ -158,6 +160,7 @@ sealed class ClientMessage {
         val targetX: Float,
         val targetY: Float,
         val targetZ: Float,
+        val spellRank: Int = 1,
     ) : ClientMessage()
 
     @ProtoId(21) @Serializable data class UseItem(val itemType: ItemType) : ClientMessage()

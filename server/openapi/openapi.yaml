@@ -245,7 +245,7 @@ paths:
   /api/attacks:
     get:
       tags: []
-      description: "Attack definitions, flattened by \"attackId:level\" key"
+      description: "Attack definitions, flattened by \"attackId:rank\" key"
       parameters: []
       responses:
         "200":
@@ -284,7 +284,7 @@ paths:
   /api/spells:
     get:
       tags: []
-      description: "Spell definitions, keyed by spell id"
+      description: "Spell definitions, flattened by \"spellId:rank\" key"
       parameters: []
       responses:
         "200":
@@ -4020,9 +4020,8 @@ components:
         spells:
           type: array
           items:
-            type: string
-            title: String
-          title: List<String>
+            $ref: "#/components/schemas/org.micoli.micraft.game.classes.ClassSpellAccess"
+          title: List<ClassSpellAccess>
       required:
       - attacks
       - spells
@@ -4041,6 +4040,20 @@ components:
       - attack
       - rank
       title: ClassAttackAccess
+    org.micoli.micraft.game.classes.ClassSpellAccess:
+      type: object
+      properties:
+        rank:
+          type: integer
+          format: int32
+          title: Int
+        spell:
+          type: string
+          title: String
+      required:
+      - rank
+      - spell
+      title: ClassSpellAccess
     org.micoli.micraft.game.macro.MacroContextVar:
       type: object
       properties:
@@ -6316,10 +6329,15 @@ components:
     org.micoli.micraft.combat.ShortcutSlot.Spell:
       type: object
       properties:
+        rank:
+          type: integer
+          format: int32
+          title: Int
         spellId:
           type: string
           title: String
       required:
+      - rank
       - spellId
       title: ShortcutSlot.Spell
     org.micoli.micraft.player.PlayerStance:

@@ -88,7 +88,7 @@ export const getApiAttacks = <ThrowOnError extends boolean = false>(options?: Op
 export const getApiClasses = <ThrowOnError extends boolean = false>(options?: Options<GetApiClassesData, ThrowOnError>): RequestResult<GetApiClassesResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetApiClassesResponses, unknown, ThrowOnError>({ url: '/api/classes', ...options });
 
 /**
- * Spell definitions, keyed by spell id
+ * Spell definitions, flattened by "spellId:rank" key
  */
 export const getApiSpells = <ThrowOnError extends boolean = false>(options?: Options<GetApiSpellsData, ThrowOnError>): RequestResult<GetApiSpellsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetApiSpellsResponses, unknown, ThrowOnError>({ url: '/api/spells', ...options });
 

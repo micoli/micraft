@@ -230,7 +230,7 @@ export function GameUI() {
                 power: parseInt(v.power ?? "0"),
                 weaponDice: v.weaponDice ?? "",
                 attackId: v.attackId ?? k.split(":")[0],
-                level: parseInt(v.level ?? k.split(":")[1] ?? "1"),
+                rank: parseInt(v.rank ?? k.split(":")[1] ?? "1"),
               },
             ]),
           );

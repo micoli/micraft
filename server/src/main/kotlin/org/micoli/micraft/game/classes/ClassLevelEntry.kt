@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ClassLevelEntry(
     val attacks: List<ClassAttackAccess> = emptyList(),
-    val spells: List<String> = emptyList(),
+    val spells: List<ClassSpellAccess> = emptyList(),
 )

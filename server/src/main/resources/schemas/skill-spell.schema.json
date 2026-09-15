@@ -14,35 +14,44 @@
     "enabled": {
       "type": "boolean"
     },
-    "rageGain": {
-      "type": "integer"
-    },
-    "tokenCost": {
-      "type": "integer"
-    },
-    "manaCost": {
-      "type": "integer"
-    },
-    "rageCost": {
-      "type": "integer"
-    },
-    "cooldownMs": {
-      "type": "integer"
-    },
-    "aoeRadius": {
-      "type": "number"
-    },
-    "maxRange": {
-      "type": "number"
-    },
-    "power": {
-      "type": "integer"
-    },
-    "statusEffect": {
-      "type": [
-        "string",
-        "null"
-      ]
+    "ranks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rageGain": {
+            "type": "integer"
+          },
+          "tokenCost": {
+            "type": "integer"
+          },
+          "manaCost": {
+            "type": "integer"
+          },
+          "rageCost": {
+            "type": "integer"
+          },
+          "cooldownMs": {
+            "type": "integer"
+          },
+          "aoeRadius": {
+            "type": "number"
+          },
+          "maxRange": {
+            "type": "number"
+          },
+          "power": {
+            "type": "integer"
+          },
+          "statusEffect": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
     }
   }
 }

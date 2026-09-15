@@ -47,7 +47,7 @@ export const getApiAttacksOptions = (clientOptions: Options<GetApiAttacksData, t
  */
 export const getApiClassesOptions = (clientOptions: Options<GetApiClassesData, true> = {}, queryKey?: Array<unknown>) => queryOptions({ queryKey: Common.UseGetApiClassesKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiClasses({ ...clientOptions, signal, throwOnError: true }).then(response => response.data) });
 /**
- * Spell definitions, keyed by spell id
+ * Spell definitions, flattened by "spellId:rank" key
  */
 export const getApiSpellsOptions = (clientOptions: Options<GetApiSpellsData, true> = {}, queryKey?: Array<unknown>) => queryOptions({ queryKey: Common.UseGetApiSpellsKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiSpells({ ...clientOptions, signal, throwOnError: true }).then(response => response.data) });
 /**

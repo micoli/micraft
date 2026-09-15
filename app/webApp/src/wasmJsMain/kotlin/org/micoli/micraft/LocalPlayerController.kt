@@ -572,6 +572,7 @@ class LocalPlayerController(
                     targetX = tx,
                     targetY = ty,
                     targetZ = tz,
+                    spellRank = slot.rank,
                 ))
         } else if (slot is ShortcutSlot.Item) {
             val def = ItemRegistry.get(slot.itemType)
@@ -614,7 +615,8 @@ class LocalPlayerController(
                     is ShortcutSlot.Attack ->
                         """{"kind":"attack","id":"${slot.attackId}:${slot.rank}"}"""
                     is ShortcutSlot.Macro -> """{"kind":"macro","id":"${slot.macroName}"}"""
-                    is ShortcutSlot.Spell -> """{"kind":"spell","id":"${slot.spellId}"}"""
+                    is ShortcutSlot.Spell ->
+                        """{"kind":"spell","id":"${slot.spellId}:${slot.rank}"}"""
                     null -> "null"
                 }
             }
@@ -1185,8 +1187,13 @@ class LocalPlayerController(
                             attackRank = attackRank))
                 }
                 event.startsWith("spell:") -> {
-                    val spellId = event.removePrefix("spell:")
-                    outMessages.trySend(ClientMessage.UseSpell(spellId = spellId))
+                    val rest = event.removePrefix("spell:")
+                    val lastColon = rest.lastIndexOf(':')
+                    val spellId = if (lastColon > 0) rest.substring(0, lastColon) else rest
+                    val spellRank =
+                        if (lastColon > 0) rest.substring(lastColon + 1).toIntOrNull() ?: 1 else 1
+                    outMessages.trySend(
+                        ClientMessage.UseSpell(spellId = spellId, spellRank = spellRank))
                 }
                 event.startsWith("creative_place:") -> {
                     val parts = event.removePrefix("creative_place:").split(",")
@@ -1298,7 +1305,14 @@ class LocalPlayerController(
                                 else ShortcutSlot.Attack(id)
                             }
                             kind == "macro" && id != null -> ShortcutSlot.Macro(id)
-                            kind == "spell" && id != null -> ShortcutSlot.Spell(id)
+                            kind == "spell" && id != null -> {
+                                val colon = id.lastIndexOf(':')
+                                if (colon > 0)
+                                    ShortcutSlot.Spell(
+                                        id.substring(0, colon),
+                                        id.substring(colon + 1).toIntOrNull() ?: 1)
+                                else ShortcutSlot.Spell(id)
+                            }
                             else -> null
                         }
                     shortcutBarPages[currentPage][slotMatch] = content

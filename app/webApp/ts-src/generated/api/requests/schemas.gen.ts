@@ -182,10 +182,9 @@ export const org_micoli_micraft_game_classes_ClassLevelEntrySchema = {
         spells: {
             type: 'array',
             items: {
-                type: 'string',
-                title: 'String'
+                $ref: '#/components/schemas/org.micoli.micraft.game.classes.ClassSpellAccess'
             },
-            title: 'List<String>'
+            title: 'List<ClassSpellAccess>'
         }
     },
     required: [
@@ -210,9 +209,29 @@ export const org_micoli_micraft_game_classes_ClassAttackAccessSchema = {
     },
     required: [
         'attack',
-        'level'
+        'rank'
     ],
     title: 'ClassAttackAccess'
+} as const;
+
+export const org_micoli_micraft_game_classes_ClassSpellAccessSchema = {
+    type: 'object',
+    properties: {
+        rank: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        spell: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'rank',
+        'spell'
+    ],
+    title: 'ClassSpellAccess'
 } as const;
 
 export const org_micoli_micraft_game_macro_MacroContextVarSchema = {
@@ -3277,12 +3296,18 @@ export const org_micoli_micraft_combat_ShortcutSlot_MacroSchema = {
 export const org_micoli_micraft_combat_ShortcutSlot_SpellSchema = {
     type: 'object',
     properties: {
+        rank: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
         spellId: {
             type: 'string',
             title: 'String'
         }
     },
     required: [
+        'rank',
         'spellId'
     ],
     title: 'ShortcutSlot.Spell'
