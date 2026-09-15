@@ -22,16 +22,32 @@ paths:
               schema:
                 $ref: "#/components/schemas/org.micoli.micraft.auth.AuthConfigResponse"
       deprecated: false
-  /auth/noauth-login:
+  /auth/me:
+    get:
+      tags: []
+      description: Resolve the current session from its bearer token
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.auth.AuthMeResponse"
+        "401":
+          description: Missing or invalid token
+          headers: {}
+      deprecated: false
+  /auth/login:
     post:
       tags: []
-      description: Create/reuse an account by email when auth is disabled (auth.provider=none)
+      description: Log in with email/password (local auth provider)
       parameters: []
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/org.micoli.micraft.auth.NoAuthLoginRequest"
+              $ref: "#/components/schemas/org.micoli.micraft.auth.LoginRequest"
         required: false
       responses:
         "200":
@@ -39,9 +55,69 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/org.micoli.micraft.auth.NoAuthLoginResponse"
+                $ref: "#/components/schemas/org.micoli.micraft.auth.LoginResponse"
         "400":
-          description: Missing or invalid email
+          description: Missing email or password
+          headers: {}
+        "401":
+          description: Invalid credentials
+          headers: {}
+      deprecated: false
+  /auth/oauth/start:
+    get:
+      tags: []
+      description: Redirect to the OAuth provider's consent screen
+      parameters:
+      - name: returnUrl
+        in: query
+        description: URL to return to after login
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "302":
+          description: Redirect to the OAuth provider
+          headers: {}
+        "404":
+          description: OAuth not configured
+          headers: {}
+      deprecated: false
+  /auth/callback:
+    get:
+      tags: []
+      description: OAuth authorization code callback — redirects with the session
+        token in the URL fragment
+      parameters:
+      - name: code
+        in: query
+        description: Authorization code
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      - name: state
+        in: query
+        description: CSRF state token
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "302":
+          description: Redirect to returnUrl#auth_token=...
+          headers: {}
+        "400":
+          description: Missing code or state
+          headers: {}
+        "401":
+          description: OAuth exchange failed
           headers: {}
       deprecated: false
   /api/assets/manifest:
@@ -1585,6 +1661,151 @@ paths:
           headers: {}
         "503":
           description: No auth backend
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/permissions:
+    get:
+      tags: []
+      description: "Every known permission string — slash commands' `permission` field\
+        \ (discovered live from the command registry) plus the fixed set checked outside\
+        \ the command system. For autocomplete, not validation — a group may still\
+        \ be given any free-form permission string."
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  title: String
+                title: List<String>
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/groups:
+    get:
+      tags: []
+      description: "All permission groups, including the virtual admin group"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.GroupsListDto"
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+    post:
+      tags: []
+      description: Create a permission group
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.CreateGroupRequest"
+        required: false
+      responses:
+        "201":
+          headers: {}
+        "400":
+          description: Invalid or reserved name
+          headers: {}
+        "409":
+          description: Group already exists
+          headers: {}
+        "503":
+          description: No group storage
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/groups/{name}:
+    put:
+      tags: []
+      description: Replace a group's permission list
+      parameters:
+      - name: name
+        in: path
+        description: Group name
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.UpdateGroupRequest"
+        required: false
+      responses:
+        "204":
+          headers: {}
+        "400":
+          description: Reserved admin group
+          headers: {}
+        "404":
+          description: Group not found
+          headers: {}
+        "503":
+          description: No group storage
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+    delete:
+      tags: []
+      description: Delete a group and unassign it from every user that has it
+      parameters:
+      - name: name
+        in: path
+        description: Group name
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "204":
+          headers: {}
+        "400":
+          description: Reserved admin group
+          headers: {}
+        "404":
+          description: Group not found
+          headers: {}
+        "503":
+          description: No group storage
           headers: {}
         "401":
           description: Missing or invalid token
@@ -3893,28 +4114,65 @@ components:
         provider:
           type: string
           title: String
+        requirePassword:
+          type: boolean
+          title: Boolean
       required:
       - messageEncoder
       - provider
+      - requirePassword
       title: AuthConfigResponse
-    org.micoli.micraft.auth.NoAuthLoginRequest:
+    org.micoli.micraft.auth.AuthMeResponse:
+      type: object
+      properties:
+        displayName:
+          type: string
+          title: String
+        email:
+          type: string
+          title: String
+        playerId:
+          type: string
+          title: String
+      required:
+      - displayName
+      - email
+      - playerId
+      title: AuthMeResponse
+    org.micoli.micraft.auth.LoginRequest:
       type: object
       properties:
         email:
           type: string
           title: String
-      required:
-      - email
-      title: NoAuthLoginRequest
-    org.micoli.micraft.auth.NoAuthLoginResponse:
-      type: object
-      properties:
-        email:
+        password:
           type: string
           title: String
       required:
       - email
-      title: NoAuthLoginResponse
+      - password
+      title: LoginRequest
+    org.micoli.micraft.auth.LoginResponse:
+      type: object
+      properties:
+        displayName:
+          type: string
+          title: String
+        email:
+          type: string
+          title: String
+        playerId:
+          type: string
+          title: String
+        token:
+          type: string
+          title: String
+      required:
+      - displayName
+      - email
+      - playerId
+      - token
+      title: LoginResponse
     org.micoli.micraft.command.Completion:
       type: object
       properties:
@@ -5546,6 +5804,72 @@ components:
             title: String
           title: List<String>
       title: UpdateUserRequest
+    org.micoli.micraft.http.GroupDto:
+      type: object
+      properties:
+        editable:
+          type: boolean
+          title: Boolean
+        name:
+          type: string
+          title: String
+        permissions:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+      required:
+      - editable
+      - name
+      - permissions
+      title: GroupDto
+    org.micoli.micraft.http.GroupsListDto:
+      type: object
+      properties:
+        defaultGroups:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.http.GroupDto"
+          title: List<GroupDto>
+      required:
+      - defaultGroups
+      - groups
+      title: GroupsListDto
+    org.micoli.micraft.http.CreateGroupRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          title: String
+        permissions:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+      required:
+      - name
+      - permissions
+      title: CreateGroupRequest
+    org.micoli.micraft.http.UpdateGroupRequest:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
+      required:
+      - permissions
+      title: UpdateGroupRequest
     org.micoli.micraft.http.CreatePlayerRequest:
       type: object
       properties:

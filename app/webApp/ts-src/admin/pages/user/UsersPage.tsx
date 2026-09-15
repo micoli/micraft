@@ -24,7 +24,7 @@ export function UsersPage() {
   const [users, setUsers] = useState<UserDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
-  const [authProvider, setAuthProvider] = useState<string>("local");
+  const [requirePassword, setRequirePassword] = useState(true);
   const [playersByEmail, setPlayersByEmail] = useState<Record<string, string[]>>({});
   const [addOpen, setAddOpen] = useState(false);
   const [editUser, setEditUser] = useState<UserDto | null>(null);
@@ -38,7 +38,7 @@ export function UsersPage() {
     setLoading(true);
     try {
       const [configR, usersR] = await Promise.all([getApiAuthConfig(), getApiAdminUsers()]);
-      setAuthProvider(configR.data?.provider ?? "local");
+      setRequirePassword(configR.data?.requirePassword ?? true);
       if (usersR.response?.status === 503) {
         setUnavailable(true);
         return;
@@ -112,10 +112,7 @@ export function UsersPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#2E3A4E]">
-                {(authProvider === "none"
-                  ? [t("users.email"), t("users.players"), ""]
-                  : [t("users.email"), t("users.displayName"), t("users.groups"), t("users.players"), ""]
-                ).map((h) => (
+                {[t("users.email"), t("users.displayName"), t("users.groups"), t("users.players"), ""].map((h) => (
                   <th
                     key={h}
                     className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF]"
@@ -128,10 +125,7 @@ export function UsersPage() {
             <tbody>
               {users.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={authProvider === "none" ? 3 : 5}
-                    className="px-5 py-8 text-[#8A99AF] text-sm text-center"
-                  >
+                  <td colSpan={5} className="px-5 py-8 text-[#8A99AF] text-sm text-center">
                     {t("users.none")}
                   </td>
                 </tr>
@@ -145,23 +139,19 @@ export function UsersPage() {
                     className={`border-b border-[#2E3A4E] last:border-0 transition-colors ${isHighlighted ? "bg-[#3C50E0]/10 ring-1 ring-inset ring-[#3C50E0]/40" : "hover:bg-[#1F2D3D]"}`}
                   >
                     <td className="px-5 py-3 text-sm text-[#8A99AF]">{u.email}</td>
-                    {authProvider !== "none" && (
-                      <>
-                        <td className="px-5 py-3 text-sm text-white font-medium">{u.displayName}</td>
-                        <td className="px-5 py-3">
-                          <div className="flex flex-wrap gap-1">
-                            {u.groups.map((g) => (
-                              <span
-                                key={g}
-                                className="bg-[#3C50E0]/20 text-[#818CF8] text-[10px] font-medium px-2 py-0.5 rounded-full border border-[#3C50E0]/30"
-                              >
-                                {g}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                      </>
-                    )}
+                    <td className="px-5 py-3 text-sm text-white font-medium">{u.displayName}</td>
+                    <td className="px-5 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {u.groups.map((g) => (
+                          <span
+                            key={g}
+                            className="bg-[#3C50E0]/20 text-[#818CF8] text-[10px] font-medium px-2 py-0.5 rounded-full border border-[#3C50E0]/30"
+                          >
+                            {g}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
                     <td className="px-5 py-3">
                       <div className="flex flex-wrap gap-1">
                         {(playersByEmail[u.email] ?? []).map((p) => (
@@ -177,11 +167,9 @@ export function UsersPage() {
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex gap-2 justify-end">
-                        {authProvider !== "none" && (
-                          <Button variant="ghost" onClick={() => setEditUser(u)}>
-                            {t("common.edit")}
-                          </Button>
-                        )}
+                        <Button variant="ghost" onClick={() => setEditUser(u)}>
+                          {t("common.edit")}
+                        </Button>
                         <Button variant="danger" onClick={() => setDeleteEmail(u.email)}>
                           {t("common.delete")}
                         </Button>
@@ -202,7 +190,7 @@ export function UsersPage() {
           <UserForm
             initial={{}}
             isNew
-            noauth={authProvider === "none"}
+            requirePassword={requirePassword}
             onSave={handleAdd}
             onClose={() => setAddOpen(false)}
           />

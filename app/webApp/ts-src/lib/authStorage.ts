@@ -1,4 +1,4 @@
-export type AuthMode = "none" | "local" | "oauth" | "loading";
+export type AuthMode = "local" | "oauth" | "loading";
 
 export type PlayerEntry = { name: string; id: string };
 

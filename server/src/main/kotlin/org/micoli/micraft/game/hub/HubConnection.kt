@@ -2,7 +2,6 @@ package org.micoli.micraft.game.hub
 
 import io.ktor.websocket.*
 import org.micoli.micraft.I18nConfig
-import org.micoli.micraft.auth.NoAuthAccountStore
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.game.session.PlayerSession
@@ -48,7 +47,6 @@ private val HUB_CHAT_CHANNELS =
 class HubConnection(
     private val gameWorldRegistry: GameWorldRegistry,
     private val tokenStore: TokenStore?,
-    private val noAuthAccountStore: NoAuthAccountStore?,
     private val i18n: I18nConfig,
 ) {
     suspend fun handle(
@@ -91,7 +89,6 @@ class HubConnection(
                     socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "invalid email"))
                     return
                 }
-                noAuthAccountStore?.getOrCreate(email)
                 email
             }
 

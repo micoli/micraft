@@ -8,6 +8,35 @@ const BASE = `http://localhost:${PORT}`;
 /** Generated OpenAPI client, pointed at the E2E server. */
 const api = createClient(createConfig({ baseUrl: BASE }));
 
+// Matches the account `:server:runE2eServer` seeds via AddUserCli before the server starts (see
+// server/build.gradle.kts) — the `admin` group grants every permission via the virtual `*` group.
+const E2E_ADMIN_EMAIL = "e2e-admin@test.local";
+const E2E_ADMIN_PASSWORD = "e2e-admin-password";
+
+let adminTokenPromise: Promise<string> | null = null;
+
+/** Logs in as the seeded e2e-admin account once per test run and caches the bearer token. */
+async function ensureAdminToken(): Promise<string> {
+  if (!adminTokenPromise) {
+    // Plain fetch, not the `api` client below: going through it would re-enter the request
+    // interceptor that calls this very function, deadlocking on its own pending promise.
+    adminTokenPromise = fetch(`${BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: E2E_ADMIN_EMAIL, password: E2E_ADMIN_PASSWORD }),
+    }).then(async (r) => {
+      if (!r.ok) throw new Error(`e2e admin login failed: ${r.status} ${await r.text()}`);
+      return ((await r.json()) as { token: string }).token;
+    });
+  }
+  return adminTokenPromise;
+}
+
+api.interceptors.request.use(async (request) => {
+  request.headers.set("Authorization", `Bearer ${await ensureAdminToken()}`);
+  return request;
+});
+
 /**
  * Options that scope a generated-client call to this test's isolated GameWorld.
  * The `X-Micraft-Game-Session` header isn't part of the OpenAPI spec, so it rides
@@ -18,17 +47,19 @@ export const adminWorldContext = (acct: E2eAccount) =>
 
 /**
  * fetch() against the admin REST API, scoped to this test's isolated GameWorld via the
- * `X-Micraft-Game-Session` header. The E2E server runs with `auth.provider=none`, so no token is
- * needed. Use this to seed fixtures (give items, set the game time, create instance zones/scenes,
- * edit blocks) either before or after `connectClient` — under MICRAFT_E2E an unknown session id
- * spawns the world on first use, same as the `/game` WebSocket.
+ * `X-Micraft-Game-Session` header. Admin routes gate on the `admin` permission, not a bearer
+ * token, so no auth header is needed here. Use this to seed fixtures (give items, set the game
+ * time, create instance zones/scenes, edit blocks) either before or after `connectClient` — under
+ * MICRAFT_E2E an unknown session id spawns the world on first use, same as the `/game` WebSocket.
  */
 export async function admin(acct: E2eAccount, path: string, init: RequestInit = {}): Promise<Response> {
+  const token = await ensureAdminToken();
   return fetch(`${BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
       "X-Micraft-Game-Session": acct.session,
+      Authorization: `Bearer ${token}`,
       ...(init.headers ?? {}),
     },
   });

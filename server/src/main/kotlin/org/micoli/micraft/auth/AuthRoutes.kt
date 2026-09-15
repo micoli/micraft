@@ -14,14 +14,14 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable
-private data class AuthConfigResponse(val provider: String, val messageEncoder: String)
+private data class AuthConfigResponse(
+    val provider: String,
+    val messageEncoder: String,
+    val requirePassword: Boolean,
+)
 
 @Serializable
 private data class AuthMeResponse(val playerId: String, val displayName: String, val email: String)
-
-@Serializable private data class NoAuthLoginRequest(val email: String)
-
-@Serializable private data class NoAuthLoginResponse(val email: String)
 
 @Serializable private data class LoginRequest(val email: String, val password: String)
 
@@ -38,7 +38,7 @@ fun Application.installAuthRoutes(
     provider: AuthProvider?,
     tokenStore: TokenStore?,
     messageEncoder: String,
-    noAuthAccountStore: NoAuthAccountStore? = null,
+    requirePassword: Boolean = true,
 ) {
     routing {
         get(
@@ -48,7 +48,7 @@ fun Application.installAuthRoutes(
                 response { code(HttpStatusCode.OK) { body<AuthConfigResponse>() } }
             }) {
                 call.respondText(
-                    """{"provider":"$providerName","messageEncoder":"$messageEncoder"}""",
+                    """{"provider":"$providerName","messageEncoder":"$messageEncoder","requirePassword":$requirePassword}""",
                     ContentType.Application.Json,
                 )
             }
@@ -79,49 +79,6 @@ fun Application.installAuthRoutes(
                     }
                     call.respondText(
                         """{"playerId":"${result.playerId}","displayName":"${result.displayName.replace("\"", "\\\"")}","email":"${result.email}"}""",
-                        ContentType.Application.Json,
-                    )
-                }
-        }
-
-        if (noAuthAccountStore != null) {
-            post(
-                "/auth/noauth-login",
-                {
-                    description =
-                        "Create/reuse an account by email when auth is disabled (auth.provider=none)"
-                    request { body<NoAuthLoginRequest>() }
-                    response {
-                        code(HttpStatusCode.OK) { body<NoAuthLoginResponse>() }
-                        code(HttpStatusCode.BadRequest) { description = "Missing or invalid email" }
-                    }
-                }) {
-                    val body =
-                        runCatching { call.receiveText() }
-                            .getOrElse {
-                                call.respond(HttpStatusCode.BadRequest)
-                                return@post
-                            }
-                    val json = Json { ignoreUnknownKeys = true }
-                    val obj =
-                        runCatching { json.parseToJsonElement(body).jsonObject }
-                            .getOrElse {
-                                call.respond(HttpStatusCode.BadRequest)
-                                return@post
-                            }
-                    val email =
-                        obj["email"]?.jsonPrimitive?.content?.trim()
-                            ?: run {
-                                call.respond(HttpStatusCode.BadRequest)
-                                return@post
-                            }
-                    if (!email.matches(Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"))) {
-                        call.respond(HttpStatusCode.BadRequest)
-                        return@post
-                    }
-                    noAuthAccountStore.getOrCreate(email)
-                    call.respondText(
-                        """{"email":"${email.replace("\"", "\\\"")}"}""",
                         ContentType.Application.Json,
                     )
                 }

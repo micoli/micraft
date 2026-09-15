@@ -76,7 +76,7 @@ class AdminEditWsTest {
 
     private fun gameLoop(vararg solid: Triple<Int, Int, Int>) = GameLoop(testWorld(*solid))
 
-    private fun controller(gameLoop: GameLoop) = AdminController(null, null, null, gameLoop, null)
+    private fun controller(gameLoop: GameLoop) = AdminController(null, null, gameLoop, null)
 
     private suspend fun jsonId(body: String): String =
         Json.parseToJsonElement(body).jsonObject["id"]!!.jsonPrimitive.content

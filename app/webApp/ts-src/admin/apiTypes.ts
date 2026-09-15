@@ -16,6 +16,8 @@ export type {
   OrgMicoliMicraftHttpNpcAdminDto as NpcAdminDto,
   OrgMicoliMicraftHttpWorldStatsDto as WorldStatsDto,
   OrgMicoliMicraftHttpUserDto as UserDto,
+  OrgMicoliMicraftHttpGroupDto as GroupDto,
+  OrgMicoliMicraftHttpGroupsListDto as GroupsListDto,
   OrgMicoliMicraftPlayerRpgBaseStats as BaseStats,
   OrgMicoliMicraftPlayerRpgCharacterData as CharacterData,
   OrgMicoliMicraftPlayerPlayerState as PlayerState,

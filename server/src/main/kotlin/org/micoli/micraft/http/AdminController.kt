@@ -31,8 +31,14 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.micoli.micraft.auth.AuthProvider
+import org.micoli.micraft.auth.GroupsConfig
+import org.micoli.micraft.auth.KNOWN_STANDALONE_PERMISSIONS
 import org.micoli.micraft.auth.LocalAuthProvider
+import org.micoli.micraft.auth.OAuthProvider
 import org.micoli.micraft.auth.TokenStore
+import org.micoli.micraft.auth.refreshLiveSessionPermissions
+import org.micoli.micraft.auth.writeGroupsConfig
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
@@ -76,6 +82,11 @@ import org.slf4j.LoggerFactory
 
 @Serializable
 data class UserDto(val email: String, val displayName: String, val groups: List<String>)
+
+@Serializable
+data class GroupDto(val name: String, val permissions: List<String>, val editable: Boolean)
+
+@Serializable data class GroupsListDto(val groups: List<GroupDto>, val defaultGroups: List<String>)
 
 @Serializable
 data class NpcAdminDto(
@@ -282,6 +293,14 @@ private data class UpdateUserRequest(
 )
 
 @Serializable
+private data class CreateGroupRequest(
+    val name: String,
+    val permissions: List<String> = emptyList()
+)
+
+@Serializable private data class UpdateGroupRequest(val permissions: List<String>)
+
+@Serializable
 private data class CreatePlayerRequest(
     val name: String,
     val email: String? = null,
@@ -384,13 +403,30 @@ private val configFileWhitelist =
 
 class AdminController(
     private val localAuth: LocalAuthProvider?,
-    private val noAuthAccountStore: org.micoli.micraft.auth.NoAuthAccountStore?,
     private val persistence: WorldPersistence?,
     private val gameLoop: GameLoop,
     private val tokenStore: TokenStore? = null,
     private val gameWorldRegistry: org.micoli.micraft.game.world.GameWorldRegistry =
         gameLoop.gameWorldRegistry,
+    private val authProvider: AuthProvider? = localAuth,
+    private val groupsFilePath: java.nio.file.Path? = null,
+    private val reloadRbac: (() -> Unit)? = null,
 ) {
+    private fun currentGroupsConfig(): GroupsConfig? =
+        when (val p = authProvider) {
+            is LocalAuthProvider -> p.groupsConfig
+            is OAuthProvider -> p.groupsConfig
+            else -> null
+        }
+
+    private fun applyGroupsConfig(updated: GroupsConfig) {
+        val path = groupsFilePath ?: error("groups file path not configured")
+        writeGroupsConfig(path, updated)
+        reloadRbac?.invoke()
+        refreshLiveSessionPermissions(
+            gameWorldRegistry, authProvider, currentGroupsConfig() ?: updated)
+    }
+
     private val configDir = org.micoli.micraft.config.ConfigPaths.dataRoot.resolve("config")
 
     companion object {
@@ -970,17 +1006,8 @@ class AdminController(
                 }) {
                     if (!requireAdmin()) return@get
                     val users: List<UserDto> =
-                        when {
-                            localAuth != null ->
-                                localAuth.listUsers().map {
-                                    UserDto(it.email, it.displayName, it.groups)
-                                }
-                            noAuthAccountStore != null ->
-                                noAuthAccountStore.listAccounts().map {
-                                    UserDto(it.email, it.email, emptyList())
-                                }
-                            else -> return@get call.respond(HttpStatusCode.ServiceUnavailable)
-                        }
+                        localAuth?.listUsers()?.map { UserDto(it.email, it.displayName, it.groups) }
+                            ?: return@get call.respond(HttpStatusCode.ServiceUnavailable)
                     call.respondText(
                         adminJson.encodeToString(ListSerializer(UserDto.serializer()), users),
                         ContentType.Application.Json)
@@ -1008,27 +1035,18 @@ class AdminController(
                     val email =
                         body["email"]?.jsonPrimitive?.content
                             ?: return@post call.respond(HttpStatusCode.BadRequest)
-                    when {
-                        localAuth != null -> {
-                            val password =
-                                body["password"]?.jsonPrimitive?.content
-                                    ?: return@post call.respond(HttpStatusCode.BadRequest)
-                            val displayName = body["displayName"]?.jsonPrimitive?.content ?: email
-                            val groups =
-                                body["groups"]?.jsonArray?.map { it.jsonPrimitive.content }
-                                    ?: emptyList()
-                            runCatching { localAuth.addUser(email, password, displayName, groups) }
-                                .onFailure {
-                                    return@post call.respond(HttpStatusCode.Conflict)
-                                }
+                    val auth =
+                        localAuth ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
+                    val password =
+                        body["password"]?.jsonPrimitive?.content
+                            ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val displayName = body["displayName"]?.jsonPrimitive?.content ?: email
+                    val groups =
+                        body["groups"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
+                    runCatching { auth.addUser(email, password, displayName, groups) }
+                        .onFailure {
+                            return@post call.respond(HttpStatusCode.Conflict)
                         }
-                        noAuthAccountStore != null -> {
-                            if (noAuthAccountStore.exists(email))
-                                return@post call.respond(HttpStatusCode.Conflict)
-                            noAuthAccountStore.getOrCreate(email)
-                        }
-                        else -> return@post call.respond(HttpStatusCode.ServiceUnavailable)
-                    }
                     call.respond(HttpStatusCode.Created)
                 }
 
@@ -1048,15 +1066,12 @@ class AdminController(
                     val email =
                         call.parameters["email"]
                             ?: return@delete call.respond(HttpStatusCode.BadRequest)
-                    when {
-                        localAuth != null ->
-                            runCatching { localAuth.deleteUser(email) }
-                                .onFailure {
-                                    return@delete call.respond(HttpStatusCode.NotFound)
-                                }
-                        noAuthAccountStore != null -> noAuthAccountStore.delete(email)
-                        else -> return@delete call.respond(HttpStatusCode.ServiceUnavailable)
-                    }
+                    val auth =
+                        localAuth ?: return@delete call.respond(HttpStatusCode.ServiceUnavailable)
+                    runCatching { auth.deleteUser(email) }
+                        .onFailure {
+                            return@delete call.respond(HttpStatusCode.NotFound)
+                        }
                     call.respond(HttpStatusCode.NoContent)
                 }
 
@@ -1092,6 +1107,160 @@ class AdminController(
                         .onFailure {
                             return@put call.respond(HttpStatusCode.NotFound)
                         }
+                    currentGroupsConfig()?.let {
+                        refreshLiveSessionPermissions(gameWorldRegistry, authProvider, it)
+                    }
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            // ── Groups (RBAC) ────────────────────────────────────────────────
+            get(
+                "/api/admin/permissions",
+                {
+                    description =
+                        "Every known permission string — slash commands' `permission` field " +
+                            "(discovered live from the command registry) plus the fixed set " +
+                            "checked outside the command system. For autocomplete, not validation " +
+                            "— a group may still be given any free-form permission string."
+                    response { code(HttpStatusCode.OK) { body<List<String>>() } }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    val permissions =
+                        (gameLoop.knownCommandPermissions() + KNOWN_STANDALONE_PERMISSIONS).sorted()
+                    call.respondText(
+                        adminJson.encodeToString(ListSerializer(String.serializer()), permissions),
+                        ContentType.Application.Json)
+                }
+
+            get(
+                "/api/admin/groups",
+                {
+                    description = "All permission groups, including the virtual admin group"
+                    response { code(HttpStatusCode.OK) { body<GroupsListDto>() } }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    val config =
+                        currentGroupsConfig()
+                            ?: return@get call.respond(HttpStatusCode.ServiceUnavailable)
+                    val dto =
+                        GroupsListDto(
+                            groups =
+                                config.allGroups.map {
+                                    GroupDto(
+                                        it.name,
+                                        it.permissions,
+                                        it.name != GroupsConfig.ADMIN_GROUP.name)
+                                },
+                            defaultGroups = config.defaultGroups)
+                    call.respondText(
+                        adminJson.encodeToString(GroupsListDto.serializer(), dto),
+                        ContentType.Application.Json)
+                }
+
+            post(
+                "/api/admin/groups",
+                {
+                    description = "Create a permission group"
+                    request { body<CreateGroupRequest>() }
+                    response {
+                        code(HttpStatusCode.Created) {}
+                        code(HttpStatusCode.BadRequest) { description = "Invalid or reserved name" }
+                        code(HttpStatusCode.Conflict) { description = "Group already exists" }
+                        code(HttpStatusCode.ServiceUnavailable) { description = "No group storage" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val config =
+                        currentGroupsConfig()
+                            ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
+                    val body =
+                        runCatching { Json.parseToJsonElement(call.receiveText()).jsonObject }
+                            .getOrNull() ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val name =
+                        body["name"]?.jsonPrimitive?.content?.trim()?.takeIf { it.isNotEmpty() }
+                            ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val permissions =
+                        body["permissions"]?.jsonArray?.map { it.jsonPrimitive.content }
+                            ?: emptyList()
+                    if (name == GroupsConfig.ADMIN_GROUP.name)
+                        return@post call.respond(HttpStatusCode.BadRequest)
+                    if (config.groups.any { it.name == name })
+                        return@post call.respond(HttpStatusCode.Conflict)
+                    applyGroupsConfig(config.withUpsertedGroup(name, permissions))
+                    call.respond(HttpStatusCode.Created)
+                }
+
+            put(
+                "/api/admin/groups/{name}",
+                {
+                    description = "Replace a group's permission list"
+                    request {
+                        pathParameter<String>("name") { description = "Group name" }
+                        body<UpdateGroupRequest>()
+                    }
+                    response {
+                        code(HttpStatusCode.NoContent) {}
+                        code(HttpStatusCode.BadRequest) { description = "Reserved admin group" }
+                        code(HttpStatusCode.NotFound) { description = "Group not found" }
+                        code(HttpStatusCode.ServiceUnavailable) { description = "No group storage" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@put
+                    val config =
+                        currentGroupsConfig()
+                            ?: return@put call.respond(HttpStatusCode.ServiceUnavailable)
+                    val name =
+                        call.parameters["name"]
+                            ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    if (name == GroupsConfig.ADMIN_GROUP.name)
+                        return@put call.respond(HttpStatusCode.BadRequest)
+                    if (config.groups.none { it.name == name })
+                        return@put call.respond(HttpStatusCode.NotFound)
+                    val body =
+                        runCatching { Json.parseToJsonElement(call.receiveText()).jsonObject }
+                            .getOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    val permissions =
+                        body["permissions"]?.jsonArray?.map { it.jsonPrimitive.content }
+                            ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    applyGroupsConfig(config.withUpsertedGroup(name, permissions))
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            delete(
+                "/api/admin/groups/{name}",
+                {
+                    description = "Delete a group and unassign it from every user that has it"
+                    request { pathParameter<String>("name") { description = "Group name" } }
+                    response {
+                        code(HttpStatusCode.NoContent) {}
+                        code(HttpStatusCode.BadRequest) { description = "Reserved admin group" }
+                        code(HttpStatusCode.NotFound) { description = "Group not found" }
+                        code(HttpStatusCode.ServiceUnavailable) { description = "No group storage" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@delete
+                    val config =
+                        currentGroupsConfig()
+                            ?: return@delete call.respond(HttpStatusCode.ServiceUnavailable)
+                    val name =
+                        call.parameters["name"]
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    if (name == GroupsConfig.ADMIN_GROUP.name)
+                        return@delete call.respond(HttpStatusCode.BadRequest)
+                    if (config.groups.none { it.name == name })
+                        return@delete call.respond(HttpStatusCode.NotFound)
+                    localAuth
+                        ?.listUsers()
+                        ?.filter { name in it.groups }
+                        ?.forEach {
+                            localAuth.setUserGroups(it.email, it.groups.filter { g -> g != name })
+                        }
+                    applyGroupsConfig(config.withoutGroup(name))
                     call.respond(HttpStatusCode.NoContent)
                 }
 
@@ -1173,10 +1342,8 @@ class AdminController(
                             }
                         }
 
-                    when {
-                        noAuthAccountStore != null -> noAuthAccountStore.getOrCreate(email)
-                        localAuth != null && localAuth.listUsers().none { it.email == email } ->
-                            runCatching { localAuth.addUser(email, email, name, emptyList()) }
+                    if (localAuth != null && localAuth.listUsers().none { it.email == email }) {
+                        runCatching { localAuth.addUser(email, email, name, emptyList()) }
                     }
                     val reserved = world.reservePlayer(name, character)
                     call.respondText(

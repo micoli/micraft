@@ -16,10 +16,15 @@ import { WorldSimulatorPage } from "./pages/worldSimulator/WorldSimulatorPage";
 import { AuctionsPage } from "./pages/auctions/AuctionsPage";
 import { ClaimsPage } from "./pages/claim/ClaimsPage";
 import { SocialPage } from "./pages/social/SocialPage";
+import { RbacPage } from "./pages/rbac/RbacPage";
+import { GroupFormPage } from "./pages/rbac/GroupFormPage";
 
 export const ROUTES = [
   { path: "/admin", page: <StatusPage /> },
   { path: "/admin/users", page: <UsersPage /> },
+  { path: "/admin/rbac", page: <RbacPage /> },
+  { path: "/admin/rbac/new", page: <GroupFormPage /> },
+  { path: "/admin/rbac/:name", page: <GroupFormPage /> },
   { path: "/admin/players", page: <PlayersPage /> },
   { path: "/admin/players/:playerName", page: <PlayersPage /> },
   { path: "/admin/players/:playerName/:tab", page: <PlayersPage /> },
@@ -55,6 +60,7 @@ export const NAV: NavItem[] = [
   { path: "/admin", labelKey: "nav.status", pageLabelKey: "page.status", icon: ICONS.status, exact: true },
   { path: "/admin/worlds", labelKey: "nav.worlds", pageLabelKey: "page.worlds", icon: ICONS.worlds },
   { path: "/admin/users", labelKey: "nav.users", pageLabelKey: "page.users", icon: ICONS.users },
+  { path: "/admin/rbac", labelKey: "nav.rbac", pageLabelKey: "page.rbac", icon: ICONS.rbac },
   { path: "/admin/players", labelKey: "nav.players", pageLabelKey: "page.players", icon: ICONS.players },
   { path: "/admin/npcs", labelKey: "nav.npcs", pageLabelKey: "page.npcs", icon: ICONS.npcs },
   { path: "/admin/classes", labelKey: "nav.classes", pageLabelKey: "page.classes", icon: ICONS.classes },

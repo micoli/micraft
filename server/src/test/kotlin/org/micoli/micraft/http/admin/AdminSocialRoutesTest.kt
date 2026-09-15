@@ -14,7 +14,7 @@ import org.micoli.micraft.support.testWorld
 
 class AdminSocialRoutesTest {
     private fun controller(gameLoop: GameLoop = GameLoop(testWorld())) =
-        AdminController(null, null, null, gameLoop) to gameLoop
+        AdminController(null, null, gameLoop) to gameLoop
 
     @Test
     fun `groups and guilds list empty by default`() = testApplication {

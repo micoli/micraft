@@ -61,8 +61,6 @@ fun main() {
 
     pairs.addIfExists(resourcesConfig.resolve("groups.yaml"), "groups.schema.json")
     pairs.addIfExists(dataConfig.resolve("server.yaml"), "server.schema.json")
-    pairs.addIfExists(
-        dataConfig.resolve("auth/noauth_accounts.yaml"), "noauth-accounts.schema.json")
     pairs.addIfExists(dataConfig.resolve("auth/groups.yaml"), "groups.schema.json")
 
     // Glob patterns

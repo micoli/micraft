@@ -53,6 +53,7 @@ data class PlayerSection(
 data class LocalAuthConfig(
     @EncodeDefault(ALWAYS) val usersFile: String = "data/config/auth/users.yaml",
     @EncodeDefault(ALWAYS) val groupsFile: String = "data/config/auth/groups.yaml",
+    @EncodeDefault(ALWAYS) val requirePassword: Boolean = true,
 )
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -68,7 +69,7 @@ data class OAuthConfig(
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class AuthSection(
-    @EncodeDefault(ALWAYS) val provider: String = "none",
+    @EncodeDefault(ALWAYS) val provider: String = "local",
     @EncodeDefault(ALWAYS) val local: LocalAuthConfig = LocalAuthConfig(),
     val oauth: OAuthConfig? = null,
 )

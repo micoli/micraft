@@ -30,7 +30,7 @@ test("two hub tabs exchange a world-channel chat message", async ({ browser }, i
       `/hub/login?gameSession=${acct.session}&playerName=${encodeURIComponent(player.name)}&playerId=${player.playerId}`,
     );
     await page.getByPlaceholder("your@email.com").fill(acct.email);
-    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByRole("button", { name: "Log in" }).click();
     await page.getByRole("link", { name: "Chat" }).click();
     await expect(page.getByPlaceholder("Message #world…")).toBeVisible();
   }

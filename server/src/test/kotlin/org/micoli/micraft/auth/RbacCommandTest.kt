@@ -55,6 +55,10 @@ class RbacCommandTest {
                 adminMessages.any { it.message.contains("alice@test.com", ignoreCase = true) },
                 "Admin should receive confirmation")
 
+            assertTrue(
+                "give" in aliceSession.permissions,
+                "Alice's live session should immediately gain the moderator group's permissions")
+
             tmp.toFile().delete()
         }
 
@@ -82,6 +86,10 @@ class RbacCommandTest {
             assertTrue(
                 aliceMessages.any { it.message.contains("group", ignoreCase = true) },
                 "Alice should receive group-update notification, got: ${aliceMessages.map { it.message }}")
+
+            assertTrue(
+                "give" !in aliceSession.permissions,
+                "Alice's live session should immediately lose the moderator group's permissions")
 
             tmp.toFile().delete()
         }

@@ -65,11 +65,11 @@ export function CharacterSelectionScreen() {
   useEffect(() => {
     getApiAuthConfig()
       .then(({ data }) => {
-        setAuthMode((data?.provider as AuthMode) || "none");
+        setAuthMode((data?.provider as AuthMode) || "local");
         setServerReady(true);
       })
       .catch(() => {
-        setAuthMode("none");
+        setAuthMode("local");
         setServerReady(true);
       });
   }, []);

@@ -20,8 +20,9 @@ player:
   speedSneaking: 1.3
   speedCrawling: 1.0
 auth:
-  provider: none
+  provider: local
   local:
+    requirePassword: false
     usersFile: data/config/auth/users.yaml
     groupsFile: data/config/auth/groups.yaml
 chunks:

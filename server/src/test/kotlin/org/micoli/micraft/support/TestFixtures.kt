@@ -236,8 +236,13 @@ private val testProjectRoot: Path = Path.of(System.getProperty("projectDir", "..
  */
 const val TEST_BCRYPT_COST = 4
 
-fun testAuthProvider(usersFile: Path, groups: GroupsConfig = GroupsConfig()): LocalAuthProvider =
-    LocalAuthProvider(usersFile, groups, bcryptCost = TEST_BCRYPT_COST)
+fun testAuthProvider(
+    usersFile: Path,
+    groups: GroupsConfig = GroupsConfig(),
+    requirePassword: Boolean = true,
+): LocalAuthProvider =
+    LocalAuthProvider(
+        usersFile, groups, bcryptCost = TEST_BCRYPT_COST, requirePassword = requirePassword)
 
 /**
  * Loading every i18n YAML costs real time and [testI18n] is a default argument of [testContext], so

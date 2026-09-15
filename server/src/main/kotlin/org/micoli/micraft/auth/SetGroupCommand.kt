@@ -44,8 +44,9 @@ class SetGroupCommand : PluginCommand {
                 val current = provider.getUserGroups(email) ?: error("User not found: $email")
                 val updated = (current + newGroups).distinct()
                 provider.setUserGroups(email, updated)
+                updated
             }
-            .onSuccess {
+            .onSuccess { updated ->
                 session.send(
                     ServerMessage.Notification(
                         context.i18n.t(
@@ -57,6 +58,7 @@ class SetGroupCommand : PluginCommand {
                     .sessions()
                     .filter { it.userName.equals(email, ignoreCase = true) }
                     .forEach { affected ->
+                        groupsConfig?.let { affected.permissions = it.resolvePermissions(updated) }
                         affected.send(
                             ServerMessage.Notification(
                                 context.i18n.t(

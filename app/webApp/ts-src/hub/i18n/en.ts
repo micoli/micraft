@@ -27,15 +27,11 @@ export const en = {
   "auth.password": "Password",
   "auth.login": "Log in",
   "auth.loggingIn": "Logging in…",
-  "auth.continue": "Continue",
-  "auth.connecting": "Connecting…",
   "auth.invalidCredentials": "Invalid email or password.",
-  "auth.invalidEmail": "Please enter a valid email address.",
   "auth.connectionError": "Connection error. Is the server running?",
   "auth.continueWithGoogle": "Continue with Google",
   "auth.modeLocal": "Local auth",
   "auth.modeOauth": "OAuth",
-  "auth.modeNone": "Open server",
 
   // ── Placeholder screens (filled in as each feature lands) ──────────────────
   "placeholder.comingSoon": "This screen isn't built yet.",

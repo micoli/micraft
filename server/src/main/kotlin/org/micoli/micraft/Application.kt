@@ -32,7 +32,6 @@ import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.di.AppModule
 import org.micoli.micraft.di.OptionalAuctionManager
 import org.micoli.micraft.di.OptionalAuthProvider
-import org.micoli.micraft.di.OptionalNoAuthAccountStore
 import org.micoli.micraft.di.OptionalTokenStore
 import org.micoli.micraft.di.OptionalWorldPersistence
 import org.micoli.micraft.di.PlayerPersister
@@ -227,7 +226,6 @@ fun Application.module() {
     val groupsConfig = get<GroupsConfig>()
     val authProvider = get<OptionalAuthProvider>().value
     val tokenStore = get<OptionalTokenStore>().value
-    val noAuthAccountStore = get<OptionalNoAuthAccountStore>().value
 
     val groupsFilePath = Path.of(authConfig.local.groupsFile)
     validateYamlConfig(groupsFilePath, "groups.schema.json")
@@ -260,7 +258,6 @@ fun Application.module() {
             groupsConfig = groupsConfig,
             reloadRbac = reloadRbacLambda,
             chunkSection = serverConfig.chunks,
-            noAuthAccountStore = noAuthAccountStore,
             sessionRegistry = sessionRegistry,
             playerPersister = get<PlayerPersister>(),
             chatChannelManager = get<ChatChannelManager>(),
@@ -324,7 +321,7 @@ fun Application.module() {
         authProvider,
         tokenStore,
         serverConfig.network.messageEncoder,
-        noAuthAccountStore)
+        requirePassword = authConfig.local.requirePassword)
 
     Runtime.getRuntime().addShutdownHook(Thread { gameLoop.shutdown() })
 
@@ -395,16 +392,18 @@ fun Application.module() {
         PlayersController(gameLoop.getMailManager()).register(this)
         staticFiles("/api/models", File("resources"))
         MapController(gameLoop, tokenStore).register(this)
-        HubController(gameLoop, tokenStore, noAuthAccountStore, gameLoop.i18n).register(this)
+        HubController(gameLoop, tokenStore, gameLoop.i18n).register(this)
         MetricsController(gameLoop).register(this)
         DocsController().register(this)
         val adminController =
             AdminController(
                 authProvider as? LocalAuthProvider,
-                noAuthAccountStore,
                 persistence,
                 gameLoop,
-                tokenStore)
+                tokenStore,
+                authProvider = authProvider,
+                groupsFilePath = groupsFilePath,
+                reloadRbac = reloadRbacLambda)
         adminController.register(this)
         adminController.registerAdminWs(this)
         adminController.registerEditWs(this)

@@ -16,26 +16,64 @@ export type OrgMicoliMicraftAuthAuthConfigResponse = {
      * String
      */
     provider: string;
+    /**
+     * Boolean
+     */
+    requirePassword: boolean;
 };
 
 /**
- * NoAuthLoginRequest
+ * AuthMeResponse
  */
-export type OrgMicoliMicraftAuthNoAuthLoginRequest = {
+export type OrgMicoliMicraftAuthAuthMeResponse = {
+    /**
+     * String
+     */
+    displayName: string;
     /**
      * String
      */
     email: string;
+    /**
+     * String
+     */
+    playerId: string;
 };
 
 /**
- * NoAuthLoginResponse
+ * LoginRequest
  */
-export type OrgMicoliMicraftAuthNoAuthLoginResponse = {
+export type OrgMicoliMicraftAuthLoginRequest = {
     /**
      * String
      */
     email: string;
+    /**
+     * String
+     */
+    password: string;
+};
+
+/**
+ * LoginResponse
+ */
+export type OrgMicoliMicraftAuthLoginResponse = {
+    /**
+     * String
+     */
+    displayName: string;
+    /**
+     * String
+     */
+    email: string;
+    /**
+     * String
+     */
+    playerId: string;
+    /**
+     * String
+     */
+    token: string;
 };
 
 /**
@@ -1449,6 +1487,62 @@ export type OrgMicoliMicraftHttpUpdateUserRequest = {
      * List<String>
      */
     groups?: null | Array<string>;
+};
+
+/**
+ * GroupDto
+ */
+export type OrgMicoliMicraftHttpGroupDto = {
+    /**
+     * Boolean
+     */
+    editable: boolean;
+    /**
+     * String
+     */
+    name: string;
+    /**
+     * List<String>
+     */
+    permissions: Array<string>;
+};
+
+/**
+ * GroupsListDto
+ */
+export type OrgMicoliMicraftHttpGroupsListDto = {
+    /**
+     * List<String>
+     */
+    defaultGroups: Array<string>;
+    /**
+     * List<GroupDto>
+     */
+    groups: Array<OrgMicoliMicraftHttpGroupDto>;
+};
+
+/**
+ * CreateGroupRequest
+ */
+export type OrgMicoliMicraftHttpCreateGroupRequest = {
+    /**
+     * String
+     */
+    name: string;
+    /**
+     * List<String>
+     */
+    permissions: Array<string>;
+};
+
+/**
+ * UpdateGroupRequest
+ */
+export type OrgMicoliMicraftHttpUpdateGroupRequest = {
+    /**
+     * List<String>
+     */
+    permissions: Array<string>;
 };
 
 /**
@@ -3530,25 +3624,101 @@ export type GetApiAuthConfigResponses = {
 
 export type GetApiAuthConfigResponse = GetApiAuthConfigResponses[keyof GetApiAuthConfigResponses];
 
-export type PostAuthNoauthLoginData = {
-    body?: OrgMicoliMicraftAuthNoAuthLoginRequest;
+export type GetAuthMeData = {
+    body?: never;
     path?: never;
     query?: never;
-    url: '/auth/noauth-login';
+    url: '/auth/me';
 };
 
-export type PostAuthNoauthLoginErrors = {
+export type GetAuthMeErrors = {
     /**
-     * Missing or invalid email
+     * Missing or invalid token
+     */
+    401: unknown;
+};
+
+export type GetAuthMeResponses = {
+    200: OrgMicoliMicraftAuthAuthMeResponse;
+};
+
+export type GetAuthMeResponse = GetAuthMeResponses[keyof GetAuthMeResponses];
+
+export type PostAuthLoginData = {
+    body?: OrgMicoliMicraftAuthLoginRequest;
+    path?: never;
+    query?: never;
+    url: '/auth/login';
+};
+
+export type PostAuthLoginErrors = {
+    /**
+     * Missing email or password
      */
     400: unknown;
+    /**
+     * Invalid credentials
+     */
+    401: unknown;
 };
 
-export type PostAuthNoauthLoginResponses = {
-    200: OrgMicoliMicraftAuthNoAuthLoginResponse;
+export type PostAuthLoginResponses = {
+    200: OrgMicoliMicraftAuthLoginResponse;
 };
 
-export type PostAuthNoauthLoginResponse = PostAuthNoauthLoginResponses[keyof PostAuthNoauthLoginResponses];
+export type PostAuthLoginResponse = PostAuthLoginResponses[keyof PostAuthLoginResponses];
+
+export type GetAuthOauthStartData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * String
+         *
+         * URL to return to after login
+         */
+        returnUrl?: string;
+    };
+    url: '/auth/oauth/start';
+};
+
+export type GetAuthOauthStartErrors = {
+    /**
+     * OAuth not configured
+     */
+    404: unknown;
+};
+
+export type GetAuthCallbackData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * String
+         *
+         * Authorization code
+         */
+        code?: string;
+        /**
+         * String
+         *
+         * CSRF state token
+         */
+        state?: string;
+    };
+    url: '/auth/callback';
+};
+
+export type GetAuthCallbackErrors = {
+    /**
+     * Missing code or state
+     */
+    400: unknown;
+    /**
+     * OAuth exchange failed
+     */
+    401: unknown;
+};
 
 export type GetApiAssetsManifestData = {
     body?: never;
@@ -5106,6 +5276,177 @@ export type PutApiAdminUsersByEmailResponses = {
 };
 
 export type PutApiAdminUsersByEmailResponse = PutApiAdminUsersByEmailResponses[keyof PutApiAdminUsersByEmailResponses];
+
+export type GetApiAdminPermissionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/permissions';
+};
+
+export type GetApiAdminPermissionsErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminPermissionsResponses = {
+    /**
+     * List<String>
+     */
+    200: Array<string>;
+};
+
+export type GetApiAdminPermissionsResponse = GetApiAdminPermissionsResponses[keyof GetApiAdminPermissionsResponses];
+
+export type GetApiAdminGroupsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/groups';
+};
+
+export type GetApiAdminGroupsErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminGroupsResponses = {
+    200: OrgMicoliMicraftHttpGroupsListDto;
+};
+
+export type GetApiAdminGroupsResponse = GetApiAdminGroupsResponses[keyof GetApiAdminGroupsResponses];
+
+export type PostApiAdminGroupsData = {
+    body?: OrgMicoliMicraftHttpCreateGroupRequest;
+    path?: never;
+    query?: never;
+    url: '/api/admin/groups';
+};
+
+export type PostApiAdminGroupsErrors = {
+    /**
+     * Invalid or reserved name
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Group already exists
+     */
+    409: unknown;
+    /**
+     * No group storage
+     */
+    503: unknown;
+};
+
+export type PostApiAdminGroupsResponses = {
+    201: unknown;
+};
+
+export type DeleteApiAdminGroupsByNameData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Group name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/api/admin/groups/{name}';
+};
+
+export type DeleteApiAdminGroupsByNameErrors = {
+    /**
+     * Reserved admin group
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Group not found
+     */
+    404: unknown;
+    /**
+     * No group storage
+     */
+    503: unknown;
+};
+
+export type DeleteApiAdminGroupsByNameResponses = {
+    204: void;
+};
+
+export type DeleteApiAdminGroupsByNameResponse = DeleteApiAdminGroupsByNameResponses[keyof DeleteApiAdminGroupsByNameResponses];
+
+export type PutApiAdminGroupsByNameData = {
+    body?: OrgMicoliMicraftHttpUpdateGroupRequest;
+    path: {
+        /**
+         * String
+         *
+         * Group name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/api/admin/groups/{name}';
+};
+
+export type PutApiAdminGroupsByNameErrors = {
+    /**
+     * Reserved admin group
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Group not found
+     */
+    404: unknown;
+    /**
+     * No group storage
+     */
+    503: unknown;
+};
+
+export type PutApiAdminGroupsByNameResponses = {
+    204: void;
+};
+
+export type PutApiAdminGroupsByNameResponse = PutApiAdminGroupsByNameResponses[keyof PutApiAdminGroupsByNameResponses];
 
 export type GetApiAdminPlayersData = {
     body?: never;

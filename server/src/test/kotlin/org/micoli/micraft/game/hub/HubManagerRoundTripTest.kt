@@ -90,7 +90,7 @@ class HubManagerRoundTripTest {
                 ClientMessageCodec.encode(
                     ClientMessage.SendMail(to = "Bob", subject = "hi", body = "from the hub"))))
         aliceSocket.incomingChannel.close()
-        HubConnection(registry, store, null, testI18n()).handle(aliceSocket, null)
+        HubConnection(registry, store, testI18n()).handle(aliceSocket, null)
 
         val mailPersistence = MailPersistence(dir.resolve("players"))
         assertTrue(
@@ -108,7 +108,7 @@ class HubManagerRoundTripTest {
                 ClientMessageCodec.encode(
                     ClientMessage.Connect(playerName = "Bob", token = bobToken))))
         bobSocket.incomingChannel.close()
-        HubConnection(registry, store, null, testI18n()).handle(bobSocket, null)
+        HubConnection(registry, store, testI18n()).handle(bobSocket, null)
 
         val sync =
             outgoingMessages(bobSocket).filterIsInstance<ServerMessage.MailSync>().lastOrNull()
@@ -153,9 +153,7 @@ class HubManagerRoundTripTest {
                     ClientMessageCodec.encode(
                         ClientMessage.Connect(playerName = "Alice", token = token))))
 
-            val job = launch {
-                HubConnection(registry, store, null, testI18n()).handle(hubSocket, null)
-            }
+            val job = launch { HubConnection(registry, store, testI18n()).handle(hubSocket, null) }
             hubSocket.outgoingChannel.receive() // first sync message — attach is done
 
             // A broadcast after attach must fan out to both sockets of the one PlayerSession.

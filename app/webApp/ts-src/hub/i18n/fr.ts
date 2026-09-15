@@ -19,15 +19,11 @@ export const fr: Record<TranslationKey, string> = {
   "auth.password": "Mot de passe",
   "auth.login": "Se connecter",
   "auth.loggingIn": "Connexion…",
-  "auth.continue": "Continuer",
-  "auth.connecting": "Connexion…",
   "auth.invalidCredentials": "Email ou mot de passe invalide.",
-  "auth.invalidEmail": "Veuillez saisir une adresse email valide.",
   "auth.connectionError": "Erreur de connexion. Le serveur est-il lancé ?",
   "auth.continueWithGoogle": "Continuer avec Google",
   "auth.modeLocal": "Auth locale",
   "auth.modeOauth": "OAuth",
-  "auth.modeNone": "Serveur ouvert",
 
   "placeholder.comingSoon": "Cet écran n'est pas encore disponible.",
 };

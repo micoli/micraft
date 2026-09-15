@@ -57,7 +57,7 @@ open class PlayerSession(
     @Volatile var state: PlayerState,
     @Volatile var vy: Float = 0f,
     val networkStats: NetworkStats = NetworkStats(),
-    val permissions: Set<String> = emptySet(),
+    @Volatile var permissions: Set<String> = emptySet(),
     val chunkMode: String = "websocket",
     val connectionId: String = "",
 ) {

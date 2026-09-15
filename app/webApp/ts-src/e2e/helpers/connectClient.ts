@@ -4,7 +4,7 @@ import { adminWorldContext, createPlayer } from "./admin";
 import { CENTER_X, CENTER_Z, DROP_Y, GROUND_Y, SETTLED_Y } from "./constants";
 import { actions } from "./game";
 import type { E2eSnapshot } from "../../game/lib/e2eBridge";
-import { putApiAdminGametime } from "../../generated/api/requests";
+import { putApiAdminGametime, postAuthLogin } from "../../generated/api/requests";
 
 export interface E2eAccount {
   email: string;
@@ -20,10 +20,12 @@ export interface E2eAccount {
  * Seed the storage the reconnect path in GameScreen.tsx reads, mark the page as e2e, then load
  * `/game/<email>/<playerId>` and wait until the wasm client reports a settled spawn.
  *
- * auth.provider is `none` (repo default): no real token, `onConnect` skips the token check. The
- * RPG player is created server-side first via `POST /api/admin/players` (reserves the id + a
- * WARRIOR character `onConnect` then uses), so `acct.playerId` matches `mcE2E.playerId`, the
- * client gets CharacterSync, and it never routes to `/char-rpg-create`.
+ * The RPG player is created server-side first via `POST /api/admin/players` (reserves the id + a
+ * WARRIOR character `onConnect` then uses, and creates the local account if it doesn't exist yet),
+ * so `acct.playerId` matches `mcE2E.playerId`, the client gets CharacterSync, and it never routes
+ * to `/char-rpg-create`. A real bearer token is then obtained via `POST /auth/login` — the E2E
+ * server runs `auth.provider=local` with `requirePassword=false`, so any password logs in the
+ * just-created account — and stashed where GameScreen.tsx's reconnect path reads it.
  */
 export interface ConnectOptions {
   lang?: string;
@@ -58,6 +60,11 @@ export async function connectClient(
   const created = await createPlayer(acct);
   await putApiAdminGametime({ ...adminWorldContext(acct), body: { hour: 9, minute: 0 } });
   acct.playerId = created.playerId;
+  const { data: loginData } = await postAuthLogin({
+    ...adminWorldContext(acct),
+    body: { email: acct.email, password: "e2e" },
+  });
+  const token = loginData!.token;
   const logs: string[] = [];
   page.on("console", (m) => logs.push(`[${m.type()}] ${m.text()}`));
   page.on("pageerror", (e) => logs.push(`[pageerror] ${e.message}`));
@@ -67,7 +74,7 @@ export async function connectClient(
   page.on("requestfailed", (r) => logs.push(`[reqfail] ${r.url()} ${r.failure()?.errorText ?? ""}`));
 
   await page.addInitScript(
-    ([a, l, noWorld]) => {
+    ([a, l, noWorld, token]) => {
       const w = window as unknown as {
         __mcE2E?: boolean;
         __mcE2ESession?: string;
@@ -84,9 +91,9 @@ export async function connectClient(
         "micraft_users",
         JSON.stringify({ [a.email]: [{ name: a.charName, id: a.playerId ?? a.charId }] }),
       );
-      sessionStorage.setItem("micraft_auth_token", "");
+      sessionStorage.setItem("micraft_auth_token", token);
     },
-    [acct, lang, noWorld] as const,
+    [acct, lang, noWorld, token] as const,
   );
 
   await page.goto(`/game/${encodeURIComponent(acct.email)}/${acct.playerId ?? acct.charId}`);

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
 import {
   getStoredToken,
-  getAccountEmail,
   storeToken,
   storeDisplayName,
   saveAccountEmail,
@@ -41,16 +40,10 @@ export function HubAuthGate({ children }: { children: React.ReactNode }) {
     }
 
     const token = getStoredToken();
-    // auth.provider=none never issues a token (server has no TokenStore at all) — the account
-    // email saved by HubLoginRoute IS the login there. Only local/oauth need an actual token.
     if (!token) {
-      if (getAccountEmail()) setStatus("authenticated");
-      else setStatus("unauthenticated");
+      setStatus("unauthenticated");
       return;
     }
-    // /auth/me only exists when a token store is configured (local/oauth); with provider=none it
-    // 404s and the stored token is trusted as-is — the WS Connect handshake is the real gate
-    // either way. Only a real 401 (token store present, token rejected) clears the session.
     fetch("/auth/me", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => {
         if (r.status === 401) {

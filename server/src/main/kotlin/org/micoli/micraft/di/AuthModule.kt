@@ -7,7 +7,6 @@ import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
 import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.LocalAuthProvider
-import org.micoli.micraft.auth.NoAuthAccountStore
 import org.micoli.micraft.auth.OAuthProvider
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.auth.loadGroupsConfig
@@ -33,13 +32,19 @@ class AuthModule {
         val authConfig = serverConfig.auth
         val provider =
             when (authConfig.provider) {
-                "local" -> LocalAuthProvider(Path.of(authConfig.local.usersFile), groupsConfig)
+                "local" ->
+                    LocalAuthProvider(
+                        Path.of(authConfig.local.usersFile),
+                        groupsConfig,
+                        requirePassword = authConfig.local.requirePassword)
                 "oauth" -> {
                     val oauthCfg =
                         authConfig.oauth ?: error("auth.oauth config required when provider=oauth")
                     OAuthProvider(oauthCfg, groupsConfig)
                 }
-                else -> null
+                else ->
+                    error(
+                        "Unknown auth.provider: '${authConfig.provider}' (expected 'local' or 'oauth')")
             }
         return OptionalAuthProvider(provider)
     }
@@ -51,13 +56,4 @@ class AuthModule {
     ): OptionalTokenStore =
         OptionalTokenStore(
             if (optionalAuthProvider.value != null) TokenStore(coroutineScope) else null)
-
-    @Single
-    fun optionalNoAuthAccountStore(serverConfig: ServerConfig): OptionalNoAuthAccountStore {
-        val authConfig = serverConfig.auth
-        return OptionalNoAuthAccountStore(
-            if (authConfig.provider == "none")
-                NoAuthAccountStore(ConfigPaths.dataConfig("auth/noauth_accounts.yaml"))
-            else null)
-    }
 }

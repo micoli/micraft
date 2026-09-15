@@ -29,14 +29,13 @@ class AdminPlayerEquipmentRoutesTest {
     private fun persistence() = WorldPersistence(Files.createTempDirectory("admin-equipment-test"))
 
     private fun controller(persistence: WorldPersistence) =
-        AdminController(null, null, persistence, GameLoop(testWorld()), null)
+        AdminController(null, persistence, GameLoop(testWorld()), null)
 
     private fun controllerWithSession(
         persistence: WorldPersistence,
         sessionRegistry: SessionRegistry
     ) =
         AdminController(
-            null,
             null,
             persistence,
             GameLoop(testWorld(), persistence = persistence, sessionRegistry = sessionRegistry),

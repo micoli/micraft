@@ -62,14 +62,14 @@ subclass with the next free `@ProtoId`; the build fails on a missing / duplicate
 
 ## Auth system
 
-Provider selected via `data/config/server.yaml` → `auth.provider` (`none` | `local` | `oauth`). Default `none` = no auth.
+Provider selected via `data/config/server.yaml` → `auth.provider` (`local` | `oauth`). Default `local` with `auth.local.requirePassword: false` — accounts still live in `users.yaml` with real RBAC groups, just without a password check; an unknown email is auto-provisioned into `defaultGroups` on first login. Set `requirePassword: true` to require a real bcrypt-checked password instead.
 
 **Flow**: client fetches `GET /api/auth/config` → login overlay shows matching UI → `POST /auth/login` or OAuth redirect → `TokenStore` issues UUID token (10-min TTL) → token sent in `ClientMessage.Connect` → `GameLoop.onConnect()` validates before creating session.
 
 **HTTP routes** (all proxied through webpack dev server via `/auth` context):
 | Route | Purpose |
 |-------|---------|
-| `GET /api/auth/config` | Returns `{"provider":"local\|oauth\|none"}` |
+| `GET /api/auth/config` | Returns `{"provider":"local\|oauth","requirePassword":bool}` |
 | `POST /auth/login` | `{email, password}` → `{token, displayName, playerId}` |
 | `GET /auth/oauth/start?returnUrl=` | Redirect to Google |
 | `GET /auth/callback?code=&state=` | Exchange code → redirect to `returnUrl#auth_token=&auth_name=` |

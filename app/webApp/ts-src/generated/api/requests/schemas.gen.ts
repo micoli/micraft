@@ -10,41 +10,90 @@ export const org_micoli_micraft_auth_AuthConfigResponseSchema = {
         provider: {
             type: 'string',
             title: 'String'
+        },
+        requirePassword: {
+            type: 'boolean',
+            title: 'Boolean'
         }
     },
     required: [
         'messageEncoder',
-        'provider'
+        'provider',
+        'requirePassword'
     ],
     title: 'AuthConfigResponse'
 } as const;
 
-export const org_micoli_micraft_auth_NoAuthLoginRequestSchema = {
+export const org_micoli_micraft_auth_AuthMeResponseSchema = {
     type: 'object',
     properties: {
+        displayName: {
+            type: 'string',
+            title: 'String'
+        },
         email: {
+            type: 'string',
+            title: 'String'
+        },
+        playerId: {
             type: 'string',
             title: 'String'
         }
     },
     required: [
-        'email'
+        'displayName',
+        'email',
+        'playerId'
     ],
-    title: 'NoAuthLoginRequest'
+    title: 'AuthMeResponse'
 } as const;
 
-export const org_micoli_micraft_auth_NoAuthLoginResponseSchema = {
+export const org_micoli_micraft_auth_LoginRequestSchema = {
     type: 'object',
     properties: {
         email: {
             type: 'string',
             title: 'String'
+        },
+        password: {
+            type: 'string',
+            title: 'String'
         }
     },
     required: [
-        'email'
+        'email',
+        'password'
     ],
-    title: 'NoAuthLoginResponse'
+    title: 'LoginRequest'
+} as const;
+
+export const org_micoli_micraft_auth_LoginResponseSchema = {
+    type: 'object',
+    properties: {
+        displayName: {
+            type: 'string',
+            title: 'String'
+        },
+        email: {
+            type: 'string',
+            title: 'String'
+        },
+        playerId: {
+            type: 'string',
+            title: 'String'
+        },
+        token: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'displayName',
+        'email',
+        'playerId',
+        'token'
+    ],
+    title: 'LoginResponse'
 } as const;
 
 export const org_micoli_micraft_command_CompletionSchema = {
@@ -2243,6 +2292,101 @@ export const org_micoli_micraft_http_UpdateUserRequestSchema = {
         }
     },
     title: 'UpdateUserRequest'
+} as const;
+
+export const org_micoli_micraft_http_GroupDtoSchema = {
+    type: 'object',
+    properties: {
+        editable: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        },
+        permissions: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        }
+    },
+    required: [
+        'editable',
+        'name',
+        'permissions'
+    ],
+    title: 'GroupDto'
+} as const;
+
+export const org_micoli_micraft_http_GroupsListDtoSchema = {
+    type: 'object',
+    properties: {
+        defaultGroups: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
+        groups: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.http.GroupDto'
+            },
+            title: 'List<GroupDto>'
+        }
+    },
+    required: [
+        'defaultGroups',
+        'groups'
+    ],
+    title: 'GroupsListDto'
+} as const;
+
+export const org_micoli_micraft_http_CreateGroupRequestSchema = {
+    type: 'object',
+    properties: {
+        name: {
+            type: 'string',
+            title: 'String'
+        },
+        permissions: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        }
+    },
+    required: [
+        'name',
+        'permissions'
+    ],
+    title: 'CreateGroupRequest'
+} as const;
+
+export const org_micoli_micraft_http_UpdateGroupRequestSchema = {
+    type: 'object',
+    properties: {
+        permissions: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        }
+    },
+    required: [
+        'permissions'
+    ],
+    title: 'UpdateGroupRequest'
 } as const;
 
 export const org_micoli_micraft_http_CreatePlayerRequestSchema = {

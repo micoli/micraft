@@ -97,6 +97,86 @@ class AuthTest {
     }
 
     @Test
+    fun `login succeeds without password when requirePassword is false`() =
+        runBlocking<Unit> {
+            val tmp = Files.createTempFile("micraft-users", ".yaml")
+            tmp.toFile().writeText("users: []\n")
+            val provider = testAuthProvider(tmp, GroupsConfig(), requirePassword = false)
+            provider.addUser("nopass@example.com", "whatever", "No Password")
+
+            assertNotNull(provider.login("nopass@example.com", ""))
+            assertNotNull(provider.login("nopass@example.com", "totally-wrong"))
+
+            tmp.toFile().delete()
+        }
+
+    @Test
+    fun `login auto-provisions an unknown email when requirePassword is false`() =
+        runBlocking<Unit> {
+            val tmp = Files.createTempFile("micraft-users", ".yaml")
+            tmp.toFile().writeText("users: []\n")
+            val groups =
+                GroupsConfig(
+                    groups = listOf(GroupEntry("player", listOf("action.break"))),
+                    defaultGroups = listOf("player"))
+            val provider = testAuthProvider(tmp, groups, requirePassword = false)
+
+            val result = provider.login("newcomer@example.com", "")
+            assertNotNull(result)
+            assertEquals("newcomer@example.com", result.playerId)
+            assertEquals(setOf("action.break"), result.permissions)
+
+            // Persisted with the configured default groups, so the account shows up in /admin/users
+            // and a second login resolves the exact same (now-existing) account.
+            assertEquals(listOf("player"), provider.getUserGroups("newcomer@example.com"))
+            val secondLogin = provider.login("newcomer@example.com", "anything")
+            assertNotNull(secondLogin)
+
+            tmp.toFile().delete()
+        }
+
+    @Test
+    fun `login does not auto-provision an unknown email when requirePassword is true`() =
+        runBlocking<Unit> {
+            val tmp = Files.createTempFile("micraft-users", ".yaml")
+            tmp.toFile().writeText("users: []\n")
+            val provider = testAuthProvider(tmp, GroupsConfig(), requirePassword = true)
+
+            assertNull(provider.login("nobody@example.com", "any"))
+            assertEquals(null, provider.getUserGroups("nobody@example.com"))
+
+            tmp.toFile().delete()
+        }
+
+    @Test
+    fun `login rejects malformed email even when requirePassword is false`() =
+        runBlocking<Unit> {
+            val tmp = Files.createTempFile("micraft-users", ".yaml")
+            tmp.toFile().writeText("users: []\n")
+            val provider = testAuthProvider(tmp, GroupsConfig(), requirePassword = false)
+
+            assertNull(provider.login("not-an-email", ""))
+
+            tmp.toFile().delete()
+        }
+
+    @Test
+    fun `addUser ignores supplied password when requirePassword is false`() =
+        runBlocking<Unit> {
+            val tmp = Files.createTempFile("micraft-users", ".yaml")
+            tmp.toFile().writeText("users: []\n")
+            val provider = testAuthProvider(tmp, GroupsConfig(), requirePassword = false)
+            provider.addUser("bob@example.com", "some-secret", "Bob")
+
+            // Even the password that was passed to addUser must not work as a real credential
+            // once the account is re-read under a requirePassword=true provider sharing the file.
+            val strictProvider = testAuthProvider(tmp, GroupsConfig(), requirePassword = true)
+            assertNull(strictProvider.login("bob@example.com", "some-secret"))
+
+            tmp.toFile().delete()
+        }
+
+    @Test
     fun localAuth_groupPermissions_resolvedInAuthResult() =
         runBlocking<Unit> {
             val tmp = Files.createTempFile("micraft-users", ".yaml")

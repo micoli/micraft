@@ -3,8 +3,9 @@ import { createRoot } from "react-dom/client";
 import { configureApiClient } from "../lib/apiClient";
 import { queryClient } from "../lib/queryClient";
 import { AdminApp } from "./AdminApp";
+import { getAdminToken } from "./auth/adminTokenStorage";
 
-configureApiClient();
+configureApiClient(getAdminToken);
 
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>

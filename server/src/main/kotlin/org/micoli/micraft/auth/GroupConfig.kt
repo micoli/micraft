@@ -37,6 +37,32 @@ data class GroupsConfig(
         allGroups.filter { it.name in groupNames }.flatMap { it.permissions }.toSet()
 
     fun resolveDefaultPermissions(): Set<String> = resolvePermissions(defaultGroups)
+
+    /** Creates or replaces a group. The virtual `admin` group (`*`) can never be edited. */
+    fun withUpsertedGroup(name: String, permissions: List<String>): GroupsConfig {
+        require(name != ADMIN_GROUP.name) { "Cannot modify the admin group" }
+        val index = groups.indexOfFirst { it.name == name }
+        val updated =
+            if (index >= 0)
+                groups.toMutableList().apply { this[index] = GroupEntry(name, permissions) }
+            else groups + GroupEntry(name, permissions)
+        return copy(groups = updated)
+    }
+
+    /**
+     * Removes a group and drops it from `defaultGroups`. The `admin` group can never be deleted.
+     */
+    fun withoutGroup(name: String): GroupsConfig {
+        require(name != ADMIN_GROUP.name) { "Cannot delete the admin group" }
+        return copy(
+            groups = groups.filter { it.name != name },
+            defaultGroups = defaultGroups.filter { it != name })
+    }
+}
+
+fun writeGroupsConfig(path: Path, config: GroupsConfig) {
+    path.parent?.createDirectories()
+    path.writeText(Yaml.default.encodeToString(GroupsConfig.serializer(), config))
 }
 
 fun loadGroupsConfig(path: Path, resourcesPath: Path): GroupsConfig {

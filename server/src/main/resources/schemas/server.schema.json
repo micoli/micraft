@@ -88,6 +88,9 @@
             },
             "groupsFile": {
               "type": "string"
+            },
+            "requirePassword": {
+              "type": "boolean"
             }
           }
         },

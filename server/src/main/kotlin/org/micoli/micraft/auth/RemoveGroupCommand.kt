@@ -26,12 +26,14 @@ class RemoveGroupCommand : PluginCommand {
         }
         val email = parts[0]
         val toRemove = parts[1].split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        val groupsConfig = context.groupsConfig
         runCatching {
                 val current = provider.getUserGroups(email) ?: error("User not found: $email")
                 val updated = current.filter { it !in toRemove }
                 provider.setUserGroups(email, updated)
+                updated
             }
-            .onSuccess {
+            .onSuccess { updated ->
                 session.send(
                     ServerMessage.Notification(
                         context.i18n.t(
@@ -43,6 +45,7 @@ class RemoveGroupCommand : PluginCommand {
                     .sessions()
                     .filter { it.userName.equals(email, ignoreCase = true) }
                     .forEach { affected ->
+                        groupsConfig?.let { affected.permissions = it.resolvePermissions(updated) }
                         affected.send(
                             ServerMessage.Notification(
                                 context.i18n.t(

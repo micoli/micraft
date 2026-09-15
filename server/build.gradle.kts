@@ -83,9 +83,27 @@ tasks.register<JavaExec>("addUser") {
     }
 }
 
+// Fixed identity the e2e Playwright suite logs in as to call admin REST routes (see
+// app/webApp/ts-src/e2e/helpers/admin.ts) — `admin` group grants every permission via the
+// virtual `*` group. The password only matters if a developer's local server.yaml overrides
+// the default `auth.local.requirePassword: false`; it's otherwise ignored at login.
+tasks.register<JavaExec>("seedE2eAdmin") {
+    group = "e2e"
+    description =
+        "Idempotently create the e2e-admin@test.local local account runE2eServer logs in as"
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.auth.AddUserCliKt")
+    workingDir = rootProject.projectDir
+    args("e2e-admin@test.local", "e2e-admin-password", "E2E Admin", "admin")
+    // AddUserCli exits 2 if the account already exists from a previous run — that's the expected
+    // steady state, not a failure worth stopping the server launch for.
+    isIgnoreExitValue = true
+}
+
 tasks.register<JavaExec>("runE2eServer") {
     group = "e2e"
     description = "Run the Ktor server with the bounded E2E generator on a dedicated port"
+    dependsOn("seedE2eAdmin")
     classpath = sourceSets.main.get().runtimeClasspath
     mainClass.set("org.micoli.micraft.ApplicationKt")
     workingDir = rootProject.projectDir

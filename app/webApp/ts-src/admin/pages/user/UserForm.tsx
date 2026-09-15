@@ -5,19 +5,20 @@ import { useForm } from "@tanstack/react-form";
 import { Field } from "./Field";
 import { TextInput } from "./TextInput";
 import { Button } from "../../../primitives/Button";
+import { GroupsMultiSelect } from "../rbac/GroupsMultiSelect";
 
 export function UserForm({
   initial,
   onSave,
   onClose,
   isNew,
-  noauth = false,
+  requirePassword = true,
 }: {
   initial: Partial<UserDto & { password: string }>;
   onSave: (u: UserDto & { password?: string }) => Promise<void>;
   onClose: () => void;
   isNew: boolean;
-  noauth?: boolean;
+  requirePassword?: boolean;
 }) {
   const t = useT();
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +28,7 @@ export function UserForm({
       email: initial.email ?? "",
       password: "",
       displayName: initial.displayName ?? "",
-      groups: (initial.groups ?? []).join(", "),
+      groups: initial.groups ?? [],
     },
     onSubmit: async ({ value }) => {
       setError(null);
@@ -35,11 +36,8 @@ export function UserForm({
         await onSave({
           email: value.email,
           displayName: value.displayName || value.email,
-          groups: value.groups
-            .split(",")
-            .map((g) => g.trim())
-            .filter(Boolean),
-          password: isNew ? value.password : undefined,
+          groups: value.groups,
+          password: isNew ? (requirePassword ? value.password : "") : undefined,
         });
         onClose();
       } catch (e: unknown) {
@@ -71,7 +69,7 @@ export function UserForm({
           </form.Field>
         </Field>
       )}
-      {isNew && !noauth && (
+      {isNew && requirePassword && (
         <Field label={t("users.password")}>
           <form.Field name="password">
             {(field) => (
@@ -85,38 +83,27 @@ export function UserForm({
           </form.Field>
         </Field>
       )}
-      {!noauth && (
-        <Field label={t("users.displayName")}>
-          <form.Field name="displayName">
-            {(field) => (
-              <form.Subscribe selector={(state) => state.values.email}>
-                {(email) => (
-                  <TextInput
-                    value={field.state.value}
-                    onChange={field.handleChange}
-                    onBlur={field.handleBlur}
-                    placeholder={email}
-                  />
-                )}
-              </form.Subscribe>
-            )}
-          </form.Field>
-        </Field>
-      )}
-      {!noauth && (
-        <Field label={t("users.groupsField")}>
-          <form.Field name="groups">
-            {(field) => (
-              <TextInput
-                value={field.state.value}
-                onChange={field.handleChange}
-                onBlur={field.handleBlur}
-                placeholder={t("users.groupsPlaceholder")}
-              />
-            )}
-          </form.Field>
-        </Field>
-      )}
+      <Field label={t("users.displayName")}>
+        <form.Field name="displayName">
+          {(field) => (
+            <form.Subscribe selector={(state) => state.values.email}>
+              {(email) => (
+                <TextInput
+                  value={field.state.value}
+                  onChange={field.handleChange}
+                  onBlur={field.handleBlur}
+                  placeholder={email}
+                />
+              )}
+            </form.Subscribe>
+          )}
+        </form.Field>
+      </Field>
+      <Field label={t("users.groupsField")}>
+        <form.Field name="groups">
+          {(field) => <GroupsMultiSelect value={field.state.value} onChange={field.handleChange} />}
+        </form.Field>
+      </Field>
       {error && <p className="text-red-400 text-xs">{error}</p>}
       <div className="flex gap-2 justify-end pt-1">
         <Button variant="ghost" onClick={onClose} type="button">

@@ -2,20 +2,17 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { KeyboardEvent } from "react";
 import { useForm } from "@tanstack/react-form";
-import { z } from "zod";
 import { Input } from "../primitives/Input";
 import { Label } from "../primitives/Label";
 import { Button } from "../primitives/Button";
 import { Panel } from "../primitives/Panel";
 import { FormField } from "../primitives/FormField";
-import { getApiAuthConfig, postAuthNoauthLogin } from "../generated/api/requests";
+import { getApiAuthConfig, postAuthLogin, getAuthMe } from "../generated/api/requests";
 import {
   AuthMode,
   getStoredToken,
   storeToken,
   clearStoredToken,
-  getLastLang,
-  saveLastLang,
   getLastUser,
   saveLastUser,
   storeDisplayName,
@@ -24,18 +21,10 @@ import {
   saveAccountEmail,
 } from "../lib/authStorage";
 
-const SUPPORTED_LANGS: { code: string; label: string }[] = [
-  { code: "en", label: "English" },
-  { code: "fr", label: "Français" },
-];
-
-const noneEmailSchema = z
-  .string()
-  .refine((v) => v === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Please enter a valid email address.");
-
 export function AuthScreen() {
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<AuthMode>("loading");
+  const [requirePassword, setRequirePassword] = useState(true);
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [serverReady, setServerReady] = useState(false);
@@ -47,25 +36,19 @@ export function AuthScreen() {
     defaultValues: { username: "", password: "" },
     onSubmit: async ({ value }) => {
       const user = value.username.trim();
-      if (!user || !value.password) return;
+      if (!user || (requirePassword && !value.password)) return;
       setAuthLoading(true);
       setAuthError("");
       try {
-        // /auth/login is only registered when auth.provider is local/oauth — not in the
-        // default (none) config the committed openapi.yaml is generated against, so it has
-        // no generated client function. Kept as a manual fetch.
-        const r = await fetch("/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: user, password: value.password }),
+        const { data, response } = await postAuthLogin({
+          body: { email: user, password: requirePassword ? value.password : "" },
         });
-        if (!r.ok) {
+        if (!response?.ok || !data) {
           setAuthError("Invalid email or password.");
           setAuthLoading(false);
           passwordInputRef.current?.focus();
           return;
         }
-        const data: { token: string; displayName: string; email?: string } = await r.json();
         storeToken(data.token);
         storeDisplayName(data.displayName || user);
         saveAccountEmail(data.email || user);
@@ -79,45 +62,15 @@ export function AuthScreen() {
     },
   });
 
-  const noneForm = useForm({
-    defaultValues: { username: "", lang: getLastLang() },
-    onSubmit: async ({ value }) => {
-      const trimmed = value.username.trim();
-      if (!trimmed) return;
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-        setAuthError("Please enter a valid email address.");
-        return;
-      }
-      setAuthLoading(true);
-      setAuthError("");
-      try {
-        const { error } = await postAuthNoauthLogin({ body: { email: trimmed } });
-        if (error) {
-          setAuthError("Invalid email address.");
-          setAuthLoading(false);
-          return;
-        }
-      } catch {
-        setAuthError("Connection error. Is the server running?");
-        setAuthLoading(false);
-        return;
-      }
-      saveLastUser(trimmed);
-      saveAccountEmail(trimmed);
-      saveLastLang(value.lang);
-      setAuthLoading(false);
-      navigate("/chars");
-    },
-  });
-
   useEffect(() => {
     getApiAuthConfig()
       .then(({ data }) => {
-        setAuthMode((data?.provider as AuthMode) || "none");
+        setAuthMode((data?.provider as AuthMode) || "local");
+        setRequirePassword(data?.requirePassword ?? true);
         setServerReady(true);
       })
       .catch(() => {
-        setAuthMode("none");
+        setAuthMode("local");
         setServerReady(true);
       });
   }, []);
@@ -141,7 +94,7 @@ export function AuthScreen() {
       }
     }
     const saved = getStoredToken();
-    if (saved && (authMode === "local" || authMode === "oauth")) {
+    if (saved) {
       const savedName = getStoredDisplayName() || getLastUser();
       if (savedName && getLastPlayer(savedName)) {
         window.mcState.intentionalDisconnect = true;
@@ -151,15 +104,12 @@ export function AuthScreen() {
       if (savedName) {
         navigate("/chars");
       } else {
-        // /auth/me is only registered when a token store exists (local/oauth) — same
-        // generated-client gap as /auth/login above.
-        fetch("/auth/me", { headers: { Authorization: `Bearer ${saved}` } })
-          .then((r) => (r.ok ? r.json() : null))
-          .then((d: { displayName: string; email?: string } | null) => {
-            const name = d?.displayName || "";
+        getAuthMe({ headers: { Authorization: `Bearer ${saved}` } })
+          .then(({ data }) => {
+            const name = data?.displayName || "";
             if (name) {
               storeDisplayName(name);
-              if (d?.email) saveAccountEmail(d.email);
+              if (data?.email) saveAccountEmail(data.email);
               saveLastUser(name);
               if (getLastPlayer(name)) {
                 window.mcState.intentionalDisconnect = true;
@@ -174,19 +124,6 @@ export function AuthScreen() {
           .catch(() => clearStoredToken());
       }
       return;
-    }
-    if (authMode === "none") {
-      const last = getLastUser();
-      if (last && getLastPlayer(last)) {
-        window.mcState.intentionalDisconnect = true;
-        navigate("/chars");
-        return;
-      }
-      if (last) {
-        navigate("/chars");
-        return;
-      }
-      setTimeout(() => usernameInputRef.current?.focus(), 50);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- navigate/refs are stable; only authMode drives this logic
   }, [authMode]);
@@ -213,7 +150,6 @@ export function AuthScreen() {
           <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#1a1a2e] border border-blue-900/60 text-blue-400/70">
             {authMode === "local" && "Local auth"}
             {authMode === "oauth" && "OAuth"}
-            {authMode === "none" && "Open server"}
           </span>
         </div>
 
@@ -245,7 +181,7 @@ export function AuthScreen() {
                     onChange={(e) => field.handleChange(e.target.value)}
                     onBlur={field.handleBlur}
                     onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                      if (e.key === "Enter") {
+                      if (e.key === "Enter" && requirePassword) {
                         e.preventDefault();
                         passwordInputRef.current?.focus();
                       }
@@ -254,21 +190,23 @@ export function AuthScreen() {
                 )}
               </localForm.Field>
             </FormField>
-            <FormField>
-              <Label>Password</Label>
-              <localForm.Field name="password">
-                {(field) => (
-                  <Input
-                    ref={passwordInputRef}
-                    type="password"
-                    placeholder="••••••••"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onBlur={field.handleBlur}
-                  />
-                )}
-              </localForm.Field>
-            </FormField>
+            {requirePassword && (
+              <FormField>
+                <Label>Password</Label>
+                <localForm.Field name="password">
+                  {(field) => (
+                    <Input
+                      ref={passwordInputRef}
+                      type="password"
+                      placeholder="••••••••"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                    />
+                  )}
+                </localForm.Field>
+              </FormField>
+            )}
             {authError && <div className="text-red-400 text-sm">{authError}</div>}
             <Button variant="blue" size="lg" className="w-full" type="submit" disabled={authLoading}>
               {authLoading ? "Logging in…" : "Login"}
@@ -286,68 +224,6 @@ export function AuthScreen() {
               <span>G</span> Continue with Google
             </button>
           </div>
-        )}
-
-        {authMode === "none" && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              noneForm.handleSubmit();
-            }}
-            className="space-y-5"
-          >
-            <FormField>
-              <Label>Email</Label>
-              <noneForm.Field name="username" validators={{ onChange: noneEmailSchema }}>
-                {(field) => (
-                  <Input
-                    ref={usernameInputRef}
-                    type="email"
-                    placeholder="your@email.com"
-                    value={field.state.value}
-                    onChange={(e) => {
-                      field.handleChange(e.target.value);
-                      setAuthError("");
-                    }}
-                    onBlur={field.handleBlur}
-                  />
-                )}
-              </noneForm.Field>
-            </FormField>
-            <FormField>
-              <Label>Language</Label>
-              <noneForm.Field name="lang">
-                {(field) => (
-                  <select
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    className="w-full bg-[#111] border border-[#444] rounded px-3 py-2 text-sm text-white cursor-pointer"
-                  >
-                    {SUPPORTED_LANGS.map((l) => (
-                      <option key={l.code} value={l.code}>
-                        {l.label}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </noneForm.Field>
-            </FormField>
-            {authError && <div className="text-red-400 text-sm">{authError}</div>}
-            <noneForm.Subscribe selector={(state) => state.values.username}>
-              {(username) => (
-                <Button
-                  variant="blue"
-                  size="lg"
-                  className="w-full"
-                  type="submit"
-                  disabled={!username.trim() || authLoading}
-                >
-                  {authLoading ? "Connecting…" : "Continue"}
-                </Button>
-              )}
-            </noneForm.Subscribe>
-          </form>
         )}
       </Panel>
     </div>

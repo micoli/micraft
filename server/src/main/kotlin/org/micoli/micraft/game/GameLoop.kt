@@ -14,7 +14,6 @@ import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.SERVER_BUILD_TIMESTAMP
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.GroupsConfig
-import org.micoli.micraft.auth.NoAuthAccountStore
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.command.CommandContext
@@ -230,7 +229,6 @@ class GameLoop(
     private val authProvider: AuthProvider? = null,
     private val groupsConfig: GroupsConfig? = null,
     private val reloadRbac: (() -> Unit)? = null,
-    private val noAuthAccountStore: NoAuthAccountStore? = null,
     private val chunkSection: ChunkSection = ChunkSection(),
     private val sessionRegistry: SessionRegistry = SessionRegistry(),
     private val playerPersister: PlayerPersister = PlayerPersister(persistence),
@@ -629,6 +627,11 @@ class GameLoop(
 
     private val commands: MutableMap<String, CommandHandler> =
         discoverCommandHandlers().toMutableMap()
+
+    /** Every distinct `permission` a registered slash command gates on — for the admin RBAC UI. */
+    fun knownCommandPermissions(): Set<String> =
+        commands.values.mapNotNull { it.permission }.toSet()
+
     private val pluginTickHandlers: MutableList<TickHandler> = mutableListOf()
 
     private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
@@ -1670,7 +1673,6 @@ class GameLoop(
                     socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "invalid email"))
                     return
                 }
-                noAuthAccountStore?.getOrCreate(email)
                 email
             }
 

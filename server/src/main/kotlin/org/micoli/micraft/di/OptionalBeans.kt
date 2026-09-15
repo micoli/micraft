@@ -1,7 +1,6 @@
 package org.micoli.micraft.di
 
 import org.micoli.micraft.auth.AuthProvider
-import org.micoli.micraft.auth.NoAuthAccountStore
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.auction.AuctionManager
 import org.micoli.micraft.game.mail.MailManager
@@ -23,8 +22,6 @@ class OptionalHouseConfig(val value: HouseConfig?)
 class OptionalAuthProvider(val value: AuthProvider?)
 
 class OptionalTokenStore(val value: TokenStore?)
-
-class OptionalNoAuthAccountStore(val value: NoAuthAccountStore?)
 
 class OptionalMailManager(val value: MailManager?)
 

@@ -56,7 +56,7 @@ class HubConnectAuthTest {
                     ClientMessage.Connect(playerName = "Alice", token = "not-a-valid-jwt"))))
         socket.incomingChannel.close()
 
-        HubConnection(registry(), store, null, testI18n()).handle(socket, null)
+        HubConnection(registry(), store, testI18n()).handle(socket, null)
 
         val closeFrame = socket.outgoingChannel.tryReceive().getOrNull() as? Frame.Close
         assertNotNull(closeFrame, "an invalid token must close the socket")
@@ -76,7 +76,7 @@ class HubConnectAuthTest {
         socket.incomingChannel.close()
 
         val gw = registry(persistence = null).defaultWorld
-        HubConnection(GameWorldRegistry(gw, false) { error("n/a") }, store, null, testI18n())
+        HubConnection(GameWorldRegistry(gw, false) { error("n/a") }, store, testI18n())
             .handle(socket, null)
 
         val closeFrame = socket.outgoingChannel.tryReceive().getOrNull() as? Frame.Close
@@ -99,7 +99,7 @@ class HubConnectAuthTest {
         socket.incomingChannel.close()
 
         val gw = registry(persistence).defaultWorld
-        HubConnection(GameWorldRegistry(gw, false) { error("n/a") }, store, null, testI18n())
+        HubConnection(GameWorldRegistry(gw, false) { error("n/a") }, store, testI18n())
             .handle(socket, null)
 
         val closeFrame = socket.outgoingChannel.tryReceive().getOrNull() as? Frame.Close
@@ -139,7 +139,7 @@ class HubConnectAuthTest {
 
         val gw = registry(persistence).defaultWorld
         val job = launch {
-            HubConnection(GameWorldRegistry(gw, false) { error("n/a") }, store, null, testI18n())
+            HubConnection(GameWorldRegistry(gw, false) { error("n/a") }, store, testI18n())
                 .handle(socket, null)
         }
         socket.outgoingChannel.receive() // first sync message (WalletUpdate) — registration is done

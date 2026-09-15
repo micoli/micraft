@@ -163,6 +163,10 @@ never hand-edit either.
 | GET | `/api/admin/configs/{...}` | Raw YAML content of a whitelisted config file |
 | PUT | `/api/admin/configs/{...}` | Overwrite a whitelisted config file's raw YAML content |
 | PUT | `/api/admin/gametime` | Set the in-game time of day |
+| GET | `/api/admin/groups` | All permission groups, including the virtual admin group |
+| POST | `/api/admin/groups` | Create a permission group |
+| DELETE | `/api/admin/groups/{name}` | Delete a group and unassign it from every user that has it |
+| PUT | `/api/admin/groups/{name}` | Replace a group's permission list |
 | GET | `/api/admin/instances` | All instance zones |
 | POST | `/api/admin/instances` | Create an instance zone covering already-generated chunks |
 | DELETE | `/api/admin/instances/{id}` | Delete an instance zone |
@@ -179,6 +183,7 @@ never hand-edit either.
 | GET | `/api/admin/npc-types` | NPC type definitions (codex info), keyed by type id |
 | POST | `/api/admin/npc-types/reload` | Reload NPC type definitions from resources/entities and despawn live instances so the spawner recreates them with the new model. Use after editing an entity bbmodel/yaml. |
 | GET | `/api/admin/npcs` | Live NPC instances with full animal/combat state |
+| GET | `/api/admin/permissions` | Every known permission string — slash commands' `permission` field (discovered live from the command registry) plus the fixed set checked outside the command system. For autocomplete, not validation — a group may still be given any free-form permission string. |
 | GET | `/api/admin/plain-colors` | All registered plain paint colors |
 | GET | `/api/admin/players` | All player names |
 | POST | `/api/admin/players` | Create a player identity in the target world and return its id. Reserves the id (and, with `characterClass`, a fresh RPG character) that `onConnect` will use — so an E2E test's RPG player is ready before the browser connects, with no character-creation screen. Also ensures the matching no-auth account exists. Does not write to persistence. |
@@ -288,7 +293,10 @@ never hand-edit either.
 | GET | `/api/tools` | List all tool definitions |
 | GET | `/api/vehicles/{name}/config` | Vehicle model config (speed, seat offset) for a named vehicle |
 | GET | `/api/weapons` | List all weapon definitions |
-| POST | `/auth/noauth-login` | Create/reuse an account by email when auth is disabled (auth.provider=none) |
+| GET | `/auth/callback` | OAuth authorization code callback — redirects with the session token in the URL fragment |
+| POST | `/auth/login` | Log in with email/password (local auth provider) |
+| GET | `/auth/me` | Resolve the current session from its bearer token |
+| GET | `/auth/oauth/start` | Redirect to the OAuth provider's consent screen |
 
 <!-- END_API_ROUTES -->
 

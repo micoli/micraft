@@ -7,7 +7,6 @@ import io.ktor.server.routing.get as undocumentedGet
 import io.ktor.server.websocket.*
 import java.io.File
 import org.micoli.micraft.I18nConfig
-import org.micoli.micraft.auth.NoAuthAccountStore
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.hub.HubConnection
@@ -20,7 +19,6 @@ import org.micoli.micraft.game.hub.HubConnection
 class HubController(
     private val gameLoop: GameLoop,
     private val tokenStore: TokenStore?,
-    private val noAuthAccountStore: NoAuthAccountStore?,
     private val i18n: I18nConfig,
 ) {
     fun register(route: Route) {
@@ -36,7 +34,7 @@ class HubController(
             }
 
             webSocket("/hub") {
-                HubConnection(gameLoop.gameWorldRegistry, tokenStore, noAuthAccountStore, i18n)
+                HubConnection(gameLoop.gameWorldRegistry, tokenStore, i18n)
                     .handle(
                         this,
                         call.request.queryParameters["lang"],

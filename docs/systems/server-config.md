@@ -37,10 +37,11 @@ player:
   speedSneaking: 1.3
   speedCrawling: 1.0
 auth:
-  provider: none              # none | local | oauth
+  provider: local              # local | oauth
   local:
     usersFile: data/config/auth/users.yaml
     groupsFile: data/config/auth/groups.yaml
+    requirePassword: false
 chunks:
   transport: websocket        # websocket | http
   httpWorkers: 4

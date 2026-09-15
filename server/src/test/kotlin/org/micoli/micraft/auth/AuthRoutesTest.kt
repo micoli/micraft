@@ -11,6 +11,7 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.support.testAuthProvider
@@ -21,11 +22,11 @@ class AuthRoutesTest {
 
     @Test
     fun `auth config returns provider name`() = testApplication {
-        application { installAuthRoutes("none", null, null, "protobuf") }
+        application { installAuthRoutes("local", null, null, "protobuf") }
         val r = client.get("/api/auth/config")
         assertEquals(HttpStatusCode.OK, r.status)
         val body = r.bodyAsText()
-        assertTrue(body.contains("\"none\""))
+        assertTrue(body.contains("\"local\""))
         assertTrue(body.contains("\"protobuf\""))
     }
 
@@ -50,6 +51,36 @@ class AuthRoutesTest {
         assertTrue(!token.isNullOrEmpty())
         assertEquals("Alice", json["displayName"]?.jsonPrimitive?.content)
         assertEquals("alice@test.com", json["email"]?.jsonPrimitive?.content)
+
+        tmp.toFile().delete()
+    }
+
+    @Test
+    fun `auth config reports requirePassword flag`() = testApplication {
+        application { installAuthRoutes("local", null, null, "protobuf", requirePassword = false) }
+        val r = client.get("/api/auth/config")
+        val json = Json.parseToJsonElement(r.bodyAsText()).jsonObject
+        assertEquals(false, json["requirePassword"]?.jsonPrimitive?.boolean)
+    }
+
+    @Test
+    fun `login succeeds with any password when requirePassword is false`() = testApplication {
+        val tmp = Files.createTempFile("micraft-users", ".yaml")
+        tmp.toFile().writeText("users: []\n")
+        val provider = testAuthProvider(tmp, GroupsConfig(), requirePassword = false)
+        provider.addUser("erin@test.com", "irrelevant", "Erin")
+        val store = TokenStore(scope)
+
+        application {
+            installAuthRoutes("local", provider, store, "protobuf", requirePassword = false)
+        }
+
+        val r =
+            client.post("/auth/login") {
+                contentType(ContentType.Application.Json)
+                setBody("""{"email":"erin@test.com","password":""}""")
+            }
+        assertEquals(HttpStatusCode.OK, r.status)
 
         tmp.toFile().delete()
     }
@@ -107,42 +138,5 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.OK, r.status)
         val json = Json.parseToJsonElement(r.bodyAsText()).jsonObject
         assertEquals("carol@test.com", json["email"]?.jsonPrimitive?.content)
-    }
-
-    @Test
-    fun `noauth-login creates account and returns email`() = testApplication {
-        val file = java.io.File.createTempFile("noauth-accounts", ".yaml").also { it.delete() }
-        val store = NoAuthAccountStore(file.toPath())
-
-        application { installAuthRoutes("none", null, null, "protobuf", store) }
-
-        val r =
-            client.post("/auth/noauth-login") {
-                contentType(ContentType.Application.Json)
-                setBody("""{"email":"dave@test.com"}""")
-            }
-        assertEquals(HttpStatusCode.OK, r.status)
-        val json = Json.parseToJsonElement(r.bodyAsText()).jsonObject
-        assertEquals("dave@test.com", json["email"]?.jsonPrimitive?.content)
-        assertTrue(store.exists("dave@test.com"))
-
-        file.delete()
-    }
-
-    @Test
-    fun `noauth-login rejects invalid email`() = testApplication {
-        val file = java.io.File.createTempFile("noauth-accounts", ".yaml").also { it.delete() }
-        val store = NoAuthAccountStore(file.toPath())
-
-        application { installAuthRoutes("none", null, null, "protobuf", store) }
-
-        val r =
-            client.post("/auth/noauth-login") {
-                contentType(ContentType.Application.Json)
-                setBody("""{"email":"not-an-email"}""")
-            }
-        assertEquals(HttpStatusCode.BadRequest, r.status)
-
-        file.delete()
     }
 }

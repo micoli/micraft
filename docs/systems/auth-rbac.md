@@ -10,9 +10,15 @@ Selected via `data/config/server.yaml` → `auth.provider`:
 
 | Provider | Behaviour |
 |----------|-----------|
-| `none` | no auth (default) — `POST /auth/noauth-login` creates/reuses an account by email |
-| `local` | email + password, bcrypt hashed |
+| `local` (default) | email + password, bcrypt hashed, accounts in `users.yaml` with real RBAC groups |
 | `oauth` | Google Authorization Code flow |
+
+The password check itself can be disabled with `auth.local.requirePassword: false` (the shipped
+default) — login then succeeds for any known email regardless of the password sent, and an
+unknown email is auto-provisioned into `users.yaml` with `defaultGroups` on first login (so a
+fresh server needs no manual account setup, same zero-friction feel the old `none` provider had —
+minus the blanket `"*"` permissions it granted every session). Set `requirePassword: true` to
+require a real bcrypt-checked password and stop auto-provisioning unknown emails.
 
 ### Flow
 
@@ -23,7 +29,7 @@ session.
 
 | Route | Purpose |
 |-------|---------|
-| `GET /api/auth/config` | `{"provider": "..."}` |
+| `GET /api/auth/config` | `{"provider": "...", "requirePassword": true}` |
 | `POST /auth/login` | `{email, password}` → `{token, displayName, playerId}` |
 | `GET /auth/oauth/start?returnUrl=` | redirect to Google |
 | `GET /auth/callback?code=&state=` | exchange code → redirect with token fragment |
