@@ -1,3 +1,0 @@
-yield:
-  server:
-    usage: "Usage: /yield <message>"

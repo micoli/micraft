@@ -374,6 +374,14 @@ give_money:
 
 npc:
   server:
+    usage: "Usage : /npc <spawn <type> [nom] | list | remove <id|nom> | tp <id|nom>>"
+    spawned: "{0} ({1}) créé en {2}."
+    removed: "PNJ {0} supprimé."
+    not_found: "PNJ '{0}' introuvable."
+    listed: "{0} PNJ dans le monde."
+    tp_done: "PNJ {0} déplacé à votre position."
+    unknown_type: "Type de PNJ inconnu : {0}. Disponibles : {1}"
+    system_unavailable: "Système NPC non disponible."
     buy_usage: "Usage : /npcbuy <npcId> <typeItem> [quantité]"
     sell_usage: "Usage : /npcsell <npcId> <typeItem> [quantité]"
     unavailable: "Système NPC indisponible."
@@ -496,3 +504,47 @@ pet:
     level: "Niv"
     resurrect: "Ressusciter"
     cooldown: "Réanimation dans"
+
+kick:
+  server:
+    usage: "Usage : /kick <nomJoueur>"
+    not_found: "Joueur introuvable : {0}"
+    kicked_you: "Vous avez été expulsé par {0}."
+    kicked_broadcast: "{0} a expulsé {1}."
+
+goto:
+  server:
+    usage: "Usage : /goto <nomJoueur|nomNPC>"
+    not_found: "Introuvable : {0}"
+    done: "Téléporté vers {0}."
+
+teleport:
+  server:
+    usage: "Usage : /teleport <x> <y> <z>  ou  /teleport <nomJoueur>"
+    done: "Téléporté en ({0}, {1}, {2})."
+    not_found: "Joueur introuvable : {0}"
+
+who:
+  server:
+    empty: "Aucun joueur connecté."
+    online: "En ligne ({0}) :\n{1}"
+
+yield:
+  server:
+    usage: "Usage : /yield <message>"
+
+compass:
+  server:
+    usage: "Usage : /compass <x y z | nomPoint | toggle | clear>"
+    not_found: "Point inconnu : {0}"
+    no_target: "Aucune cible de boussole définie."
+    set: "Boussole pointée vers {0} {1} {2}."
+    set_named: "Boussole pointée vers {0}."
+    cleared: "Boussole désactivée."
+
+summon:
+  server:
+    usage: "Usage : /summon <nomJoueur>"
+    not_found: "Joueur introuvable : {0}"
+    summoned_you: "Vous avez été invoqué par {0}."
+    done: "{0} a été invoqué à votre position."

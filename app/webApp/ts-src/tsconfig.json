@@ -10,11 +10,7 @@
     "skipLibCheck": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "baseUrl": ".",
-    "paths": {
-      "@plugins/*": ["../../../plugins/*"],
-      "@plugins": ["../../../plugins"]
-    }
+    "baseUrl": "."
   },
   "include": ["./**/*.ts", "./**/*.tsx"],
   "exclude": ["./__tests__/**", "./vitest.config.ts", "./e2e/**"]

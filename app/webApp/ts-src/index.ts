@@ -1,7 +1,6 @@
 // mc_bindings.js — BabylonJS host functions called from Kotlin/Wasm via js()
 // Must be loaded AFTER babylon.js and BEFORE webApp.js.
 import type { Vector4 } from "@babylonjs/core";
-import { registerAllPlugins } from "@plugins/index";
 import { registerAutoUpdate } from "./lib/autoUpdate";
 import { registerUtils } from "./game/lib/utils";
 import { registerEngine } from "./game/lib/engine";
@@ -423,7 +422,6 @@ window.mc = {
   scenePreviewData: () => {},
 } satisfies McBindings;
 
-registerAllPlugins();
 registerAutoUpdate();
 
 async function mountUI() {

@@ -1,6 +1,0 @@
-summon:
-  server:
-    usage: "Usage: /summon <playerName>"
-    not_found: "Player not found: {0}"
-    summoned_you: "You were summoned by {0}."
-    done: "Summoned {0} to your location."

@@ -1,5 +1,0 @@
-goto:
-  server:
-    usage: "Usage: /goto <playerName|npcName>"
-    not_found: "Not found: {0}"
-    done: "Teleported to {0}."

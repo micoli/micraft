@@ -1,6 +1,0 @@
-kick:
-  server:
-    usage: "Usage: /kick <playerName>"
-    not_found: "Player not found: {0}"
-    kicked_you: "You have been kicked by {0}."
-    kicked_broadcast: "{0} kicked {1}."

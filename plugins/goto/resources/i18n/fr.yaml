@@ -1,5 +1,0 @@
-goto:
-  server:
-    usage: "Usage : /goto <nomJoueur|nomNPC>"
-    not_found: "Introuvable : {0}"
-    done: "Téléporté vers {0}."

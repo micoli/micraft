@@ -1,4 +1,0 @@
-who:
-  server:
-    empty: "Aucun joueur connecté."
-    online: "En ligne ({0}) :\n{1}"

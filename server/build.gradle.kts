@@ -21,35 +21,6 @@ tasks.named<ProcessResources>("processResources") {
     }
 }
 
-sourceSets {
-    main {
-        kotlin {
-            val pluginsDir = rootProject.projectDir.resolve("plugins")
-            if (pluginsDir.exists()) {
-                pluginsDir
-                    .listFiles { f -> f.isDirectory }
-                    ?.forEach { pluginDir ->
-                        val serverDir = pluginDir.resolve("server")
-                        if (serverDir.exists()) srcDir(serverDir)
-                    }
-            }
-        }
-    }
-    test {
-        kotlin {
-            val pluginsDir = rootProject.projectDir.resolve("plugins")
-            if (pluginsDir.exists()) {
-                pluginsDir
-                    .listFiles { f -> f.isDirectory }
-                    ?.forEach { pluginDir ->
-                        val testDir = pluginDir.resolve("test")
-                        if (testDir.exists()) srcDir(testDir)
-                    }
-            }
-        }
-    }
-}
-
 val rootDirPath: String = rootProject.projectDir.absolutePath
 
 tasks.test {

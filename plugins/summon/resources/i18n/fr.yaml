@@ -1,6 +1,0 @@
-summon:
-  server:
-    usage: "Usage : /summon <nomJoueur>"
-    not_found: "Joueur introuvable : {0}"
-    summoned_you: "Vous avez été invoqué par {0}."
-    done: "{0} a été invoqué à votre position."
