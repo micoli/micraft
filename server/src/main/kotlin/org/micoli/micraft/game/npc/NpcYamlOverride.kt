@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.npc
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.game.armor.ArmorDropEntry
 import org.micoli.micraft.game.npc.animal.AnimalYamlOverride
 import org.micoli.micraft.game.npc.pack.PackConfigOverride
 import org.micoli.micraft.game.world.block.DropEntry
@@ -42,5 +43,5 @@ data class NpcYamlOverride(
     val tameBaseChance: Float? = null,
     val movementMode: List<MovementMode>? = null,
     val offersQuests: List<String>? = null,
-    val armorLoot: List<org.micoli.micraft.game.armor.ArmorDropEntry>? = null,
+    val armorLoot: List<ArmorDropEntry>? = null,
 )

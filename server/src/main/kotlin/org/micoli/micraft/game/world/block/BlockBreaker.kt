@@ -14,6 +14,7 @@ import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
 import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
@@ -41,7 +42,7 @@ class BlockBreaker(
     private val claimRegistry: ClaimRegistry? = null,
     private val railNetworkRegistry: RailNetworkRegistry? = null,
     private val actionBlockRegistry:
-        org.micoli.micraft.game.world.actionblock.ActionBlockRegistry? =
+        ActionBlockRegistry? =
         null,
     private val weaponRegistry: () -> Map<String, WeaponDefinition> = { emptyMap() },
     private val toolRegistry: () -> Map<String, ToolDefinition> = { emptyMap() },

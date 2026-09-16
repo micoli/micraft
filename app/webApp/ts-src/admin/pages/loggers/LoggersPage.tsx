@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getApiAdminLoggers } from "../../../generated/api/requests";
 import type { OrgMicoliMicraftHttpLoggerLevelDto as LoggerRow } from "../../../generated/api/requests";
+import { getAdminToken } from "../../auth/adminTokenStorage";
 import { useT } from "../../i18n";
 
 const LEVELS = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"] as const;
@@ -27,7 +28,10 @@ export function LoggersPage() {
       // ConfigEditorPage for {filename...}. Kept as a manual fetch.
       const r = await fetch(`/api/admin/loggers/${encodeURIComponent(name)}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getAdminToken()}`,
+        },
         body: JSON.stringify({ level }),
       });
       if (!r.ok) throw new Error();

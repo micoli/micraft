@@ -40,14 +40,18 @@ import org.micoli.micraft.di.loadRegistries
 import org.micoli.micraft.game.GameConfig
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.ServerConfig
+import org.micoli.micraft.game.SharedGameServices
 import org.micoli.micraft.game.applyServerConfig
 import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.classes.ClassesConfig
 import org.micoli.micraft.game.classes.ClassesConfigData
+import org.micoli.micraft.game.combat.CombatConfig
 import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.RegenProcessor
+import org.micoli.micraft.game.combat.SkillsConfig
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
@@ -57,6 +61,8 @@ import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
+import org.micoli.micraft.game.pet.PetCoordinator
+import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.placeable.furniture.FurnitureRegistryLoader
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileManager
@@ -67,6 +73,7 @@ import org.micoli.micraft.game.plaincolor.PlainColorRegistryLoader
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
+import org.micoli.micraft.game.rpg.ExperienceConfig
 import org.micoli.micraft.game.rpg.ExperienceConfigData
 import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.session.NetworkStats
@@ -76,18 +83,24 @@ import org.micoli.micraft.game.trade.TradeConfigLoader
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.vehicle.VehicleRegistryLoader
+import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
 import org.micoli.micraft.game.world.biome.BiomeRegistry
 import org.micoli.micraft.game.world.biome.loadBiomeRegistry
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockPlacer
 import org.micoli.micraft.game.world.block.BlockRegistryLoader
+import org.micoli.micraft.game.world.claim.ClaimManager
+import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.house.loadHouseConfig
+import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.game.world.road.loadRoadConfig
+import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.game.world.weather.WeatherConfig
@@ -158,9 +171,9 @@ private fun applyE2eOverridesIfEnabled() {
  */
 internal fun applyE2eWorldOverrides(groundY: Int) {
     org.micoli.micraft.game.SPAWN_Y = (groundY + 8).toFloat()
-    org.micoli.micraft.game.world.WorldConstants.VIEW_RADIUS = 3
-    org.micoli.micraft.game.world.WorldConstants.FORWARD_VIEW_RADIUS = 3
-    org.micoli.micraft.game.world.WorldConstants.WATER_LEVEL = 0
+    WorldConstants.VIEW_RADIUS = 3
+    WorldConstants.FORWARD_VIEW_RADIUS = 3
+    WorldConstants.WATER_LEVEL = 0
 }
 
 @kotlinx.serialization.Serializable data class PlayerByEmailEntry(val name: String, val id: String)
@@ -268,12 +281,11 @@ fun Application.module() {
             weatherManager = get<WeatherManager>(),
             configRegistry = get<ConfigRegistry>(),
             liquidManager = get<LiquidManager>(),
-            instanceRegistry = get<org.micoli.micraft.game.world.instance.InstanceRegistry>(),
-            claimRegistry = get<org.micoli.micraft.game.world.claim.ClaimRegistry>(),
-            actionBlockRegistry =
-                get<org.micoli.micraft.game.world.actionblock.ActionBlockRegistry>(),
-            claimManager = get<org.micoli.micraft.game.world.claim.ClaimManager>(),
-            sceneRegistry = get<org.micoli.micraft.game.world.scene.SceneRegistry>(),
+            instanceRegistry = get<InstanceRegistry>(),
+            claimRegistry = get<ClaimRegistry>(),
+            actionBlockRegistry = get<ActionBlockRegistry>(),
+            claimManager = get<ClaimManager>(),
+            sceneRegistry = get<SceneRegistry>(),
             vegetationConfig = get<VegetationConfig>(),
             vegetationManager = get<VegetationManager>(),
             recipeRegistryLoader = get<RecipeRegistryLoader>(),
@@ -290,10 +302,10 @@ fun Application.module() {
             attackRegistry = get(named("attacks")),
             spellRegistry = get(named("spells")),
             classesData = get<ClassesConfigData>(),
-            combatConfigLoader = get<org.micoli.micraft.game.combat.CombatConfig>(),
-            skillsConfigLoader = get<org.micoli.micraft.game.combat.SkillsConfig>(),
-            classesConfigLoader = get<org.micoli.micraft.game.classes.ClassesConfig>(),
-            experienceConfigLoader = get<org.micoli.micraft.game.rpg.ExperienceConfig>(),
+            combatConfigLoader = get<CombatConfig>(),
+            skillsConfigLoader = get<SkillsConfig>(),
+            classesConfigLoader = get<ClassesConfig>(),
+            experienceConfigLoader = get<ExperienceConfig>(),
             combatProcessor = get<CombatProcessor>(),
             statusEffectProcessor = get<StatusEffectProcessor>(),
             regenProcessor = get<RegenProcessor>(),
@@ -309,11 +321,11 @@ fun Application.module() {
             networkStats = get<NetworkStats>(),
             commandContextFactory = { closures -> get<CommandContext> { parametersOf(closures) } },
             experienceProcessor = get<ExperienceProcessor>(),
-            petManager = get<org.micoli.micraft.game.pet.PetManager>(),
-            petCoordinator = get<org.micoli.micraft.game.pet.PetCoordinator>(),
+            petManager = get<PetManager>(),
+            petCoordinator = get<PetCoordinator>(),
             questManager = get<QuestManager>(),
             questRegistryLoader = get<QuestRegistryLoader>(),
-            shared = get<org.micoli.micraft.game.SharedGameServices>(),
+            shared = get<SharedGameServices>(),
         )
     gameLoop.start(this)
     installAuthRoutes(

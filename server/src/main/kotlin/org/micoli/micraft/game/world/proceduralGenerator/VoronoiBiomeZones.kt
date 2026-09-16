@@ -8,6 +8,7 @@ import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.biome.BiomeDefinition
 import org.micoli.micraft.game.world.biome.BiomeRegistry
+import org.micoli.micraft.game.world.biome.FillerEntry
 
 class VoronoiBiomeZones(
     private val seed: Long,
@@ -349,7 +350,7 @@ class VoronoiBiomeZones(
         val surface: BlockType,
         val subsurface: BlockType,
         val subsurfaceDepth: Int,
-        val fillers: List<org.micoli.micraft.game.world.biome.FillerEntry>,
+        val fillers: List<FillerEntry>,
     )
 
     fun effectiveBiome(

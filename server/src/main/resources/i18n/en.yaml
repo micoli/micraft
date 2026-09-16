@@ -166,11 +166,12 @@ config_reload:
 rbac:
   server:
     no_permission: "You don't have permission to use this command."
-    group_set: "User {0} added to group(s): {1}."
-    group_removed: "User {0} removed from group(s): {1}."
+    group_set: "Player {0} added to group(s): {1}."
+    group_removed: "Player {0} removed from group(s): {1}."
     groups_list: "Groups:{0}"
     group_not_found: "Unknown group(s): {0}"
-    your_groups_updated: "Your group membership has been updated. Re-login for permissions to take effect."
+    player_not_found: "Player not found: {0}"
+    your_groups_updated: "Your character's group membership has been updated — permissions take effect immediately."
 equip:
   server:
     usage: "Usage: /equip <armorName>"

@@ -4,6 +4,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.Json
 import org.micoli.micraft.babylon.*
 import org.micoli.micraft.combat.ShortcutSlot
+import org.micoli.micraft.game.ActionBlockManager
 import org.micoli.micraft.game.NetworkStats
 import org.micoli.micraft.game.NpcManager
 import org.micoli.micraft.game.world.BlockPos
@@ -131,7 +132,7 @@ class LocalPlayerController(
     private val playerName: () -> String,
     private val playerId: () -> String,
     private val npcManager: NpcManager,
-    private val actionBlockManager: org.micoli.micraft.game.ActionBlockManager? = null,
+    private val actionBlockManager: ActionBlockManager? = null,
     private val isVehicleTarget: (String) -> Boolean = { false },
     private val vehiclePositionOf: (String) -> Vec3? = { null },
     private val isPlaceableTarget: (String) -> Boolean = { false },
@@ -1160,13 +1161,13 @@ class LocalPlayerController(
                     val (item, n) = event.removePrefix("guild_bank_deposit:").split("\t")
                     outMessages.trySend(
                         ClientMessage.GuildBankDeposit(
-                            org.micoli.micraft.game.world.ItemType(item), n.toIntOrNull() ?: 0))
+                            ItemType(item), n.toIntOrNull() ?: 0))
                 }
                 event.startsWith("guild_bank_withdraw:") -> {
                     val (item, n) = event.removePrefix("guild_bank_withdraw:").split("\t")
                     outMessages.trySend(
                         ClientMessage.GuildBankWithdraw(
-                            org.micoli.micraft.game.world.ItemType(item), n.toIntOrNull() ?: 0))
+                            ItemType(item), n.toIntOrNull() ?: 0))
                 }
                 event.startsWith("faction_set:") ->
                     outMessages.trySend(

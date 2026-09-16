@@ -9,13 +9,17 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.drop.DropConfig
+import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.session.WorldActionRecord
 import org.micoli.micraft.game.world.BlockDefinition
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
@@ -69,12 +73,12 @@ class BlockBreakerTest {
     fun handleStart_insideProtectedZone_ignores() {
         val world = testWorld(Triple(8, 5, 8))
         val wim = noopWim()
-        val registry = org.micoli.micraft.game.world.instance.InstanceRegistry(null)
+        val registry = InstanceRegistry(null)
         registry.create(
             name = "Arena",
             yMin = 0,
             yMax = 16,
-            chunks = setOf(org.micoli.micraft.game.world.ChunkPos(0, 0)),
+            chunks = setOf(ChunkPos(0, 0)),
             ownerName = "Alice",
         )
         val breaker = BlockBreaker(world, {}, wim, instanceRegistry = registry)
@@ -280,7 +284,7 @@ class BlockBreakerTest {
                     BlockDefinition(
                         hardness = 1f,
                         solid = true,
-                        requiredEquipment = org.micoli.micraft.game.world.EquipmentCategory.AXE,
+                        requiredEquipment = EquipmentCategory.AXE,
                     )))
         return type
     }
@@ -302,8 +306,8 @@ class BlockBreakerTest {
         val toolRegistry =
             mapOf(
                 "iron_axe" to
-                    org.micoli.micraft.game.equipment.ToolDefinition(
-                        category = org.micoli.micraft.game.world.EquipmentCategory.AXE))
+                        ToolDefinition(
+                        category = EquipmentCategory.AXE))
         val breaker = BlockBreaker(world, {}, noopWim(), toolRegistry = { toolRegistry })
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.state = session.state.copy(leftHandItem = "iron_axe")

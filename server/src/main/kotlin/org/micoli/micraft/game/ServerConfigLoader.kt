@@ -11,7 +11,9 @@ import org.micoli.micraft.config.loadOverridableConfig
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.protocol.MessageEncoding
+import org.micoli.micraft.schema.JsonSchemaConstraint
 import org.micoli.micraft.schema.JsonSchemaRoot
+import org.micoli.micraft.social.FactionDefinition
 import org.slf4j.LoggerFactory
 
 private val serverConfigLog = LoggerFactory.getLogger("ServerConfigLoader")
@@ -95,8 +97,8 @@ data class FactionsSection(
     @EncodeDefault(ALWAYS) val changeCooldownSeconds: Long = 0,
     @EncodeDefault(ALWAYS) val spawnRingRadius: Double = 384.0,
     @EncodeDefault(ALWAYS)
-    @org.micoli.micraft.schema.JsonSchemaConstraint(minItems = 0, maxItems = 5)
-    val list: List<org.micoli.micraft.social.FactionDefinition> = emptyList(),
+    @JsonSchemaConstraint(minItems = 0, maxItems = 5)
+    val list: List<FactionDefinition> = emptyList(),
 )
 
 @OptIn(ExperimentalSerializationApi::class)

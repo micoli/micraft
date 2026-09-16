@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { putApiAdminScenesByIdLayout } from "../../../generated/api/requests";
 import type { SceneDto, SceneBlockDto } from "../../apiTypes";
+import { getAdminToken } from "../../auth/adminTokenStorage";
 import { useVoxelEditorViewport } from "../shared/voxelEditor/useVoxelEditorViewport";
 import { createVoxelEditorSceneController } from "../shared/voxelEditor/voxelEditorSceneController";
 import type { VoxelVolumeAdapter } from "../shared/voxelEditor/voxelVolumeAdapter";
@@ -317,7 +318,9 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     // chunk, entities included, from the server after every edit).
     async function reloadEntities() {
       if (!wasmExports || disposed) return;
-      const json = await fetch(`/api/admin/scenes/${encodeURIComponent(scene.id)}/entities`).then((r) => r.text());
+      const json = await fetch(`/api/admin/scenes/${encodeURIComponent(scene.id)}/entities`, {
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+      }).then((r) => r.text());
       if (disposed) return;
       wasmExports.mcSceneLoadEntities(babylonScene, json);
       // mcSceneLoadEntities re-meshes the buffer, and chunkBuilder.ts defaults every new mesh to
@@ -339,9 +342,9 @@ export function SceneEditorViewport({ scene }: { scene: SceneDto }) {
     async function loadScene() {
       const exports = await window.webApp!;
       // Binary payload (application/octet-stream) — not a JSON API, kept as a manual fetch.
-      const buf = await fetch(`/api/admin/scenes/${encodeURIComponent(scene.id)}/blocks/raw`).then((r) =>
-        r.arrayBuffer(),
-      );
+      const buf = await fetch(`/api/admin/scenes/${encodeURIComponent(scene.id)}/blocks/raw`, {
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+      }).then((r) => r.arrayBuffer());
       const { width, height, depth, blocks, states, extraStates } = parseSceneRaw(buf);
       exports.mcSceneLoad(babylonScene, width, height, depth, blocks, states, extraStates);
       applyClipPlanes(B!, babylonScene, v.clipPlanesRef.current, clipBounds, overlayMeshes, v.clipMeshesRef.current);

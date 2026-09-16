@@ -6,6 +6,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessage.PlayerUpdate
@@ -13,7 +14,7 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(SkinCommand::class.java)
 
-private val skinsRoot = org.micoli.micraft.config.ConfigPaths.resourcesDir("models")
+private val skinsRoot = ConfigPaths.resourcesDir("models")
 
 fun availablePlayerSkins(): List<String> =
     runCatching {

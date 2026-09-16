@@ -1784,7 +1784,8 @@ paths:
       deprecated: false
     delete:
       tags: []
-      description: Delete a group and unassign it from every user that has it
+      description: Delete a group and unassign it from every account and character
+        that has it
       parameters:
       - name: name
         in: path
@@ -1937,6 +1938,81 @@ paths:
           headers: {}
         "503":
           description: No persistence backend
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/players/{name}/groups:
+    get:
+      tags: []
+      description: "A character's in-game RBAC groups — distinct from the account-level\
+        \ groups on /api/admin/users, which only gate this admin panel"
+      parameters:
+      - name: name
+        in: path
+        description: Player name
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  title: String
+                title: List<String>
+        "404":
+          description: Player not found
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+    put:
+      tags: []
+      description: Replace a character's in-game RBAC groups
+      parameters:
+      - name: name
+        in: path
+        description: Player name
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                title: String
+              title: List<String>
+        required: false
+      responses:
+        "204":
+          headers: {}
+        "404":
+          description: Player not found
+          headers: {}
+        "503":
+          description: No group storage
           headers: {}
         "401":
           description: Missing or invalid token
@@ -5895,6 +5971,14 @@ components:
           - "null"
           - string
           title: String
+        groups:
+          type:
+          - "null"
+          - array
+          items:
+            type: string
+            title: String
+          title: List<String>
         intel:
           type: integer
           format: int32
@@ -6039,6 +6123,12 @@ components:
         godMode:
           type: boolean
           title: Boolean
+        groups:
+          type: array
+          items:
+            type: string
+            title: String
+          title: List<String>
         guildId:
           type:
           - "null"
@@ -6250,6 +6340,7 @@ components:
       - fieldOfView
       - flying
       - godMode
+      - groups
       - headInLiquid
       - id
       - inventory

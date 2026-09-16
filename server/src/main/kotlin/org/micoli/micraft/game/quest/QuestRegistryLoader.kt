@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.quest
 
 import com.charleskorn.kaml.Yaml
+import org.micoli.micraft.config.ConfigPaths
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -17,7 +18,7 @@ fun findRecursive(path: Path, mask: String): List<Path> {
 private val log = LoggerFactory.getLogger(QuestRegistryLoader::class.java)
 
 class QuestRegistryLoader(
-    private val questsPath: Path = org.micoli.micraft.config.ConfigPaths.resourcesDir("quests")
+    private val questsPath: Path = ConfigPaths.resourcesDir("quests")
 ) {
     @Volatile private var cached: Map<String, QuestDefinition>? = null
 

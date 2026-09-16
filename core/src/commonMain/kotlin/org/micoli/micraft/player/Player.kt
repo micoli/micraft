@@ -2,6 +2,7 @@ package org.micoli.micraft.player
 
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.combat.ShortcutSlot
+import org.micoli.micraft.game.world.BreathConstants
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.player.pet.PetRecord
 import org.micoli.micraft.player.rpg.CharacterData
@@ -59,8 +60,8 @@ data class PlayerState(
     val speedMultiplier: Float = 1f,
     val biome: String = "",
     val headInLiquid: Boolean = false,
-    val currentBreath: Int = org.micoli.micraft.game.world.BreathConstants.MAX_BREATH_TICKS,
-    val maxBreath: Int = org.micoli.micraft.game.world.BreathConstants.MAX_BREATH_TICKS,
+    val currentBreath: Int = BreathConstants.MAX_BREATH_TICKS,
+    val maxBreath: Int = BreathConstants.MAX_BREATH_TICKS,
     val inventory: Map<ItemType, Int> = emptyMap(),
     val language: String = "en",
     val shadersEnabled: Boolean = true,
@@ -94,6 +95,7 @@ data class PlayerState(
     val editMode: EditMode = EditMode.GAME,
     val lightBoostEnabled: Boolean = false,
     val email: String = "",
+    val groups: List<String> = emptyList(),
     val zoneLevel: Int = 0,
     val quests: Map<String, QuestProgress> = emptyMap(),
     val autoTargetEnabled: Boolean = true,

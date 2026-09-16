@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.world
 
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.protocol.BlockEntityProto
 
 @Serializable
 data class Chunk(
@@ -65,7 +66,7 @@ data class Chunk(
             wire: ByteArray,
             wireStates: ByteArray? = null,
             wireExtraStates: ByteArray? = null,
-            entityProtos: List<org.micoli.micraft.protocol.BlockEntityProto> = emptyList(),
+            entityProtos: List<BlockEntityProto> = emptyList(),
         ): Chunk {
             val blocks = ByteArray(TOTAL) // AIR = 0 by default
             val states = ByteArray(TOTAL)

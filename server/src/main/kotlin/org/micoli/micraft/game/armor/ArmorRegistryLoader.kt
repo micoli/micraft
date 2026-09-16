@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.armor
 
 import com.charleskorn.kaml.Yaml
+import org.micoli.micraft.config.ConfigPaths
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -21,9 +22,9 @@ private fun ArmorYamlEntry.applyOverride(o: ArmorYamlOverride) =
         requiredLevel = o.requiredLevel ?: requiredLevel)
 
 class ArmorRegistryLoader(
-    private val armorsPath: Path = org.micoli.micraft.config.ConfigPaths.resourcesDir("armors"),
+    private val armorsPath: Path = ConfigPaths.resourcesDir("armors"),
     private val dataArmorsPath: Path =
-        org.micoli.micraft.config.ConfigPaths.dataResources("armors"),
+        ConfigPaths.dataResources("armors"),
 ) {
     fun load(): Map<String, ArmorDefinition> {
         if (!armorsPath.exists()) return emptyMap()

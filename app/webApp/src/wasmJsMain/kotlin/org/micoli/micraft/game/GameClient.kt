@@ -40,6 +40,7 @@ import org.micoli.micraft.protocol.SUPERSEDED_CONNECTION_CLOSE_CODE
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
 import org.micoli.micraft.protocol.SiegeWeaponCodexInfo
+import org.micoli.micraft.social.FactionColors
 import org.micoli.micraft.ui.LayoutSyncPayload
 import org.micoli.micraft.ui.McUiState
 
@@ -1061,8 +1062,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             put(
                 ServerMessage.FactionSync::class,
                 typedHandler { msg: ServerMessage.FactionSync ->
-                    org.micoli.micraft.social.FactionColors.update(
-                        msg.definitions.associate { it.id to it.color })
+                    FactionColors.update(msg.definitions.associate { it.id to it.color })
                     jsFactionSync(Json.encodeToString(msg))
                 })
             put(

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Editor } from "../../../primitives/Editor";
 import { getApiAdminConfigs, getApiAdminSchemasByFilename } from "../../../generated/api/requests";
+import { getAdminToken } from "../../auth/adminTokenStorage";
 import { useT } from "../../i18n";
 
 const SCHEMA_MAP: Record<string, string> = {
@@ -42,7 +43,9 @@ export function ConfigEditorPage() {
       // {filename...} is a Ktor tail parameter (can contain "/", e.g. auth/users.yaml) — the
       // generated client's path serializer encodeURIComponents every segment, which would
       // break that. Kept as a manual fetch.
-      const r = await fetch(`/api/admin/configs/${filename}`);
+      const r = await fetch(`/api/admin/configs/${filename}`, {
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+      });
       if (!r.ok) throw new Error();
       const text = await r.text();
       setContent(text);
@@ -67,7 +70,10 @@ export function ConfigEditorPage() {
     try {
       const r = await fetch(`/api/admin/configs/${selected}`, {
         method: "PUT",
-        headers: { "Content-Type": "text/plain" },
+        headers: {
+          "Content-Type": "text/plain",
+          Authorization: `Bearer ${getAdminToken()}`,
+        },
         body: editedContent,
       });
       if (!r.ok) throw new Error(t("common.serverError", r.status));

@@ -14,7 +14,9 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import org.micoli.micraft.game.FactionsSection
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
+import org.micoli.micraft.game.social.Guild
 import org.micoli.micraft.game.world.actionblock.ActionBlock
 import org.micoli.micraft.game.world.claim.Claim
 import org.micoli.micraft.game.world.instance.InstanceZone
@@ -498,11 +500,11 @@ class WorldPersistence(val worldDir: Path) {
 
     private val guildsFile = worldDir.resolve("guilds.yaml")
 
-    fun loadGuilds(): List<org.micoli.micraft.game.social.Guild> {
+    fun loadGuilds(): List<Guild> {
         if (!guildsFile.exists()) return emptyList()
         return try {
             Yaml.default.decodeFromString(
-                ListSerializer(org.micoli.micraft.game.social.Guild.serializer()),
+                ListSerializer(Guild.serializer()),
                 guildsFile.readText())
         } catch (e: Exception) {
             worldPersistenceLog.warn("Failed to load guilds: {}", e.message)
@@ -510,11 +512,11 @@ class WorldPersistence(val worldDir: Path) {
         }
     }
 
-    fun saveGuilds(guilds: List<org.micoli.micraft.game.social.Guild>) {
+    fun saveGuilds(guilds: List<Guild>) {
         try {
             guildsFile.writeText(
                 Yaml.default.encodeToString(
-                    ListSerializer(org.micoli.micraft.game.social.Guild.serializer()), guilds))
+                    ListSerializer(Guild.serializer()), guilds))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save guilds: {}", e.message)
         }
@@ -523,22 +525,22 @@ class WorldPersistence(val worldDir: Path) {
     private val factionsFile = worldDir.resolve("factions.yaml")
 
     /** Admin-managed faction overrides — take precedence over the config `factions:` section. */
-    fun loadFactions(): org.micoli.micraft.game.FactionsSection? {
+    fun loadFactions(): FactionsSection? {
         if (!factionsFile.exists()) return null
         return try {
             Yaml.default.decodeFromString(
-                org.micoli.micraft.game.FactionsSection.serializer(), factionsFile.readText())
+                FactionsSection.serializer(), factionsFile.readText())
         } catch (e: Exception) {
             worldPersistenceLog.warn("Failed to load factions: {}", e.message)
             null
         }
     }
 
-    fun saveFactions(section: org.micoli.micraft.game.FactionsSection) {
+    fun saveFactions(section: FactionsSection) {
         try {
             factionsFile.writeText(
                 Yaml.default.encodeToString(
-                    org.micoli.micraft.game.FactionsSection.serializer(), section))
+                    FactionsSection.serializer(), section))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save factions: {}", e.message)
         }

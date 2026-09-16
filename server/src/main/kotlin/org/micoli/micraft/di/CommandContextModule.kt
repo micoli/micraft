@@ -17,8 +17,13 @@ import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
 import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.social.FactionManager
+import org.micoli.micraft.game.social.GroupManager
+import org.micoli.micraft.game.social.GuildManager
+import org.micoli.micraft.game.social.GuildRegistry
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.world.EquipmentCategory
@@ -56,10 +61,10 @@ data class CommandContextClosures(
     val weaponCategories: () -> Map<EquipmentCategory, WeaponCategoryDefinition>,
     val toolCategories: () -> Map<EquipmentCategory, ToolCategoryDefinition>,
     val applyBuff: suspend (PlayerSession, StatusEffect, Float) -> Unit,
-    val groupManager: org.micoli.micraft.game.social.GroupManager,
-    val guildManager: org.micoli.micraft.game.social.GuildManager,
-    val guildRegistry: org.micoli.micraft.game.social.GuildRegistry,
-    val factionManager: org.micoli.micraft.game.social.FactionManager,
+    val groupManager: GroupManager,
+    val guildManager: GuildManager,
+    val guildRegistry: GuildRegistry,
+    val factionManager: FactionManager,
 )
 
 @Module
@@ -72,7 +77,7 @@ class CommandContextModule {
         i18nConfig: I18nConfig,
         worldItemManager: WorldItemManager,
         npcManager: NpcManager,
-        petManager: org.micoli.micraft.game.pet.PetManager,
+        petManager: PetManager,
         chatService: ChatService,
         chatChannelManager: ChatChannelManager,
         weatherManager: WeatherManager,

@@ -17,8 +17,8 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 | `movement` | `sneak` | KeyZ |
 | `movement` | `crawl` | KeyC |
 | `movement` | `auto_forward` | KeyW+KeyW, ArrowUp+ArrowUp |
-| `movement` | `speed_up` | F3 |
-| `movement` | `speed_down` | F4 |
+| `movement` | `speed_up` | F4 |
+| `movement` | `speed_down` | F3 |
 | `flight` | `fly_toggle` | Space+Space |
 | `flight` | `ascend` | Space |
 | `flight` | `descend` | KeyZ |

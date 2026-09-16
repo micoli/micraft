@@ -11,6 +11,7 @@ import kotlin.io.path.writeText
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.YamlField
 import org.micoli.micraft.config.YamlSection
 import org.micoli.micraft.config.isYamlEffectivelyEmpty
@@ -27,7 +28,7 @@ private val SECTION_SERIALIZER =
         MapSerializer(String.serializer(), ListSerializer(String.serializer())))
 
 private val DEFAULT_RESOURCES_PATH =
-    org.micoli.micraft.config.ConfigPaths.resourcesConfig("keybindings.yaml")
+    ConfigPaths.resourcesConfig("keybindings.yaml")
 
 private fun loadDefaultSections(defaultsPath: Path): Map<String, Map<String, List<String>>> {
     val text = defaultsPath.readText()

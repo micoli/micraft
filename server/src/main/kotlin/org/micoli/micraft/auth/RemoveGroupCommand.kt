@@ -2,7 +2,11 @@ package org.micoli.micraft.auth
 
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.Completion
 import org.micoli.micraft.command.PluginCommand
+import org.micoli.micraft.command.canonicalPlayerName
+import org.micoli.micraft.command.playerCompletions
+import org.micoli.micraft.command.resolvePlayerSession
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -10,48 +14,59 @@ class RemoveGroupCommand : PluginCommand {
     override val id: UUID = UUID.fromString("d5e6f7a8-b9c0-4123-d456-e7f8a9b0c123")
     override val name = "rbac:removegroup"
     override val permission = "admin"
-    override val description = "Remove groups from a user."
-    override val usage = "$command <email> <group1,group2,...>"
+    override val description = "Remove in-game RBAC groups from a character."
+    override val usage = "$command <playerName> <group1,group2,...>"
+
+    override val autocompleteArgs = listOf(0)
+
+    override suspend fun completeArgRich(
+        argIndex: Int,
+        partial: String,
+        session: PlayerSession?,
+        context: CommandContext
+    ): List<Completion> = if (argIndex == 0) context.playerCompletions(partial) else emptyList()
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
-        val provider = context.authProvider as? LocalAuthProvider
-        if (provider == null) {
-            session.send(ServerMessage.Notification("Local auth provider not active."))
-            return
-        }
+        val lang = session.state.language
+        val i18n = context.i18n
         val parts = args.trim().split(" ", limit = 2)
         if (parts.size < 2 || parts[0].isBlank() || parts[1].isBlank()) {
             session.send(ServerMessage.Notification(usage))
             return
         }
-        val email = parts[0]
+        val playerName = context.canonicalPlayerName(parts[0])
         val toRemove = parts[1].split(",").map { it.trim() }.filter { it.isNotEmpty() }
         val groupsConfig = context.groupsConfig
-        runCatching {
-                val current = provider.getUserGroups(email) ?: error("User not found: $email")
-                val updated = current.filter { it !in toRemove }
-                provider.setUserGroups(email, updated)
-                updated
-            }
-            .onSuccess { updated ->
+        if (groupsConfig == null) {
+            session.send(ServerMessage.Notification("Groups config not available."))
+            return
+        }
+        when (val result =
+            mutatePlayerGroups(
+                playerName,
+                context.sessions(),
+                context.persistence,
+                groupsConfig,
+                context.savePlayer) { current ->
+                    current.filter { it !in toRemove }
+                }) {
+            is PlayerRbacResult.NotFound ->
                 session.send(
                     ServerMessage.Notification(
-                        context.i18n.t(
-                            session.state.language,
+                        i18n.t(lang, "rbac:server:player_not_found", playerName)))
+            is PlayerRbacResult.Applied -> {
+                session.send(
+                    ServerMessage.Notification(
+                        i18n.t(
+                            lang,
                             "rbac:server:group_removed",
-                            email,
+                            playerName,
                             toRemove.joinToString(", "))))
                 context
-                    .sessions()
-                    .filter { it.userName.equals(email, ignoreCase = true) }
-                    .forEach { affected ->
-                        groupsConfig?.let { affected.permissions = it.resolvePermissions(updated) }
-                        affected.send(
-                            ServerMessage.Notification(
-                                context.i18n.t(
-                                    affected.state.language, "rbac:server:your_groups_updated")))
-                    }
+                    .resolvePlayerSession(playerName)
+                    ?.send(
+                        ServerMessage.Notification(i18n.t(lang, "rbac:server:your_groups_updated")))
             }
-            .onFailure { e -> session.send(ServerMessage.Notification("Failed: ${e.message}")) }
+        }
     }
 }

@@ -46,6 +46,8 @@ import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.npc.NpcSubsystemHooks
+import org.micoli.micraft.game.pet.PetCoordinator
+import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileManager
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
@@ -339,8 +341,8 @@ class GameLoopModule {
         sessionRegistry: SessionRegistry,
         playerPersister: PlayerPersister,
         i18nConfig: I18nConfig,
-    ): org.micoli.micraft.game.pet.PetManager =
-        org.micoli.micraft.game.pet.PetManager(
+    ): PetManager =
+        PetManager(
             npcManager = npcManager,
             experienceProcessor = experienceProcessor,
             getSessions = sessionRegistry::all,
@@ -352,8 +354,8 @@ class GameLoopModule {
     fun petCoordinator(
         npcManager: NpcManager,
         combatConfigData: CombatConfigData,
-    ): org.micoli.micraft.game.pet.PetCoordinator =
-        org.micoli.micraft.game.pet.PetCoordinator(
+    ): PetCoordinator =
+        PetCoordinator(
             npcManager = npcManager,
             combatConfig = combatConfigData,
         )

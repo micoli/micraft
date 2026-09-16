@@ -14,12 +14,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
+import org.micoli.micraft.auth.GroupEntry
+import org.micoli.micraft.auth.GroupsConfig
+import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.command.Plugin
+import org.micoli.micraft.game.rpg.character.RpgCharacterBuilder
+import org.micoli.micraft.game.rpg.character.RpgCharacterResult
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.player.ChannelSubscription
+import org.micoli.micraft.player.Orientation
+import org.micoli.micraft.player.PlayerState
+import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.ServerMessage
@@ -203,11 +214,8 @@ class GameLoopTest {
                 .first()
         // applyE2eOverridesIfEnabled is Application-level; here WorldConstants keeps its defaults,
         // so the view-radius override just mirrors those — the point is that it is non-null.
-        assertEquals(
-            org.micoli.micraft.game.world.WorldConstants.FORWARD_VIEW_RADIUS,
-            prefs.overrideForwardViewRadius)
-        assertEquals(
-            org.micoli.micraft.game.world.WorldConstants.VIEW_RADIUS, prefs.overrideViewRadius)
+        assertEquals(WorldConstants.FORWARD_VIEW_RADIUS, prefs.overrideForwardViewRadius)
+        assertEquals(WorldConstants.VIEW_RADIUS, prefs.overrideViewRadius)
         // Every chunk past the player's own is forced to the flat impostor mesh.
         assertEquals(true, prefs.overrideUseImpostor)
         assertEquals(0, prefs.overrideImpostorRadiusChunks)
@@ -218,15 +226,8 @@ class GameLoopTest {
     fun onConnect_reservedRpgPlayer_sendsCharacterSyncNotCreationPrompt() = runTest {
         val gameLoop = GameLoop(testWorld())
         val character =
-            (org.micoli.micraft.game.rpg.character.RpgCharacterBuilder.build(
-                    "RpgHero",
-                    org.micoli.micraft.player.rpg.CharacterClass.WARRIOR,
-                    8,
-                    8,
-                    8,
-                    8,
-                    8,
-                    8) as org.micoli.micraft.game.rpg.character.RpgCharacterResult.Success)
+            (RpgCharacterBuilder.build("RpgHero", CharacterClass.WARRIOR, 8, 8, 8, 8, 8, 8)
+                    as RpgCharacterResult.Success)
                 .character
         val reserved = gameLoop.defaultWorld.reservePlayer("RpgHero", character)
 
@@ -285,11 +286,11 @@ class GameLoopTest {
         val persistence = WorldPersistence(Files.createTempDirectory("gameloop-owned-test"))
         persistence.savePlayerState(
             "Dave",
-            org.micoli.micraft.player.PlayerState(
+            PlayerState(
                 id = UUID.randomUUID().toString(),
                 name = "Dave",
-                pos = org.micoli.micraft.player.Vec3(0f, 0f, 0f),
-                orientation = org.micoli.micraft.player.Orientation(0f, 0f),
+                pos = Vec3(0f, 0f, 0f),
+                orientation = Orientation(0f, 0f),
                 ownedArmors = listOf("iron_armor"),
                 ownedWeapons = listOf("iron_sword"),
                 ownedTools = listOf("iron_pickaxe"),
@@ -314,15 +315,15 @@ class GameLoopTest {
         val persistence = WorldPersistence(Files.createTempDirectory("gameloop-stale-group-test"))
         persistence.savePlayerState(
             "Erin",
-            org.micoli.micraft.player.PlayerState(
+            PlayerState(
                 id = UUID.randomUUID().toString(),
                 name = "Erin",
-                pos = org.micoli.micraft.player.Vec3(0f, 0f, 0f),
-                orientation = org.micoli.micraft.player.Orientation(0f, 0f),
+                pos = Vec3(0f, 0f, 0f),
+                orientation = Orientation(0f, 0f),
                 subscribedChannels =
                     listOf(
-                        org.micoli.micraft.player.ChannelSubscription("world"),
-                        org.micoli.micraft.player.ChannelSubscription("group:dead-group-id"),
+                        ChannelSubscription("world"),
+                        ChannelSubscription("group:dead-group-id"),
                     ),
             ),
         )
@@ -359,11 +360,11 @@ class GameLoopTest {
         // fresh, never-saved name would otherwise get a random id per connect and never collide.
         persistence.savePlayerState(
             "Eve",
-            org.micoli.micraft.player.PlayerState(
+            PlayerState(
                 id = "eve-fixed-id",
                 name = "Eve",
-                pos = org.micoli.micraft.player.Vec3(0f, 0f, 0f),
-                orientation = org.micoli.micraft.player.Orientation(0f, 0f),
+                pos = Vec3(0f, 0f, 0f),
+                orientation = Orientation(0f, 0f),
             ),
         )
 
@@ -409,6 +410,75 @@ class GameLoopTest {
 
         secondSocket.incomingChannel.close()
         secondJob.join()
+    }
+
+    @Test
+    fun onConnect_newCharacter_persistsGroupsConfigDefaultGroups() = runTest {
+        val groupsConfig = GroupsConfig(defaultGroups = listOf("player"))
+        val persistence = WorldPersistence(Files.createTempDirectory("gameloop-rbac-default-test"))
+        val gameLoop = GameLoop(testWorld(), persistence, groupsConfig = groupsConfig)
+
+        val socket = FakeWebSocketSession()
+        val connect = ClientMessage.Connect(playerName = "Newbie", userName = "newbie@example.com")
+        socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        socket.incomingChannel.close()
+        gameLoop.onConnect(socket)
+
+        assertEquals(listOf("player"), persistence.loadPlayerState("Newbie")?.groups)
+    }
+
+    @Test
+    fun onConnect_resolvesLivePermissionsFromCharacterGroupsNotAccount() = runTest {
+        val groupsConfig =
+            GroupsConfig(
+                groups = listOf(GroupEntry("moderator", listOf("give"))),
+                defaultGroups = listOf("player"))
+        // A real scope, not `this` (the TestScope): TokenStore's housekeeping loop uses
+        // `delay(60_000)` in an infinite while(true) — tied to the virtual test scheduler, that
+        // recurring timer makes advanceUntilIdle() spin forever (it keeps advancing virtual time
+        // to the next iteration, which reschedules another). Same pattern as MapControllerAuthTest.
+        val tokenStore = TokenStore(kotlinx.coroutines.CoroutineScope(Dispatchers.Default))
+        val persistence = WorldPersistence(Files.createTempDirectory("gameloop-rbac-live-test"))
+        persistence.savePlayerState(
+            "Frank",
+            PlayerState(
+                id = "frank-id",
+                name = "Frank",
+                pos = Vec3(0f, 0f, 0f),
+                orientation = Orientation(0f, 0f),
+                groups = listOf("moderator"),
+            ))
+        val gameLoop =
+            GameLoop(testWorld(), persistence, tokenStore = tokenStore, groupsConfig = groupsConfig)
+        // The account carries no groups at all — only the character's saved groups should matter.
+        val token =
+            tokenStore.issue(
+                org.micoli.micraft.auth.AuthResult(
+                    playerId = "frank-id", displayName = "Frank", email = "frank@example.com"))
+
+        val socket = FakeWebSocketSession()
+        val connect =
+            ClientMessage.Connect(
+                playerName = "Frank", userName = "frank@example.com", token = token)
+        socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        val job = launch { gameLoop.onConnect(socket) }
+        // Drive the virtual test dispatcher so the job actually starts running and reaches the
+        // point where it hops onto Dispatchers.IO (chunk generation) — that real dispatcher isn't
+        // controlled by the virtual scheduler, so poll for completion with a real delay after.
+        advanceUntilIdle()
+        withContext(Dispatchers.Default) {
+            var waited = 0
+            while (gameLoop.getPlayerStates().isEmpty() && waited < 5000) {
+                delay(10)
+                waited += 10
+            }
+        }
+
+        val session = gameLoop.defaultWorld.sessions.all().first { it.state.name == "Frank" }
+        assertTrue("give" in session.permissions, "moderator group's permission should apply")
+
+        socket.incomingChannel.close()
+        job.join()
     }
 
     @Test

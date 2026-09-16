@@ -49,7 +49,10 @@ class AdminGroupsRoutesTest {
                 .getOrDefault(provider.groupsConfig)
     }
 
-    private fun setup(initialGroups: GroupsConfig = GroupsConfig()): Fixture {
+    private fun setup(
+        initialGroups: GroupsConfig = GroupsConfig(),
+        persistence: org.micoli.micraft.game.world.WorldPersistence? = null,
+    ): Fixture {
         val usersFile =
             Files.createTempFile("micraft-users", ".yaml").also {
                 it.toFile().writeText("users: []\n")
@@ -60,11 +63,11 @@ class AdminGroupsRoutesTest {
         val token =
             store.issue(
                 AuthResult(playerId = "admin", displayName = "Admin", permissions = setOf("admin")))
-        val gameLoop = GameLoop(testWorld())
+        val gameLoop = GameLoop(testWorld(), persistence)
         val controller =
             AdminController(
                 provider,
-                null,
+                persistence,
                 gameLoop,
                 store,
                 authProvider = provider,
@@ -161,9 +164,9 @@ class AdminGroupsRoutesTest {
         testApplication {
             val fx = setup(GroupsConfig(groups = listOf(GroupEntry("player", listOf("move")))))
             application { routing { fx.controller.register(this) } }
-            fx.provider.addUser("bob@test.com", "pass", "Bob", listOf("player"))
 
-            val session = testSession(id = "bob-id", name = "Bob", userName = "bob@test.com")
+            val session = testSession(id = "bob-id", name = "Bob")
+            session.state = session.state.copy(groups = listOf("player"))
             session.permissions = fx.provider.groupsConfig.resolvePermissions(listOf("player"))
             fx.gameLoop.gameWorldRegistry.defaultWorld.sessions["bob-id"] = session
             assertTrue("build" !in session.permissions)
@@ -191,5 +194,30 @@ class AdminGroupsRoutesTest {
         assertEquals(HttpStatusCode.NoContent, r.status)
 
         assertEquals(emptyList(), fx.provider.getUserGroups("bob@test.com"))
+    }
+
+    @Test
+    fun `deleting a group unassigns it from offline characters that had it`() = testApplication {
+        val persistence =
+            org.micoli.micraft.game.world.WorldPersistence(
+                java.nio.file.Files.createTempDirectory("admin-groups-cascade-test"))
+        persistence.savePlayerState(
+            "Carol",
+            org.micoli.micraft.player.PlayerState(
+                id = "carol-id",
+                name = "Carol",
+                pos = org.micoli.micraft.player.Vec3(0f, 0f, 0f),
+                orientation = org.micoli.micraft.player.Orientation(0f, 0f),
+                groups = listOf("moderator"),
+            ))
+        val fx =
+            setup(
+                GroupsConfig(groups = listOf(GroupEntry("moderator", listOf("give")))), persistence)
+        application { routing { fx.controller.register(this) } }
+
+        val r = client.delete("/api/admin/groups/moderator") { auth(fx.token) }
+        assertEquals(HttpStatusCode.NoContent, r.status)
+
+        assertEquals(emptyList(), persistence.loadPlayerState("Carol")?.groups)
     }
 }

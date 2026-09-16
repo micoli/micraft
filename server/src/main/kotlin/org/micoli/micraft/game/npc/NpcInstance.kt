@@ -4,6 +4,7 @@ import kotlin.random.Random
 import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.game.npc.animal.AnimalInstanceData
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.world.BreathConstants
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.rpg.ClassResource
@@ -59,7 +60,7 @@ class NpcInstance(
      * Remaining breath ticks. Only drained for NPCs that cannot swim (see [NpcManager.tickBreath]).
      */
     @Volatile
-    var currentBreath: Int = org.micoli.micraft.game.world.BreathConstants.MAX_BREATH_TICKS,
+    var currentBreath: Int = BreathConstants.MAX_BREATH_TICKS,
     @Volatile var drowningDamageAccumTicks: Int = 0,
     /** Owning player's session id when this NPC is a summoned pet; null for every wild NPC. */
     @Volatile var ownerId: String? = null,

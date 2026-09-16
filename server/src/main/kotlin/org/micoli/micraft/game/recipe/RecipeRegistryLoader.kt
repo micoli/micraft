@@ -9,6 +9,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.isYamlEffectivelyEmpty
 import org.micoli.micraft.config.mergeMapConfig
 import org.micoli.micraft.config.spliceMissingAsComments
@@ -24,9 +25,9 @@ private val recipeLog = LoggerFactory.getLogger(RecipeRegistryLoader::class.java
 private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), RecipeYamlEntry.serializer())
 
 class RecipeRegistryLoader(
-    private val path: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("recipes.yaml"),
+    private val path: Path = ConfigPaths.dataConfig("recipes.yaml"),
     private val resourcesPath: Path =
-        org.micoli.micraft.config.ConfigPaths.resourcesConfig("recipes.yaml"),
+        ConfigPaths.resourcesConfig("recipes.yaml"),
 ) {
     private val default: Map<String, RecipeYamlEntry> =
         Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, resourcesPath.readText())

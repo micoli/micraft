@@ -1,5 +1,7 @@
 package org.micoli.micraft.game.world
 
+import org.micoli.micraft.game.world.instance.InstanceZone
+import org.micoli.micraft.game.world.scene.Scene
 import java.nio.file.Files
 import java.nio.file.attribute.FileTime
 import kotlin.io.path.outputStream
@@ -156,7 +158,7 @@ class WorldPersistenceTest {
     fun instancesRoundtrip_saveThenLoad() {
         val p = persistence()
         val zone =
-            org.micoli.micraft.game.world.instance.InstanceZone(
+            InstanceZone(
                 id = "zone-1",
                 name = "Arena",
                 yMin = -5,
@@ -198,7 +200,7 @@ class WorldPersistenceTest {
     fun scenesMetadataRoundtrip_saveThenLoad() {
         val p = persistence()
         val scene =
-            org.micoli.micraft.game.world.scene.Scene(
+            Scene(
                 id = "scene-1",
                 name = "Room",
                 width = 2,
@@ -250,7 +252,7 @@ class WorldPersistenceTest {
     fun loadScenes_hydratesBlocksFromSavedSceneBlocks() {
         val p = persistence()
         val scene =
-            org.micoli.micraft.game.world.scene.Scene(
+            Scene(
                 id = "scene-1",
                 name = "Room",
                 width = 2,

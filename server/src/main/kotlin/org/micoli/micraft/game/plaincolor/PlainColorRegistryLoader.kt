@@ -8,6 +8,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.builtins.serializer
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.YamlField
 import org.micoli.micraft.config.YamlSection
 import org.micoli.micraft.config.isYamlEffectivelyEmpty
@@ -31,9 +32,9 @@ private const val ROOT_KEY = "plainColors"
  * data-only entries are appended — adding a color at the end never recolors placed blocks.
  */
 class PlainColorRegistryLoader(
-    private val path: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("plain_colors.yaml"),
+    private val path: Path = ConfigPaths.dataConfig("plain_colors.yaml"),
     private val resourcesPath: Path =
-        org.micoli.micraft.config.ConfigPaths.resourcesConfig("plain_colors.yaml"),
+        ConfigPaths.resourcesConfig("plain_colors.yaml"),
 ) {
     private val default: Map<String, String> = decode(resourcesPath.readText())
 

@@ -21,6 +21,7 @@ import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.command.Completion
 import org.micoli.micraft.command.Plugin
 import org.micoli.micraft.command.commands.resolveSkin
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.di.CommandContextClosures
 import org.micoli.micraft.di.PlayerPersister
@@ -33,6 +34,7 @@ import org.micoli.micraft.game.auction.AuctionManager
 import org.micoli.micraft.game.auction.AuctionPersistence
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.classes.ClassesConfig
 import org.micoli.micraft.game.classes.ClassesConfigData
 import org.micoli.micraft.game.combat.CombatConfig
@@ -65,6 +67,8 @@ import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.npc.NpcSubsystemHooks
+import org.micoli.micraft.game.pet.PetCoordinator
+import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileManager
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileTickPipeline
@@ -81,6 +85,10 @@ import org.micoli.micraft.game.session.NetworkStats
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.hasPermission
 import org.micoli.micraft.game.session.toPageMap
+import org.micoli.micraft.game.social.FactionManager
+import org.micoli.micraft.game.social.GroupManager
+import org.micoli.micraft.game.social.GuildManager
+import org.micoli.micraft.game.social.GuildRegistry
 import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.IntentCollector
 import org.micoli.micraft.game.tick.MovementProcessor
@@ -88,6 +96,7 @@ import org.micoli.micraft.game.trade.TradeConfigLoader
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.vehicle.VehicleTickPipeline
+import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.EquipmentCategory
@@ -138,10 +147,12 @@ import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.plugin.PluginLoader
 import org.micoli.micraft.plugin.TickHandler
 import org.micoli.micraft.protocol.BlockChange
+import org.micoli.micraft.protocol.BlockEntityProto
 import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.CommandInfo
+import org.micoli.micraft.protocol.EntityRemoveAt
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.PlaceableCodexInfo
@@ -223,7 +234,7 @@ class GameLoop(
     private val reloadBiomes: (() -> ChunkGenerator)? = null,
     private val reloadRegistries: (() -> Unit)? = null,
     private val reloadGameConfig: (() -> Unit)? = null,
-    private val reloadFactionsConfig: (() -> org.micoli.micraft.game.FactionsSection)? = null,
+    private val reloadFactionsConfig: (() -> FactionsSection)? = null,
     val i18n: I18nConfig = I18nConfig.fromClasspath(pluginsRoot = Path.of("plugins")),
     private val tokenStore: TokenStore? = null,
     private val authProvider: AuthProvider? = null,
@@ -235,10 +246,9 @@ class GameLoop(
     private val chatChannelManager: ChatChannelManager = ChatChannelManager(),
     private val chatService: ChatService =
         ChatService(chatChannelManager, playerPersister::save, sessionRegistry::all),
-    private val factionsSection: org.micoli.micraft.game.FactionsSection =
-        org.micoli.micraft.game.FactionsSection(),
-    private val factionManager: org.micoli.micraft.game.social.FactionManager =
-        org.micoli.micraft.game.social.FactionManager(
+    private val factionsSection: FactionsSection = FactionsSection(),
+    private val factionManager: FactionManager =
+        FactionManager(
             getSessions = sessionRegistry::all,
             savePlayer = playerPersister::save,
             chatService = chatService,
@@ -268,7 +278,7 @@ class GameLoop(
             vegetationConfig,
             savePath =
                 persistence?.worldDir?.resolve("vegetation_state.yaml")
-                    ?: org.micoli.micraft.config.ConfigPaths.dataWorld(
+                    ?: ConfigPaths.dataWorld(
                         "default_world/vegetation_state.yaml"),
         ),
     private val recipeRegistryLoader: RecipeRegistryLoader = RecipeRegistryLoader(),
@@ -488,16 +498,16 @@ class GameLoop(
     private val commandContextFactory: ((CommandContextClosures) -> CommandContext)? = null,
     private val experienceProcessor: ExperienceProcessor =
         ExperienceProcessor(ExperienceConfig().data, sessionRegistry::all, playerPersister::save),
-    private val petManager: org.micoli.micraft.game.pet.PetManager =
-        org.micoli.micraft.game.pet.PetManager(
+    private val petManager: PetManager =
+        PetManager(
             npcManager = npcManager,
             experienceProcessor = experienceProcessor,
             getSessions = sessionRegistry::all,
             savePlayer = playerPersister::save,
             i18n = i18n,
         ),
-    private val petCoordinator: org.micoli.micraft.game.pet.PetCoordinator =
-        org.micoli.micraft.game.pet.PetCoordinator(
+    private val petCoordinator: PetCoordinator =
+        PetCoordinator(
             npcManager = npcManager,
             combatConfig = combatConfig,
         ),
@@ -506,7 +516,7 @@ class GameLoop(
     private val e2eEnabled: Boolean = System.getenv("MICRAFT_E2E")?.isNotBlank() == true,
     private val shared: SharedGameServices = SharedGameServices.default(),
 ) {
-    val classRegistry: Map<String, org.micoli.micraft.game.classes.ClassDefinitionEntry>
+    val classRegistry: Map<String, ClassDefinitionEntry>
         get() = classesData.classes
 
     private fun reloadCombatSystems() {
@@ -546,11 +556,10 @@ class GameLoop(
             )
         }
 
-    private val guildRegistry: org.micoli.micraft.game.social.GuildRegistry =
-        org.micoli.micraft.game.social.GuildRegistry(persistence)
+    private val guildRegistry: GuildRegistry = GuildRegistry(persistence)
 
-    private val guildManager: org.micoli.micraft.game.social.GuildManager =
-        org.micoli.micraft.game.social.GuildManager(
+    private val guildManager: GuildManager =
+        GuildManager(
             registry = guildRegistry,
             getSessions = sessionRegistry::all,
             savePlayer = playerPersister::save,
@@ -568,8 +577,8 @@ class GameLoop(
             persistence = persistence,
         )
 
-    private val groupManager: org.micoli.micraft.game.social.GroupManager =
-        org.micoli.micraft.game.social.GroupManager(
+    private val groupManager: GroupManager =
+        GroupManager(
             getSessions = sessionRegistry::all,
             chatService = chatService,
             channelManager = chatChannelManager,
@@ -949,9 +958,9 @@ class GameLoop(
     // standing near the zone to see the edit without reconnecting.
     suspend fun broadcastWorldUpdate(
         changes: List<BlockChange>,
-        entityAdds: List<org.micoli.micraft.protocol.BlockEntityProto> = emptyList(),
-        entityRemoves: List<org.micoli.micraft.game.world.BlockPos> = emptyList(),
-        entityRemovesAt: List<org.micoli.micraft.protocol.EntityRemoveAt> = emptyList(),
+        entityAdds: List<BlockEntityProto> = emptyList(),
+        entityRemoves: List<BlockPos> = emptyList(),
+        entityRemovesAt: List<EntityRemoveAt> = emptyList(),
     ) {
         sessionRegistry.broadcast(
             ServerMessage.WorldUpdate(changes, entityAdds, entityRemoves, entityRemovesAt))
@@ -1680,6 +1689,11 @@ class GameLoop(
         val reserved = gw.reservedPlayers[playerName.lowercase()]
         val id = reserved?.id ?: saved?.id ?: UUID.randomUUID().toString()
         val reservedCharacter = reserved?.characterData
+        val characterGroups =
+            saved?.groups?.takeIf { it.isNotEmpty() }
+                ?: reserved?.groups
+                ?: groupsConfig?.defaultGroups
+                ?: emptyList()
         if (saved != null &&
             saved.email.isNotEmpty() &&
             !saved.email.equals(accountEmail, ignoreCase = true)) {
@@ -1732,6 +1746,7 @@ class GameLoop(
                 zoneLevel = saved?.zoneLevel ?: 0,
                 quests = saved?.quests ?: emptyMap(),
                 email = accountEmail,
+                groups = characterGroups,
                 autoTargetEnabled = saved?.autoTargetEnabled ?: true,
                 inventorySortA = saved?.inventorySortA ?: "",
                 inventorySortB = saved?.inventorySortB ?: "",
@@ -1752,7 +1767,11 @@ class GameLoop(
                 activePetId = null,
                 compassTarget = saved?.compassTarget,
             )
-        val sessionPermissions = authResult?.permissions ?: setOf("*")
+        // In-game permissions follow the character's groups, not the account — a session with no
+        // auth backend (dev/no-auth mode) still gets full access.
+        val sessionPermissions =
+            if (tokenStore != null) groupsConfig?.resolvePermissions(characterGroups) ?: emptySet()
+            else setOf("*")
         val session =
             PlayerSession(
                 id,

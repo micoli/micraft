@@ -178,6 +178,9 @@ export const en = {
   "players.tabPreferences": "Preferences",
   "players.tabKeybindings": "Keybindings",
   "players.tabRpg": "RPG",
+  "players.tabRbac": "Permissions",
+  "players.rbacHint":
+    "In-game RBAC groups for this character — separate from the account groups on the Users page, which only gate this admin panel.",
   "players.skin": "Skin",
   "players.language": "Language",
   "players.fieldOfView": "Field of View — {0}°",

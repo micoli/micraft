@@ -7,6 +7,7 @@ import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.npc.pack.PackCoordinator
 import org.micoli.micraft.game.npc.pack.PackEvent
 import org.micoli.micraft.game.pet.PetCoordinator
+import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.vegetation.VegetationManager
@@ -49,7 +50,7 @@ data class NpcSubsystemHooks(
     val onAnimalEvent: (AnimalEvent) -> Unit = {},
     val onPackEvent: (PackEvent) -> Unit = {},
     /** Quest manager for the quest-giver behavior's dialog. Null hosts get no quest offers. */
-    val getQuestManager: () -> org.micoli.micraft.game.quest.QuestManager? = { null },
+    val getQuestManager: () -> QuestManager? = { null },
     /** Host-provided check so a generated NPC name never collides with a player's. */
     val isPlayerName: (String) -> Boolean = { false },
 )

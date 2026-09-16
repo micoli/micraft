@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.combat
 
 import kotlin.math.sqrt
+import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.equipment.ToolDefinition
@@ -305,8 +306,7 @@ class SpellProcessor(
                     if (ex * ex + ey * ey + ez * ez <= radiusSq) {
                         npc.activeEffects.removeAll { it.effect::class == effect::class }
                         npc.activeEffects.add(
-                            org.micoli.micraft.combat.ActiveStatusEffect(
-                                effect, now + (durationSec * 1000).toLong()))
+                            ActiveStatusEffect(effect, now + (durationSec * 1000).toLong()))
                         hitNpcs += "${npc.state.id.take(8)}(${npc.state.name})"
                     }
                 }
@@ -399,8 +399,7 @@ class SpellProcessor(
             if (ex * ex + ey * ey + ez * ez <= radiusSq) {
                 other.activeEffects.removeAll { it.effect::class == effect::class }
                 other.activeEffects.add(
-                    org.micoli.micraft.combat.ActiveStatusEffect(
-                        effect, now + (durationSec * 1000).toLong()))
+                    ActiveStatusEffect(effect, now + (durationSec * 1000).toLong()))
             }
         }
 

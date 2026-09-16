@@ -3,13 +3,16 @@ package org.micoli.micraft.game.npc.animal
 import org.micoli.micraft.game.GameTimeService
 import org.micoli.micraft.game.TICK_SECONDS
 import org.micoli.micraft.game.combat.CombatProcessor
+import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcTickContext
+import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.npc.NpcGender
+import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
@@ -212,7 +215,7 @@ class AnimalInteractionProcessor(
      * function of the registry, and a prey animal needs it on every slow tick.
      */
     private var predatorsByPrey: Map<String, Set<String>> = emptyMap()
-    private var predatorIndexSource: Map<String, org.micoli.micraft.game.npc.NpcDefinition>? = null
+    private var predatorIndexSource: Map<String, NpcDefinition>? = null
 
     private fun predatorsOf(type: String): Set<String> {
         val definitions = npcManager.getDefinitions()
@@ -286,7 +289,7 @@ class AnimalInteractionProcessor(
             // dividing by zero, so keep the previous point and let the next tick sort it out.
             if (dist < 0.01f) continue
             animal.fleeTargetPos =
-                org.micoli.micraft.player.Vec3(
+                Vec3(
                     pos.x + dx / dist * config.fleeRadius,
                     pos.y,
                     pos.z + dz / dist * config.fleeRadius,
@@ -488,7 +491,7 @@ class AnimalInteractionProcessor(
                 // to
                 // a meadow" indistinguishable from "hunting" everywhere else in the code.
                 animal.foodTargetPos =
-                    org.micoli.micraft.player.Vec3(
+                    Vec3(
                         bestX.toFloat() + 0.5f, pos.y, bestZ.toFloat() + 0.5f)
             }
         }
@@ -503,7 +506,7 @@ class AnimalInteractionProcessor(
         animal: AnimalInstanceData,
         config: AnimalYamlEntry
     ) {
-        val blockPos = org.micoli.micraft.game.world.BlockPos(bx, by, bz)
+        val blockPos = BlockPos(bx, by, bz)
         val change = BlockChange(blockPos, BlockType.AIR)
         world.applyChange(change)
         broadcast(ServerMessage.WorldUpdate(listOf(change)))
@@ -607,7 +610,7 @@ class AnimalInteractionProcessor(
                 )
             val name = npcManager.generateUniqueName(offspringType)
             val offset =
-                org.micoli.micraft.player.Vec3(
+                Vec3(
                     mother.state.pos.x + random.nextFloat() * 2f - 1f,
                     mother.state.pos.y,
                     mother.state.pos.z + random.nextFloat() * 2f - 1f,

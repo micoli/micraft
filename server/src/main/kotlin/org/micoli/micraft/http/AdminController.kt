@@ -36,12 +36,18 @@ import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.KNOWN_STANDALONE_PERMISSIONS
 import org.micoli.micraft.auth.LocalAuthProvider
 import org.micoli.micraft.auth.OAuthProvider
+import org.micoli.micraft.auth.PlayerRbacResult
 import org.micoli.micraft.auth.TokenStore
+import org.micoli.micraft.auth.mutatePlayerGroups
 import org.micoli.micraft.auth.refreshLiveSessionPermissions
 import org.micoli.micraft.auth.writeGroupsConfig
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
+import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
+import org.micoli.micraft.game.equipment.ToolRegistryLoader
+import org.micoli.micraft.game.equipment.WeaponRegistryLoader
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.character.RpgCharacterBuilder
@@ -52,6 +58,8 @@ import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.GameWorld
+import org.micoli.micraft.game.world.GameWorldRegistry
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.PlayerFile
@@ -65,6 +73,7 @@ import org.micoli.micraft.game.world.instance.InstanceClipPlanes
 import org.micoli.micraft.game.world.instance.InstanceZone
 import org.micoli.micraft.game.world.rail.RailConnection
 import org.micoli.micraft.game.world.scene.Scene
+import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.player.Hand
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.rpg.BaseStats
@@ -78,6 +87,9 @@ import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.PlainColorInfo
 import org.micoli.micraft.protocol.RailInfo
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.social.FactionDefinition
+import org.micoli.micraft.social.GroupInfo
+import org.micoli.micraft.social.GuildInfoDto
 import org.slf4j.LoggerFactory
 
 @Serializable
@@ -221,7 +233,7 @@ data class FactionSettingsRequest(
 @Serializable
 data class FactionAdminView(
     val settings: FactionSettingsRequest,
-    val list: List<org.micoli.micraft.social.FactionDefinition>,
+    val list: List<FactionDefinition>,
 )
 
 @Serializable
@@ -312,6 +324,8 @@ private data class CreatePlayerRequest(
     val wis: Int = 8,
     val con: Int = 8,
     val cha: Int = 8,
+    /** In-game RBAC groups to pre-seed on the reserved character (defaults if omitted). */
+    val groups: List<String>? = null,
 )
 
 @Serializable
@@ -406,7 +420,7 @@ class AdminController(
     private val persistence: WorldPersistence?,
     private val gameLoop: GameLoop,
     private val tokenStore: TokenStore? = null,
-    private val gameWorldRegistry: org.micoli.micraft.game.world.GameWorldRegistry =
+    private val gameWorldRegistry: GameWorldRegistry =
         gameLoop.gameWorldRegistry,
     private val authProvider: AuthProvider? = localAuth,
     private val groupsFilePath: java.nio.file.Path? = null,
@@ -423,11 +437,10 @@ class AdminController(
         val path = groupsFilePath ?: error("groups file path not configured")
         writeGroupsConfig(path, updated)
         reloadRbac?.invoke()
-        refreshLiveSessionPermissions(
-            gameWorldRegistry, authProvider, currentGroupsConfig() ?: updated)
+        refreshLiveSessionPermissions(gameWorldRegistry, currentGroupsConfig() ?: updated)
     }
 
-    private val configDir = org.micoli.micraft.config.ConfigPaths.dataRoot.resolve("config")
+    private val configDir = ConfigPaths.dataRoot.resolve("config")
 
     companion object {
         /**
@@ -438,10 +451,10 @@ class AdminController(
         const val GAME_SESSION_HEADER = "X-Micraft-Game-Session"
     }
 
-    private fun RoutingContext.adminWorld(): org.micoli.micraft.game.world.GameWorld {
+    private fun RoutingContext.adminWorld(): GameWorld {
         val id = call.request.headers[GAME_SESSION_HEADER]?.trim()?.takeIf { it.isNotEmpty() }
         if (id == null ||
-            id == org.micoli.micraft.game.world.GameWorldRegistry.DEFAULT_ID ||
+            id == GameWorldRegistry.DEFAULT_ID ||
             !gameWorldRegistry.e2eEnabled) {
             return gameWorldRegistry.defaultWorld
         }
@@ -450,10 +463,10 @@ class AdminController(
 
     // Browser WebSockets can't set request headers, so the admin edit/list sockets take the
     // target world as a `?gameSession=` query param (same convention as `/game` and `/chunks`).
-    private fun DefaultWebSocketServerSession.wsWorld(): org.micoli.micraft.game.world.GameWorld {
+    private fun DefaultWebSocketServerSession.wsWorld(): GameWorld {
         val id = call.request.queryParameters["gameSession"]?.trim()?.takeIf { it.isNotEmpty() }
         if (id == null ||
-            id == org.micoli.micraft.game.world.GameWorldRegistry.DEFAULT_ID ||
+            id == GameWorldRegistry.DEFAULT_ID ||
             !gameWorldRegistry.e2eEnabled) {
             return gameWorldRegistry.defaultWorld
         }
@@ -462,22 +475,22 @@ class AdminController(
 
     // Loaded fresh per call rather than borrowed from `gameLoop` — its own copies only populate
     // once `GameLoop.start()` runs, which a bare-bones test setup never calls.
-    private fun armorRegistry() = org.micoli.micraft.game.armor.ArmorRegistryLoader().load()
+    private fun armorRegistry() = ArmorRegistryLoader().load()
 
-    private fun weaponRegistry() = org.micoli.micraft.game.equipment.WeaponRegistryLoader().load()
+    private fun weaponRegistry() = WeaponRegistryLoader().load()
 
-    private fun toolRegistry() = org.micoli.micraft.game.equipment.ToolRegistryLoader().load()
+    private fun toolRegistry() = ToolRegistryLoader().load()
 
-    private val worldsDir = org.micoli.micraft.config.ConfigPaths.dataRoot.resolve("world")
+    private val worldsDir = ConfigPaths.dataRoot.resolve("world")
     private val activeWorldName: String = org.micoli.micraft.di.worldName()
 
     // Chunks eligible for an instance zone: in-memory (this run) union persisted-to-disk (any
     // prior run) — WorldState.discoveredChunks() alone misses chunks generated before the last
     // server restart that no player has revisited yet.
-    private fun generatedChunks(gw: org.micoli.micraft.game.world.GameWorld): Set<ChunkPos> =
+    private fun generatedChunks(gw: GameWorld): Set<ChunkPos> =
         gw.getWorldState().discoveredChunks() +
             (persistence
-                ?.takeIf { gw.id == org.micoli.micraft.game.world.GameWorld.DEFAULT_ID }
+                ?.takeIf { gw.id == GameWorld.DEFAULT_ID }
                 ?.persistedChunkPositions() ?: emptySet())
 
     private suspend fun RoutingContext.requireAdmin(): Boolean {
@@ -549,7 +562,7 @@ class AdminController(
      * /api/admin/scenes/{id}/blocks` handler body.
      */
     private fun applySceneBlockEdit(
-        gw: org.micoli.micraft.game.world.GameWorld,
+        gw: GameWorld,
         id: String,
         dto: SceneBlockDto
     ): EditResult<SceneBlockDto> {
@@ -591,14 +604,14 @@ class AdminController(
     }
 
     private fun applySceneSwitchToggle(
-        gw: org.micoli.micraft.game.world.GameWorld,
+        gw: GameWorld,
         id: String,
         dto: SceneSwitchToggleDto
     ): EditResult<SceneSwitchToggleDto> =
         when (val result = gw.scenes().toggleSwitch(id, dto.x, dto.y, dto.z)) {
-            is org.micoli.micraft.game.world.scene.SceneRegistry.SwitchToggleResult.Applied ->
+            is SceneRegistry.SwitchToggleResult.Applied ->
                 EditResult.Applied(dto)
-            is org.micoli.micraft.game.world.scene.SceneRegistry.SwitchToggleResult.Rejected ->
+            is SceneRegistry.SwitchToggleResult.Rejected ->
                 EditResult.Failed(result.reason)
         }
 
@@ -610,7 +623,7 @@ class AdminController(
      * call.
      */
     private fun applyInstanceBlockEdit(
-        gw: org.micoli.micraft.game.world.GameWorld,
+        gw: GameWorld,
         id: String,
         dto: InstanceBlockDto
     ): EditResult<InstanceEditOutcome> {
@@ -659,7 +672,7 @@ class AdminController(
     )
 
     private fun applyInstanceSwitchToggle(
-        gw: org.micoli.micraft.game.world.GameWorld,
+        gw: GameWorld,
         id: String,
         dto: InstanceSwitchToggleDto
     ): EditResult<InstanceSwitchToggleOutcome> {
@@ -1107,9 +1120,6 @@ class AdminController(
                         .onFailure {
                             return@put call.respond(HttpStatusCode.NotFound)
                         }
-                    currentGroupsConfig()?.let {
-                        refreshLiveSessionPermissions(gameWorldRegistry, authProvider, it)
-                    }
                     call.respond(HttpStatusCode.NoContent)
                 }
 
@@ -1233,7 +1243,9 @@ class AdminController(
             delete(
                 "/api/admin/groups/{name}",
                 {
-                    description = "Delete a group and unassign it from every user that has it"
+                    description =
+                        "Delete a group and unassign it from every account and character that " +
+                            "has it"
                     request { pathParameter<String>("name") { description = "Group name" } }
                     response {
                         code(HttpStatusCode.NoContent) {}
@@ -1260,6 +1272,12 @@ class AdminController(
                         ?.forEach {
                             localAuth.setUserGroups(it.email, it.groups.filter { g -> g != name })
                         }
+                    persistence?.listPlayers()?.forEach { playerName ->
+                        val saved = persistence.loadPlayerState(playerName) ?: return@forEach
+                        if (name in saved.groups) {
+                            persistence.savePlayerState(playerName, saved.copy(groups = saved.groups - name))
+                        }
+                    }
                     applyGroupsConfig(config.withoutGroup(name))
                     call.respond(HttpStatusCode.NoContent)
                 }
@@ -1345,7 +1363,7 @@ class AdminController(
                     if (localAuth != null && localAuth.listUsers().none { it.email == email }) {
                         runCatching { localAuth.addUser(email, email, name, emptyList()) }
                     }
-                    val reserved = world.reservePlayer(name, character)
+                    val reserved = world.reservePlayer(name, character, body.groups)
                     call.respondText(
                         adminJson.encodeToString(
                             CreatePlayerResponse.serializer(),
@@ -1416,6 +1434,77 @@ class AdminController(
                         }
                     p.savePlayerKeyBindings(name, bindings)
                     call.respond(HttpStatusCode.NoContent)
+                }
+
+            get(
+                "/api/admin/players/{name}/groups",
+                {
+                    description =
+                        "A character's in-game RBAC groups — distinct from the account-level " +
+                            "groups on /api/admin/users, which only gate this admin panel"
+                    request { pathParameter<String>("name") { description = "Player name" } }
+                    response {
+                        code(HttpStatusCode.OK) { body<List<String>>() }
+                        code(HttpStatusCode.NotFound) { description = "Player not found" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    val name =
+                        call.parameters["name"]
+                            ?: return@get call.respond(HttpStatusCode.BadRequest)
+                    val liveGroups =
+                        gameWorldRegistry.all().flatMap { it.sessions.all() }.find {
+                            it.state.name.equals(name, ignoreCase = true)
+                        }
+                            ?.state
+                            ?.groups
+                    val groups = liveGroups ?: persistence?.loadPlayerState(name)?.groups
+                    if (groups == null) return@get call.respond(HttpStatusCode.NotFound)
+                    call.respondText(
+                        adminJson.encodeToString(ListSerializer(String.serializer()), groups),
+                        ContentType.Application.Json)
+                }
+
+            put(
+                "/api/admin/players/{name}/groups",
+                {
+                    description = "Replace a character's in-game RBAC groups"
+                    request {
+                        pathParameter<String>("name") { description = "Player name" }
+                        body<List<String>>()
+                    }
+                    response {
+                        code(HttpStatusCode.NoContent) {}
+                        code(HttpStatusCode.NotFound) { description = "Player not found" }
+                        code(HttpStatusCode.ServiceUnavailable) { description = "No group storage" }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@put
+                    val config =
+                        currentGroupsConfig()
+                            ?: return@put call.respond(HttpStatusCode.ServiceUnavailable)
+                    val name =
+                        call.parameters["name"]
+                            ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    val newGroups =
+                        runCatching {
+                                Json.decodeFromString(
+                                    ListSerializer(String.serializer()), call.receiveText())
+                            }
+                            .getOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
+                    val sessions = gameWorldRegistry.all().flatMap { it.sessions.all() }
+                    when (
+                        mutatePlayerGroups(name, sessions, persistence, config, { s ->
+                            persistence?.savePlayerState(s.state.name, s.state)
+                        }) {
+                            newGroups
+                        }) {
+                        is PlayerRbacResult.NotFound ->
+                            return@put call.respond(HttpStatusCode.NotFound)
+                        is PlayerRbacResult.Applied -> call.respond(HttpStatusCode.NoContent)
+                    }
                 }
 
             put(
@@ -2939,7 +3028,7 @@ class AdminController(
                     description = "All active player groups"
                     response {
                         code(HttpStatusCode.OK) {
-                            body<List<org.micoli.micraft.social.GroupInfo>>()
+                            body<List<GroupInfo>>()
                         }
                     }
                     requireAdminDocs()
@@ -2947,7 +3036,7 @@ class AdminController(
                     if (!requireAdmin()) return@get
                     call.respondText(
                         adminJson.encodeToString(
-                            ListSerializer(org.micoli.micraft.social.GroupInfo.serializer()),
+                            ListSerializer(GroupInfo.serializer()),
                             adminWorld().groupManager.adminAll()),
                         ContentType.Application.Json)
                 }
@@ -2958,7 +3047,7 @@ class AdminController(
                     description = "Create a group led by an online player"
                     request { body<SocialNameRequest>() }
                     response {
-                        code(HttpStatusCode.Created) { body<org.micoli.micraft.social.GroupInfo>() }
+                        code(HttpStatusCode.Created) { body<GroupInfo>() }
                         code(HttpStatusCode.BadRequest) { description = "Leader offline / busy" }
                     }
                     requireAdminDocs()
@@ -2975,7 +3064,7 @@ class AdminController(
                     call.respond(
                         HttpStatusCode.Created,
                         adminJson.encodeToString(
-                            org.micoli.micraft.social.GroupInfo.serializer(), info))
+                            GroupInfo.serializer(), info))
                 }
 
             post(
@@ -2987,7 +3076,7 @@ class AdminController(
                         body<SocialNameRequest>()
                     }
                     response {
-                        code(HttpStatusCode.OK) { body<org.micoli.micraft.social.GroupInfo>() }
+                        code(HttpStatusCode.OK) { body<GroupInfo>() }
                         code(HttpStatusCode.BadRequest) {
                             description = "Offline / full / not found"
                         }
@@ -3007,7 +3096,7 @@ class AdminController(
                         }
                     call.respondText(
                         adminJson.encodeToString(
-                            org.micoli.micraft.social.GroupInfo.serializer(), info),
+                            GroupInfo.serializer(), info),
                         ContentType.Application.Json)
                 }
 
@@ -3069,7 +3158,7 @@ class AdminController(
                     description = "All guilds"
                     response {
                         code(HttpStatusCode.OK) {
-                            body<List<org.micoli.micraft.social.GuildInfoDto>>()
+                            body<List<GuildInfoDto>>()
                         }
                     }
                     requireAdminDocs()
@@ -3077,7 +3166,7 @@ class AdminController(
                     if (!requireAdmin()) return@get
                     call.respondText(
                         adminJson.encodeToString(
-                            ListSerializer(org.micoli.micraft.social.GuildInfoDto.serializer()),
+                            ListSerializer(GuildInfoDto.serializer()),
                             adminWorld().guildManager.adminAll()),
                         ContentType.Application.Json)
                 }
@@ -3089,7 +3178,7 @@ class AdminController(
                     request { body<GuildCreateRequest>() }
                     response {
                         code(HttpStatusCode.Created) {
-                            body<org.micoli.micraft.social.GuildInfoDto>()
+                            body<GuildInfoDto>()
                         }
                         code(HttpStatusCode.BadRequest) { description = "Invalid name/tag/owner" }
                     }
@@ -3109,7 +3198,7 @@ class AdminController(
                     call.respond(
                         HttpStatusCode.Created,
                         adminJson.encodeToString(
-                            org.micoli.micraft.social.GuildInfoDto.serializer(), dto))
+                            GuildInfoDto.serializer(), dto))
                 }
 
             put(
@@ -3121,7 +3210,7 @@ class AdminController(
                         body<GuildUpdateRequest>()
                     }
                     response {
-                        code(HttpStatusCode.OK) { body<org.micoli.micraft.social.GuildInfoDto>() }
+                        code(HttpStatusCode.OK) { body<GuildInfoDto>() }
                         code(HttpStatusCode.BadRequest) { description = "Invalid / not found" }
                     }
                     requireAdminDocs()
@@ -3177,7 +3266,7 @@ class AdminController(
                         body<SocialNameRequest>()
                     }
                     response {
-                        code(HttpStatusCode.OK) { body<org.micoli.micraft.social.GuildInfoDto>() }
+                        code(HttpStatusCode.OK) { body<GuildInfoDto>() }
                         code(HttpStatusCode.BadRequest) { description = "Unknown / busy player" }
                     }
                     requireAdminDocs()
@@ -3209,7 +3298,7 @@ class AdminController(
                         body<GuildRankRequest>()
                     }
                     response {
-                        code(HttpStatusCode.OK) { body<org.micoli.micraft.social.GuildInfoDto>() }
+                        code(HttpStatusCode.OK) { body<GuildInfoDto>() }
                         code(HttpStatusCode.BadRequest) { description = "Unknown rank / member" }
                     }
                     requireAdminDocs()
@@ -3230,7 +3319,7 @@ class AdminController(
                         }
                     call.respondText(
                         adminJson.encodeToString(
-                            org.micoli.micraft.social.GuildInfoDto.serializer(), dto),
+                            GuildInfoDto.serializer(), dto),
                         ContentType.Application.Json)
                 }
 

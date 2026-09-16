@@ -15,6 +15,7 @@ import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
 import org.micoli.micraft.game.TICK_MS
 import org.micoli.micraft.game.tick.TickPhaseStat
+import org.micoli.micraft.game.world.GameWorld
 
 // Rough per-entry sizes for working-set estimates (no JAMM/JOL available):
 // BlockPos = 3 Int + obj header ≈ 28 B; ConcurrentHashMap node ≈ 56 B.
@@ -194,7 +195,7 @@ private fun webAssetBuildTimestamp(fileName: String): String {
 
 fun buildStatusSnapshot(
     gameLoop: GameLoop,
-    world: org.micoli.micraft.game.world.GameWorld = gameLoop.defaultWorld,
+    world: GameWorld = gameLoop.defaultWorld,
 ): StatusSnapshot {
     val memMx = ManagementFactory.getMemoryMXBean()
     val heapUsed = memMx.heapMemoryUsage.used

@@ -8,11 +8,17 @@ import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.StaticNpcBehavior
 import org.micoli.micraft.game.world.BlockDefinition
+import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.biome.BiomeDefinition
+import org.micoli.micraft.game.world.biome.BiomeZone
+import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
+import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.support.testWorld
 
 private fun wanderDef(
@@ -126,24 +132,24 @@ class NpcSpawnerTest {
             for (x in 0 until chunkSize * 5) for (z in 0 until chunkSize * 5) add(Triple(x, 3, z))
         }
         val testBiome =
-            org.micoli.micraft.game.world.biome.BiomeDefinition(
+            BiomeDefinition(
                 id = "plains",
                 zones =
                     listOf(
-                        org.micoli.micraft.game.world.biome.BiomeZone(
+                        BiomeZone(
                             moistureMin = 0.0, moistureMax = 1.0)),
-                surface = org.micoli.micraft.game.world.BlockType.GRASS,
-                subsurface = org.micoli.micraft.game.world.BlockType.DIRT,
+                surface = BlockType.GRASS,
+                subsurface = BlockType.DIRT,
                 maxNpcs = 2,
             )
-        val baseWorld = org.micoli.micraft.support.testWorld(*blocks.toTypedArray())
+        val baseWorld = testWorld(*blocks.toTypedArray())
         val worldWithBiome =
-            org.micoli.micraft.game.world.WorldState(
+            WorldState(
                 object :
-                    org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator {
+                    ChunkGenerator {
                     override fun generate(
-                        pos: org.micoli.micraft.game.world.ChunkPos
-                    ): org.micoli.micraft.game.world.Chunk = baseWorld.getOrGenerate(pos)
+                        pos: ChunkPos
+                    ): Chunk = baseWorld.getOrGenerate(pos)
 
                     override fun biomeDefinitionAt(
                         wx: Int,
@@ -255,14 +261,14 @@ class NpcSpawnerTest {
             for (x in 0 until chunkSize * 5) for (z in 0 until chunkSize * 5) add(Triple(x, 3, z))
         }
         val liquidBiome =
-            org.micoli.micraft.game.world.biome.BiomeDefinition(
+            BiomeDefinition(
                 id = "sea",
                 zones =
                     listOf(
-                        org.micoli.micraft.game.world.biome.BiomeZone(
+                        BiomeZone(
                             moistureMin = 0.0, moistureMax = 1.0)),
-                surface = org.micoli.micraft.game.world.BlockType.SAND,
-                subsurface = org.micoli.micraft.game.world.BlockType.SANDSTONE,
+                surface = BlockType.SAND,
+                subsurface = BlockType.SANDSTONE,
                 maxNpcs = 20,
                 liquid = true,
                 waterLevel = 10,
@@ -271,7 +277,7 @@ class NpcSpawnerTest {
         val world =
             WorldState(
                 object :
-                    org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator {
+                    ChunkGenerator {
                     override fun generate(pos: ChunkPos) = baseWorld.getOrGenerate(pos)
 
                     override fun biomeDefinitionAt(wx: Int, wz: Int) = liquidBiome
@@ -287,9 +293,9 @@ class NpcSpawnerTest {
         // Fill the column with water between the floor and the water level.
         for (x in 0 until chunkSize * 5) for (z in 0 until chunkSize * 5) for (y in 4..9) {
             world.applyChange(
-                org.micoli.micraft.protocol.BlockChange(
-                    org.micoli.micraft.game.world.BlockPos(x, y, z),
-                    org.micoli.micraft.game.world.BlockType.WATER,
+                BlockChange(
+                    BlockPos(x, y, z),
+                    BlockType.WATER,
                     0))
         }
 

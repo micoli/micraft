@@ -14,7 +14,7 @@ Bindings resolve through six layers: the YAML config → the server keybindings 
 - A player's saved bindings live in their player file; defaults come from the
   config below.
 
-{{ story "story/game-windows-preferences--keybindings-tab" caption="Preferences → Keybindings — rebind actions and custom slash commands" }}
+{{ story "story/game-windows-preferences-keybindings--keybindings" caption="Preferences → Keybindings — rebind actions and custom slash commands" }}
 
 | Route | Purpose |
 |-------|---------|

@@ -489,30 +489,45 @@
     "name": "Open",
     "source": ".stories/game/window/PauseMenu.stories.tsx"
   },
-  "game-windows-preferences--chat-tab": {
-    "title": "Game/Windows/Preferences",
-    "name": "Chat Tab",
-    "source": ".stories/game/window/Preferences.stories.tsx"
-  },
   "game-windows-preferences--closed": {
     "title": "Game/Windows/Preferences",
     "name": "Closed",
     "source": ".stories/game/window/Preferences.stories.tsx"
   },
-  "game-windows-preferences--game-tab": {
+  "game-windows-preferences--preference-window": {
     "title": "Game/Windows/Preferences",
-    "name": "Game Tab",
+    "name": "Preference Window",
     "source": ".stories/game/window/Preferences.stories.tsx"
   },
-  "game-windows-preferences--graphics-tab": {
-    "title": "Game/Windows/Preferences",
-    "name": "Graphics Tab",
-    "source": ".stories/game/window/Preferences.stories.tsx"
+  "game-windows-preferences-chat--chat": {
+    "title": "Game/Windows/Preferences/Chat",
+    "name": "Chat",
+    "source": ".stories/game/window/preferences/PreferencesChat.stories.tsx"
   },
-  "game-windows-preferences--keybindings-tab": {
-    "title": "Game/Windows/Preferences",
-    "name": "Keybindings Tab",
-    "source": ".stories/game/window/Preferences.stories.tsx"
+  "game-windows-preferences-commands--commands": {
+    "title": "Game/Windows/Preferences/Commands",
+    "name": "Commands",
+    "source": ".stories/game/window/preferences/PreferencesCommands.stories.tsx"
+  },
+  "game-windows-preferences-debug--debug": {
+    "title": "Game/Windows/Preferences/Debug",
+    "name": "Debug",
+    "source": ".stories/game/window/preferences/PreferencesDebug.stories.tsx"
+  },
+  "game-windows-preferences-game--game": {
+    "title": "Game/Windows/Preferences/Game",
+    "name": "Game",
+    "source": ".stories/game/window/preferences/PreferencesGame.stories.tsx"
+  },
+  "game-windows-preferences-graphics--graphics": {
+    "title": "Game/Windows/Preferences/Graphics",
+    "name": "Graphics",
+    "source": ".stories/game/window/preferences/PreferencesGraphics.stories.tsx"
+  },
+  "game-windows-preferences-keybindings--keybindings": {
+    "title": "Game/Windows/Preferences/Keybindings",
+    "name": "Keybindings",
+    "source": ".stories/game/window/preferences/PreferencesKeybindings.stories.tsx"
   },
   "game-windows-questjournal--closed": {
     "title": "Game/Windows/QuestJournal",

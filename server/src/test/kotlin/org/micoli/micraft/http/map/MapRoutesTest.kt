@@ -1,5 +1,6 @@
 package org.micoli.micraft.http.map
 
+import io.ktor.client.HttpClient
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -18,10 +19,29 @@ import org.micoli.micraft.module
 
 class MapRoutesTest {
 
+    // auth.provider is "local" with requirePassword: false in resources/config/server.yaml, so
+    // an unknown email is enough to log in and get a bearer token — see MapController's
+    // requireMapAuth.
+    private suspend fun HttpClient.mapAuthToken(): String {
+        val r =
+            post("/auth/login") {
+                contentType(ContentType.Application.Json)
+                setBody("""{"email":"map-routes-test@example.com","password":""}""")
+            }
+        return Json.parseToJsonElement(r.bodyAsText())
+            .jsonObject["token"]!!
+            .jsonPrimitive
+            .content
+    }
+
     @Test
     fun testMapStateReturnsJson() = testApplication {
         application { module() }
-        val r = client.get("/api/map/state")
+        val token = client.mapAuthToken()
+        val r =
+            client.get("/api/map/state") {
+                headers.append(HttpHeaders.Authorization, "Bearer $token")
+            }
         assertEquals(HttpStatusCode.OK, r.status)
         assertEquals(ContentType.Application.Json, r.contentType()?.withoutParameters())
     }
@@ -29,14 +49,24 @@ class MapRoutesTest {
     @Test
     fun testMapStateHasCorsHeader() = testApplication {
         application { module() }
-        val r = client.get("/api/map/state")
+        val token = client.mapAuthToken()
+        val r =
+            client.get("/api/map/state") {
+                headers.append(HttpHeaders.Authorization, "Bearer $token")
+            }
         assertEquals("*", r.headers[HttpHeaders.AccessControlAllowOrigin])
     }
 
     @Test
     fun testMapStateStructure() = testApplication {
         application { module() }
-        val body = client.get("/api/map/state").bodyAsText()
+        val token = client.mapAuthToken()
+        val body =
+            client
+                .get("/api/map/state") {
+                    headers.append(HttpHeaders.Authorization, "Bearer $token")
+                }
+                .bodyAsText()
         val json = Json.parseToJsonElement(body).jsonObject
         assertNotNull(json["gameTicks"], "gameTicks field must be present")
         assertTrue(
@@ -62,7 +92,11 @@ class MapRoutesTest {
     @Test
     fun testRoadRasterPngReturnsPng() = testApplication {
         application { module() }
-        val r = client.get("/api/map/road-raster.png?cx=0&cz=0&radius=64")
+        val token = client.mapAuthToken()
+        val r =
+            client.get("/api/map/road-raster.png?cx=0&cz=0&radius=64") {
+                headers.append(HttpHeaders.Authorization, "Bearer $token")
+            }
         assertEquals(HttpStatusCode.OK, r.status)
         assertEquals(ContentType.Image.PNG, r.contentType()?.withoutParameters())
         assertEquals("*", r.headers[HttpHeaders.AccessControlAllowOrigin])

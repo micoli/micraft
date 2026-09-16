@@ -5,6 +5,7 @@ import kotlin.math.sin
 import org.micoli.micraft.babylon.*
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
+import org.micoli.micraft.social.FactionColors
 
 private const val PRED_DT = 16.0 / 1000.0
 
@@ -158,8 +159,7 @@ class RemotePlayerManager(private val scene: JsAny) {
             jsSetPlayerOnMinimap(id, x.toFloat(), z.toFloat(), yaw)
 
             val tag = playerGuildTag[id]
-            val factionColor =
-                org.micoli.micraft.social.FactionColors.colorOf(playerFactionId[id]) ?: "#ffffff"
+            val factionColor = FactionColors.colorOf(playerFactionId[id]) ?: "#ffffff"
             val label = (if (tag != null) "[$tag] " else "") + (playerNames[id] ?: "")
             val nameplateKey = "$label|$factionColor"
             if (playerNameplateApplied[id] != nameplateKey) {

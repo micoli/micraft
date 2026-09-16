@@ -10,6 +10,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.KSerializer
 import org.micoli.micraft.combat.AttackDefinition
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.isYamlEffectivelyEmpty
 import org.micoli.micraft.config.mergeConfig
 import org.micoli.micraft.config.spliceMissingAsComments
@@ -25,8 +26,8 @@ private const val SPELL_SCHEMA_HEADER =
 
 class SkillsConfig(
     private val resourcesRoot: Path =
-        org.micoli.micraft.config.ConfigPaths.resourcesConfig("skills"),
-    private val dataRoot: Path = org.micoli.micraft.config.ConfigPaths.dataConfig("skills"),
+        ConfigPaths.resourcesConfig("skills"),
+    private val dataRoot: Path = ConfigPaths.dataConfig("skills"),
 ) {
     @Volatile
     var data: SkillsConfigData = SkillsConfigData()

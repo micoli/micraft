@@ -17,6 +17,7 @@ import { PreferencesTab } from "./PreferencesTab";
 import { RpgTab } from "./RpgTab";
 import { EquipmentTab } from "./EquipmentTab";
 import { InventoryTab } from "./InventoryTab";
+import { RbacTab } from "./RbacTab";
 
 const DEFAULT_TAB = "prefs";
 
@@ -55,7 +56,7 @@ export function PlayerDetail({
   }, [name, refresh]);
 
   const hasRpg = !!file?.state.characterData;
-  const validTabs = ["prefs", "kb", "inventory", ...(hasRpg ? ["rpg"] : ["equipment"])];
+  const validTabs = ["prefs", "kb", "inventory", "rbac", ...(hasRpg ? ["rpg"] : ["equipment"])];
   const tab = activeTab && validTabs.includes(activeTab) ? activeTab : DEFAULT_TAB;
 
   useEffect(() => {
@@ -184,6 +185,12 @@ export function PlayerDetail({
           >
             {t("players.tabInventory")}
           </TabsTrigger>
+          <TabsTrigger
+            value="rbac"
+            className="text-xs data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-[#3C50E0] rounded-none pb-2 px-1 text-[#8A99AF] transition-colors"
+          >
+            {t("players.tabRbac")}
+          </TabsTrigger>
           {hasRpg && (
             <TabsTrigger
               value="rpg"
@@ -218,6 +225,9 @@ export function PlayerDetail({
         )}
         <TabsContent value="inventory">
           <InventoryTab file={file} onGive={giveItem} />
+        </TabsContent>
+        <TabsContent value="rbac">
+          <RbacTab name={name} file={file} />
         </TabsContent>
         {hasRpg && (
           <TabsContent value="rpg">

@@ -10,6 +10,8 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
+import org.micoli.micraft.game.npc.animal.AnimalYamlEntry
+import org.micoli.micraft.game.npc.animal.NpcDiet
 import org.micoli.micraft.game.npc.behaviors.InteractionableNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.StaticNpcBehavior
@@ -697,8 +699,8 @@ class NpcManagerTest {
             staticDef("FOX")
                 .copy(
                     animalConfig =
-                        org.micoli.micraft.game.npc.animal.AnimalYamlEntry(
-                            diet = org.micoli.micraft.game.npc.animal.NpcDiet.HERBIVORE,
+                        AnimalYamlEntry(
+                            diet = NpcDiet.HERBIVORE,
                             lifespanDays = 20.0,
                             preyTypes = emptyList(),
                             canReproduce = true,

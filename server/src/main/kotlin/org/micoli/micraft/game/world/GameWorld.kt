@@ -540,15 +540,24 @@ class GameWorld(
     // Filled by `POST /api/admin/players` before the browser connects, keyed by lower-cased player
     // name. `onConnect` consumes it in place of minting a fresh id / running character creation, so
     // an E2E test's RPG player is ready up front (memory-only worlds have no persistence).
-    data class ReservedPlayer(val id: String, val characterData: CharacterData?)
+    data class ReservedPlayer(
+        val id: String,
+        val characterData: CharacterData?,
+        val groups: List<String>? = null,
+    )
 
     val reservedPlayers = java.util.concurrent.ConcurrentHashMap<String, ReservedPlayer>()
 
-    fun reservePlayer(name: String, characterData: CharacterData? = null): ReservedPlayer =
+    fun reservePlayer(
+        name: String,
+        characterData: CharacterData? = null,
+        groups: List<String>? = null,
+    ): ReservedPlayer =
         reservedPlayers.compute(name.lowercase()) { _, cur ->
             ReservedPlayer(
                 cur?.id ?: java.util.UUID.randomUUID().toString(),
-                characterData ?: cur?.characterData)
+                characterData ?: cur?.characterData,
+                groups ?: cur?.groups)
         }!!
 
     // ── World-scoped admin surface (mirrors GameLoop's accessors so admin routes can target

@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.skin
 
 import com.charleskorn.kaml.Yaml
+import org.micoli.micraft.config.ConfigPaths
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -22,8 +23,8 @@ private fun SkinDefinition.applyOverride(o: SkinYamlOverride) =
  * registry — the client then falls back to the stance eye offset.
  */
 class SkinRegistryLoader(
-    private val skinsPath: Path = org.micoli.micraft.config.ConfigPaths.resourcesDir("models"),
-    private val dataSkinsPath: Path = org.micoli.micraft.config.ConfigPaths.dataResources("models"),
+    private val skinsPath: Path = ConfigPaths.resourcesDir("models"),
+    private val dataSkinsPath: Path = ConfigPaths.dataResources("models"),
 ) {
     fun load(): Map<String, SkinDefinition> {
         if (!skinsPath.exists()) return emptyMap()

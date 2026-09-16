@@ -174,6 +174,9 @@ export const fr: Record<TranslationKey, string> = {
   "players.tabPreferences": "Préférences",
   "players.tabKeybindings": "Raccourcis",
   "players.tabRpg": "RPG",
+  "players.tabRbac": "Permissions",
+  "players.rbacHint":
+    "Groupes RBAC en jeu pour ce personnage — distincts des groupes de compte de la page Utilisateurs, qui ne conditionnent que ce panel admin.",
   "players.skin": "Skin",
   "players.language": "Langue",
   "players.fieldOfView": "Champ de vision — {0}°",

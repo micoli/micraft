@@ -11,13 +11,16 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.math.abs
 import kotlinx.serialization.builtins.ListSerializer
+import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.AttackRankDefinition
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.npc.animal.AnimalInstanceData
+import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.world.BreathConstants
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
@@ -71,7 +74,7 @@ class NpcManager(
     private var onNpcDamagedByNpc: (victim: NpcInstance, attacker: NpcInstance) -> Unit = { _, _ ->
     },
     /** Quest manager for the quest-giver behavior's dialog. Null hosts get no quest offers. */
-    private val getQuestManager: () -> org.micoli.micraft.game.quest.QuestManager? = { null },
+    private val getQuestManager: () -> QuestManager? = { null },
     /** Host-provided check so a generated NPC name never collides with a player's. */
     private val isPlayerName: (String) -> Boolean = { false },
 ) {
@@ -245,22 +248,22 @@ class NpcManager(
         if (!headBlock.isLiquid) {
             instance.currentBreath =
                 (instance.currentBreath +
-                        org.micoli.micraft.game.world.BreathConstants.REFILL_PER_TICK)
-                    .coerceAtMost(org.micoli.micraft.game.world.BreathConstants.MAX_BREATH_TICKS)
+                        BreathConstants.REFILL_PER_TICK)
+                    .coerceAtMost(BreathConstants.MAX_BREATH_TICKS)
             instance.drowningDamageAccumTicks = 0
             return
         }
         instance.currentBreath =
-            (instance.currentBreath - org.micoli.micraft.game.world.BreathConstants.DRAIN_PER_TICK)
+            (instance.currentBreath - BreathConstants.DRAIN_PER_TICK)
                 .coerceAtLeast(0)
         if (instance.currentBreath > 0) return
         instance.drowningDamageAccumTicks++
         if (instance.drowningDamageAccumTicks <
-            org.micoli.micraft.game.world.BreathConstants.DAMAGE_INTERVAL_TICKS)
+            BreathConstants.DAMAGE_INTERVAL_TICKS)
             return
         instance.drowningDamageAccumTicks = 0
         instance.currentHp =
-            (instance.currentHp - org.micoli.micraft.game.world.BreathConstants.DAMAGE_PER_INTERVAL)
+            (instance.currentHp - BreathConstants.DAMAGE_PER_INTERVAL)
                 .coerceAtLeast(0)
         instance.state = instance.state.copy(currentHp = instance.currentHp, maxHp = instance.maxHp)
         broadcast(
@@ -574,7 +577,7 @@ class NpcManager(
     suspend fun handleInteract(
         session: PlayerSession,
         npcId: String,
-        i18n: org.micoli.micraft.I18nConfig? = null,
+        i18n: I18nConfig? = null,
     ) {
         val instance = npcs[npcId] ?: return
         val interactCtx =

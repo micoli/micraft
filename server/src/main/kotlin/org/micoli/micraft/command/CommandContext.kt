@@ -14,16 +14,22 @@ import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
 import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.social.FactionManager
+import org.micoli.micraft.game.social.GroupManager
+import org.micoli.micraft.game.social.GuildManager
+import org.micoli.micraft.game.social.GuildRegistry
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
 import org.micoli.micraft.game.world.claim.ClaimManager
 import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
@@ -44,7 +50,7 @@ data class CommandContext(
     val savePlayer: (PlayerSession) -> Unit = {},
     val worldItems: WorldItemManager? = null,
     val npcManager: NpcManager? = null,
-    val petManager: org.micoli.micraft.game.pet.PetManager? = null,
+    val petManager: PetManager? = null,
     val vehicleManager: VehicleManager? = null,
     val placeableManager: PlaceableManager? = null,
     val siegeWeaponManager: SiegeWeaponManager? = null,
@@ -77,9 +83,9 @@ data class CommandContext(
     val scenes: SceneRegistry? = null,
     val claimRegistry: ClaimRegistry? = null,
     val claimManager: ClaimManager? = null,
-    val actionBlockRegistry: org.micoli.micraft.game.world.actionblock.ActionBlockRegistry? = null,
-    val groupManager: org.micoli.micraft.game.social.GroupManager? = null,
-    val guildManager: org.micoli.micraft.game.social.GuildManager? = null,
-    val guildRegistry: org.micoli.micraft.game.social.GuildRegistry? = null,
-    val factionManager: org.micoli.micraft.game.social.FactionManager? = null,
+    val actionBlockRegistry: ActionBlockRegistry? = null,
+    val groupManager: GroupManager? = null,
+    val guildManager: GuildManager? = null,
+    val guildRegistry: GuildRegistry? = null,
+    val factionManager: FactionManager? = null,
 )

@@ -14,11 +14,13 @@ import org.micoli.micraft.game.world.BlockDefinition
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.EntityType
 import org.micoli.micraft.game.world.ItemDefinition
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.placeable.PlaceableDefinition
 import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.placeable.siege.SiegeWeaponDefinition
@@ -106,12 +108,12 @@ class BlockPlacerTest {
     @Test
     fun place_insideProtectedZone_rejected() = runBlocking {
         val world = testWorld()
-        val registry = org.micoli.micraft.game.world.instance.InstanceRegistry(null)
+        val registry = InstanceRegistry(null)
         registry.create(
             name = "Arena",
             yMin = 0,
             yMax = 16,
-            chunks = setOf(org.micoli.micraft.game.world.ChunkPos(0, 0)),
+            chunks = setOf(ChunkPos(0, 0)),
             ownerName = "Alice",
         )
         val placer = BlockPlacer(world, {}, {}, instanceRegistry = registry)

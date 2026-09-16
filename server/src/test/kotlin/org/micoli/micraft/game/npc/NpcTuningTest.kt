@@ -7,6 +7,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
+import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.support.testWorld
 
@@ -41,7 +42,7 @@ class NpcTuningTest {
         val instance =
             NpcInstance(
                 state =
-                    org.micoli.micraft.npc.NpcState(
+                    NpcState(
                         id = "n1",
                         name = "Walker",
                         type = "walker",
@@ -91,7 +92,7 @@ class NpcTuningTest {
         val instance =
             NpcInstance(
                 state =
-                    org.micoli.micraft.npc.NpcState(
+                    NpcState(
                         id = "n1",
                         name = "Walker",
                         type = "walker",

@@ -166,11 +166,12 @@ config_reload:
 rbac:
   server:
     no_permission: "Vous n'avez pas la permission d'utiliser cette commande."
-    group_set: "Utilisateur {0} ajouté au(x) groupe(s) : {1}."
-    group_removed: "Utilisateur {0} retiré du/des groupe(s) : {1}."
+    group_set: "Joueur {0} ajouté au(x) groupe(s) : {1}."
+    group_removed: "Joueur {0} retiré du/des groupe(s) : {1}."
     groups_list: "Groupes :{0}"
     group_not_found: "Groupe(s) inconnu(s) : {0}"
-    your_groups_updated: "Votre appartenance aux groupes a été mise à jour. Reconnectez-vous pour que les permissions prennent effet."
+    player_not_found: "Joueur introuvable : {0}"
+    your_groups_updated: "L'appartenance aux groupes de votre personnage a été mise à jour — les permissions prennent effet immédiatement."
 equip:
   server:
     usage: "Usage : /equip <nomArmure>"

@@ -1,5 +1,6 @@
 package org.micoli.micraft
 
+import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -13,6 +14,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
@@ -20,6 +22,21 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
 
 class ApplicationTest {
+
+    // auth.provider is "local" with requirePassword: false in resources/config/server.yaml, so
+    // an unknown email is enough to log in and get a bearer token — GameLoop.onConnect requires
+    // one in ClientMessage.Connect.token whenever a TokenStore is wired in (always, in module()).
+    private suspend fun HttpClient.gameAuthToken(email: String): String {
+        val r =
+            post("/auth/login") {
+                contentType(ContentType.Application.Json)
+                setBody("""{"email":"$email","password":""}""")
+            }
+        return Json.parseToJsonElement(r.bodyAsText())
+            .jsonObject["token"]!!
+            .jsonPrimitive
+            .content
+    }
 
     @Test
     fun applyE2eWorldOverrides_spawnsJustAboveTheGroundAndShrinksTheView() {
@@ -52,6 +69,7 @@ class ApplicationTest {
     @Test
     fun testWebSocketWelcome() = testApplication {
         application { module() }
+        val token = client.gameAuthToken("test@example.com")
         val wsClient = createClient { install(io.ktor.client.plugins.websocket.WebSockets) }
         wsClient.webSocket("/game") {
             send(
@@ -59,7 +77,9 @@ class ApplicationTest {
                     true,
                     ClientMessageCodec.encode(
                         ClientMessage.Connect(
-                            playerName = "TestPlayer", userName = "test@example.com"))))
+                            playerName = "TestPlayer",
+                            userName = "test@example.com",
+                            token = token))))
             val frame = incoming.receive()
             assertIs<Frame.Binary>(frame)
             val msg = ServerMessageCodec.decode(frame.readBytes())
@@ -71,6 +91,7 @@ class ApplicationTest {
     @Test
     fun testWebSocketRegistrySyncSentAfterWelcome() = testApplication {
         application { module() }
+        val token = client.gameAuthToken("test2@example.com")
         val wsClient = createClient { install(io.ktor.client.plugins.websocket.WebSockets) }
         wsClient.webSocket("/game") {
             send(
@@ -78,7 +99,9 @@ class ApplicationTest {
                     true,
                     ClientMessageCodec.encode(
                         ClientMessage.Connect(
-                            playerName = "TestPlayer", userName = "test@example.com"))))
+                            playerName = "TestPlayer",
+                            userName = "test@example.com",
+                            token = token))))
 
             // First message: Welcome
             val welcomeFrame = incoming.receive()

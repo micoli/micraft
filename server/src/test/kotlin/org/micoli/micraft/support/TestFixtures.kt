@@ -6,6 +6,8 @@ import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.LocalAuthProvider
 import org.micoli.micraft.command.CommandContext
+import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.command.Completion
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.auction.AuctionManager
@@ -16,12 +18,14 @@ import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
 import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.ItemDefinition
 import org.micoli.micraft.game.world.ItemRegistry
@@ -29,6 +33,7 @@ import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
 import org.micoli.micraft.game.world.scene.SceneRegistry
 import org.micoli.micraft.game.world.weather.WeatherConfig
@@ -257,6 +262,7 @@ fun testI18n(): I18nConfig = sharedTestI18n
 fun testContext(
     world: WorldState = testWorld(),
     sessions: List<PlayerSession> = emptyList(),
+    persistence: WorldPersistence? = null,
     broadcast: suspend (ServerMessage) -> Unit = {},
     kickSession: suspend (String) -> Unit = {},
     reloadConfig: (suspend (String) -> String)? = null,
@@ -286,13 +292,13 @@ fun testContext(
     namedPoints: () -> Map<String, Vec3> = { emptyMap() },
     scenes: SceneRegistry? = null,
     vehicleManager: VehicleManager? = null,
-    petManager: org.micoli.micraft.game.pet.PetManager? = null,
-    actionBlockRegistry: org.micoli.micraft.game.world.actionblock.ActionBlockRegistry? = null,
+    petManager: PetManager? = null,
+    actionBlockRegistry: ActionBlockRegistry? = null,
     questManager: QuestManager? = null,
 ) =
     CommandContext(
         world = world,
-        persistence = null,
+        persistence = persistence,
         i18n = i18n,
         broadcast = broadcast,
         sessions = { sessions },
@@ -329,15 +335,15 @@ fun testContext(
     )
 
 /** Resolves a command's completions the way `GameLoop.autocomplete` does (rich, then string). */
-suspend fun org.micoli.micraft.command.CommandHandler.completions(
+suspend fun CommandHandler.completions(
     argIndex: Int,
     partial: String,
     context: CommandContext,
     session: PlayerSession? = null,
-): List<org.micoli.micraft.command.Completion> =
+): List<Completion> =
     completeArgRich(argIndex, partial, session, context)
         ?: completeArg(argIndex, partial, session, context).map {
-            org.micoli.micraft.command.Completion(it)
+            Completion(it)
         }
 
 fun testWeatherManager() = WeatherManager(WeatherConfig())

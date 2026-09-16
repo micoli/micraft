@@ -17,6 +17,7 @@ import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.social.FactionManager
 import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.rpg.CharacterData
@@ -79,7 +80,7 @@ class CombatProcessor(
     private val onPlayerDownedByNpc: suspend (session: PlayerSession, killerNpcId: String) -> Unit =
         { _, _ ->
         },
-    private val factionManager: org.micoli.micraft.game.social.FactionManager? = null,
+    private val factionManager: FactionManager? = null,
 ) {
     // ── Target selection ──────────────────────────────────────────────────────
 
@@ -304,7 +305,7 @@ class CombatProcessor(
             }
 
         data class Resolved(
-            val slot: org.micoli.micraft.game.npc.NpcAttackSlot,
+            val slot: NpcAttackSlot,
             val attackDef: AttackDefinition,
             val rankDef: AttackRankDefinition,
         )

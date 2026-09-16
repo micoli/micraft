@@ -53,6 +53,7 @@ make test                     # all test suites
 | `/character` | `/character` | Show your RPG character sheet | — |
 | `/claim` | `/claim <trust\|untrust\|abandon\|info> [playerName]` | Manage the land claim you're standing in. | dynamic |
 | `/codex` | `/codex` | Opens the codex (blocks, items, bestiary). | — |
+| `/compass` | `/compass <x y z \| pointName \| toggle \| clear>` | Points the compass widget at coordinates or a named point. | dynamic |
 | `/config` | `/config <get\|set> <key> [value]` | Get or set a runtime config value. | dynamic |
 | `/config:reload` | `/config:reload` | Reloads block, NPC, or RBAC definitions from resource files. | block, npc, rbac |
 | `/craft` | `/craft` | Opens the crafting window. | — |
@@ -68,10 +69,12 @@ make test                     # all test suites
 | `/give:money` | `/give:money <amount> [playerName]` | Give copper to a player (or yourself if name omitted). | dynamic |
 | `/god:off` | `/god:off` | Disable god mode. | — |
 | `/god:on` | `/god:on` | Enable god mode (immune to damage). | — |
+| `/goto` | `/goto <playerName\|npcName>` | Teleports you to a player or NPC. | dynamic |
 | `/group` | `/group create\|invite <player>\|accept\|leave\|kick <player>\|transfer <player>\|disband\|who` | Manage your temporary party (max 5). | create, invite, accept, leave, kick, transfer, disband, who |
 | `/guild` | `/guild create <name> <tag>\|invite <player>\|accept\|leave\|kick <player>\|motd <text>\|rank <player> <rankName>\|transfer <player>\|disband\|info` | Manage your guild. | create, invite, accept, decline, leave, kick, motd, rank, transfer, disband, info |
 | `/help` | `/help [command]` | Lists available commands. | — |
 | `/join` | `/join <channelName>` | Join a chat channel. | dynamic |
+| `/kick` | `/kick <playerName>` | Kicks a connected player. | dynamic |
 | `/lang` | `/lang [locale]` | Changes your language preference. | — |
 | `/layout` | `/layout <name>` | Switches to a named layout. | — |
 | `/layouts` | `/layouts` | Opens the layout editor. | — |
@@ -83,6 +86,7 @@ make test                     # all test suites
 | `/map` | `/map` | Toggles the biome map overlay. | — |
 | `/mode` | `/mode <game\|creative>` | Switch between normal game mode and creative edit mode. (admin) | game, creative |
 | `/mount` | `/mount` | Mount or dismount the vehicle you're targeting. | — |
+| `/npc` | `/npc <spawn\|list\|remove\|tp> [args]` | Manage NPCs in the world. | — |
 | `/npcbuy` | `/npcbuy <npcId> <itemType> [quantity]` | Buy an item from a seller NPC. | — |
 | `/npcsell` | `/npcsell <npcId> <itemType> [quantity]` | Sell an item to a seller NPC. | — |
 | `/pet` | `/pet <list\|spawn\|dismiss\|resurrect\|rename> [name] [newName]` | Manage your tamed pets (list, spawn, dismiss, resurrect, rename). | dynamic |
@@ -101,8 +105,10 @@ make test                     # all test suites
 | `/skin` | `/skin <skinName>` | Changes your player skin. | dynamic |
 | `/skiprpg` | `/skiprpg` | Opt out of RPG system | — |
 | `/spawn` | `/spawn <npc_model> [x y z]` | Spawn an NPC of the given model on the solid block you are looking at. (admin) | dynamic |
+| `/summon` | `/summon <playerName>` | Teleports another player to your location. | dynamic |
 | `/talk` | `/talk <playerName>` | Open a private chat with a player. | dynamic |
 | `/tame` | `/tame` | Attempt to tame the wild creature you are targeting. | — |
+| `/teleport` | `/teleport <x> <y> <z>  \|  /teleport <playerName>` | Teleports you to the given coordinates. | dynamic |
 | `/time` | `/time [0-23]` | Shows or sets the in-game time. | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 |
 | `/trade` | `/trade <playerName>` | Initiates a trade with another player. | dynamic |
 | `/tradeaccept` | `/tradeaccept <tradeId>` | Accepts the current trade offer. | — |
@@ -115,24 +121,18 @@ make test                     # all test suites
 | `/water` | `/water [x y z]` | Place a water source on the solid block you are looking at (or x y z). (admin) | — |
 | `/weather` | `/weather [rain\|storm\|snow\|fog\|none]` | Force a weather zone at your position or clear all zones. (admin) | rain, storm, snow, fog, none |
 | `/weather-forecast` | `/weather-forecast` | Shows active weather zones and their location. | — |
+| `/who` | `/who` | Lists connected players with their position. | — |
 | `/wield` | `/wield <name> [hand]` | Wield a weapon or tool in a hand. | dynamic |
+| `/yield` | `/yield <message>` | Broadcasts a message to all connected players. | — |
 
 ### Plugin commands
 
 | Command | Usage | Description | Options / Autocomplete |
 |---------|-------|-------------|------------------------|
 | `/adduser` | `/adduser <email> <password> [displayName] [group1,group2,...]` | Add a local auth user. Usage: /adduser <email> <password> [displayName] [group1,group2,...] | — |
-| `/compass` | `/compass <x y z \| pointName \| toggle \| clear>` | Points the compass widget at coordinates or a named point. | dynamic |
-| `/goto` | `/goto <playerName\|npcName>` | Teleports you to a player or NPC. | dynamic |
-| `/kick` | `/kick <playerName>` | Kicks a connected player. | dynamic |
-| `/npc` | `/npc <spawn\|list\|remove\|tp> [args]` | Manage NPCs in the world. | — |
 | `/rbac:listgroups` | `/rbac:listgroups` | List all groups and their permissions. | — |
-| `/rbac:removegroup` | `/rbac:removegroup <email> <group1,group2,...>` | Remove groups from a user. | — |
-| `/rbac:setgroup` | `/rbac:setgroup <email> <group1,group2,...>` | Add groups to a user. | — |
-| `/summon` | `/summon <playerName>` | Teleports another player to your location. | dynamic |
-| `/teleport` | `/teleport <x> <y> <z>  \|  /teleport <playerName>` | Teleports you to the given coordinates. | dynamic |
-| `/who` | `/who` | Lists connected players with their position. | — |
-| `/yield` | `/yield <message>` | Broadcasts a message to all connected players. | — |
+| `/rbac:removegroup` | `/rbac:removegroup <playerName> <group1,group2,...>` | Remove in-game RBAC groups from a character. | dynamic |
+| `/rbac:setgroup` | `/rbac:setgroup <playerName> <group1,group2,...>` | Add in-game RBAC groups to a character. | dynamic |
 
 <!-- END_COMMANDS -->
 
@@ -165,7 +165,7 @@ never hand-edit either.
 | PUT | `/api/admin/gametime` | Set the in-game time of day |
 | GET | `/api/admin/groups` | All permission groups, including the virtual admin group |
 | POST | `/api/admin/groups` | Create a permission group |
-| DELETE | `/api/admin/groups/{name}` | Delete a group and unassign it from every user that has it |
+| DELETE | `/api/admin/groups/{name}` | Delete a group and unassign it from every account and character that has it |
 | PUT | `/api/admin/groups/{name}` | Replace a group's permission list |
 | GET | `/api/admin/instances` | All instance zones |
 | POST | `/api/admin/instances` | Create an instance zone covering already-generated chunks |
@@ -190,6 +190,8 @@ never hand-edit either.
 | GET | `/api/admin/players/{name}` | Full player file (state, keybindings, RPG data) |
 | PUT | `/api/admin/players/{name}/equipment` | Partially update a player's owned/equipped armor and wielded hand items |
 | POST | `/api/admin/players/{name}/give` | Give an inventory item, or grant ownership of an armor/weapon/tool |
+| GET | `/api/admin/players/{name}/groups` | A character's in-game RBAC groups — distinct from the account-level groups on /api/admin/users, which only gate this admin panel |
+| PUT | `/api/admin/players/{name}/groups` | Replace a character's in-game RBAC groups |
 | PUT | `/api/admin/players/{name}/keybindings` | Overwrite a player's saved key bindings |
 | PUT | `/api/admin/players/{name}/preferences` | Partially update a player's preferences (only given fields change) |
 | POST | `/api/admin/players/{name}/rename` | Rename a player |

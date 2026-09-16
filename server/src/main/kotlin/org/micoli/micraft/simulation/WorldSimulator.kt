@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.game.SharedGameServices
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
@@ -47,6 +48,7 @@ import org.micoli.micraft.npc.NpcDeathCause
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
 
@@ -135,9 +137,7 @@ class WorldSimulator(
                     gameDayDurationSecondsOf = { config.gameDayDurationSeconds },
                     experienceConfigData = deps.experienceConfig,
                     // never saved: the simulated world is discarded on stop
-                    vegetationSavePath =
-                        org.micoli.micraft.config.ConfigPaths.dataWorld(
-                            ".simulator/vegetation_state.yaml"),
+                    vegetationSavePath = ConfigPaths.dataWorld(".simulator/vegetation_state.yaml"),
                     initialGameTicks = 0L,
                     broadcastWorldChange = { message -> onWorldUpdate(message) },
                     npcLifecycleGate = {
@@ -527,8 +527,7 @@ class WorldSimulator(
         // Real client path: the movement pass in GameWorld.tick drains session.intents. Held until
         // the next call, as a real client would keep re-sending it.
         session.intents.trySend(
-            org.micoli.micraft.protocol.ClientMessage.MoveIntent(
-                dx = dx, dz = dz, yaw = yaw, pitch = 0f, jump = jump))
+            ClientMessage.MoveIntent(dx = dx, dz = dz, yaw = yaw, pitch = 0f, jump = jump))
     }
 
     // ── Views ─────────────────────────────────────────────────────────────────

@@ -104,7 +104,10 @@ export interface CreatePlayerOptions {
  */
 export async function createPlayer(acct: E2eAccount, opts: CreatePlayerOptions = {}): Promise<CreatedPlayer> {
   const cc = opts.characterClass === undefined ? "WARRIOR" : opts.characterClass;
-  const body: Record<string, unknown> = { name: acct.charName, email: acct.email };
+  // In-game RBAC is per-character (PlayerState.groups), independent of the account created above
+  // — grant "admin" here so specs can use admin-gated slash commands (e.g. /give:money) without
+  // depending on defaultGroups.
+  const body: Record<string, unknown> = { name: acct.charName, email: acct.email, groups: ["admin"] };
   if (cc !== null) {
     body.characterClass = cc;
     body.str = opts.str ?? 8;

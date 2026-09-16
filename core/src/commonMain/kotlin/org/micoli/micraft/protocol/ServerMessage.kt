@@ -12,6 +12,7 @@ import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.RecipeDefinition
 import org.micoli.micraft.game.world.WeatherZoneInfo
 import org.micoli.micraft.game.world.WorldItem
+import org.micoli.micraft.game.world.actionblock.ActionBlockInfo
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.placeable.PlaceableState
 import org.micoli.micraft.placeable.siege.SiegeProjectileState
@@ -25,6 +26,7 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.player.rpg.DerivedStats
+import org.micoli.micraft.quest.QuestOfferSummary
 import org.micoli.micraft.quest.QuestProgress
 import org.micoli.micraft.social.FactionDefinition
 import org.micoli.micraft.social.FactionState
@@ -536,14 +538,14 @@ sealed class ServerMessage {
     @ProtoId(83)
     @Serializable
     data class ActionBlockSync(
-        val blocks: List<org.micoli.micraft.game.world.actionblock.ActionBlockInfo>,
+        val blocks: List<ActionBlockInfo>,
     ) : ServerMessage()
 
     /** Incremental add/rename of one action block. */
     @ProtoId(84)
     @Serializable
     data class ActionBlockUpsert(
-        val info: org.micoli.micraft.game.world.actionblock.ActionBlockInfo,
+        val info: ActionBlockInfo,
     ) : ServerMessage()
 
     /** One action block was removed (block broken or unnamed). */
@@ -598,7 +600,7 @@ sealed class ServerMessage {
     data class QuestGiverDialog(
         val npcId: String,
         val npcType: String,
-        val offerable: List<org.micoli.micraft.quest.QuestOfferSummary>,
+        val offerable: List<QuestOfferSummary>,
         val turnInable: List<String>,
     ) : ServerMessage()
 }
