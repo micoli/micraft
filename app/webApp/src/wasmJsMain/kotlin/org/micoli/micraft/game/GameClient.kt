@@ -484,10 +484,14 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                         jsLog("WS auth rejected (1008) — clearing token, returning to login")
                         jsClearStoredToken()
                         currentToken = ""
+                        // A non-empty reason skips showLoginOverlay's silent-reconnect fast path in
+                        // GameUI.tsx, which would otherwise immediately retry with the (now empty)
+                        // stored token and loop forever without ever showing a login screen.
+                        jsShowLoginOverlay("auth")
                     } else {
                         jsLog("WS disconnected after session — returning to login")
+                        jsShowLoginOverlay()
                     }
-                    jsShowLoginOverlay()
                     var loginResult = ""
                     while (loginResult.isEmpty()) {
                         delay(100)

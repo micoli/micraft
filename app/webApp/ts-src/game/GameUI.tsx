@@ -689,7 +689,11 @@ export function GameUI() {
       const token = getStoredToken();
       const intentional = window.mcState.intentionalDisconnect;
       window.mcState.intentionalDisconnect = false;
-      if (player && !intentional && !reason) {
+      // Silently retrying with no token would immediately be rejected by the server, clear the
+      // (already empty) token again and re-enter this same function — an infinite reconnect loop
+      // that never shows a real login screen. Only take the silent-reconnect shortcut when there's
+      // actually a token to reconnect with.
+      if (player && token && !intentional && !reason) {
         loginResultRef.current = `${accountKey}\t${player}\t${lang}\t${token}`;
         navigateRef.current?.(lastGameUrl());
         return;
