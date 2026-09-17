@@ -20,7 +20,6 @@ class FactionManager(
     private val chatService: ChatService,
     private val channelManager: ChatChannelManager,
     private val i18n: I18nConfig,
-    private val broadcast: suspend (ServerMessage) -> Unit,
     private val persistence: WorldPersistence? = null,
     private val zoneLevelAt: (Int, Int) -> Int = { _, _ -> 0 },
     private val lowLevelSpawnSlots: (Int, Double) -> List<Pair<Int, Int>> = { _, _ -> emptyList() },
@@ -241,19 +240,18 @@ class FactionManager(
 
     suspend fun adminJoin(playerName: String, factionId: String) {
         if (defs.none { it.id == factionId }) throw AdminError("Unknown faction '$factionId'")
-        val (id, name) = resolvePlayer(playerName)
-        applyFaction(id, name, factionId)
+        applyFaction(resolvePlayer(playerName).first, factionId)
     }
 
     suspend fun adminLeave(playerId: String) {
-        val name =
-            getSessions().find { it.id == playerId }?.state?.name
-                ?: persistence?.allPlayerStates()?.find { it.id == playerId }?.name
-                ?: return
-        applyFaction(playerId, name, null)
+        val exists =
+            getSessions().any { it.id == playerId } ||
+                persistence?.allPlayerStates()?.any { it.id == playerId } == true
+        if (!exists) return
+        applyFaction(playerId, null)
     }
 
-    private suspend fun applyFaction(playerId: String, playerName: String, factionId: String?) {
+    private suspend fun applyFaction(playerId: String, factionId: String?) {
         val session = getSessions().find { it.id == playerId }
         val previous =
             session?.state?.factionId

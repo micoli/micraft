@@ -358,7 +358,7 @@ class BlockPlacerTest {
         val placer = placer(world = world)
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.inventory[ItemType("LEGO_PIECE")] = 20
-        for (xOff in 0..1) for (zOff in 0..1) for (y in 0..2) {
+        for (xOff in 0..1) for (zOff in 0..1) repeat(3) {
             placer.handlePlace(
                 session,
                 ClientMessage.BlockPlace(

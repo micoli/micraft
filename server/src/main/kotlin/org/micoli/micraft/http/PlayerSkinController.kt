@@ -2,10 +2,15 @@ package org.micoli.micraft.http
 
 import io.github.smiley4.ktoropenapi.get
 import io.github.smiley4.ktoropenapi.put
-import io.ktor.http.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receiveText
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.put
+import io.ktor.server.routing.route
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.command.commands.availablePlayerSkins
 import org.micoli.micraft.game.world.WorldPersistence

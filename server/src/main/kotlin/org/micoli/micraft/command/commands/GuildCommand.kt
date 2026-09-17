@@ -43,7 +43,6 @@ class GuildCommand : CommandHandler {
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val gm = context.guildManager ?: return
-        val lang = session.state.language
         val trimmed = args.trim()
         val sub = trimmed.substringBefore(' ').lowercase()
         val rest = trimmed.substringAfter(' ', "").trim()

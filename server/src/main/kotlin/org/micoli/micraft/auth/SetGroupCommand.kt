@@ -48,7 +48,7 @@ class SetGroupCommand : PluginCommand {
                     i18n.t(lang, "rbac:server:group_not_found", unknownGroups.joinToString(", "))))
             return
         }
-        when (val result =
+        val result =
             mutatePlayerGroups(
                 playerName,
                 context.sessions(),
@@ -56,7 +56,8 @@ class SetGroupCommand : PluginCommand {
                 groupsConfig,
                 context.savePlayer) { current ->
                     current + newGroups
-                }) {
+                }
+        when (result) {
             is PlayerRbacResult.NotFound ->
                 session.send(
                     ServerMessage.Notification(

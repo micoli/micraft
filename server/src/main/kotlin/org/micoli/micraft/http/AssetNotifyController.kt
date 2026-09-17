@@ -1,11 +1,16 @@
 package org.micoli.micraft.http
 
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import io.ktor.server.websocket.*
-import io.ktor.websocket.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.Application
+import io.ktor.server.application.call
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.application
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
+import io.ktor.server.websocket.webSocket
+import io.ktor.websocket.DefaultWebSocketSession
+import io.ktor.websocket.send
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.delay
@@ -56,9 +61,8 @@ class AssetNotifyController(private val manifestController: AssetManifestControl
                     }
                 }
                 try {
-                    for (frame in incoming) {
-                        // Inbound frames are ignored; the client compares versions itself.
-                    }
+                    // Inbound frames are ignored; the client compares versions itself.
+                    @Suppress("EmptyForBlock") for (ignored in incoming) {}
                 } finally {
                     sessions.remove(id)
                 }

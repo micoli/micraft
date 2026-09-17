@@ -125,7 +125,7 @@ class AnimalInteractionProcessor(
                 if (newGestation <= 0) {
                     animal.gestationRemainingDays = null
                     animal.lastReproductionDay = currentDay
-                    spawnOffspring(instance, config, animal, currentDay)
+                    spawnOffspring(instance, config, animal)
                 } else {
                     animal.gestationRemainingDays = newGestation
                 }
@@ -569,7 +569,6 @@ class AnimalInteractionProcessor(
         mother: NpcInstance,
         config: AnimalYamlEntry,
         motherAnimal: AnimalInstanceData,
-        currentDay: Double
     ) {
         val fatherAnimal = mother.animalData ?: return
         val offspringType = config.offspringType ?: return

@@ -178,7 +178,6 @@ fun buildGameWorld(
             chatService = chatService,
             channelManager = chatChannelManager,
             i18n = shared.i18n,
-            broadcast = sessions::broadcast,
             persistence = null,
             zoneLevelAt = { x, z -> world.zoneLevelAt(x, z) },
             lowLevelSpawnSlots = { count, radius -> world.distinctLowLevelSpawns(count, radius) },

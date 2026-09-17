@@ -3,7 +3,16 @@ package org.micoli.micraft.tools
 import java.util.Base64
 import java.util.UUID
 import javax.imageio.ImageIO
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /**
  * Ports Blockbench's OBJ importer (`js/modeling/mesh/import_obj.ts`) to a standalone converter:
@@ -23,8 +32,6 @@ object ObjToBbmodel {
         prettyPrint = true
         prettyPrintIndent = "  "
     }
-
-    private data class MeshVertex(val uuid: String, val position: FloatArray)
 
     private class MeshBuilder(val name: String) {
         val uuid: String = UUID.randomUUID().toString()

@@ -1,9 +1,11 @@
 package org.micoli.micraft.http
 
 import com.sun.management.OperatingSystemMXBean
-import io.ktor.http.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.http.ContentType
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.route
 import java.io.File
 import java.lang.management.ManagementFactory
 import java.time.Instant

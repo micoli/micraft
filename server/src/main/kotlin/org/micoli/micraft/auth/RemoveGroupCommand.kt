@@ -41,7 +41,7 @@ class RemoveGroupCommand : PluginCommand {
             session.send(ServerMessage.Notification("Groups config not available."))
             return
         }
-        when (val result =
+        val result =
             mutatePlayerGroups(
                 playerName,
                 context.sessions(),
@@ -49,7 +49,8 @@ class RemoveGroupCommand : PluginCommand {
                 groupsConfig,
                 context.savePlayer) { current ->
                     current.filter { it !in toRemove }
-                }) {
+                }
+        when (result) {
             is PlayerRbacResult.NotFound ->
                 session.send(
                     ServerMessage.Notification(

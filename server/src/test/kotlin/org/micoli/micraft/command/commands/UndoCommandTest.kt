@@ -93,7 +93,7 @@ class UndoCommandTest {
         val wim = WorldItemManager(emptyDropConfig(), { broadcasts.add(it) })
         // Manually spawn an item so it's registered in wim
         val pos = BlockPos(8, 5, 8)
-        val spawned = wim.spawnDrops(pos, BlockType.STONE) // no drops from empty config → empty
+        wim.spawnDrops(pos, BlockType.STONE) // no drops from empty config → empty
         // Since emptyDropConfig yields nothing, we test with worldItems = null
         // instead test the branch where worldItems has no item → reduces inventory
         val session = testSession()

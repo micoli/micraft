@@ -3,8 +3,10 @@ package org.micoli.micraft.game.world
 import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.readText
-import kotlin.test.*
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import org.micoli.micraft.player.Orientation
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3

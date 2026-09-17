@@ -32,7 +32,6 @@ class FactionManagerTest {
                 chat,
                 cm,
                 testI18n(),
-                {},
                 zoneLevelAt = zoneLevelAt,
                 lowLevelSpawnSlots = spawnSlots,
             )

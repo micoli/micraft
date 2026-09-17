@@ -130,7 +130,7 @@ class MovementProcessor(private val world: WorldState) {
                 val swimDown = submerged && input.dy < 0f
                 val gravityY =
                     applyGravity(session, newX, pos.y, newZ, h, submerged, swimUp, swimDown)
-                snapToSlope(session, newX, gravityY, newZ)
+                snapToSlope(newX, gravityY, newZ)
             }
 
         val newHeadInLiquid =
@@ -165,7 +165,7 @@ class MovementProcessor(private val world: WorldState) {
         )
     }
 
-    private fun snapToSlope(session: PlayerSession, cx: Float, cy: Float, cz: Float): Float {
+    private fun snapToSlope(cx: Float, cy: Float, cz: Float): Float {
         val bx = floor(cx.toDouble()).toInt()
         val bz = floor(cz.toDouble()).toInt()
         for (dy in 0 downTo -2) {

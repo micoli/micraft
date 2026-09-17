@@ -1,6 +1,8 @@
 package org.micoli.micraft.game
 
-import io.ktor.websocket.*
+import io.ktor.websocket.Frame
+import io.ktor.websocket.close
+import io.ktor.websocket.send
 import kotlin.test.Test
 import kotlin.test.assertNull
 import kotlinx.coroutines.CoroutineScope

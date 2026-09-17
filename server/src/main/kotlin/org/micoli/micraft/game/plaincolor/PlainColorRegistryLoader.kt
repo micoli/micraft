@@ -49,7 +49,7 @@ class PlainColorRegistryLoader(
             .onSuccess { node ->
                 path.writeText(
                     spliceMissingAsComments(
-                        originalText, section(mergedEntries(originalText, node), node)))
+                        originalText, section(mergedEntries(originalText), node)))
             }
             .onFailure {
                 if (!originalText.isYamlEffectivelyEmpty())
@@ -62,8 +62,7 @@ class PlainColorRegistryLoader(
 
     fun load(): List<PlainColor> {
         val originalText = if (path.exists()) path.readText() else ""
-        val node = runCatching { Yaml.default.parseToYamlNode(originalText) }.getOrNull()
-        val merged = mergedEntries(originalText, node)
+        val merged = mergedEntries(originalText)
         val parsed = merged.mapNotNull { (name, hex) -> parse(name, hex) }
         if (parsed.size > BlockState.MAX_COLOR_INDEX) {
             log.error(
@@ -80,7 +79,7 @@ class PlainColorRegistryLoader(
     fun reload(): List<PlainColor> = load()
 
     /** Resources order first (override values applied), then data-only colors appended. */
-    private fun mergedEntries(originalText: String, node: YamlNode?): Map<String, String> {
+    private fun mergedEntries(originalText: String): Map<String, String> {
         val decoded =
             if (originalText.isBlank()) emptyMap()
             else runCatching { decode(originalText) }.getOrElse { emptyMap() }

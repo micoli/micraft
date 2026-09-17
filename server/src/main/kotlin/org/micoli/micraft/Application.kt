@@ -4,14 +4,25 @@ import io.github.smiley4.ktoropenapi.OpenApi
 import io.github.smiley4.ktoropenapi.config.OutputFormat
 import io.github.smiley4.ktoropenapi.get
 import io.github.smiley4.ktoropenapi.openApi
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.engine.*
-import io.ktor.server.http.content.*
-import io.ktor.server.netty.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import io.ktor.server.websocket.*
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.parametersOf
+import io.ktor.server.application.Application
+import io.ktor.server.application.call
+import io.ktor.server.application.install
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.http.content.staticFiles
+import io.ktor.server.netty.Netty
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondFile
+import io.ktor.server.response.respondRedirect
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.get
+import io.ktor.server.routing.path
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
+import io.ktor.server.websocket.WebSockets
+import io.ktor.server.websocket.webSocket
 import java.io.File
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
@@ -144,9 +155,6 @@ import org.micoli.micraft.http.VehiclesController
 import org.micoli.micraft.http.WeaponsController
 import org.micoli.micraft.simulation.SimulationDeps
 import org.micoli.micraft.simulation.SimulationRegistry
-import org.slf4j.LoggerFactory
-
-private val log = LoggerFactory.getLogger(Application::class.java)
 
 fun main() {
     val port = System.getenv("MICRAFT_PORT")?.toIntOrNull() ?: 8080

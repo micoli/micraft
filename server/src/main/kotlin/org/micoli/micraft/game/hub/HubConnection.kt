@@ -1,6 +1,11 @@
 package org.micoli.micraft.game.hub
 
-import io.ktor.websocket.*
+import io.ktor.websocket.CloseReason
+import io.ktor.websocket.DefaultWebSocketSession
+import io.ktor.websocket.Frame
+import io.ktor.websocket.close
+import io.ktor.websocket.readBytes
+import io.ktor.websocket.send
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.auth.TokenStore

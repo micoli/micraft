@@ -28,10 +28,10 @@ class NpcCommand : CommandHandler {
         val rest = args.substringAfter(' ', "").trim()
 
         when (sub) {
-            "spawn" -> handleSpawn(session, rest, context, lang, i18n, npcManager)
-            "list" -> handleList(session, context, lang, i18n, npcManager)
+            "spawn" -> handleSpawn(session, rest, lang, i18n, npcManager)
+            "list" -> handleList(session, lang, i18n, npcManager)
             "remove",
-            "rm" -> handleRemove(session, rest, context, lang, i18n, npcManager)
+            "rm" -> handleRemove(session, rest, lang, i18n, npcManager)
             "tp" -> handleTp(session, rest, context, lang, i18n, npcManager)
             else -> session.send(ServerMessage.Notification(i18n.t(lang, "npc:server:usage")))
         }
@@ -40,7 +40,6 @@ class NpcCommand : CommandHandler {
     private suspend fun handleSpawn(
         session: PlayerSession,
         args: String,
-        context: CommandContext,
         lang: String,
         i18n: I18nConfig,
         npcManager: NpcManager,
@@ -73,7 +72,6 @@ class NpcCommand : CommandHandler {
 
     private suspend fun handleList(
         session: PlayerSession,
-        @Suppress("UNUSED_PARAMETER") context: CommandContext,
         lang: String,
         i18n: I18nConfig,
         npcManager: NpcManager,
@@ -91,7 +89,6 @@ class NpcCommand : CommandHandler {
     private suspend fun handleRemove(
         session: PlayerSession,
         args: String,
-        @Suppress("UNUSED_PARAMETER") context: CommandContext,
         lang: String,
         i18n: I18nConfig,
         npcManager: NpcManager,
@@ -113,7 +110,7 @@ class NpcCommand : CommandHandler {
     private suspend fun handleTp(
         session: PlayerSession,
         args: String,
-        @Suppress("UNUSED_PARAMETER") context: CommandContext,
+        context: CommandContext,
         lang: String,
         i18n: I18nConfig,
         npcManager: NpcManager,

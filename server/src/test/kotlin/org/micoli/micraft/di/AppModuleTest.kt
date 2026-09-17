@@ -47,7 +47,7 @@ class AppModuleTest {
                         groupManager = GroupManager({ emptyList() }, chat, cm, i18n),
                         guildManager = GuildManager(guildReg, { emptyList() }, {}, chat, cm, i18n),
                         guildRegistry = guildReg,
-                        factionManager = FactionManager({ emptyList() }, {}, chat, cm, i18n, {}),
+                        factionManager = FactionManager({ emptyList() }, {}, chat, cm, i18n),
                     )
                 }
             }

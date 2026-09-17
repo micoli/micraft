@@ -44,6 +44,9 @@ import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 
+// Load-for-side-effect: populates the global ItemRegistry singleton every test in this module
+// reads from. The binding itself is never read.
+@Suppress("UnusedPrivateProperty")
 private val _itemRegistryInit =
     ItemRegistry.load(
         mapOf(

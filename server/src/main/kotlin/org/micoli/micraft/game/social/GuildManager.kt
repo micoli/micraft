@@ -66,7 +66,6 @@ class GuildManager(
     }
 
     suspend fun create(founder: PlayerSession, name: String, tag: String) {
-        val lang = founder.state.language
         if (founder.state.guildId != null)
             return deny(founder, t(founder, "guild:server:already_in_guild"))
         val cleanName = name.trim()

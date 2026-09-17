@@ -1,8 +1,12 @@
 package org.micoli.micraft.http
 
-import io.ktor.http.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.http.CacheControl
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.route
 import java.io.File
 
 // Excluded from the OpenAPI spec by the Application.kt pathFilter (docs.html/docs.js are markup

@@ -15,7 +15,6 @@ class BuffCommand : CommandHandler {
     override val options = listOf("hp", "mana", "hpregen", "manaregen")
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
-        val lang = session.state.language
         val applyBuff = context.applyBuff
         if (applyBuff == null) {
             session.send(ServerMessage.Notification("Buff system unavailable."))

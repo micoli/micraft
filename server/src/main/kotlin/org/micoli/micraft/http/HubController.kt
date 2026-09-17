@@ -1,10 +1,11 @@
 package org.micoli.micraft.http
 
-import io.ktor.http.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.server.response.respondFile
+import io.ktor.server.routing.Route
 import io.ktor.server.routing.get as undocumentedGet
-import io.ktor.server.websocket.*
+import io.ktor.server.routing.get
+import io.ktor.server.routing.route
+import io.ktor.server.websocket.webSocket
 import java.io.File
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.auth.TokenStore

@@ -1,7 +1,11 @@
 package org.micoli.micraft.game.tick
 
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.*
+import kotlin.math.acos
+import kotlin.math.cos
+import kotlin.math.log
+import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -75,7 +79,7 @@ class ChunkStreamer(private val world: WorldState) {
         if (!session.worldStreaming) return
         val yaw = session.state.orientation.yaw.toDouble()
         val radius = forwardViewRadius(session)
-        val offsets = buildOffsets(yaw, cx, cz, radius)
+        val offsets = buildOffsets(yaw, radius)
         val pending = pendingPools.getOrPut(session.id) { ConcurrentHashMap.newKeySet() }
         val primaryAllCovered =
             offsets.none { (dx, dz) ->
@@ -206,12 +210,7 @@ class ChunkStreamer(private val world: WorldState) {
         }
     }
 
-    private fun buildOffsets(
-        yaw: Double,
-        cx: Int,
-        cz: Int,
-        forwardRadius: Int
-    ): List<Pair<Int, Int>> {
+    private fun buildOffsets(yaw: Double, forwardRadius: Int): List<Pair<Int, Int>> {
         val fwdR = forwardRadius
         return (-fwdR..fwdR)
             .flatMap { dx -> (-fwdR..fwdR).map { dz -> dx to dz } }

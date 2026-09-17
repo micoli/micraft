@@ -1,12 +1,20 @@
 package org.micoli.micraft
 
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.websocket.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.server.testing.*
-import io.ktor.websocket.*
+import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.readBytes
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import io.ktor.server.testing.testApplication
+import io.ktor.websocket.Frame
+import io.ktor.websocket.readBytes
+import io.ktor.websocket.send
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

@@ -429,6 +429,7 @@ class GameLoopTest {
     }
 
     @Test
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     fun onConnect_resolvesLivePermissionsFromCharacterGroupsNotAccount() = runTest {
         val groupsConfig =
             GroupsConfig(

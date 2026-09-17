@@ -1,9 +1,13 @@
 package org.micoli.micraft.http.map
 
-import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.server.routing.*
-import io.ktor.server.testing.*
+import io.ktor.client.request.get
+import io.ktor.client.request.headers
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.routing.application
+import io.ktor.server.routing.get
+import io.ktor.server.routing.routing
+import io.ktor.server.testing.testApplication
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CoroutineScope

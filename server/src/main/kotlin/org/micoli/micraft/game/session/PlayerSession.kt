@@ -1,6 +1,8 @@
 package org.micoli.micraft.game.session
 
-import io.ktor.websocket.*
+import io.ktor.websocket.DefaultWebSocketSession
+import io.ktor.websocket.Frame
+import io.ktor.websocket.send
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList

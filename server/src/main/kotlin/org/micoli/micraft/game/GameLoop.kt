@@ -2,14 +2,25 @@ package org.micoli.micraft.game
 
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
-import io.ktor.server.application.*
-import io.ktor.websocket.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.log
+import io.ktor.websocket.CloseReason
+import io.ktor.websocket.DefaultWebSocketSession
+import io.ktor.websocket.Frame
+import io.ktor.websocket.close
+import io.ktor.websocket.readBytes
+import io.ktor.websocket.readText
+import io.ktor.websocket.send
 import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.SERVER_BUILD_TIMESTAMP
 import org.micoli.micraft.auth.ActionPermissions
@@ -257,7 +268,6 @@ class GameLoop(
             chatService = chatService,
             channelManager = chatChannelManager,
             i18n = i18n,
-            broadcast = sessionRegistry::broadcast,
             persistence = persistence,
             zoneLevelAt = { x, z -> world.zoneLevelAt(x, z) },
             lowLevelSpawnSlots = { count, radius -> world.distinctLowLevelSpawns(count, radius) },
@@ -642,7 +652,8 @@ class GameLoop(
     // Force-load every standalone-permission namespace object so `PermissionRegistry.all` is
     // complete by the time `GET /api/admin/permissions` is served (Kotlin objects init lazily).
     init {
-        ActionPermissions
+        @Suppress("UNUSED_EXPRESSION") ActionPermissions
+        @Suppress("UNUSED_EXPRESSION")
         org.micoli.micraft.game.world.actionblock.ActionBlockPermissions
     }
 
@@ -2011,7 +2022,6 @@ class GameLoop(
                                                 session,
                                                 msg.weaponId,
                                                 placeableManager,
-                                                world,
                                                 siegeProjectileManager)
                                         is ClientMessage.RequestScenePreview -> {
                                             if (session.hasPermission(CorePermissions.ADMIN)) {

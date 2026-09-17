@@ -1,10 +1,16 @@
 package org.micoli.micraft.http.admin
 
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.server.routing.*
-import io.ktor.server.testing.*
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import io.ktor.server.routing.application
+import io.ktor.server.routing.post
+import io.ktor.server.routing.put
+import io.ktor.server.routing.routing
+import io.ktor.server.testing.testApplication
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals

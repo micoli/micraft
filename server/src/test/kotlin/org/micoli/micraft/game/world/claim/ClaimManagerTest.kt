@@ -39,7 +39,7 @@ class ClaimManagerTest {
 
         val sync = alice.sent.filterIsInstance<ServerMessage.ClaimSync>().lastOrNull()
         assertTrue(sync != null, "expected a ClaimSync to be sent")
-        assertEquals(1, sync!!.claims.size)
+        assertEquals(1, sync.claims.size)
         assertEquals("alice-id", sync.claims[0].ownerId)
         assertTrue(alice.sent.none { it is ServerMessage.ClaimDenied })
     }

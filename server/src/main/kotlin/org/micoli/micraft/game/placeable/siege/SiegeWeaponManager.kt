@@ -11,7 +11,6 @@ import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.EntityType
 import org.micoli.micraft.game.world.ItemType
-import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.placeable.siege.SiegeWeaponDefinition
 import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.player.Vec3
@@ -132,9 +131,7 @@ class SiegeWeaponManager(private val broadcast: suspend (ServerMessage) -> Unit)
 
     /**
      * Fires the siege weapon linked to placeable [placeableId] on behalf of [session] — gates on
-     * cooldown and ammo, then consumes ammo and resets the cooldown on success. [world] isn't used
-     * yet (Phase B does no ground/trajectory validation); it's threaded through so Phase C's
-     * projectile spawn can be wired in without changing this call site.
+     * cooldown and ammo, then consumes ammo and resets the cooldown on success.
      *
      * Returns the computed muzzle position + launch velocity on success, or null if rejected
      * (weapon/placeable not found, on cooldown, or no ammo) — nothing is mutated or broadcast on
@@ -150,7 +147,6 @@ class SiegeWeaponManager(private val broadcast: suspend (ServerMessage) -> Unit)
         session: PlayerSession,
         placeableId: String,
         placeableManager: PlaceableManager,
-        world: WorldState,
         siegeProjectileManager: SiegeProjectileManager,
     ): Pair<Vec3, Vec3>? {
         val weapon = getByPlaceableId(placeableId) ?: return null

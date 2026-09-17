@@ -82,7 +82,7 @@ class CombatProcessorTest {
             onPlayerDownedByNpc = onPlayerDownedByNpc,
         )
 
-    private fun fakeNpc(power: Int = 0): NpcInstance {
+    private fun fakeNpc(): NpcInstance {
         val def =
             NpcDefinition(
                 type = "zombie",
@@ -777,7 +777,7 @@ class CombatProcessorTest {
                 attackRegistry = mapOf("basic_attack" to highPower),
             )
 
-        val npc = fakeNpc(power = 100)
+        val npc = fakeNpc()
         npc.activeEffects.add(
             ActiveStatusEffect(
                 effect = StatusEffect.Frozen,
@@ -827,7 +827,7 @@ class CombatProcessorTest {
         val target = testSession(id = "survivor")
         target.characterData = testChar("survivor", "Survivor", hp = 100)
 
-        val npc = fakeNpc(power = 0)
+        val npc = fakeNpc()
         buildProcessor(
                 sessions = { listOf(target) },
                 onPlayerDownedByNpc = { _, _ -> called = true },

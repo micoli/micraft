@@ -195,7 +195,7 @@ class SiegeWeaponManagerTest {
         session.inventory[ammo] = 2
         val projectileManager = SiegeProjectileManager({})
 
-        val result = manager.fire(session, placeable.id, placeableManager, world, projectileManager)
+        val result = manager.fire(session, placeable.id, placeableManager, projectileManager)
 
         assertNotNull(result)
         assertEquals(1, session.inventory[ammo])
@@ -215,7 +215,7 @@ class SiegeWeaponManagerTest {
         session.inventory[ammo] = 1
         val projectileManager = SiegeProjectileManager({})
 
-        manager.fire(session, placeable.id, placeableManager, world, projectileManager)
+        manager.fire(session, placeable.id, placeableManager, projectileManager)
 
         assertNull(session.inventory[ammo])
     }
@@ -232,7 +232,7 @@ class SiegeWeaponManagerTest {
         val session = testSession()
         val projectileManager = SiegeProjectileManager({})
 
-        val result = manager.fire(session, placeable.id, placeableManager, world, projectileManager)
+        val result = manager.fire(session, placeable.id, placeableManager, projectileManager)
 
         assertNull(result)
         assertEquals(0, manager.get(weapon.id)!!.cooldownUntilMs)
@@ -251,11 +251,11 @@ class SiegeWeaponManagerTest {
         session.inventory[ammo] = 5
         val projectileManager = SiegeProjectileManager({})
 
-        val first = manager.fire(session, placeable.id, placeableManager, world, projectileManager)
+        val first = manager.fire(session, placeable.id, placeableManager, projectileManager)
         assertNotNull(first)
         assertEquals(4, session.inventory[ammo])
 
-        val second = manager.fire(session, placeable.id, placeableManager, world, projectileManager)
+        val second = manager.fire(session, placeable.id, placeableManager, projectileManager)
 
         assertNull(second)
         assertEquals(4, session.inventory[ammo]) // ammo NOT consumed on the rejected second shot
