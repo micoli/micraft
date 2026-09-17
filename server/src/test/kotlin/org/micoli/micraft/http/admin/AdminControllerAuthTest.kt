@@ -10,6 +10,7 @@ import kotlin.test.assertNotEquals
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.micoli.micraft.auth.AuthResult
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.http.AdminController
@@ -48,7 +49,10 @@ class AdminControllerAuthTest {
         val store = TokenStore(scope, ttlSeconds = -1)
         val token =
             store.issue(
-                AuthResult(playerId = "p1", displayName = "Admin", permissions = setOf("admin")))
+                AuthResult(
+                    playerId = "p1",
+                    displayName = "Admin",
+                    permissions = setOf(Permission("admin"))))
         application { routing { controller(store).register(this) } }
 
         val r =
@@ -78,7 +82,10 @@ class AdminControllerAuthTest {
         val store = TokenStore(scope)
         val token =
             store.issue(
-                AuthResult(playerId = "p1", displayName = "Builder", permissions = setOf("build")))
+                AuthResult(
+                    playerId = "p1",
+                    displayName = "Builder",
+                    permissions = setOf(Permission("build"))))
         application { routing { controller(store).register(this) } }
 
         val r =
@@ -93,7 +100,10 @@ class AdminControllerAuthTest {
         val store = TokenStore(scope)
         val token =
             store.issue(
-                AuthResult(playerId = "p1", displayName = "Admin", permissions = setOf("admin")))
+                AuthResult(
+                    playerId = "p1",
+                    displayName = "Admin",
+                    permissions = setOf(Permission("admin"))))
         application { routing { controller(store).register(this) } }
 
         val r =
@@ -108,7 +118,10 @@ class AdminControllerAuthTest {
         val store = TokenStore(scope)
         val token =
             store.issue(
-                AuthResult(playerId = "p1", displayName = "Super", permissions = setOf("*")))
+                AuthResult(
+                    playerId = "p1",
+                    displayName = "Super",
+                    permissions = setOf(Permission.WILDCARD)))
         application { routing { controller(store).register(this) } }
 
         val r =
@@ -144,7 +157,10 @@ class AdminControllerAuthTest {
         val store2 = TokenStore(scope)
         val token =
             store1.issue(
-                AuthResult(playerId = "p1", displayName = "Admin", permissions = setOf("admin")))
+                AuthResult(
+                    playerId = "p1",
+                    displayName = "Admin",
+                    permissions = setOf(Permission("admin"))))
         application { routing { controller(store2).register(this) } }
 
         val r =

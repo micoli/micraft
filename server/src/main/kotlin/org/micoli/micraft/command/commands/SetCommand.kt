@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.command.Completion
@@ -18,7 +19,7 @@ private const val MAX_RAGE_DEFAULT = 100
 class SetCommand : CommandHandler {
     override val id: UUID = UUID.fromString("c4e7a2d1-83f5-4b9e-a0c6-d1e2f3a4b5c6")
     override val name = "set"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Set a player stat."
     override val usage = "$command <hp|mana> <playerName> <value>"
     override val autocompleteArgs = listOf(0, 1)

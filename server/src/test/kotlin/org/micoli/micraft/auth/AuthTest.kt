@@ -124,7 +124,7 @@ class AuthTest {
             val result = provider.login("newcomer@example.com", "")
             assertNotNull(result)
             assertEquals("newcomer@example.com", result.playerId)
-            assertEquals(setOf("action.break"), result.permissions)
+            assertEquals(setOf(Permission("action.break")), result.permissions)
 
             // Persisted with the configured default groups, so the account shows up in /admin/users
             // and a second login resolves the exact same (now-existing) account.
@@ -189,7 +189,8 @@ class AuthTest {
             provider.addUser("admin@example.com", "pass", "Admin", listOf("admins"))
             val result = provider.login("admin@example.com", "pass")
             assertNotNull(result)
-            assertEquals(setOf("admin.kick", "admin.ban"), result.permissions)
+            assertEquals(
+                setOf(Permission("admin.kick"), Permission("admin.ban")), result.permissions)
             tmp.toFile().delete()
         }
 }

@@ -5,6 +5,7 @@ import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.hasPermission
+import org.micoli.micraft.game.world.actionblock.ActionBlockPermissions
 import org.micoli.micraft.game.world.actionblock.toInfo
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -127,5 +128,5 @@ class ActionBlockEditCommand : CommandHandler {
     }
 
     private fun canEdit(session: PlayerSession, owner: String): Boolean =
-        owner == session.state.name || session.hasPermission("actionblock:edit")
+        owner == session.state.name || session.hasPermission(ActionBlockPermissions.EDIT)
 }

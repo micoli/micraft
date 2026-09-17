@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import org.micoli.micraft.auth.AuthResult
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcRegistryLoader
@@ -125,7 +126,7 @@ class SimulationControllerTest {
     @Test
     fun defaults_returnTuningAndTypes() = testApplication {
         val store = TokenStore(scope)
-        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf(Permission("admin"))))
         application { routing { controller(store).register(this) } }
 
         val response =
@@ -156,7 +157,7 @@ class SimulationControllerTest {
     @Test
     fun ws_init_repliesWithSnapshot() = testApplication {
         val store = TokenStore(scope)
-        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf(Permission("admin"))))
         application {
             install(WebSockets)
             routing { controller(store).registerWs(this) }
@@ -183,7 +184,7 @@ class SimulationControllerTest {
     @Test
     fun ws_badCommand_repliesWithError() = testApplication {
         val store = TokenStore(scope)
-        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf(Permission("admin"))))
         application {
             install(WebSockets)
             routing { controller(store).registerWs(this) }
@@ -208,7 +209,7 @@ class SimulationControllerTest {
     @Test
     fun ws_announcesRunningSimulationsOnConnect() = testApplication {
         val store = TokenStore(scope)
-        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf(Permission("admin"))))
         application {
             install(WebSockets)
             routing { controller(store).registerWs(this) }
@@ -224,7 +225,7 @@ class SimulationControllerTest {
     @Test
     fun ws_secondSocketCanAttachToARunningSimulation() = testApplication {
         val store = TokenStore(scope)
-        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf(Permission("admin"))))
         val registry = SimulationRegistry { deps() }
         val simController =
             SimulationController(
@@ -262,7 +263,7 @@ class SimulationControllerTest {
     @Test
     fun ws_attachingToNothing_isReported() = testApplication {
         val store = TokenStore(scope)
-        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf(Permission("admin"))))
         application {
             install(WebSockets)
             routing { controller(store).registerWs(this) }
@@ -278,7 +279,7 @@ class SimulationControllerTest {
     @Test
     fun ws_stop_confirmsAndFreesTheSimulation() = testApplication {
         val store = TokenStore(scope)
-        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf(Permission("admin"))))
         val registry = SimulationRegistry { deps() }
         val simController =
             SimulationController(
@@ -315,7 +316,7 @@ class SimulationControllerTest {
     @Test
     fun ws_stop_closesTheTargetedArena_andLeavesTheAttachedOneAlone() = testApplication {
         val store = TokenStore(scope)
-        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf(Permission("admin"))))
         val registry = SimulationRegistry { deps() }
         val simController =
             SimulationController(
@@ -353,7 +354,7 @@ class SimulationControllerTest {
     @Test
     fun ws_restart_rebuildsTheTargetedArena_notTheAttachedOne() = testApplication {
         val store = TokenStore(scope)
-        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf("admin")))
+        val token = store.issue(AuthResult("p1", "Admin", permissions = setOf(Permission("admin"))))
         val registry = SimulationRegistry { deps() }
         val simController =
             SimulationController(

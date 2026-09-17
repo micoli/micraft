@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
@@ -12,7 +13,7 @@ import org.micoli.micraft.protocol.ServerMessage.Notification
 class GiveCommand : CommandHandler {
     override val id: UUID = UUID.fromString("84b05d3d-19c7-4cee-bb3d-469d053c9b07")
     override val name = "give"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Give an item, or grant an armor/weapon/tool, to yourself."
     override val usage = "$command <name> [N]"
     override val autocompleteArgs = listOf(0)

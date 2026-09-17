@@ -2,6 +2,7 @@ package org.micoli.micraft.command
 
 import java.util.UUID
 import kotlinx.serialization.Serializable
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.game.session.PlayerSession
 
 /**
@@ -20,7 +21,7 @@ interface CommandHandler {
     val description: String
         get() = ""
 
-    val permission: String?
+    val permission: Permission?
         get() = null
 
     val usage: String

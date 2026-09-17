@@ -1,19 +1,17 @@
 package org.micoli.micraft.game.npc
 
 import com.charleskorn.kaml.Yaml
-import org.micoli.micraft.config.ConfigPaths
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import org.micoli.micraft.config.ConfigPaths
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(NpcConfigLoader::class.java)
 
-class NpcConfigLoader(
-    private val path: Path = ConfigPaths.dataConfig("npc.yaml")
-) {
+class NpcConfigLoader(private val path: Path = ConfigPaths.dataConfig("npc.yaml")) {
     init {
         if (!path.exists()) {
             path.parent.createDirectories()

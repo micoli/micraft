@@ -1,19 +1,17 @@
 package org.micoli.micraft.game.trade
 
 import com.charleskorn.kaml.Yaml
-import org.micoli.micraft.config.ConfigPaths
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import org.micoli.micraft.config.ConfigPaths
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(TradeConfigLoader::class.java)
 
-class TradeConfigLoader(
-    private val path: Path = ConfigPaths.dataConfig("trade.yaml")
-) {
+class TradeConfigLoader(private val path: Path = ConfigPaths.dataConfig("trade.yaml")) {
     init {
         if (!path.exists()) {
             path.parent.createDirectories()

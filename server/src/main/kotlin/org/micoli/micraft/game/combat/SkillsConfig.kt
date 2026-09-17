@@ -25,8 +25,7 @@ private const val SPELL_SCHEMA_HEADER =
     "# yaml-language-server: \$schema=../../schemas/skill-spell.schema.json"
 
 class SkillsConfig(
-    private val resourcesRoot: Path =
-        ConfigPaths.resourcesConfig("skills"),
+    private val resourcesRoot: Path = ConfigPaths.resourcesConfig("skills"),
     private val dataRoot: Path = ConfigPaths.dataConfig("skills"),
 ) {
     @Volatile

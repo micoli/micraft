@@ -156,7 +156,7 @@ class ActionBlockService(
     }
 
     private fun canEdit(session: PlayerSession, pos: BlockPos): Boolean {
-        if (session.hasPermission("actionblock:edit")) return true
+        if (session.hasPermission(ActionBlockPermissions.EDIT)) return true
         registry.at(pos)?.let { if (it.owner == session.state.name) return true }
         val claim = claimRegistry?.claimAt(pos.x, pos.y, pos.z) ?: return true
         return claimRegistry.canEdit(claim, session)

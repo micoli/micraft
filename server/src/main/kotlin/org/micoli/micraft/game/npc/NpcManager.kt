@@ -247,24 +247,19 @@ class NpcManager(
             )
         if (!headBlock.isLiquid) {
             instance.currentBreath =
-                (instance.currentBreath +
-                        BreathConstants.REFILL_PER_TICK)
-                    .coerceAtMost(BreathConstants.MAX_BREATH_TICKS)
+                (instance.currentBreath + BreathConstants.REFILL_PER_TICK).coerceAtMost(
+                    BreathConstants.MAX_BREATH_TICKS)
             instance.drowningDamageAccumTicks = 0
             return
         }
         instance.currentBreath =
-            (instance.currentBreath - BreathConstants.DRAIN_PER_TICK)
-                .coerceAtLeast(0)
+            (instance.currentBreath - BreathConstants.DRAIN_PER_TICK).coerceAtLeast(0)
         if (instance.currentBreath > 0) return
         instance.drowningDamageAccumTicks++
-        if (instance.drowningDamageAccumTicks <
-            BreathConstants.DAMAGE_INTERVAL_TICKS)
-            return
+        if (instance.drowningDamageAccumTicks < BreathConstants.DAMAGE_INTERVAL_TICKS) return
         instance.drowningDamageAccumTicks = 0
         instance.currentHp =
-            (instance.currentHp - BreathConstants.DAMAGE_PER_INTERVAL)
-                .coerceAtLeast(0)
+            (instance.currentHp - BreathConstants.DAMAGE_PER_INTERVAL).coerceAtLeast(0)
         instance.state = instance.state.copy(currentHp = instance.currentHp, maxHp = instance.maxHp)
         broadcast(
             ServerMessage.HealthUpdate(instance.state.id, true, instance.currentHp, instance.maxHp))

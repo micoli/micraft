@@ -134,10 +134,7 @@ class NpcSpawnerTest {
         val testBiome =
             BiomeDefinition(
                 id = "plains",
-                zones =
-                    listOf(
-                        BiomeZone(
-                            moistureMin = 0.0, moistureMax = 1.0)),
+                zones = listOf(BiomeZone(moistureMin = 0.0, moistureMax = 1.0)),
                 surface = BlockType.GRASS,
                 subsurface = BlockType.DIRT,
                 maxNpcs = 2,
@@ -145,11 +142,8 @@ class NpcSpawnerTest {
         val baseWorld = testWorld(*blocks.toTypedArray())
         val worldWithBiome =
             WorldState(
-                object :
-                    ChunkGenerator {
-                    override fun generate(
-                        pos: ChunkPos
-                    ): Chunk = baseWorld.getOrGenerate(pos)
+                object : ChunkGenerator {
+                    override fun generate(pos: ChunkPos): Chunk = baseWorld.getOrGenerate(pos)
 
                     override fun biomeDefinitionAt(
                         wx: Int,
@@ -263,10 +257,7 @@ class NpcSpawnerTest {
         val liquidBiome =
             BiomeDefinition(
                 id = "sea",
-                zones =
-                    listOf(
-                        BiomeZone(
-                            moistureMin = 0.0, moistureMax = 1.0)),
+                zones = listOf(BiomeZone(moistureMin = 0.0, moistureMax = 1.0)),
                 surface = BlockType.SAND,
                 subsurface = BlockType.SANDSTONE,
                 maxNpcs = 20,
@@ -276,8 +267,7 @@ class NpcSpawnerTest {
         val baseWorld = testWorld(*blocks.toTypedArray())
         val world =
             WorldState(
-                object :
-                    ChunkGenerator {
+                object : ChunkGenerator {
                     override fun generate(pos: ChunkPos) = baseWorld.getOrGenerate(pos)
 
                     override fun biomeDefinitionAt(wx: Int, wz: Int) = liquidBiome
@@ -292,11 +282,7 @@ class NpcSpawnerTest {
             .forEach { world.getOrGenerate(it) }
         // Fill the column with water between the floor and the water level.
         for (x in 0 until chunkSize * 5) for (z in 0 until chunkSize * 5) for (y in 4..9) {
-            world.applyChange(
-                BlockChange(
-                    BlockPos(x, y, z),
-                    BlockType.WATER,
-                    0))
+            world.applyChange(BlockChange(BlockPos(x, y, z), BlockType.WATER, 0))
         }
 
         val m =

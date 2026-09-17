@@ -303,11 +303,7 @@ class BlockBreakerTest {
     fun handleStart_requiredEquipmentInEitherHand_setsBreakTarget() {
         val type = registerAxeRequiredBlock()
         val world = WorldState(MapChunkGenerator(mapOf(Triple(8, 5, 8) to type)))
-        val toolRegistry =
-            mapOf(
-                "iron_axe" to
-                        ToolDefinition(
-                        category = EquipmentCategory.AXE))
+        val toolRegistry = mapOf("iron_axe" to ToolDefinition(category = EquipmentCategory.AXE))
         val breaker = BlockBreaker(world, {}, noopWim(), toolRegistry = { toolRegistry })
         val session = testSession(pos = Vec3(8.5f, 6f, 8.5f))
         session.state = session.state.copy(leftHandItem = "iron_axe")

@@ -11,7 +11,9 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.auth.TokenStore
+import org.micoli.micraft.auth.hasPermission
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.protocol.AuctionListing
 
@@ -29,7 +31,7 @@ class AuctionsController(
             call.respond(HttpStatusCode.Unauthorized)
             return false
         }
-        if ("*" !in auth.permissions && "admin" !in auth.permissions) {
+        if (!auth.hasPermission(CorePermissions.ADMIN)) {
             call.respond(HttpStatusCode.Forbidden)
             return false
         }

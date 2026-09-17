@@ -32,12 +32,14 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.auth.AuthProvider
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.auth.GroupsConfig
-import org.micoli.micraft.auth.KNOWN_STANDALONE_PERMISSIONS
 import org.micoli.micraft.auth.LocalAuthProvider
 import org.micoli.micraft.auth.OAuthProvider
+import org.micoli.micraft.auth.PermissionRegistry
 import org.micoli.micraft.auth.PlayerRbacResult
 import org.micoli.micraft.auth.TokenStore
+import org.micoli.micraft.auth.hasPermission
 import org.micoli.micraft.auth.mutatePlayerGroups
 import org.micoli.micraft.auth.refreshLiveSessionPermissions
 import org.micoli.micraft.auth.writeGroupsConfig
@@ -420,8 +422,7 @@ class AdminController(
     private val persistence: WorldPersistence?,
     private val gameLoop: GameLoop,
     private val tokenStore: TokenStore? = null,
-    private val gameWorldRegistry: GameWorldRegistry =
-        gameLoop.gameWorldRegistry,
+    private val gameWorldRegistry: GameWorldRegistry = gameLoop.gameWorldRegistry,
     private val authProvider: AuthProvider? = localAuth,
     private val groupsFilePath: java.nio.file.Path? = null,
     private val reloadRbac: (() -> Unit)? = null,
@@ -453,9 +454,7 @@ class AdminController(
 
     private fun RoutingContext.adminWorld(): GameWorld {
         val id = call.request.headers[GAME_SESSION_HEADER]?.trim()?.takeIf { it.isNotEmpty() }
-        if (id == null ||
-            id == GameWorldRegistry.DEFAULT_ID ||
-            !gameWorldRegistry.e2eEnabled) {
+        if (id == null || id == GameWorldRegistry.DEFAULT_ID || !gameWorldRegistry.e2eEnabled) {
             return gameWorldRegistry.defaultWorld
         }
         return gameWorldRegistry.resolve(id)
@@ -465,9 +464,7 @@ class AdminController(
     // target world as a `?gameSession=` query param (same convention as `/game` and `/chunks`).
     private fun DefaultWebSocketServerSession.wsWorld(): GameWorld {
         val id = call.request.queryParameters["gameSession"]?.trim()?.takeIf { it.isNotEmpty() }
-        if (id == null ||
-            id == GameWorldRegistry.DEFAULT_ID ||
-            !gameWorldRegistry.e2eEnabled) {
+        if (id == null || id == GameWorldRegistry.DEFAULT_ID || !gameWorldRegistry.e2eEnabled) {
             return gameWorldRegistry.defaultWorld
         }
         return gameWorldRegistry.resolve(id)
@@ -489,9 +486,8 @@ class AdminController(
     // server restart that no player has revisited yet.
     private fun generatedChunks(gw: GameWorld): Set<ChunkPos> =
         gw.getWorldState().discoveredChunks() +
-            (persistence
-                ?.takeIf { gw.id == GameWorld.DEFAULT_ID }
-                ?.persistedChunkPositions() ?: emptySet())
+            (persistence?.takeIf { gw.id == GameWorld.DEFAULT_ID }?.persistedChunkPositions()
+                ?: emptySet())
 
     private suspend fun RoutingContext.requireAdmin(): Boolean {
         tokenStore ?: return true
@@ -501,7 +497,7 @@ class AdminController(
             call.respond(HttpStatusCode.Unauthorized)
             return false
         }
-        if ("*" !in auth.permissions && "admin" !in auth.permissions) {
+        if (!auth.hasPermission(CorePermissions.ADMIN)) {
             call.respond(HttpStatusCode.Forbidden)
             return false
         }
@@ -609,10 +605,8 @@ class AdminController(
         dto: SceneSwitchToggleDto
     ): EditResult<SceneSwitchToggleDto> =
         when (val result = gw.scenes().toggleSwitch(id, dto.x, dto.y, dto.z)) {
-            is SceneRegistry.SwitchToggleResult.Applied ->
-                EditResult.Applied(dto)
-            is SceneRegistry.SwitchToggleResult.Rejected ->
-                EditResult.Failed(result.reason)
+            is SceneRegistry.SwitchToggleResult.Applied -> EditResult.Applied(dto)
+            is SceneRegistry.SwitchToggleResult.Rejected -> EditResult.Failed(result.reason)
         }
 
     /**
@@ -700,7 +694,7 @@ class AdminController(
         if (tokenStore == null) return true
         val token = call.request.queryParameters["token"]
         val auth = token?.let { tokenStore.validate(it) }
-        if (auth == null || ("*" !in auth.permissions && "admin" !in auth.permissions)) {
+        if (auth == null || !auth.hasPermission(CorePermissions.ADMIN)) {
             close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Unauthorized"))
             return false
         }
@@ -1137,7 +1131,9 @@ class AdminController(
                 }) {
                     if (!requireAdmin()) return@get
                     val permissions =
-                        (gameLoop.knownCommandPermissions() + KNOWN_STANDALONE_PERMISSIONS).sorted()
+                        (gameLoop.knownCommandPermissions() + PermissionRegistry.all)
+                            .map { it.id }
+                            .sorted()
                     call.respondText(
                         adminJson.encodeToString(ListSerializer(String.serializer()), permissions),
                         ContentType.Application.Json)
@@ -1275,7 +1271,8 @@ class AdminController(
                     persistence?.listPlayers()?.forEach { playerName ->
                         val saved = persistence.loadPlayerState(playerName) ?: return@forEach
                         if (name in saved.groups) {
-                            persistence.savePlayerState(playerName, saved.copy(groups = saved.groups - name))
+                            persistence.savePlayerState(
+                                playerName, saved.copy(groups = saved.groups - name))
                         }
                     }
                     applyGroupsConfig(config.withoutGroup(name))
@@ -1454,9 +1451,10 @@ class AdminController(
                         call.parameters["name"]
                             ?: return@get call.respond(HttpStatusCode.BadRequest)
                     val liveGroups =
-                        gameWorldRegistry.all().flatMap { it.sessions.all() }.find {
-                            it.state.name.equals(name, ignoreCase = true)
-                        }
+                        gameWorldRegistry
+                            .all()
+                            .flatMap { it.sessions.all() }
+                            .find { it.state.name.equals(name, ignoreCase = true) }
                             ?.state
                             ?.groups
                     val groups = liveGroups ?: persistence?.loadPlayerState(name)?.groups
@@ -1495,10 +1493,12 @@ class AdminController(
                             }
                             .getOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest)
                     val sessions = gameWorldRegistry.all().flatMap { it.sessions.all() }
-                    when (
-                        mutatePlayerGroups(name, sessions, persistence, config, { s ->
-                            persistence?.savePlayerState(s.state.name, s.state)
-                        }) {
+                    when (mutatePlayerGroups(
+                        name,
+                        sessions,
+                        persistence,
+                        config,
+                        { s -> persistence?.savePlayerState(s.state.name, s.state) }) {
                             newGroups
                         }) {
                         is PlayerRbacResult.NotFound ->
@@ -3026,11 +3026,7 @@ class AdminController(
                 "/api/admin/social/groups",
                 {
                     description = "All active player groups"
-                    response {
-                        code(HttpStatusCode.OK) {
-                            body<List<GroupInfo>>()
-                        }
-                    }
+                    response { code(HttpStatusCode.OK) { body<List<GroupInfo>>() } }
                     requireAdminDocs()
                 }) {
                     if (!requireAdmin()) return@get
@@ -3063,8 +3059,7 @@ class AdminController(
                         }
                     call.respond(
                         HttpStatusCode.Created,
-                        adminJson.encodeToString(
-                            GroupInfo.serializer(), info))
+                        adminJson.encodeToString(GroupInfo.serializer(), info))
                 }
 
             post(
@@ -3095,8 +3090,7 @@ class AdminController(
                                 HttpStatusCode.BadRequest, e.message ?: "Failed")
                         }
                     call.respondText(
-                        adminJson.encodeToString(
-                            GroupInfo.serializer(), info),
+                        adminJson.encodeToString(GroupInfo.serializer(), info),
                         ContentType.Application.Json)
                 }
 
@@ -3156,11 +3150,7 @@ class AdminController(
                 "/api/admin/social/guilds",
                 {
                     description = "All guilds"
-                    response {
-                        code(HttpStatusCode.OK) {
-                            body<List<GuildInfoDto>>()
-                        }
-                    }
+                    response { code(HttpStatusCode.OK) { body<List<GuildInfoDto>>() } }
                     requireAdminDocs()
                 }) {
                     if (!requireAdmin()) return@get
@@ -3177,9 +3167,7 @@ class AdminController(
                     description = "Create a guild"
                     request { body<GuildCreateRequest>() }
                     response {
-                        code(HttpStatusCode.Created) {
-                            body<GuildInfoDto>()
-                        }
+                        code(HttpStatusCode.Created) { body<GuildInfoDto>() }
                         code(HttpStatusCode.BadRequest) { description = "Invalid name/tag/owner" }
                     }
                     requireAdminDocs()
@@ -3197,8 +3185,7 @@ class AdminController(
                         }
                     call.respond(
                         HttpStatusCode.Created,
-                        adminJson.encodeToString(
-                            GuildInfoDto.serializer(), dto))
+                        adminJson.encodeToString(GuildInfoDto.serializer(), dto))
                 }
 
             put(
@@ -3318,8 +3305,7 @@ class AdminController(
                                 HttpStatusCode.BadRequest, e.message ?: "Failed")
                         }
                     call.respondText(
-                        adminJson.encodeToString(
-                            GuildInfoDto.serializer(), dto),
+                        adminJson.encodeToString(GuildInfoDto.serializer(), dto),
                         ContentType.Application.Json)
                 }
 
@@ -3647,7 +3633,7 @@ class AdminController(
             if (tokenStore != null) {
                 val token = call.request.queryParameters["token"]
                 val auth = token?.let { tokenStore.validate(it) }
-                if (auth == null || ("*" !in auth.permissions && "admin" !in auth.permissions)) {
+                if (auth == null || !auth.hasPermission(CorePermissions.ADMIN)) {
                     close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Unauthorized"))
                     return@webSocket
                 }

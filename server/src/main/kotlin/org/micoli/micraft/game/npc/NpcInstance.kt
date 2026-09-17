@@ -59,8 +59,7 @@ class NpcInstance(
     /**
      * Remaining breath ticks. Only drained for NPCs that cannot swim (see [NpcManager.tickBreath]).
      */
-    @Volatile
-    var currentBreath: Int = BreathConstants.MAX_BREATH_TICKS,
+    @Volatile var currentBreath: Int = BreathConstants.MAX_BREATH_TICKS,
     @Volatile var drowningDamageAccumTicks: Int = 0,
     /** Owning player's session id when this NPC is a summoned pet; null for every wild NPC. */
     @Volatile var ownerId: String? = null,

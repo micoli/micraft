@@ -1,13 +1,13 @@
 package org.micoli.micraft.game.quest
 
 import com.charleskorn.kaml.Yaml
-import org.micoli.micraft.config.ConfigPaths
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
+import org.micoli.micraft.config.ConfigPaths
 import org.slf4j.LoggerFactory
 
 fun findRecursive(path: Path, mask: String): List<Path> {
@@ -17,9 +17,7 @@ fun findRecursive(path: Path, mask: String): List<Path> {
 
 private val log = LoggerFactory.getLogger(QuestRegistryLoader::class.java)
 
-class QuestRegistryLoader(
-    private val questsPath: Path = ConfigPaths.resourcesDir("quests")
-) {
+class QuestRegistryLoader(private val questsPath: Path = ConfigPaths.resourcesDir("quests")) {
     @Volatile private var cached: Map<String, QuestDefinition>? = null
 
     fun load(): Map<String, QuestDefinition> =

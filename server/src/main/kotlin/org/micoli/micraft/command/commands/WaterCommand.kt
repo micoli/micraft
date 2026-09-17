@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
@@ -12,7 +13,7 @@ import org.micoli.micraft.protocol.ServerMessage
 
 class WaterCommand : CommandHandler {
     override val id: UUID = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val name = "water"
     override val description =
         "Place a water source on the solid block you are looking at (or x y z). (admin)"

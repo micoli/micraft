@@ -5,6 +5,7 @@ import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.hasPermission
+import org.micoli.micraft.game.world.actionblock.ActionBlockPermissions
 import org.micoli.micraft.protocol.ServerMessage
 
 /** `/actionblock:delete <name>` — removes the action-block logic; the block itself stays. */
@@ -41,7 +42,8 @@ class ActionBlockDeleteCommand : CommandHandler {
             session.send(ServerMessage.Notification(i18n.t(lang, "actionblock:server:usage")))
             return
         }
-        if (block.owner != session.state.name && !session.hasPermission("actionblock:edit")) {
+        if (block.owner != session.state.name &&
+            !session.hasPermission(ActionBlockPermissions.EDIT)) {
             session.send(
                 ServerMessage.Notification(i18n.t(lang, "actionblock:server:no_permission")))
             return

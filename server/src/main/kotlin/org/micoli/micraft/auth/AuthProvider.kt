@@ -4,7 +4,7 @@ data class AuthResult(
     val playerId: String,
     val displayName: String,
     val token: String = "",
-    val permissions: Set<String> = emptySet(),
+    val permissions: Set<Permission> = emptySet(),
     val email: String = playerId,
 )
 

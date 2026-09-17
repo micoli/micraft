@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import org.micoli.micraft.auth.GroupEntry
 import org.micoli.micraft.auth.GroupsConfig
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
@@ -475,7 +476,8 @@ class GameLoopTest {
         }
 
         val session = gameLoop.defaultWorld.sessions.all().first { it.state.name == "Frank" }
-        assertTrue("give" in session.permissions, "moderator group's permission should apply")
+        assertTrue(
+            Permission("give") in session.permissions, "moderator group's permission should apply")
 
         socket.incomingChannel.close()
         job.join()

@@ -1,8 +1,8 @@
 package org.micoli.micraft.game.npc
 
+import kotlin.random.Random
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.game.quest.QuestManager
-import kotlin.random.Random
 
 /**
  * Everything a behavior needs beyond the world: the tunables in force and the random source.

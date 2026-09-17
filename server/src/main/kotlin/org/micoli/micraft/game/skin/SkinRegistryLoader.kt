@@ -1,12 +1,12 @@
 package org.micoli.micraft.game.skin
 
 import com.charleskorn.kaml.Yaml
-import org.micoli.micraft.config.ConfigPaths
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
+import org.micoli.micraft.config.ConfigPaths
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(SkinRegistryLoader::class.java)

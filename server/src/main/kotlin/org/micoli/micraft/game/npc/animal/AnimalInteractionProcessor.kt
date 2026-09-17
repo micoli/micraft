@@ -490,9 +490,7 @@ class AnimalInteractionProcessor(
                 // worked because `updateTargets` happened to clear it first, and it made "walking
                 // to
                 // a meadow" indistinguishable from "hunting" everywhere else in the code.
-                animal.foodTargetPos =
-                    Vec3(
-                        bestX.toFloat() + 0.5f, pos.y, bestZ.toFloat() + 0.5f)
+                animal.foodTargetPos = Vec3(bestX.toFloat() + 0.5f, pos.y, bestZ.toFloat() + 0.5f)
             }
         }
     }

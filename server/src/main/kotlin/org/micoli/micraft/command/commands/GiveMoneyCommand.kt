@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.command.Completion
@@ -13,7 +14,7 @@ import org.micoli.micraft.protocol.ServerMessage
 class GiveMoneyCommand : CommandHandler {
     override val id: UUID = UUID.fromString("d2e3f4a5-b6c7-8901-bcde-f12345678901")
     override val name = "give:money"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Give copper to a player (or yourself if name omitted)."
     override val usage = "$command <amount> [playerName]"
     override val autocompleteArgs = listOf(1)

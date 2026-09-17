@@ -32,10 +32,7 @@ class ApplicationTest {
                 contentType(ContentType.Application.Json)
                 setBody("""{"email":"$email","password":""}""")
             }
-        return Json.parseToJsonElement(r.bodyAsText())
-            .jsonObject["token"]!!
-            .jsonPrimitive
-            .content
+        return Json.parseToJsonElement(r.bodyAsText()).jsonObject["token"]!!.jsonPrimitive.content
     }
 
     @Test

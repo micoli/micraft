@@ -26,8 +26,7 @@ private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), RecipeYaml
 
 class RecipeRegistryLoader(
     private val path: Path = ConfigPaths.dataConfig("recipes.yaml"),
-    private val resourcesPath: Path =
-        ConfigPaths.resourcesConfig("recipes.yaml"),
+    private val resourcesPath: Path = ConfigPaths.resourcesConfig("recipes.yaml"),
 ) {
     private val default: Map<String, RecipeYamlEntry> =
         Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, resourcesPath.readText())

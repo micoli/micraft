@@ -1,7 +1,5 @@
 package org.micoli.micraft.game.world
 
-import org.micoli.micraft.game.world.instance.InstanceZone
-import org.micoli.micraft.game.world.scene.Scene
 import java.nio.file.Files
 import java.nio.file.attribute.FileTime
 import kotlin.io.path.outputStream
@@ -10,6 +8,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import org.micoli.micraft.game.world.instance.InstanceZone
+import org.micoli.micraft.game.world.scene.Scene
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.support.MapChunkGenerator
 import org.micoli.micraft.support.testPlayerState

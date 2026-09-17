@@ -23,6 +23,7 @@ import org.micoli.micraft.auth.AuthResult
 import org.micoli.micraft.auth.GroupEntry
 import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.LocalAuthProvider
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.http.AdminController
@@ -62,7 +63,10 @@ class AdminGroupsRoutesTest {
         val store = TokenStore(CoroutineScope(Dispatchers.Default))
         val token =
             store.issue(
-                AuthResult(playerId = "admin", displayName = "Admin", permissions = setOf("admin")))
+                AuthResult(
+                    playerId = "admin",
+                    displayName = "Admin",
+                    permissions = setOf(Permission("admin"))))
         val gameLoop = GameLoop(testWorld(), persistence)
         val controller =
             AdminController(
@@ -169,7 +173,7 @@ class AdminGroupsRoutesTest {
             session.state = session.state.copy(groups = listOf("player"))
             session.permissions = fx.provider.groupsConfig.resolvePermissions(listOf("player"))
             fx.gameLoop.gameWorldRegistry.defaultWorld.sessions["bob-id"] = session
-            assertTrue("build" !in session.permissions)
+            assertTrue(Permission("build") !in session.permissions)
 
             val r =
                 client.put("/api/admin/groups/player") {
@@ -180,7 +184,7 @@ class AdminGroupsRoutesTest {
             assertEquals(HttpStatusCode.NoContent, r.status)
 
             assertTrue(
-                "build" in session.permissions,
+                Permission("build") in session.permissions,
                 "Bob's connected session should gain the new permission without reconnecting")
         }
 

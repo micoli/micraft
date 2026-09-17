@@ -13,7 +13,7 @@ import org.micoli.micraft.protocol.ServerMessage
 class SetGroupCommand : PluginCommand {
     override val id: UUID = UUID.fromString("c4d5e6f7-a8b9-4012-c345-d6e7f8a9b012")
     override val name = "rbac:setgroup"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Add in-game RBAC groups to a character."
     override val usage = "$command <playerName> <group1,group2,...>"
 

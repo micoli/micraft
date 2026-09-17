@@ -7,6 +7,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.combat.CombatState
 import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.game.world.BlockPos
@@ -28,7 +29,8 @@ fun Array<MutableList<ShortcutSlot?>>.toPageMap(): Map<Int, Map<Int, ShortcutSlo
         }
         .toMap()
 
-fun PlayerSession.hasPermission(perm: String): Boolean = "*" in permissions || perm in permissions
+fun PlayerSession.hasPermission(perm: Permission): Boolean =
+    Permission.WILDCARD in permissions || perm in permissions
 
 /** Adds items to the live inventory and pushes an [ServerMessage.InventoryUpdate]. */
 suspend fun PlayerSession.addItems(items: Map<ItemType, Int>) {
@@ -57,7 +59,7 @@ open class PlayerSession(
     @Volatile var state: PlayerState,
     @Volatile var vy: Float = 0f,
     val networkStats: NetworkStats = NetworkStats(),
-    @Volatile var permissions: Set<String> = emptySet(),
+    @Volatile var permissions: Set<Permission> = emptySet(),
     val chunkMode: String = "websocket",
     val connectionId: String = "",
 ) {

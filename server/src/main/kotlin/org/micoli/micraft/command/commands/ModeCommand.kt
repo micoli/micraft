@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
@@ -10,7 +11,7 @@ import org.micoli.micraft.protocol.ServerMessage
 class ModeCommand : CommandHandler {
     override val id: UUID = UUID.fromString("d4a1c6b2-8e3f-4a7b-9c2d-1e5f6a7b8c9d")
     override val name = "mode"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Switch between normal game mode and creative edit mode. (admin)"
     override val usage = "$command <game|creative>"
     override val options = listOf("game", "creative")

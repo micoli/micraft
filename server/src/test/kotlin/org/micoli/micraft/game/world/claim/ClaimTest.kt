@@ -3,6 +3,7 @@ package org.micoli.micraft.game.world.claim
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.support.FakeWebSocketSession
@@ -22,7 +23,7 @@ private fun claim(ownerId: String = "owner-id", trustedPlayerIds: Set<String> = 
 
 private fun sessionWithPermissions(
     id: String,
-    permissions: Set<String> = emptySet()
+    permissions: Set<Permission> = emptySet()
 ): PlayerSession =
     PlayerSession(
         id,
@@ -54,7 +55,8 @@ class ClaimTest {
     @Test
     fun canEdit_admin_returnsTrue() {
         val c = claim(ownerId = "owner-id")
-        assertTrue(c.canEdit(sessionWithPermissions("admin-id", permissions = setOf("*"))))
+        assertTrue(
+            c.canEdit(sessionWithPermissions("admin-id", permissions = setOf(Permission.WILDCARD))))
     }
 
     @Test

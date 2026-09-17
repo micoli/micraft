@@ -503,9 +503,7 @@ class WorldPersistence(val worldDir: Path) {
     fun loadGuilds(): List<Guild> {
         if (!guildsFile.exists()) return emptyList()
         return try {
-            Yaml.default.decodeFromString(
-                ListSerializer(Guild.serializer()),
-                guildsFile.readText())
+            Yaml.default.decodeFromString(ListSerializer(Guild.serializer()), guildsFile.readText())
         } catch (e: Exception) {
             worldPersistenceLog.warn("Failed to load guilds: {}", e.message)
             emptyList()
@@ -515,8 +513,7 @@ class WorldPersistence(val worldDir: Path) {
     fun saveGuilds(guilds: List<Guild>) {
         try {
             guildsFile.writeText(
-                Yaml.default.encodeToString(
-                    ListSerializer(Guild.serializer()), guilds))
+                Yaml.default.encodeToString(ListSerializer(Guild.serializer()), guilds))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save guilds: {}", e.message)
         }
@@ -528,8 +525,7 @@ class WorldPersistence(val worldDir: Path) {
     fun loadFactions(): FactionsSection? {
         if (!factionsFile.exists()) return null
         return try {
-            Yaml.default.decodeFromString(
-                FactionsSection.serializer(), factionsFile.readText())
+            Yaml.default.decodeFromString(FactionsSection.serializer(), factionsFile.readText())
         } catch (e: Exception) {
             worldPersistenceLog.warn("Failed to load factions: {}", e.message)
             null
@@ -539,8 +535,7 @@ class WorldPersistence(val worldDir: Path) {
     fun saveFactions(section: FactionsSection) {
         try {
             factionsFile.writeText(
-                Yaml.default.encodeToString(
-                    FactionsSection.serializer(), section))
+                Yaml.default.encodeToString(FactionsSection.serializer(), section))
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save factions: {}", e.message)
         }

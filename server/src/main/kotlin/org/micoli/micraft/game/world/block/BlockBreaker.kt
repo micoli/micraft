@@ -41,9 +41,7 @@ class BlockBreaker(
     private val instanceRegistry: InstanceRegistry? = null,
     private val claimRegistry: ClaimRegistry? = null,
     private val railNetworkRegistry: RailNetworkRegistry? = null,
-    private val actionBlockRegistry:
-        ActionBlockRegistry? =
-        null,
+    private val actionBlockRegistry: ActionBlockRegistry? = null,
     private val weaponRegistry: () -> Map<String, WeaponDefinition> = { emptyMap() },
     private val toolRegistry: () -> Map<String, ToolDefinition> = { emptyMap() },
 ) {

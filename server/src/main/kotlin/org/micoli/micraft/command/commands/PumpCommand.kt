@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
@@ -16,7 +17,7 @@ private const val MAX_PUMP_BLOCKS = 10_000
 class PumpCommand : CommandHandler {
     override val id: UUID = UUID.fromString("b7e2a1f3-9c4d-4e5b-8f6a-2d3c1e0b9a7f")
     override val name = "pump"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Remove all connected liquid blocks in sight."
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {

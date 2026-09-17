@@ -2,6 +2,7 @@ package org.micoli.micraft.game.hub
 
 import io.ktor.websocket.*
 import org.micoli.micraft.I18nConfig
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.game.session.PlayerSession
@@ -144,7 +145,7 @@ class HubConnection(
                     userName = connectMsg?.userName ?: candidate.name,
                     socket = socket,
                     state = candidate.copy(language = language),
-                    permissions = authResult?.permissions ?: setOf("*"),
+                    permissions = authResult?.permissions ?: setOf(Permission.WILDCARD),
                     connectionId = connectMsg?.connectionId ?: "",
                 )
             session.companion = true

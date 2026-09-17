@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
@@ -11,7 +12,7 @@ import org.micoli.micraft.protocol.ServerMessage
 class DrinkCommand : CommandHandler {
     override val id: UUID = UUID.fromString("a3f2c1d4-8b7e-4f56-9c3a-2e1d0b5f6a7c")
     override val name = "drink"
-    override val permission = "player"
+    override val permission = CorePermissions.PLAYER
     override val description = "Consomme un item consommable de l'inventaire."
     override val usage = "$command <itemType>"
     override val options

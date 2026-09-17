@@ -3,6 +3,7 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import kotlin.math.cos
 import kotlin.math.sin
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
@@ -23,7 +24,7 @@ import org.micoli.micraft.vehicle.VehicleRegistry
 class VehicleAddCommand : CommandHandler {
     override val id: UUID = UUID.fromString("6b2b6a34-6d8b-4b0b-9a6a-6a2f9a2b6f3a")
     override val name = "vehicule:add"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Spawn a vehicle on the rail block you're standing on."
     override val usage = "$command <vehiculeName>"
     override val options

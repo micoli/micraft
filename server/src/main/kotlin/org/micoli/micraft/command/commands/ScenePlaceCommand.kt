@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
@@ -18,7 +19,7 @@ import org.micoli.micraft.protocol.ServerMessage
 class ScenePlaceCommand : CommandHandler {
     override val id: UUID = UUID.fromString("6b2b6a34-6d8b-4b0b-9a6a-6a2f9a2b6f4b")
     override val name = "scene:place"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Stamp a scene into the live world at the given position."
     override val usage = "$command <sceneId> <rotation:0-3> <x> <y> <z>"
 

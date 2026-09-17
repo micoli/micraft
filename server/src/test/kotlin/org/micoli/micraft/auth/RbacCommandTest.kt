@@ -44,7 +44,7 @@ class RbacCommandTest {
                 "Admin should receive confirmation")
 
             assertTrue(
-                "give" in aliceSession.permissions,
+                Permission("give") in aliceSession.permissions,
                 "Alice's live session should immediately gain the moderator group's permissions")
             assertTrue("moderator" in aliceSession.state.groups)
         }
@@ -69,7 +69,7 @@ class RbacCommandTest {
                 "Alice should receive a group-update notification, got: ${aliceMessages.map { it.message }}")
 
             assertTrue(
-                "give" !in aliceSession.permissions,
+                Permission("give") !in aliceSession.permissions,
                 "Alice's live session should immediately lose the moderator group's permissions")
             assertTrue("moderator" !in aliceSession.state.groups)
         }

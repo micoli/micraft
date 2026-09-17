@@ -18,7 +18,9 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.auth.TokenStore
+import org.micoli.micraft.auth.hasPermission
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcTuning
@@ -66,7 +68,7 @@ class SimulationController(
             call.respond(HttpStatusCode.Unauthorized)
             return false
         }
-        if ("*" !in auth.permissions && "admin" !in auth.permissions) {
+        if (!auth.hasPermission(CorePermissions.ADMIN)) {
             call.respond(HttpStatusCode.Forbidden)
             return false
         }
@@ -106,7 +108,7 @@ class SimulationController(
             if (tokenStore != null) {
                 val token = call.request.queryParameters["token"]
                 val auth = token?.let { tokenStore.validate(it) }
-                if (auth == null || ("*" !in auth.permissions && "admin" !in auth.permissions)) {
+                if (auth == null || !auth.hasPermission(CorePermissions.ADMIN)) {
                     close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Unauthorized"))
                     return@webSocket
                 }

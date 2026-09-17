@@ -12,8 +12,11 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.SERVER_BUILD_TIMESTAMP
+import org.micoli.micraft.auth.ActionPermissions
 import org.micoli.micraft.auth.AuthProvider
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.auth.GroupsConfig
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.command.CommandContext
@@ -278,8 +281,7 @@ class GameLoop(
             vegetationConfig,
             savePath =
                 persistence?.worldDir?.resolve("vegetation_state.yaml")
-                    ?: ConfigPaths.dataWorld(
-                        "default_world/vegetation_state.yaml"),
+                    ?: ConfigPaths.dataWorld("default_world/vegetation_state.yaml"),
         ),
     private val recipeRegistryLoader: RecipeRegistryLoader = RecipeRegistryLoader(),
     private val armorRegistryLoader: ArmorRegistryLoader = ArmorRegistryLoader(),
@@ -637,8 +639,15 @@ class GameLoop(
     private val commands: MutableMap<String, CommandHandler> =
         discoverCommandHandlers().toMutableMap()
 
+    // Force-load every standalone-permission namespace object so `PermissionRegistry.all` is
+    // complete by the time `GET /api/admin/permissions` is served (Kotlin objects init lazily).
+    init {
+        ActionPermissions
+        org.micoli.micraft.game.world.actionblock.ActionBlockPermissions
+    }
+
     /** Every distinct `permission` a registered slash command gates on — for the admin RBAC UI. */
-    fun knownCommandPermissions(): Set<String> =
+    fun knownCommandPermissions(): Set<Permission> =
         commands.values.mapNotNull { it.permission }.toSet()
 
     private val pluginTickHandlers: MutableList<TickHandler> = mutableListOf()
@@ -1027,7 +1036,9 @@ class GameLoop(
             commands.values
                 .filter { cmd ->
                     val p = cmd.permission
-                    p == null || "*" in session.permissions || p in session.permissions
+                    p == null ||
+                        Permission.WILDCARD in session.permissions ||
+                        p in session.permissions
                 }
                 .map {
                     CommandInfo(it.id.toString(), it.command, it.description, it.autocompleteArgs)
@@ -1583,7 +1594,9 @@ class GameLoop(
                 return
             }
             val perm = handler.permission
-            if (perm != null && "*" !in session.permissions && perm !in session.permissions) {
+            if (perm != null &&
+                Permission.WILDCARD !in session.permissions &&
+                perm !in session.permissions) {
                 session.send(
                     ServerMessage.Notification(
                         i18n.t(session.state.language, "rbac:server:no_permission")))
@@ -1771,7 +1784,7 @@ class GameLoop(
         // auth backend (dev/no-auth mode) still gets full access.
         val sessionPermissions =
             if (tokenStore != null) groupsConfig?.resolvePermissions(characterGroups) ?: emptySet()
-            else setOf("*")
+            else setOf(Permission.WILDCARD)
         val session =
             PlayerSession(
                 id,
@@ -1854,7 +1867,7 @@ class GameLoop(
                 knownRecipes = session.knownRecipes.toSet(),
             ))
         session.send(buildPreferencesSync(session))
-        if (session.hasPermission("admin")) {
+        if (session.hasPermission(CorePermissions.ADMIN)) {
             session.send(
                 ServerMessage.InstanceZonesSync(gw.instanceRegistry.all().map { it.toProto() }))
             session.send(
@@ -2001,7 +2014,7 @@ class GameLoop(
                                                 world,
                                                 siegeProjectileManager)
                                         is ClientMessage.RequestScenePreview -> {
-                                            if (session.hasPermission("admin")) {
+                                            if (session.hasPermission(CorePermissions.ADMIN)) {
                                                 sceneRegistry.get(msg.sceneId)?.let { scene ->
                                                     session.send(
                                                         ServerMessage.ScenePreviewData(

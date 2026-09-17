@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.command.Completion
@@ -21,7 +22,7 @@ import org.micoli.micraft.protocol.ServerMessage
 class ClaimCommand : CommandHandler {
     override val id: UUID = UUID.fromString("d3f1a6b2-4c7e-4a1d-9f2b-6a8e5c0d7f31")
     override val name = "claim"
-    override val permission = "player"
+    override val permission = CorePermissions.PLAYER
     override val description = "Manage the land claim you're standing in."
     override val usage = "$command <trust|untrust|abandon|info> [playerName]"
     override val autocompleteArgs = listOf(0, 1)

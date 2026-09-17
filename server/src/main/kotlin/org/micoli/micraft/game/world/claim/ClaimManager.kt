@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.world.claim
 
 import org.micoli.micraft.I18nConfig
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.ChunkPos
@@ -96,7 +97,7 @@ class ClaimManager(
             session.send(ServerMessage.ClaimDenied(i18n.t(lang, "claim:server:claim_not_found")))
             return
         }
-        if (claim.ownerId != session.id && "*" !in session.permissions) {
+        if (claim.ownerId != session.id && Permission.WILDCARD !in session.permissions) {
             session.send(ServerMessage.ClaimDenied(i18n.t(lang, "claim:server:not_your_claim")))
             return
         }
@@ -120,7 +121,7 @@ class ClaimManager(
             session.send(ServerMessage.ClaimDenied(i18n.t(lang, "claim:server:claim_not_found")))
             return
         }
-        if (claim.ownerId != session.id && "*" !in session.permissions) {
+        if (claim.ownerId != session.id && Permission.WILDCARD !in session.permissions) {
             session.send(ServerMessage.ClaimDenied(i18n.t(lang, "claim:server:not_your_claim")))
             return
         }

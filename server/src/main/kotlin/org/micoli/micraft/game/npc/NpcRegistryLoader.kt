@@ -1,8 +1,8 @@
 package org.micoli.micraft.game.npc
 
 import com.charleskorn.kaml.Yaml
-import org.micoli.micraft.config.ConfigPaths
 import java.nio.file.Path
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.OverridablePaths
 import org.micoli.micraft.config.loadOverridableDir
 import org.micoli.micraft.game.npc.animal.applyOverride
@@ -104,10 +104,8 @@ fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition =
     )
 
 class NpcRegistryLoader(
-    private val resourcesEntityPath: Path =
-        ConfigPaths.resourcesDir("entities"),
-    private val dataEntityPath: Path =
-        ConfigPaths.dataResources("entities"),
+    private val resourcesEntityPath: Path = ConfigPaths.resourcesDir("entities"),
+    private val dataEntityPath: Path = ConfigPaths.dataResources("entities"),
 ) {
     @Volatile private var cached: Map<String, NpcDefinition>? = null
 

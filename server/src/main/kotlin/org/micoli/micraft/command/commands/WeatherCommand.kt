@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
@@ -10,7 +11,7 @@ import org.micoli.micraft.protocol.ServerMessage
 class WeatherCommand : CommandHandler {
     override val id: UUID = UUID.fromString("b3e7f2d1-4a8c-4e9b-b5f6-7c1d2e3a4b5c")
     override val name = "weather"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Force a weather zone at your position or clear all zones. (admin)"
     override val usage = "$command [rain|storm|snow|fog|none]"
     override val options = listOf("rain", "storm", "snow", "fog", "none")

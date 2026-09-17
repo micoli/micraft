@@ -52,9 +52,12 @@ class TokenStoreTest {
     fun issue_preservesPermissions() {
         val store = TokenStore(scope)
         val result =
-            AuthResult(playerId = "p1", displayName = "Player One", permissions = setOf("admin"))
+            AuthResult(
+                playerId = "p1",
+                displayName = "Player One",
+                permissions = setOf(Permission("admin")))
         val token = store.issue(result)
         val validated = assertNotNull(store.validate(token))
-        assertEquals(setOf("admin"), validated.permissions)
+        assertEquals(setOf(Permission("admin")), validated.permissions)
     }
 }

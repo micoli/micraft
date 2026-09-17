@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.TICKS_PER_DAY
@@ -10,7 +11,7 @@ import org.micoli.micraft.protocol.ServerMessage
 class TimeCommand : CommandHandler {
     override val id: UUID = UUID.fromString("48666b02-7c6d-4a88-b162-26c3ff56bd9a")
     override val name = "time"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Shows or sets the in-game time."
     override val usage = "$command [0-23]"
     override val options = (0..23).map { it.toString() }

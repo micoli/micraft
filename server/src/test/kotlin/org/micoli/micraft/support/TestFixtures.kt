@@ -25,13 +25,13 @@ import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ChunkPos
-import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.ItemDefinition
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
+import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
@@ -342,8 +342,6 @@ suspend fun CommandHandler.completions(
     session: PlayerSession? = null,
 ): List<Completion> =
     completeArgRich(argIndex, partial, session, context)
-        ?: completeArg(argIndex, partial, session, context).map {
-            Completion(it)
-        }
+        ?: completeArg(argIndex, partial, session, context).map { Completion(it) }
 
 fun testWeatherManager() = WeatherManager(WeatherConfig())

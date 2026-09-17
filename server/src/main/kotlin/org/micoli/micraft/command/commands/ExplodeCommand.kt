@@ -2,6 +2,7 @@ package org.micoli.micraft.command.commands
 
 import java.util.UUID
 import kotlin.math.floor
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
@@ -16,7 +17,7 @@ private const val MAX_RADIUS = 32
 class ExplodeCommand : CommandHandler {
     override val id: UUID = UUID.fromString("570782cd-ac20-413c-ad7b-9f7fcb312df0")
     override val name = "explode"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Destroy all blocks in a sphere around the player."
     override val usage = "/explode <radius>"
 

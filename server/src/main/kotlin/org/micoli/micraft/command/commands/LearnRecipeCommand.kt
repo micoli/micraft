@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.recipe.RecipeRegistry
@@ -10,7 +11,7 @@ import org.micoli.micraft.protocol.ServerMessage
 class LearnRecipeCommand : CommandHandler {
     override val id: UUID = UUID.fromString("b2c3d4e5-f6a7-8901-bcde-f12345678901")
     override val name = "learnrecipe"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Teach a recipe to the player."
     override val usage = "$command <recipeId>"
     override val options

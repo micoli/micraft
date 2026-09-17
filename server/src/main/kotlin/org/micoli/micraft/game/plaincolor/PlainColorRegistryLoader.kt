@@ -33,8 +33,7 @@ private const val ROOT_KEY = "plainColors"
  */
 class PlainColorRegistryLoader(
     private val path: Path = ConfigPaths.dataConfig("plain_colors.yaml"),
-    private val resourcesPath: Path =
-        ConfigPaths.resourcesConfig("plain_colors.yaml"),
+    private val resourcesPath: Path = ConfigPaths.resourcesConfig("plain_colors.yaml"),
 ) {
     private val default: Map<String, String> = decode(resourcesPath.readText())
 

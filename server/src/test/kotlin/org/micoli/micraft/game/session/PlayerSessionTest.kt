@@ -5,13 +5,14 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.support.FakeWebSocketSession
 import org.micoli.micraft.support.testPlayerState
 import org.micoli.micraft.support.testSession
 
 class PlayerSessionTest {
-    private fun sessionWithPerms(perms: Set<String>): PlayerSession =
+    private fun sessionWithPerms(perms: Set<Permission>): PlayerSession =
         PlayerSession(
             id = "test-id",
             userName = "alice",
@@ -22,24 +23,24 @@ class PlayerSessionTest {
 
     @Test
     fun hasPermission_wildcardGrantsAll() {
-        val session = sessionWithPerms(setOf("*"))
-        assertTrue(session.hasPermission("action.fly"))
-        assertTrue(session.hasPermission("admin.kick"))
-        assertTrue(session.hasPermission("anything"))
+        val session = sessionWithPerms(setOf(Permission.WILDCARD))
+        assertTrue(session.hasPermission(Permission("action.fly")))
+        assertTrue(session.hasPermission(Permission("admin.kick")))
+        assertTrue(session.hasPermission(Permission("anything")))
     }
 
     @Test
     fun hasPermission_specificPerm_onlyThatPerm() {
-        val session = sessionWithPerms(setOf("action.fly"))
-        assertTrue(session.hasPermission("action.fly"))
-        assertFalse(session.hasPermission("action.break"))
-        assertFalse(session.hasPermission("admin.kick"))
+        val session = sessionWithPerms(setOf(Permission("action.fly")))
+        assertTrue(session.hasPermission(Permission("action.fly")))
+        assertFalse(session.hasPermission(Permission("action.break")))
+        assertFalse(session.hasPermission(Permission("admin.kick")))
     }
 
     @Test
     fun hasPermission_emptyPerms_returnsFalse() {
         val session = sessionWithPerms(emptySet())
-        assertFalse(session.hasPermission("anything"))
+        assertFalse(session.hasPermission(Permission("anything")))
     }
 
     @Test

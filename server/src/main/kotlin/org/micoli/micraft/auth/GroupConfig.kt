@@ -33,10 +33,14 @@ data class GroupsConfig(
     val allGroups: List<GroupEntry>
         get() = listOf(ADMIN_GROUP) + groups
 
-    fun resolvePermissions(groupNames: List<String>): Set<String> =
-        allGroups.filter { it.name in groupNames }.flatMap { it.permissions }.toSet()
+    fun resolvePermissions(groupNames: List<String>): Set<Permission> =
+        allGroups
+            .filter { it.name in groupNames }
+            .flatMap { it.permissions }
+            .map { Permission(it) }
+            .toSet()
 
-    fun resolveDefaultPermissions(): Set<String> = resolvePermissions(defaultGroups)
+    fun resolveDefaultPermissions(): Set<Permission> = resolvePermissions(defaultGroups)
 
     /** Creates or replaces a group. The virtual `admin` group (`*`) can never be edited. */
     fun withUpsertedGroup(name: String, permissions: List<String>): GroupsConfig {

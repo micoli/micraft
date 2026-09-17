@@ -28,10 +28,7 @@ class MapRoutesTest {
                 contentType(ContentType.Application.Json)
                 setBody("""{"email":"map-routes-test@example.com","password":""}""")
             }
-        return Json.parseToJsonElement(r.bodyAsText())
-            .jsonObject["token"]!!
-            .jsonPrimitive
-            .content
+        return Json.parseToJsonElement(r.bodyAsText()).jsonObject["token"]!!.jsonPrimitive.content
     }
 
     @Test

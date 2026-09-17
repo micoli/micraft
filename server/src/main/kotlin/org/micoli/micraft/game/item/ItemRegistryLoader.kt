@@ -27,8 +27,7 @@ private val ENTRY_MAP_SERIALIZER = MapSerializer(String.serializer(), ItemYamlEn
 
 class ItemRegistryLoader(
     private val path: Path = ConfigPaths.dataConfig("items.yaml"),
-    private val resourcesPath: Path =
-        ConfigPaths.resourcesConfig("items.yaml"),
+    private val resourcesPath: Path = ConfigPaths.resourcesConfig("items.yaml"),
 ) {
     private val default: Map<String, ItemYamlEntry> =
         Yaml.default.decodeFromString(ENTRY_MAP_SERIALIZER, resourcesPath.readText())

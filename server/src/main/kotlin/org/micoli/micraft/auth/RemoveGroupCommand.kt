@@ -13,7 +13,7 @@ import org.micoli.micraft.protocol.ServerMessage
 class RemoveGroupCommand : PluginCommand {
     override val id: UUID = UUID.fromString("d5e6f7a8-b9c0-4123-d456-e7f8a9b0c123")
     override val name = "rbac:removegroup"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Remove in-game RBAC groups from a character."
     override val usage = "$command <playerName> <group1,group2,...>"
 

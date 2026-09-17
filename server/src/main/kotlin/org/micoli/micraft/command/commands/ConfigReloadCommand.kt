@@ -1,6 +1,7 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
@@ -12,7 +13,7 @@ private val log = LoggerFactory.getLogger(ConfigReloadCommand::class.java)
 class ConfigReloadCommand : CommandHandler {
     override val id: UUID = UUID.fromString("3b4c5d6e-7f80-4a1b-9c2d-3e4f5a6b7c8d")
     override val name = "config:reload"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description = "Reloads block, NPC, or RBAC definitions from resource files."
     override val options = listOf("block", "npc", "rbac")
 

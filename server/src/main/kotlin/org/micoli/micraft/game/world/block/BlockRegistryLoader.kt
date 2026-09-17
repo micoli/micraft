@@ -1,7 +1,6 @@
 package org.micoli.micraft.game.world.block
 
 import com.charleskorn.kaml.Yaml
-import org.micoli.micraft.config.ConfigPaths
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -11,6 +10,7 @@ import kotlin.io.path.writeText
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
+import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.spliceMissingAsComments
 import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.config.yamlOverrideSection
@@ -46,10 +46,8 @@ private fun BlockYamlEntry.applyOverride(o: BlockYamlOverride): BlockYamlEntry {
 }
 
 class BlockRegistryLoader(
-    private val resourcesBlocksPath: Path =
-        ConfigPaths.resourcesDir("blocks"),
-    private val dataBlocksPath: Path =
-        ConfigPaths.dataResources("blocks"),
+    private val resourcesBlocksPath: Path = ConfigPaths.resourcesDir("blocks"),
+    private val dataBlocksPath: Path = ConfigPaths.dataResources("blocks"),
     private val blockIdRegistryLoader: BlockIdRegistryLoader = BlockIdRegistryLoader(),
 ) {
     private fun generateFromResources(): Map<String, BlockYamlEntry> {

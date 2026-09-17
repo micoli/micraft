@@ -35,7 +35,7 @@ class TokenStore(scope: CoroutineScope, private val ttlSeconds: Long = 600) {
                 .withSubject(result.playerId)
                 .withClaim("name", result.displayName)
                 .withClaim("email", result.email)
-                .withClaim("perms", result.permissions.joinToString(","))
+                .withClaim("perms", result.permissions.joinToString(",") { it.id })
                 .withIssuedAt(Date(now))
                 .withExpiresAt(Date(now + ttlSeconds * 1000L))
                 .sign(algorithm)
@@ -48,7 +48,9 @@ class TokenStore(scope: CoroutineScope, private val ttlSeconds: Long = 600) {
         return try {
             val decoded = verifier.verify(token)
             val permsStr = decoded.getClaim("perms").asString() ?: ""
-            val permissions = if (permsStr.isEmpty()) emptySet() else permsStr.split(",").toSet()
+            val permissions =
+                if (permsStr.isEmpty()) emptySet()
+                else permsStr.split(",").map { Permission(it) }.toSet()
             AuthResult(
                 playerId = decoded.subject,
                 displayName = decoded.getClaim("name").asString() ?: "",

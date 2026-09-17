@@ -1160,14 +1160,12 @@ class LocalPlayerController(
                 event.startsWith("guild_bank_deposit:") -> {
                     val (item, n) = event.removePrefix("guild_bank_deposit:").split("\t")
                     outMessages.trySend(
-                        ClientMessage.GuildBankDeposit(
-                            ItemType(item), n.toIntOrNull() ?: 0))
+                        ClientMessage.GuildBankDeposit(ItemType(item), n.toIntOrNull() ?: 0))
                 }
                 event.startsWith("guild_bank_withdraw:") -> {
                     val (item, n) = event.removePrefix("guild_bank_withdraw:").split("\t")
                     outMessages.trySend(
-                        ClientMessage.GuildBankWithdraw(
-                            ItemType(item), n.toIntOrNull() ?: 0))
+                        ClientMessage.GuildBankWithdraw(ItemType(item), n.toIntOrNull() ?: 0))
                 }
                 event.startsWith("faction_set:") ->
                     outMessages.trySend(

@@ -46,13 +46,13 @@ class TokenStoreJwtTest {
                     playerId = "p1",
                     displayName = "Alice",
                     email = "alice@test.com",
-                    permissions = setOf("admin"),
+                    permissions = setOf(Permission("admin")),
                 ))
         val result = assertNotNull(store.validate(issued))
         assertEquals("p1", result.playerId)
         assertEquals("Alice", result.displayName)
         assertEquals("alice@test.com", result.email)
-        assertEquals(setOf("admin"), result.permissions)
+        assertEquals(setOf(Permission("admin")), result.permissions)
         assertEquals(issued, result.token)
     }
 
@@ -69,15 +69,18 @@ class TokenStoreJwtTest {
         val store = TokenStore(scope)
         val token =
             store.issue(
-                AuthResult(playerId = "p1", displayName = "Super", permissions = setOf("*")))
+                AuthResult(
+                    playerId = "p1",
+                    displayName = "Super",
+                    permissions = setOf(Permission.WILDCARD)))
         val result = assertNotNull(store.validate(token))
-        assertTrue("*" in result.permissions)
+        assertTrue(Permission.WILDCARD in result.permissions)
     }
 
     @Test
     fun validate_multiplePermissions_roundTrip() {
         val store = TokenStore(scope)
-        val perms = setOf("admin", "build", "fly")
+        val perms = setOf(Permission("admin"), Permission("build"), Permission("fly"))
         val token =
             store.issue(AuthResult(playerId = "p1", displayName = "Player", permissions = perms))
         val result = assertNotNull(store.validate(token))

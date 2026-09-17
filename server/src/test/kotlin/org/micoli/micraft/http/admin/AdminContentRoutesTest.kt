@@ -11,6 +11,7 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.micoli.micraft.auth.AuthResult
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.http.AdminController
@@ -108,7 +109,10 @@ class AdminContentRoutesTest {
         val store = TokenStore(scope)
         val token =
             store.issue(
-                AuthResult(playerId = "p1", displayName = "Admin", permissions = setOf("admin")))
+                AuthResult(
+                    playerId = "p1",
+                    displayName = "Admin",
+                    permissions = setOf(Permission("admin"))))
         application { routing { controller(store).register(this) } }
         val r =
             client.get("/api/admin/blocks") {

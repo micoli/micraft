@@ -9,7 +9,7 @@ import org.micoli.micraft.protocol.ServerMessage
 class AddUserCommand : PluginCommand {
     override val id: UUID = UUID.fromString("b3c4d5e6-f7a8-4901-b234-c5d6e7f8a901")
     override val name = "adduser"
-    override val permission = "admin"
+    override val permission = CorePermissions.ADMIN
     override val description =
         "Add a local auth user. Usage: /adduser <email> <password> [displayName] [group1,group2,...]"
     override val usage = "$command <email> <password> [displayName] [group1,group2,...]"

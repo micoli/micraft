@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.tick
 
+import org.micoli.micraft.auth.ActionPermissions
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.session.PlayerSession
@@ -50,21 +51,21 @@ class IntentCollector(
                     stance = intent.stance
                     seq = intent.seq
                     if (intent.jump) jumpRequested = true
-                    if (intent.flyToggle && session.hasPermission("action.fly"))
+                    if (intent.flyToggle && session.hasPermission(ActionPermissions.FLY))
                         flyToggleRequested = true
                     if (intent.speedUp) speedUpRequested = true
                     if (intent.speedDown) speedDownRequested = true
                 }
                 is ClientMessage.BlockBreakStart ->
-                    if (session.hasPermission("action.break"))
+                    if (session.hasPermission(ActionPermissions.BREAK))
                         blockBreaker.handleStart(session, intent)
                 is ClientMessage.BlockBreakStop -> blockBreaker.handleStop(session)
                 is ClientMessage.BlockPlace ->
-                    if (session.hasPermission("action.place"))
+                    if (session.hasPermission(ActionPermissions.PLACE))
                         blockPlacer.handlePlace(session, intent)
                 is ClientMessage.ShortcutBarSet -> blockPlacer.handleShortcutBarSet(session, intent)
                 is ClientMessage.BlockInteract ->
-                    if (session.hasPermission("action.place"))
+                    if (session.hasPermission(ActionPermissions.PLACE))
                         blockInteractor?.handleInteract(session, intent)
                 is ClientMessage.Command -> onCommand(session, intent.text)
                 is ClientMessage.ChatSend -> onChatSend(session, intent.channel, intent.text)

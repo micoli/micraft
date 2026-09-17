@@ -6,6 +6,7 @@ import io.ktor.websocket.close
 import java.nio.file.Path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.di.SessionRegistry
@@ -330,7 +331,7 @@ class GameWorld(
                         session.lastZonePos = Pair(newZoneX, newZoneZ)
                         npcTickPipeline.onZoneCrossed(world, newZoneX, newZoneZ)
                     }
-                    if (session.hasPermission("admin")) {
+                    if (session.hasPermission(CorePermissions.ADMIN)) {
                         val pos = session.state.pos
                         val instanceZone =
                             instanceRegistry.zoneAt(pos.x.toInt(), pos.y.toInt(), pos.z.toInt())
@@ -574,7 +575,7 @@ class GameWorld(
 
     suspend fun broadcastInstanceZonesSync() {
         val msg = ServerMessage.InstanceZonesSync(instanceRegistry.all().map { it.toProto() })
-        sessions.all().filter { it.hasPermission("admin") }.forEach { it.send(msg) }
+        sessions.all().filter { it.hasPermission(CorePermissions.ADMIN) }.forEach { it.send(msg) }
     }
 
     suspend fun broadcastWorldUpdate(
