@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.qodana)
     alias(libs.plugins.spotless)
     alias(libs.plugins.cyclonedx)
+    alias(libs.plugins.detekt)
 }
 
 // ── Supply-chain: lock every resolved dependency version ──────────────────────
@@ -26,6 +27,29 @@ subprojects {
     }
     plugins.withId("org.jetbrains.kotlin.multiplatform") {
         configure<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension> { jvmToolchain(21) }
+    }
+}
+
+// ── Static analysis: detekt on every Kotlin module (JVM or MPP) ────────────────
+subprojects {
+    plugins.withId("org.jetbrains.kotlin.jvm") { apply(plugin = "io.gitlab.arturbosch.detekt") }
+    plugins.withId("org.jetbrains.kotlin.multiplatform") {
+        apply(plugin = "io.gitlab.arturbosch.detekt")
+    }
+    plugins.withId("io.gitlab.arturbosch.detekt") {
+        configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
+            buildUponDefaultConfig = true
+            config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+            parallel = true
+            // Grandfathers pre-existing findings so detekt only gates new code;
+            // regenerate with `./gradlew detektBaseline` when intentionally cleaning some up.
+            baseline = file("detekt-baseline.xml")
+        }
+        dependencies {
+            add(
+                "detektPlugins",
+                "io.gitlab.arturbosch.detekt:detekt-formatting:${libs.versions.detekt.get()}")
+        }
     }
 }
 

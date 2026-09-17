@@ -20,6 +20,7 @@ ktor-openapi = "5.7.0"
 qodana = "2026.2.1"
 spotless = "8.10.2"
 cyclonedx = "3.4.1"
+detekt = "1.23.8"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -63,3 +64,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 qodana = { id = "org.jetbrains.qodana", version.ref = "qodana" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 cyclonedx = { id = "org.cyclonedx.bom", version.ref = "cyclonedx" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

@@ -79,6 +79,22 @@ else
     echo "→ spotless: skipped (no Kotlin/YAML change)"
 fi
 
+kt_only_files=()
+for f in "${kotlin_files[@]}"; do
+    case "$f" in
+    *.kt) kt_only_files+=("$f") ;;
+    esac
+done
+
+if [ ${#kt_only_files[@]} -gt 0 ]; then
+    # detekt's Gradle plugin has no per-file source filter — the task is incrementally
+    # cached, so re-running it whole-project after a small diff stays fast.
+    echo "→ detekt"
+    ./gradlew detekt --console=plain -q || status=$?
+else
+    echo "→ detekt: skipped (no .kt change)"
+fi
+
 if [ ${#prettier_files[@]} -gt 0 ]; then
     echo "→ prettier (${#prettier_files[@]} file(s))"
     (cd "$TS_DIR" && npx --no-install prettier --write --log-level warn "${prettier_files[@]}")

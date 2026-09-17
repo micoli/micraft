@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LoopWithTooManyJumpStatements:CodecRegistryProcessor.kt$CodecRegistryProcessor$for</ID>
+    <ID>SpreadOperator:CodecRegistryProcessor.kt$CodecRegistryProcessor$(aggregating = true, *files.toTypedArray())</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,0 +1,542 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:AdminController.kt$AdminController$body.name.isBlank() || body.width &lt;= 0 || body.height &lt;= 0 || body.depth &lt;= 0</ID>
+    <ID>ComplexCondition:AnimalInteractionProcessor.kt$AnimalInteractionProcessor$config.canReproduce &amp;&amp; !sterileFromHunger &amp;&amp; !crowded &amp;&amp; animal.hunger &lt; config.hungerThresholdToMate &amp;&amp; animal.gestationRemainingDays == null &amp;&amp; animal.mateTargetId == null</ID>
+    <ID>ComplexCondition:BlockBreaker.kt$BlockBreaker$(creative || dist &lt;= MAX_INTERACTION_DISTANCE) &amp;&amp; (hasEntity || (block.hardness > 0f &amp;&amp; block.hardness != Float.MAX_VALUE)) &amp;&amp; hasRequiredEquipment(session, block)</ID>
+    <ID>ComplexCondition:BlockPlacer.kt$BlockPlacer.Companion$(slotsX > 1 &amp;&amp; xOffset >= slotsX) || (slotsZ > 1 &amp;&amp; zOffset >= slotsZ)</ID>
+    <ID>ComplexCondition:CombatProcessor.kt$CombatProcessor$classDef != null &amp;&amp; unlockedAttacks.isNotEmpty() &amp;&amp; unlockedAttacks.none { it.attack == msg.attackId &amp;&amp; it.rank == msg.attackRank }</ID>
+    <ID>ComplexCondition:GameLoop.kt$GameLoop$combatConfigLoader != null || skillsConfigLoader != null || classesConfigLoader != null || experienceConfigLoader != null</ID>
+    <ID>ComplexCondition:MapController.kt$MapController$px &lt; 0 || px >= size || pz &lt; 0 || pz >= size</ID>
+    <ID>ComplexCondition:MovementProcessor.kt$MovementProcessor$!newFlying &amp;&amp; !submerged &amp;&amp; input.jumpRequested &amp;&amp; session.vy == 0f &amp;&amp; AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, w)</ID>
+    <ID>ComplexCondition:NpcPhysics.kt$NpcPhysics$instance.weightless || instance.flying || (def.canSwim &amp;&amp; world.getBlockIfLoaded(pos.x.toInt(), pos.y.toInt(), pos.z.toInt()).isLiquid)</ID>
+    <ID>ComplexCondition:PackCoordinator.kt$PackCoordinator$packs.isEmpty() &amp;&amp; pendingRetaliations.isEmpty() &amp;&amp; npcManager.getAll().none { !it.isDead &amp;&amp; it.definition.packConfig != null }</ID>
+    <ID>ComplexCondition:PetCoordinator.kt$PetCoordinator$t != null &amp;&amp; !t.isDead &amp;&amp; t.ownerId == null &amp;&amp; t.state.id != pet.state.id</ID>
+    <ID>ComplexCondition:ProceduralChunkGeneratorTest.kt$ProceduralChunkGeneratorTest$nx &lt; -30 || nx > 30 || nz &lt; -30 || nz > 30</ID>
+    <ID>ComplexCondition:RandomMovableNpcBehavior.kt$RandomMovableNpcBehavior$(blockedX || blockedZ) &amp;&amp; instance.vy == 0f &amp;&amp; AabbCollider.isGrounded(solid, pos.x, pos.y, pos.z, def.width)</ID>
+    <ID>ComplexCondition:RegenProcessor.kt$RegenProcessor$newHp == charData.currentHp &amp;&amp; newMana == charData.currentMana &amp;&amp; newRage == charData.currentRage &amp;&amp; newTokens == charData.currentTokens</ID>
+    <ID>ComplexCondition:ScenePlaceCommand.kt$ScenePlaceCommand$rotation == null || x == null || y == null || z == null</ID>
+    <ID>ComplexCondition:SpellProcessor.kt$SpellProcessor$classDef != null &amp;&amp; unlockedSpells.isNotEmpty() &amp;&amp; unlockedSpells.none { it.spell == msg.spellId &amp;&amp; it.rank == msg.spellRank }</ID>
+    <ID>ComplexCondition:VoronoiBiomeZones.kt$VoronoiBiomeZones$(osx == sx1 &amp;&amp; osz == sz1) || (osx == sx2 &amp;&amp; osz == sz2) || (osx == sx3 &amp;&amp; osz == sz3)</ID>
+    <ID>ComplexCondition:VoronoiBiomeZones.kt$VoronoiBiomeZones$dcx &lt; -1 || dcx > 1 || dcz &lt; -1 || dcz > 1</ID>
+    <ID>ComplexCondition:YamlPatchWriter.kt$lineIndent == indent * 2 &amp;&amp; !trimmed.startsWith("#") &amp;&amp; (trimmed == "$key:" || trimmed.startsWith("$key: "))</ID>
+    <ID>CyclomaticComplexMethod:ActionBlockEditCommand.kt$ActionBlockEditCommand$override suspend fun execute(session: PlayerSession, args: String, context: CommandContext)</ID>
+    <ID>CyclomaticComplexMethod:AdminController.kt$AdminController$fun register(route: Route)</ID>
+    <ID>CyclomaticComplexMethod:AdminController.kt$AdminController$fun registerEditWs(route: Route)</ID>
+    <ID>CyclomaticComplexMethod:AnimalInteractionProcessor.kt$AnimalInteractionProcessor$private fun updateFlight(allAnimal: List&lt;NpcInstance>)</ID>
+    <ID>CyclomaticComplexMethod:AnimalInteractionProcessor.kt$AnimalInteractionProcessor$private fun updateTargets(allAnimal: List&lt;NpcInstance>, currentDay: Double)</ID>
+    <ID>CyclomaticComplexMethod:AnimalInteractionProcessor.kt$AnimalInteractionProcessor$private suspend fun tickHerbivoreFeeding(allAnimal: List&lt;NpcInstance>)</ID>
+    <ID>CyclomaticComplexMethod:AnimalInteractionProcessor.kt$AnimalInteractionProcessor$private suspend fun tickMating(allAnimal: List&lt;NpcInstance>, currentDay: Double)</ID>
+    <ID>CyclomaticComplexMethod:AnimalInteractionProcessor.kt$AnimalInteractionProcessor$suspend fun tick()</ID>
+    <ID>CyclomaticComplexMethod:AnimalYamlOverride.kt$fun AnimalYamlEntry.applyOverride(o: AnimalYamlOverride)</ID>
+    <ID>CyclomaticComplexMethod:AuctionManager.kt$AuctionManager$private fun matches( listing: AuctionListing, filter: AuctionFilter, sessionId: String ): Boolean</ID>
+    <ID>CyclomaticComplexMethod:AuthRoutes.kt$fun Application.installAuthRoutes( providerName: String, provider: AuthProvider?, tokenStore: TokenStore?, messageEncoder: String, requirePassword: Boolean = true, )</ID>
+    <ID>CyclomaticComplexMethod:BlockBreaker.kt$BlockBreaker$suspend fun tick(session: PlayerSession)</ID>
+    <ID>CyclomaticComplexMethod:BlockBreaker.kt$BlockBreaker.Companion$fun removeAt(pos: BlockPos, xOffset: Int, zOffset: Int, world: BlockStore): RemoveResult</ID>
+    <ID>CyclomaticComplexMethod:BlockPlacer.kt$BlockPlacer$suspend fun handlePlace(session: PlayerSession, intent: ClientMessage.BlockPlace)</ID>
+    <ID>CyclomaticComplexMethod:BlockPlacer.kt$BlockPlacer.Companion$fun placeAt( rawPos: BlockPos, blockType: BlockType, rotation: Int, colorIndex: Int, xOffset: Int, zOffset: Int, world: BlockStore, extraState: Byte = 0, ): PlaceResult</ID>
+    <ID>CyclomaticComplexMethod:CavernGenerator.kt$CavernGenerator$fun carve( blocks: ByteArray, ox: Int, oz: Int, surfaceAt: (lx: Int, lz: Int) -> Int, cavernsAt: (lx: Int, lz: Int) -> CavernConfig?, )</ID>
+    <ID>CyclomaticComplexMethod:CharacterController.kt$CharacterController$fun register(route: Route)</ID>
+    <ID>CyclomaticComplexMethod:ChatService.kt$ChatService$suspend fun routeMessage(sender: PlayerSession, channel: String, text: String)</ID>
+    <ID>CyclomaticComplexMethod:CircularTempleRenderer.kt$internal fun PlacedHouse.renderCircularTemple(blocks: ByteArray, ox: Int, oz: Int)</ID>
+    <ID>CyclomaticComplexMethod:CombatProcessor.kt$CombatProcessor$suspend fun handleAttack(session: PlayerSession, msg: ClientMessage.AttackTarget)</ID>
+    <ID>CyclomaticComplexMethod:CombatProcessor.kt$CombatProcessor$suspend fun handleNpcAttack(npc: NpcInstance, target: PlayerSession)</ID>
+    <ID>CyclomaticComplexMethod:CombatProcessor.kt$CombatProcessor$suspend fun handleNpcAttackNpc(predator: NpcInstance, prey: NpcInstance)</ID>
+    <ID>CyclomaticComplexMethod:ConfigRegistry.kt$ConfigRegistry.Companion$fun buildConfigRegistry(weatherConfig: WeatherConfig): ConfigRegistry</ID>
+    <ID>CyclomaticComplexMethod:ExplodeCommand.kt$ExplodeCommand$override suspend fun execute(session: PlayerSession, args: String, context: CommandContext)</ID>
+    <ID>CyclomaticComplexMethod:ExtractKayKitAnimations.kt$private fun extractAnimations(file: File): List&lt;AnimationData></ID>
+    <ID>CyclomaticComplexMethod:GameAssetsController.kt$GameAssetsController$fun register(route: Route)</ID>
+    <ID>CyclomaticComplexMethod:GameLoop.kt$GameLoop$suspend fun onConnect(socket: DefaultWebSocketSession, gameSessionId: String? = null)</ID>
+    <ID>CyclomaticComplexMethod:GameWorld.kt$GameWorld$private suspend fun fullSimulationTick()</ID>
+    <ID>CyclomaticComplexMethod:GameWorld.kt$GameWorld$private suspend fun tickBody()</ID>
+    <ID>CyclomaticComplexMethod:GenerateJsonSchemas.kt$private fun applyConstraint(schema: JsonElement, c: JsonSchemaConstraint): JsonElement</ID>
+    <ID>CyclomaticComplexMethod:GroupCommand.kt$GroupCommand$override suspend fun execute(session: PlayerSession, args: String, context: CommandContext)</ID>
+    <ID>CyclomaticComplexMethod:GuildCommand.kt$GuildCommand$override suspend fun execute(session: PlayerSession, args: String, context: CommandContext)</ID>
+    <ID>CyclomaticComplexMethod:GuildManager.kt$GuildManager$suspend fun adminUpdate(id: String, name: String?, tag: String?, motd: String?): GuildInfoDto</ID>
+    <ID>CyclomaticComplexMethod:HouseZones.kt$HouseZones$fun housesNear(ox: Int, oz: Int): List&lt;PlacedHouse></ID>
+    <ID>CyclomaticComplexMethod:HubConnection.kt$HubConnection$private suspend fun dispatch(gw: GameWorld, session: PlayerSession, msg: ClientMessage)</ID>
+    <ID>CyclomaticComplexMethod:HubConnection.kt$HubConnection$suspend fun handle( socket: DefaultWebSocketSession, lang: String?, gameSessionId: String? = null )</ID>
+    <ID>CyclomaticComplexMethod:IntentCollector.kt$IntentCollector$suspend fun collect(session: PlayerSession): TickInput</ID>
+    <ID>CyclomaticComplexMethod:LiquidManager.kt$LiquidManager$suspend fun tick(broadcast: suspend (ServerMessage) -> Unit)</ID>
+    <ID>CyclomaticComplexMethod:MailManager.kt$MailManager$suspend fun handleSendMail(session: PlayerSession, msg: ClientMessage.SendMail)</ID>
+    <ID>CyclomaticComplexMethod:MapController.kt$MapController$fun register(route: Route)</ID>
+    <ID>CyclomaticComplexMethod:MovementProcessor.kt$MovementProcessor$fun process(session: PlayerSession, input: TickInput): PlayerState</ID>
+    <ID>CyclomaticComplexMethod:NpcManager.kt$NpcManager$suspend fun applyDamage(npcId: String, damage: Int, attackerId: String)</ID>
+    <ID>CyclomaticComplexMethod:NpcManager.kt$NpcManager$suspend fun tick(world: WorldState)</ID>
+    <ID>CyclomaticComplexMethod:NpcManager.kt$NpcManager$suspend fun tickAggro( sessions: Collection&lt;PlayerSession>, combatProcessor: CombatProcessor, spellProcessor: SpellProcessor? = null, )</ID>
+    <ID>CyclomaticComplexMethod:NpcRegistryLoader.kt$fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition</ID>
+    <ID>CyclomaticComplexMethod:NpcRegistryLoader.kt$private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride)</ID>
+    <ID>CyclomaticComplexMethod:NpcSpawner.kt$NpcSpawner$suspend fun trySpawn( world: WorldState, npcManager: NpcManager, definitions: Map&lt;String, NpcDefinition>, loadedChunks: Collection&lt;ChunkPos>, ctx: NpcTickContext = NpcTickContext.live, canSpawn: () -> Boolean = { true }, )</ID>
+    <ID>CyclomaticComplexMethod:ObjToBbmodel.kt$ObjToBbmodel$fun convert( objName: String, objContent: String, mtlContent: String?, resolveTexture: (String) -> ResolvedTexture?, scale: Float = 16f, ): String</ID>
+    <ID>CyclomaticComplexMethod:PackCoordinator.kt$PackCoordinator$private fun recruit( pack: Pack, initiator: NpcInstance, target: NpcInstance, alive: List&lt;NpcInstance>, now: Long, )</ID>
+    <ID>CyclomaticComplexMethod:PerlinNoise3D.kt$PerlinNoise3D$private fun grad(hash: Int, x: Double, y: Double, z: Double): Double</ID>
+    <ID>CyclomaticComplexMethod:PetCommand.kt$PetCommand$override suspend fun execute(session: PlayerSession, args: String, context: CommandContext)</ID>
+    <ID>CyclomaticComplexMethod:ProceduralChunkGeneratorTest.kt$ProceduralChunkGeneratorTest$@Test fun generate_aquaticRelief_noExposedWaterAndDeterministic()</ID>
+    <ID>CyclomaticComplexMethod:QuestCommand.kt$QuestCommand$override suspend fun execute(session: PlayerSession, args: String, context: CommandContext)</ID>
+    <ID>CyclomaticComplexMethod:QuestGiverNpcBehavior.kt$QuestGiverNpcBehavior$override suspend fun onInteract( instance: NpcInstance, session: PlayerSession, ctx: NpcTickContext, send: suspend (ServerMessage) -> Unit, )</ID>
+    <ID>CyclomaticComplexMethod:QuestGiverSpawner.kt$QuestGiverSpawner$suspend fun trySpawn( world: WorldState, npcManager: NpcManager, definitions: Map&lt;String, NpcDefinition>, loadedChunks: Collection&lt;ChunkPos>, ctx: NpcTickContext = NpcTickContext.live, )</ID>
+    <ID>CyclomaticComplexMethod:QuestManager.kt$QuestManager$suspend fun accept(session: PlayerSession, questId: String)</ID>
+    <ID>CyclomaticComplexMethod:QuestManager.kt$QuestManager$suspend fun onNpcKilled(npc: NpcInstance)</ID>
+    <ID>CyclomaticComplexMethod:RandomMovableNpcBehavior.kt$RandomMovableNpcBehavior$private fun applyMovement( instance: NpcInstance, world: WorldState, targetX: Float, targetZ: Float, requestedSpeed: Float, ctx: NpcTickContext, onBlocked: ((blockedDirX: Float, blockedDirZ: Float) -> Unit)? = null, ): Boolean</ID>
+    <ID>CyclomaticComplexMethod:RectangularHouseRenderer.kt$private fun PlacedHouse.placeGabledRoof( blocks: ByteArray, ox: Int, oz: Int, baseY: Int, overhang: Boolean, )</ID>
+    <ID>CyclomaticComplexMethod:RegenProcessor.kt$RegenProcessor$suspend fun tick(sessions: Collection&lt;PlayerSession>)</ID>
+    <ID>CyclomaticComplexMethod:RoadVoronoiZones.kt$RoadVoronoiZones$fun roadVertexSegmentsInArea(wx1: Int, wz1: Int, wx2: Int, wz2: Int): List&lt;RoadVertexSegment></ID>
+    <ID>CyclomaticComplexMethod:SimMetrics.kt$SimMetrics$@Synchronized fun record(event: SimEvent)</ID>
+    <ID>CyclomaticComplexMethod:SimulationController.kt$SimulationController$fun registerWs(route: Route)</ID>
+    <ID>CyclomaticComplexMethod:SpellProcessor.kt$SpellProcessor$suspend fun handleCastAoeSpell(session: PlayerSession, msg: ClientMessage.CastAoeSpell)</ID>
+    <ID>CyclomaticComplexMethod:SpellProcessor.kt$SpellProcessor$suspend fun handleSpell(session: PlayerSession, msg: ClientMessage.UseSpell)</ID>
+    <ID>CyclomaticComplexMethod:SpellProcessor.kt$SpellProcessor$suspend fun tryNpcCast(npc: NpcInstance, target: PlayerSession): Boolean</ID>
+    <ID>CyclomaticComplexMethod:StatusEffectProcessor.kt$StatusEffectProcessor$suspend fun tick(sessions: Collection&lt;PlayerSession>)</ID>
+    <ID>CyclomaticComplexMethod:TameCommand.kt$TameCommand$override suspend fun execute(session: PlayerSession, args: String, context: CommandContext)</ID>
+    <ID>CyclomaticComplexMethod:TerrainCache.kt$TerrainCache$fun prewarm(chunksDir: Path, cacheDir: Path)</ID>
+    <ID>CyclomaticComplexMethod:TradeManager.kt$TradeManager$private suspend fun executeTrade(trade: PendingTrade)</ID>
+    <ID>CyclomaticComplexMethod:VegetationGenerator.kt$fun oakTreeBlocks(wx: Int, wz: Int, surfaceY: Int): List&lt;Pair&lt;BlockPos, BlockType>></ID>
+    <ID>CyclomaticComplexMethod:VegetationManager.kt$VegetationManager$suspend fun tick(broadcast: suspend (ServerMessage) -> Unit)</ID>
+    <ID>CyclomaticComplexMethod:VoronoiBiomeZones.kt$VoronoiBiomeZones$fun computeBorderEdges(centerX: Int, centerZ: Int, radiusBlocks: Int): List&lt;VoronoiEdge></ID>
+    <ID>CyclomaticComplexMethod:WearableSlots.kt$WearableSlots$fun toSet(): Set&lt;String></ID>
+    <ID>CyclomaticComplexMethod:WeatherManager.kt$WeatherManager$private fun trySpawn(world: WorldState): Boolean</ID>
+    <ID>CyclomaticComplexMethod:WieldCommand.kt$WieldCommand$override suspend fun execute(session: PlayerSession, args: String, context: CommandContext)</ID>
+    <ID>CyclomaticComplexMethod:WorldPersistence.kt$WorldPersistence$fun loadChunk(pos: ChunkPos): Chunk?</ID>
+    <ID>CyclomaticComplexMethod:WorldSimulator.kt$WorldSimulator$fun populationSample(): PopulationSample</ID>
+    <ID>CyclomaticComplexMethod:WorldSimulator.kt$WorldSimulator$private fun logAnimalEvent(event: AnimalEvent)</ID>
+    <ID>EmptyFunctionBlock:FakeWebSocketSession.kt$FakeWebSocketSession${}</ID>
+    <ID>EmptyFunctionBlock:GameLoopTest.kt$FakeCommandHandler${}</ID>
+    <ID>EmptyFunctionBlock:HelpCommandTest.kt$HelpCommandTest.&lt;no name provided>${}</ID>
+    <ID>EmptyFunctionBlock:NpcHpCalculatorTest.kt$&lt;no name provided>${}</ID>
+    <ID>EmptyFunctionBlock:NullWebSocketSession.kt$NullWebSocketSession${}</ID>
+    <ID>EmptyFunctionBlock:SimPlayerSession.kt$SimPlayerSession${}</ID>
+    <ID>ImplicitDefaultLocale:WorldSimulator.kt$String.format("%.2f", it)</ID>
+    <ID>LargeClass:AdminController.kt$AdminController</ID>
+    <ID>LargeClass:CombatProcessor.kt$CombatProcessor</ID>
+    <ID>LargeClass:CombatProcessorTest.kt$CombatProcessorTest</ID>
+    <ID>LargeClass:GameLoop.kt$GameLoop</ID>
+    <ID>LargeClass:NpcManager.kt$NpcManager</ID>
+    <ID>LargeClass:WorldSimulator.kt$WorldSimulator</ID>
+    <ID>LongMethod:ActionBlockEditCommand.kt$ActionBlockEditCommand$override suspend fun execute(session: PlayerSession, args: String, context: CommandContext)</ID>
+    <ID>LongMethod:AdminController.kt$AdminController$fun register(route: Route)</ID>
+    <ID>LongMethod:AdminController.kt$AdminController$fun registerEditWs(route: Route)</ID>
+    <ID>LongMethod:Application.kt$fun Application.module()</ID>
+    <ID>LongMethod:AttacksController.kt$AttacksController$fun register(route: Route)</ID>
+    <ID>LongMethod:AuthRoutes.kt$fun Application.installAuthRoutes( providerName: String, provider: AuthProvider?, tokenStore: TokenStore?, messageEncoder: String, requirePassword: Boolean = true, )</ID>
+    <ID>LongMethod:BiomeRegistry.kt$BiomeRegistry.Companion$fun default()</ID>
+    <ID>LongMethod:BlockBreaker.kt$BlockBreaker.Companion$fun removeAt(pos: BlockPos, xOffset: Int, zOffset: Int, world: BlockStore): RemoveResult</ID>
+    <ID>LongMethod:BlockPlacer.kt$BlockPlacer.Companion$fun placeAt( rawPos: BlockPos, blockType: BlockType, rotation: Int, colorIndex: Int, xOffset: Int, zOffset: Int, world: BlockStore, extraState: Byte = 0, ): PlaceResult</ID>
+    <ID>LongMethod:CavernGenerator.kt$CavernGenerator$fun carve( blocks: ByteArray, ox: Int, oz: Int, surfaceAt: (lx: Int, lz: Int) -> Int, cavernsAt: (lx: Int, lz: Int) -> CavernConfig?, )</ID>
+    <ID>LongMethod:CharacterController.kt$CharacterController$fun register(route: Route)</ID>
+    <ID>LongMethod:CombatProcessor.kt$CombatProcessor$suspend fun handleNpcAttack(npc: NpcInstance, target: PlayerSession)</ID>
+    <ID>LongMethod:ConfigRegistry.kt$ConfigRegistry.Companion$fun buildConfigRegistry(weatherConfig: WeatherConfig): ConfigRegistry</ID>
+    <ID>LongMethod:ExtractKayKitAnimations.kt$private fun extractAnimations(file: File): List&lt;AnimationData></ID>
+    <ID>LongMethod:GameAssetsController.kt$GameAssetsController$fun register(route: Route)</ID>
+    <ID>LongMethod:GameLoop.kt$GameLoop$private fun buildRegistrySync(): ServerMessage.RegistrySync</ID>
+    <ID>LongMethod:GameLoop.kt$GameLoop$suspend fun onConnect(socket: DefaultWebSocketSession, gameSessionId: String? = null)</ID>
+    <ID>LongMethod:GameWorld.kt$GameWorld$private suspend fun tickBody()</ID>
+    <ID>LongMethod:GameWorldFactory.kt$fun buildGameWorld( id: String, generator: ChunkGenerator, shared: SharedGameServices, opts: GameWorldOptions = GameWorldOptions(), ): GameWorld</ID>
+    <ID>LongMethod:HubConnection.kt$HubConnection$suspend fun handle( socket: DefaultWebSocketSession, lang: String?, gameSessionId: String? = null )</ID>
+    <ID>LongMethod:IntentCollector.kt$IntentCollector$suspend fun collect(session: PlayerSession): TickInput</ID>
+    <ID>LongMethod:MailManager.kt$MailManager$suspend fun handleSendMail(session: PlayerSession, msg: ClientMessage.SendMail)</ID>
+    <ID>LongMethod:MapController.kt$MapController$fun register(route: Route)</ID>
+    <ID>LongMethod:MetricsController.kt$fun buildPrometheusMetrics(gameLoop: GameLoop): String</ID>
+    <ID>LongMethod:MetricsController.kt$private fun buildStatusHtml(s: StatusSnapshot): String</ID>
+    <ID>LongMethod:MovementProcessor.kt$MovementProcessor$fun process(session: PlayerSession, input: TickInput): PlayerState</ID>
+    <ID>LongMethod:NpcManager.kt$NpcManager$suspend fun tickAggro( sessions: Collection&lt;PlayerSession>, combatProcessor: CombatProcessor, spellProcessor: SpellProcessor? = null, )</ID>
+    <ID>LongMethod:ObjToBbmodel.kt$ObjToBbmodel$fun convert( objName: String, objContent: String, mtlContent: String?, resolveTexture: (String) -> ResolvedTexture?, scale: Float = 16f, ): String</ID>
+    <ID>LongMethod:QuestCommand.kt$QuestCommand$override suspend fun execute(session: PlayerSession, args: String, context: CommandContext)</ID>
+    <ID>LongMethod:RegenProcessor.kt$RegenProcessor$suspend fun tick(sessions: Collection&lt;PlayerSession>)</ID>
+    <ID>LongMethod:RoadVoronoiZones.kt$RoadVoronoiZones$fun roadVertexSegmentsInArea(wx1: Int, wz1: Int, wx2: Int, wz2: Int): List&lt;RoadVertexSegment></ID>
+    <ID>LongMethod:SimulationController.kt$SimulationController$fun registerWs(route: Route)</ID>
+    <ID>LongMethod:SpellProcessor.kt$SpellProcessor$suspend fun handleCastAoeSpell(session: PlayerSession, msg: ClientMessage.CastAoeSpell)</ID>
+    <ID>LongMethod:SpellProcessor.kt$SpellProcessor$suspend fun handleSpell(session: PlayerSession, msg: ClientMessage.UseSpell)</ID>
+    <ID>LongParameterList:AnimalInstanceData.kt$AnimalInstanceData$( @Volatile var gender: NpcGender, @Volatile var ageGameDays: Double, @Volatile var hunger: Double, @Volatile var gestationRemainingDays: Double?, @Volatile var lastReproductionDay: Double?, val parentIds: MutableSet&lt;String>, val stats: BaseStats, val motherLevel: Int, @Volatile var preyTargetId: String? = null, @Volatile var preyTargetPos: Vec3? = null, @Volatile var mateTargetId: String? = null, @Volatile var mateTargetPos: Vec3? = null, /** * Grazing block this animal is heading for. * * Feeding used to consume only what was already within 2.5 blocks, so a herbivore starved * beside a meadow it never walked to. Nothing was pulling it there because no goal position * existed. */ @Volatile var foodTargetPos: Vec3? = null, /** Where to run to, away from the nearest predator. Overrides every other errand. */ @Volatile var fleeTargetPos: Vec3? = null, /** * Game days spent continuously starving; 0 when the animal is not starving. * * Accumulated like [ageGameDays] rather than derived from a start date, so it measures time the * animal actually lived through and does not depend on when the world clock is advanced * relative to this pass. Hunger itself stays clamped at 1.0 — bounded and serializable — and * this is the timer that turns "has been starving a while" into a death. Reset to 0 as soon as * it eats: recovery is complete, not partial. */ @Volatile var starvingDays: Double = 0.0, @Volatile var hpRegenAccumulator: Float = 0f, )</ID>
+    <ID>LongParameterList:AnimalInstanceData.kt$AnimalInstanceData.Companion$( lifespanDays: Double?, baseStats: BaseStats, statsVariance: Int, parentIds: Set&lt;String> = emptySet(), motherLevel: Int = 0, initialHunger: Double? = null, initialAge: Double? = null, random: Random = Random, )</ID>
+    <ID>LongParameterList:BlockBreaker.kt$BlockBreaker$( private val world: WorldState, private val broadcast: suspend (ServerMessage) -> Unit, private val worldItems: WorldItemManager, private val liquidManager: LiquidManager? = null, private val bufferSize: Int = 1000, private val instanceRegistry: InstanceRegistry? = null, private val claimRegistry: ClaimRegistry? = null, private val railNetworkRegistry: RailNetworkRegistry? = null, private val actionBlockRegistry: ActionBlockRegistry? = null, private val weaponRegistry: () -> Map&lt;String, WeaponDefinition> = { emptyMap() }, private val toolRegistry: () -> Map&lt;String, ToolDefinition> = { emptyMap() }, )</ID>
+    <ID>LongParameterList:BlockPlacer.kt$BlockPlacer$( private val world: WorldState, private val broadcast: suspend (ServerMessage) -> Unit, private val savePlayer: (PlayerSession) -> Unit, private val vegetationManager: VegetationManager? = null, @Volatile private var attackRegistry: Map&lt;String, AttackDefinition> = emptyMap(), private val instanceRegistry: InstanceRegistry? = null, private val claimRegistry: ClaimRegistry? = null, private val railNetworkRegistry: RailNetworkRegistry? = null, private val placeableManager: PlaceableManager? = null, private val siegeWeaponManager: SiegeWeaponManager? = null, )</ID>
+    <ID>LongParameterList:BlockPlacer.kt$BlockPlacer.Companion$( rawPos: BlockPos, blockType: BlockType, rotation: Int, colorIndex: Int, xOffset: Int, zOffset: Int, world: BlockStore, extraState: Byte = 0, )</ID>
+    <ID>LongParameterList:CavernGenerator.kt$CavernGenerator$( blocks: ByteArray, ox: Int, oz: Int, seed: CavernSeed, startY: Int, localSurfaceAt: (lx: Int, lz: Int) -> Int, airWire: Byte, chunkSize: Int, )</ID>
+    <ID>LongParameterList:CombatProcessor.kt$CombatProcessor$( @Volatile private var config: CombatConfigData, @Volatile private var attackRegistry: Map&lt;String, AttackDefinition>, @Volatile private var armorRegistry: Map&lt;String, ArmorDefinition>, @Volatile private var weaponRegistry: Map&lt;String, WeaponDefinition> = emptyMap(), @Volatile private var toolRegistry: Map&lt;String, ToolDefinition> = emptyMap(), @Volatile private var classRegistry: Map&lt;String, ClassDefinitionEntry>, private val npcManager: NpcManager, private val vehicleManager: VehicleManager = VehicleManager { _ -> }, private val placeableManager: PlaceableManager = PlaceableManager { _ -> }, private val getSessions: () -> Collection&lt;PlayerSession>, private val broadcastCombatLog: suspend (String) -> Unit, private val subscribeToChannel: suspend (PlayerSession, String) -> Unit, @Suppress("unused") private val i18n: I18nConfig, private val savePlayer: suspend (PlayerSession) -> Unit, private val onPlayerDownedByNpc: suspend (session: PlayerSession, killerNpcId: String) -> Unit = { _, _ -> }, private val factionManager: FactionManager? = null, )</ID>
+    <ID>LongParameterList:CombatProcessor.kt$CombatProcessor$( session: PlayerSession, msg: ClientMessage.AttackTarget, attackDef: AttackDefinition, rankDef: AttackRankDefinition, charData: CharacterData, range: Float, now: Long, cooldownKey: String, )</ID>
+    <ID>LongParameterList:CommandContextModule.kt$CommandContextModule$( @InjectedParam closures: CommandContextClosures, worldState: WorldState, optionalWorldPersistence: OptionalWorldPersistence, i18nConfig: I18nConfig, worldItemManager: WorldItemManager, npcManager: NpcManager, petManager: PetManager, chatService: ChatService, chatChannelManager: ChatChannelManager, weatherManager: WeatherManager, optionalAuthProvider: OptionalAuthProvider, groupsConfig: GroupsConfig, liquidManager: LiquidManager, configRegistry: ConfigRegistry, tradeManager: TradeManager, optionalAuctionManager: OptionalAuctionManager, questManager: QuestManager, instanceRegistry: InstanceRegistry, claimRegistry: ClaimRegistry, claimManager: ClaimManager, actionBlockRegistry: ActionBlockRegistry, vehicleManager: VehicleManager, sceneRegistry: SceneRegistry, )</ID>
+    <ID>LongParameterList:GameLoop.kt$GameLoop$( private val world: WorldState, private val persistence: WorldPersistence? = null, private val reloadBiomes: (() -> ChunkGenerator)? = null, private val reloadRegistries: (() -> Unit)? = null, private val reloadGameConfig: (() -> Unit)? = null, private val reloadFactionsConfig: (() -> FactionsSection)? = null, val i18n: I18nConfig = I18nConfig.fromClasspath(pluginsRoot = Path.of("plugins")), private val tokenStore: TokenStore? = null, private val authProvider: AuthProvider? = null, private val groupsConfig: GroupsConfig? = null, private val reloadRbac: (() -> Unit)? = null, private val chunkSection: ChunkSection = ChunkSection(), private val sessionRegistry: SessionRegistry = SessionRegistry(), private val playerPersister: PlayerPersister = PlayerPersister(persistence), private val chatChannelManager: ChatChannelManager = ChatChannelManager(), private val chatService: ChatService = ChatService(chatChannelManager, playerPersister::save, sessionRegistry::all), private val factionsSection: FactionsSection = FactionsSection(), private val factionManager: FactionManager = FactionManager( getSessions = sessionRegistry::all, savePlayer = playerPersister::save, chatService = chatService, channelManager = chatChannelManager, i18n = i18n, broadcast = sessionRegistry::broadcast, persistence = persistence, zoneLevelAt = { x, z -> world.zoneLevelAt(x, z) }, lowLevelSpawnSlots = { count, radius -> world.distinctLowLevelSpawns(count, radius) }, ), private val dropConfig: DropConfig = DropConfig(BlockRegistryLoader()), private val worldItems: WorldItemManager = WorldItemManager( dropConfig, broadcast = sessionRegistry::broadcast, savePlayer = playerPersister::save, i18n = i18n, ), private val weatherConfig: WeatherConfig = WeatherConfig(), private val weatherManager: WeatherManager = WeatherManager(weatherConfig), private val configRegistry: ConfigRegistry = ConfigRegistry.buildConfigRegistry(weatherConfig), private val liquidManager: LiquidManager = LiquidManager(world), private val vegetationConfig: VegetationConfig = VegetationConfig(), private val vegetationManager: VegetationManager = VegetationManager( world, vegetationConfig, savePath = persistence?.worldDir?.resolve("vegetation_state.yaml") ?: ConfigPaths.dataWorld("default_world/vegetation_state.yaml"), ), private val recipeRegistryLoader: RecipeRegistryLoader = RecipeRegistryLoader(), private val armorRegistryLoader: ArmorRegistryLoader = ArmorRegistryLoader(), private val weaponRegistryLoader: WeaponRegistryLoader = WeaponRegistryLoader(), private val toolRegistryLoader: ToolRegistryLoader = ToolRegistryLoader(), private val weaponCategoryRegistryLoader: WeaponCategoryRegistryLoader = WeaponCategoryRegistryLoader(), private val toolCategoryRegistryLoader: ToolCategoryRegistryLoader = ToolCategoryRegistryLoader(), private val instanceRegistry: InstanceRegistry = InstanceRegistry(persistence), private val claimRegistry: ClaimRegistry = ClaimRegistry(persistence), private val actionBlockRegistry: ActionBlockRegistry = ActionBlockRegistry(persistence), private var weaponRegistry: Map&lt;String, WeaponDefinition> = weaponRegistryLoader.load(), private var toolRegistry: Map&lt;String, ToolDefinition> = toolRegistryLoader.load(), private var weaponCategories: Map&lt;EquipmentCategory, WeaponCategoryDefinition> = weaponCategoryRegistryLoader.load(), private var toolCategories: Map&lt;EquipmentCategory, ToolCategoryDefinition> = toolCategoryRegistryLoader.load(), private val railNetworkRegistry: RailNetworkRegistry = RailNetworkRegistry(world), private val vehicleManager: VehicleManager = VehicleManager(sessionRegistry::broadcast), private val vehicleTickPipeline: VehicleTickPipeline = VehicleTickPipeline(vehicleManager), private val placeableManager: PlaceableManager = PlaceableManager(sessionRegistry::broadcast), private val siegeWeaponManager: SiegeWeaponManager = SiegeWeaponManager(sessionRegistry::broadcast), private val siegeProjectileManager: SiegeProjectileManager = SiegeProjectileManager(sessionRegistry::broadcast), private val siegeProjectileTickPipeline: SiegeProjectileTickPipeline = SiegeProjectileTickPipeline(siegeProjectileManager), private val blockInteractor: BlockInteractor = BlockInteractor( world, sessionRegistry::broadcast, instanceRegistry = instanceRegistry, claimRegistry = claimRegistry, railNetworkRegistry = railNetworkRegistry, actionBlockRegistry = actionBlockRegistry, ), private val sceneRegistry: SceneRegistry = SceneRegistry(persistence), private val npcConfigLoader: NpcConfigLoader = NpcConfigLoader(), private val npcRegistryLoader: NpcRegistryLoader = NpcRegistryLoader(), /** * The single wiring of the NPC subsystem, shared with the admin world simulator. * * The default here is deliberately hook-poor — it is what a test that does not care gets. The * real server passes the Koin-provided factory, which carries XP, quest credit and chat * fan-out. */ private val npcSubsystemFactory: NpcSubsystemFactory = NpcSubsystemFactory( hooks = NpcSubsystemHooks( broadcast = sessionRegistry::broadcast, broadcastWorldUpdate = sessionRegistry::broadcast, getSessions = sessionRegistry::all, ), world = world, vegetationManager = vegetationManager, gameDayDurationSecondsOf = { NpcConstants.live.gameDayDurationSeconds }, ), private val npcManager: NpcManager = npcSubsystemFactory.npcManager, private val combatConfig: CombatConfigData = CombatConfig().data, val attackRegistry: Map&lt;String, AttackDefinition> = SkillsConfig().data.attacks, val spellRegistry: Map&lt;String, SpellDefinition> = SkillsConfig().data.spells, private val classesData: ClassesConfigData = ClassesConfig().data, private val combatConfigLoader: CombatConfig? = null, private val skillsConfigLoader: SkillsConfig? = null, private val classesConfigLoader: ClassesConfig? = null, private val experienceConfigLoader: ExperienceConfig? = null, private val combatProcessor: CombatProcessor = CombatProcessor( config = combatConfig, attackRegistry = attackRegistry, armorRegistry = armorRegistryLoader.load(), weaponRegistry = weaponRegistry, toolRegistry = toolRegistry, classRegistry = classesData.classes, npcManager = npcManager, vehicleManager = vehicleManager, placeableManager = placeableManager, getSessions = sessionRegistry::all, broadcastCombatLog = { msg -> val chatMsg = ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg) sessionRegistry .all() .filter { it.state.subscribedChannels.hasChannel("combat") } .forEach { it.send(chatMsg) } }, subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) }, i18n = i18n, savePlayer = playerPersister::save, factionManager = factionManager, ), private val statusEffectProcessor: StatusEffectProcessor = StatusEffectProcessor( armorRegistry = armorRegistryLoader.load(), weaponRegistry = weaponRegistry, toolRegistry = toolRegistry, world = world, broadcastHealthUpdate = { id, isNpc, hp, maxHp -> sessionRegistry.all().forEach { it.send(ServerMessage.HealthUpdate(id, isNpc, hp, maxHp)) } if (!isNpc) { sessionRegistry .all() .find { it.id == id } ?.let { s -> val charData = s.characterData if (charData != null) { val derived = DerivedStatsCalculator.compute(charData, emptyList()) s.send( combatProcessor.makeStatusUpdate( charData, derived, s.state.stance, s.combatState.attackCooldownUntilMs, s.combatState.attackCooldownsUntilMs, s.state.godMode)) } } } }, broadcastCombatLog = { msg -> val chatMsg = ServerMessage.ChatMessage(channel = "combat", sender = "", message = msg) sessionRegistry .all() .filter { it.state.subscribedChannels.hasChannel("combat") } .forEach { it.send(chatMsg) } }, subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) }, onPlayerDowned = { session -> combatProcessor.handlePlayerDowned(session) }, ), private val regenProcessor: RegenProcessor = RegenProcessor( config = ClassesConfig().data, maxRage = combatConfig.maxRage, armorRegistry = armorRegistryLoader.load(), weaponRegistry = weaponRegistry, toolRegistry = toolRegistry, combatProcessor = combatProcessor, ), private val spellProcessor: SpellProcessor = SpellProcessor( spellRegistry = spellRegistry, classRegistry = classesData.classes, armorRegistry = armorRegistryLoader.load(), weaponRegistry = weaponRegistry, toolRegistry = toolRegistry, combatConfig = combatConfig, combatProcessor = combatProcessor, getSessions = sessionRegistry::all, getNpcs = { npcManager.getAll() }, ), private val tradeConfigLoader: TradeConfigLoader = TradeConfigLoader(), private val tradeManager: TradeManager = TradeManager( getSessions = sessionRegistry::all, i18n = i18n, savePlayer = playerPersister::save, maxDistance = tradeConfigLoader.load().maxDistance, ), private val auctionConfigLoader: AuctionConfigLoader = AuctionConfigLoader(), private val auctionManager: AuctionManager? = persistence?.worldDir?.let { worldDir -> AuctionManager( getSessions = sessionRegistry::all, i18n = i18n, savePlayer = playerPersister::save, persistence = AuctionPersistence(worldDir), mailManager = null, config = auctionConfigLoader.load(), ) }, private val blockBreaker: BlockBreaker = BlockBreaker( world, sessionRegistry::broadcast, worldItems, liquidManager, instanceRegistry = instanceRegistry, claimRegistry = claimRegistry, railNetworkRegistry = railNetworkRegistry, actionBlockRegistry = actionBlockRegistry, weaponRegistry = { weaponRegistry }, toolRegistry = { toolRegistry }, ), private val blockPlacer: BlockPlacer = BlockPlacer( world, sessionRegistry::broadcast, playerPersister::save, vegetationManager, attackRegistry, instanceRegistry = instanceRegistry, claimRegistry = claimRegistry, railNetworkRegistry = railNetworkRegistry, placeableManager = placeableManager, siegeWeaponManager = siegeWeaponManager, ), private val claimConfigLoader: ClaimConfigLoader = ClaimConfigLoader(), private val claimManager: ClaimManager = ClaimManager( registry = claimRegistry, config = claimConfigLoader.load(), getSessions = sessionRegistry::all, i18n = i18n, savePlayer = playerPersister::save, persistence = persistence, ), private val movementProcessor: MovementProcessor = MovementProcessor(world), private val chunkStreamer: ChunkStreamer = ChunkStreamer(world), val terrainCache: TerrainCache = TerrainCache(), val networkStats: NetworkStats = NetworkStats(), private val commandContextFactory: ((CommandContextClosures) -> CommandContext)? = null, private val experienceProcessor: ExperienceProcessor = ExperienceProcessor(ExperienceConfig().data, sessionRegistry::all, playerPersister::save), private val petManager: PetManager = PetManager( npcManager = npcManager, experienceProcessor = experienceProcessor, getSessions = sessionRegistry::all, savePlayer = playerPersister::save, i18n = i18n, ), private val petCoordinator: PetCoordinator = PetCoordinator( npcManager = npcManager, combatConfig = combatConfig, ), private val questManager: QuestManager? = null, private val questRegistryLoader: QuestRegistryLoader? = null, private val e2eEnabled: Boolean = System.getenv("MICRAFT_E2E")?.isNotBlank() == true, private val shared: SharedGameServices = SharedGameServices.default(), )</ID>
+    <ID>LongParameterList:GameLoopModule.kt$GameLoopModule$( armorRegistry: Map&lt;String, ArmorDefinition>, weaponRegistry: Map&lt;String, WeaponDefinition>, toolRegistry: Map&lt;String, ToolDefinition>, @Named("spells") spells: Map&lt;String, SpellDefinition>, classesConfigData: ClassesConfigData, combatConfigData: CombatConfigData, combatProcessor: CombatProcessor, sessionRegistry: SessionRegistry, npcManager: NpcManager, )</ID>
+    <ID>LongParameterList:GameLoopModule.kt$GameLoopModule$( combatConfigData: CombatConfigData, armorRegistry: Map&lt;String, ArmorDefinition>, weaponRegistry: Map&lt;String, WeaponDefinition>, toolRegistry: Map&lt;String, ToolDefinition>, @Named("attacks") attacks: Map&lt;String, AttackDefinition>, classesConfigData: ClassesConfigData, npcManager: NpcManager, vehicleManager: VehicleManager, placeableManager: PlaceableManager, sessionRegistry: SessionRegistry, chatService: ChatService, i18nConfig: I18nConfig, playerPersister: PlayerPersister, experienceProcessor: ExperienceProcessor, experienceConfigData: ExperienceConfigData, )</ID>
+    <ID>LongParameterList:GameLoopModule.kt$GameLoopModule$( gameConfig: GameConfig, i18nConfig: I18nConfig, configRegistry: ConfigRegistry, weatherConfig: WeatherConfig, vegetationConfig: VegetationConfig, chatChannelManager: ChatChannelManager, dropConfig: DropConfig, networkStats: NetworkStats, recipeRegistryLoader: RecipeRegistryLoader, armorRegistryLoader: ArmorRegistryLoader, weaponRegistryLoader: WeaponRegistryLoader, toolRegistryLoader: ToolRegistryLoader, weaponCategoryRegistryLoader: WeaponCategoryRegistryLoader, toolCategoryRegistryLoader: ToolCategoryRegistryLoader, npcConfigLoader: NpcConfigLoader, npcRegistryLoader: NpcRegistryLoader, questRegistryLoader: QuestRegistryLoader, tradeConfigLoader: TradeConfigLoader, auctionConfigLoader: AuctionConfigLoader, claimConfigLoader: ClaimConfigLoader, combatConfig: CombatConfig, skillsConfig: SkillsConfig, classesConfig: ClassesConfig, experienceConfig: ExperienceConfig, armorRegistry: Map&lt;String, ArmorDefinition>, weaponRegistry: Map&lt;String, WeaponDefinition>, toolRegistry: Map&lt;String, ToolDefinition>, weaponCategories: Map&lt;EquipmentCategory, WeaponCategoryDefinition>, toolCategories: Map&lt;EquipmentCategory, ToolCategoryDefinition>, @Named("attacks") attacks: Map&lt;String, AttackDefinition>, @Named("spells") spells: Map&lt;String, SpellDefinition>, combatConfigData: CombatConfigData, classesConfigData: ClassesConfigData, experienceConfigData: ExperienceConfigData, )</ID>
+    <ID>LongParameterList:GameLoopModule.kt$GameLoopModule$( sessionRegistry: SessionRegistry, experienceProcessor: ExperienceProcessor, questManager: QuestManager, worldItemManager: WorldItemManager, // A concrete class, not Map&lt;String, ArmorDefinition>: Koin was observed resolving that // bare Map type to the weapon registry instead on an equivalent wiring — see // GameWorldFactory's ArmorLootGranter call for the repro notes. armorRegistryLoader: ArmorRegistryLoader, playerPersister: PlayerPersister, i18nConfig: I18nConfig, optionalWorldPersistence: OptionalWorldPersistence, )</ID>
+    <ID>LongParameterList:GameLoopModule.kt$GameLoopModule$( worldState: WorldState, sessionRegistry: SessionRegistry, playerPersister: PlayerPersister, vegetationManager: VegetationManager, @Named("attacks") attacks: Map&lt;String, AttackDefinition>, instanceRegistry: InstanceRegistry, claimRegistry: ClaimRegistry, railNetworkRegistry: RailNetworkRegistry, placeableManager: PlaceableManager, siegeWeaponManager: SiegeWeaponManager, )</ID>
+    <ID>LongParameterList:GameLoopModule.kt$GameLoopModule$( worldState: WorldState, sessionRegistry: SessionRegistry, worldItemManager: WorldItemManager, liquidManager: LiquidManager, gameConfig: GameConfig, instanceRegistry: InstanceRegistry, claimRegistry: ClaimRegistry, railNetworkRegistry: RailNetworkRegistry, actionBlockRegistry: ActionBlockRegistry, weaponRegistry: Map&lt;String, WeaponDefinition>, toolRegistry: Map&lt;String, ToolDefinition>, )</ID>
+    <ID>LongParameterList:GameWorld.kt$GameWorld$( val id: String, val world: WorldState, val persistence: WorldPersistence?, val sessions: SessionRegistry, /** Which slices of [tick] actually run — [TickSection.REALTIME] for the default world. */ val tickSections: Set&lt;TickSection> = TickSection.REALTIME, /** Edit mode a joining player is placed in — GAME everywhere; CREATIVE only via `/mode`. */ val spawnEditMode: EditMode = EditMode.GAME, private val terrainCache: TerrainCache, val npcManager: NpcManager, val vehicleManager: VehicleManager, val placeableManager: PlaceableManager, val siegeWeaponManager: SiegeWeaponManager, val vegetationManager: VegetationManager, val npcSubsystem: org.micoli.micraft.game.npc.NpcSubsystem, private val vehicleTickPipeline: VehicleTickPipeline, private val siegeProjectileTickPipeline: SiegeProjectileTickPipeline, val siegeProjectileManager: SiegeProjectileManager, val petManager: PetManager, val tradeManager: TradeManager, val groupManager: GroupManager, val guildManager: GuildManager, val guildRegistry: org.micoli.micraft.game.social.GuildRegistry, val factionManager: FactionManager, val chatService: ChatService, val chatChannelManager: ChatChannelManager, val experienceProcessor: ExperienceProcessor, val questManager: QuestManager?, val mailManager: MailManager?, val claimManager: ClaimManager, val claimRegistry: ClaimRegistry, val actionBlockService: org.micoli.micraft.game.world.actionblock.ActionBlockService, val railNetworkRegistry: RailNetworkRegistry, val sceneRegistry: SceneRegistry, private val playerPersister: PlayerPersister, private val intentCollectorProvider: () -> IntentCollector, private val blockBreaker: BlockBreaker, private val movementProcessor: MovementProcessor, val chunkStreamer: ChunkStreamer, val instanceRegistry: InstanceRegistry, val worldItems: WorldItemManager, val combatProcessor: CombatProcessor, val spellProcessor: SpellProcessor? = null, private val statusEffectProcessor: StatusEffectProcessor, val regenProcessor: RegenProcessor, val weatherManager: WeatherManager, val liquidManager: LiquidManager, val auctionManager: AuctionManager?, private val commandContextProvider: () -> CommandContext, private val pluginTickHandlersProvider: () -> List&lt;TickHandler>, /** Extra sink for player-admin events, on top of this world's own listener list. */ private val broadcastPlayerAdminSink: suspend (String) -> Unit = {}, private val appScope: () -> Application?, /** Where the game clock starts when there is no persisted metadata (a simulator wants 0). */ private val initialGameTicks: Long? = null, /** Extra sink for world changes the tick broadcasts (vegetation regrowth, liquid, weather). */ private val broadcastWorldChange: suspend (ServerMessage) -> Unit = {}, /** Gate on the slow NPC lane — a simulator only runs it with a player present. */ private val npcLifecycleGate: () -> Boolean = { true }, )</ID>
+    <ID>LongParameterList:MovementProcessor.kt$MovementProcessor$( session: PlayerSession, cx: Float, cy: Float, cz: Float, h: Float, inLiquid: Boolean = false, swimUp: Boolean = false, swimDown: Boolean = false, )</ID>
+    <ID>LongParameterList:MovementProcessorTest.kt$MovementProcessorTest$( stance: PlayerStance = PlayerStance.STANDING, dx: Float = 0f, dz: Float = 0f, dy: Float = 0f, jump: Boolean = false, flyToggle: Boolean = false, speedUp: Boolean = false, speedDown: Boolean = false, yaw: Float = 0f, pitch: Float = 0f, )</ID>
+    <ID>LongParameterList:NpcInstance.kt$NpcInstance$( @Volatile var state: NpcState, @Volatile var vy: Float = 0f, @Volatile var velocity: Vec3 = Vec3(0f, 0f, 0f), val definition: NpcDefinition, val spawnPos: Vec3, @Volatile var currentHp: Int = -1, @Volatile var currentMana: Int = -1, @Volatile var currentRage: Int = 0, @Volatile var aggroTarget: String? = null, /** * Target that is another NPC, kept apart from [aggroTarget] on purpose: the player aggro code * clears [aggroTarget] as soon as it no longer resolves to a session. */ @Volatile var npcAggroTarget: String? = null, @Volatile var packId: String? = null, /** Where a pack member converges while the pack is still short of its quorum. */ @Volatile var packRallyPos: Vec3? = null, /** Set when a pack disbands; silences this NPC for `callCooldownSec`. */ @Volatile var lastPackCallMs: Long = 0L, @Volatile var lastDamagedAtMs: Long = 0L, val attackCooldownsUntilMs: MutableMap&lt;String, Long> = mutableMapOf(), val spellCooldownsUntilMs: MutableMap&lt;String, Long> = mutableMapOf(), val damageContributors: MutableMap&lt;String, Int> = mutableMapOf(), @Volatile var chaseTargetPos: Vec3? = null, /** * Leash radius in force for the current [chaseTargetPos], or null for the default (pack radius, * else `aggroRange`). Set by the animal behaviour when the target is prey, food or a mate: * those errands legitimately go further from home than an animal's eyesight. */ @Volatile var chaseLeash: Float? = null, /** * Multiplier on movement speed, and on outgoing damage, from the animal's condition — starving, * pregnant, or both at once. * * Recomputed once per tick by the animal processor, which is the single place that knows the * condition; every reader just multiplies. 1f means "nothing wrong", which is also what a * non-animal NPC always reports. */ @Volatile var speedMultiplier: Float = 1f, @Volatile var damageMultiplier: Float = 1f, @Volatile var instanceLevel: Int = 1, @Volatile var xp: Int = 0, val activeEffects: MutableList&lt;ActiveStatusEffect> = mutableListOf(), @Volatile var pendingDotDamage: Float = 0f, @Volatile var isDead: Boolean = false, @Volatile var deathTimeMs: Long = 0L, /** * Remaining breath ticks. Only drained for NPCs that cannot swim (see [NpcManager.tickBreath]). */ @Volatile var currentBreath: Int = BreathConstants.MAX_BREATH_TICKS, @Volatile var drowningDamageAccumTicks: Int = 0, /** Owning player's session id when this NPC is a summoned pet; null for every wild NPC. */ @Volatile var ownerId: String? = null, /** * Id of the owner's [org.micoli.micraft.player.pet.PetRecord] this instance was summoned from. */ @Volatile var petRecordId: String? = null, /** Gravity disabled — a pet mirrors its flying owner; its Y is driven by [PetCoordinator]. */ @Volatile var weightless: Boolean = false, /** * Currently airborne: gravity off, altitude driven by [NpcPhysics.cruise]. A `FLYING`-only NPC * is always flying; a `[FLYING, WALKING]` NPC lands (this goes false) while it is in combat. */ @Volatile var flying: Boolean = false, /** Scratch, recomputed each tick: a player has this NPC as their combat target. */ @Volatile var targetedByPlayer: Boolean = false, @Volatile var animalData: AnimalInstanceData? = null, /** Asleep for the current hibernation window: no movement, no aggro. */ @Volatile var hibernating: Boolean = false, /** Woken by a hit: stays awake until the current hibernation window is over. */ @Volatile var hibernationWakeForced: Boolean = false, tuning: NpcTuning = NpcConstants.live, /** * Per-NPC random source. Derived from the world's seed at spawn time so an NPC's evolution does * not depend on the order the (concurrent) NPC map happens to be iterated in — that is what * makes a seeded simulation reproducible. */ val random: Random = Random, )</ID>
+    <ID>LongParameterList:RectangularHouseRenderer.kt$( blocks: ByteArray, ox: Int, oz: Int, low: Int, high: Int, windowY: Int, fixedCoord: Int, alongX: Boolean, )</ID>
+    <ID>LongParameterList:ReloadCoordinator.kt$ReloadCoordinator$( private val dropConfig: DropConfig, private val world: WorldState, private val reloadBiomes: (() -> ChunkGenerator)?, private val reloadRegistries: (() -> Unit)?, private val reloadGameConfig: (() -> Unit)?, private val reloadFactions: (suspend () -> Unit)? = null, private val sessionRegistry: SessionRegistry, private val buildRegistrySync: () -> ServerMessage.RegistrySync, private val npcConfigLoader: NpcConfigLoader, private val npcRegistryLoader: NpcRegistryLoader, private val npcManager: NpcManager, private val i18n: I18nConfig, private val weatherManager: WeatherManager, private val vegetationManager: VegetationManager, private val questManager: QuestManager? = null, private val questRegistryLoader: QuestRegistryLoader? = null, private val reloadRbac: (() -> Unit)? = null, private val reloadArmorRegistry: (() -> Unit)? = null, private val reloadEquipmentCategories: (() -> Unit)? = null, private val reloadRecipeRegistry: (() -> Unit)? = null, private val reloadCombatSystems: (() -> Unit)? = null, )</ID>
+    <ID>LongParameterList:ReloadCoordinatorTest.kt$ReloadCoordinatorTest$( reloadBiomes: (() -> ChunkGenerator)? = null, reloadRegistries: (() -> Unit)? = null, reloadGameConfig: (() -> Unit)? = null, reloadRbac: (() -> Unit)? = null, reloadArmorRegistry: (() -> Unit)? = null, reloadEquipmentCategories: (() -> Unit)? = null, reloadRecipeRegistry: (() -> Unit)? = null, sessionRegistry: SessionRegistry = SessionRegistry(), questManager: QuestManager? = null, questRegistryLoader: QuestRegistryLoader? = null, )</ID>
+    <ID>LongParameterList:RpgCharacterBuilder.kt$RpgCharacterBuilder$( name: String, characterClass: CharacterClass, str: Int, dex: Int, intel: Int, wis: Int, con: Int, cha: Int, characterId: String = UUID.randomUUID().toString(), )</ID>
+    <ID>LongParameterList:RpgCharacterBuilderTest.kt$RpgCharacterBuilderTest$( name: String = "Alice", cc: CharacterClass = CharacterClass.WARRIOR, str: Int = 8, dex: Int = 8, intel: Int = 8, wis: Int = 8, con: Int = 8, cha: Int = 8, )</ID>
+    <ID>LongParameterList:SceneRegistry.kt$SceneRegistry$( id: String, x: Int, y: Int, z: Int, blockType: BlockType, rotation: Int, colorIndex: Int, xOffset: Int, zOffset: Int, )</ID>
+    <ID>LongParameterList:SharedGameServices.kt$SharedGameServices$( val gameConfig: GameConfig, val i18n: I18nConfig, val configRegistry: ConfigRegistry, val weatherConfig: WeatherConfig, val vegetationConfig: VegetationConfig, val chatChannelManager: ChatChannelManager, val dropConfig: DropConfig, val networkStats: NetworkStats, val recipeRegistryLoader: RecipeRegistryLoader, val armorRegistryLoader: ArmorRegistryLoader, val weaponRegistryLoader: WeaponRegistryLoader, val toolRegistryLoader: ToolRegistryLoader, val weaponCategoryRegistryLoader: WeaponCategoryRegistryLoader, val toolCategoryRegistryLoader: ToolCategoryRegistryLoader, val npcConfigLoader: NpcConfigLoader, val npcRegistryLoader: NpcRegistryLoader, val questRegistryLoader: QuestRegistryLoader, val tradeConfigLoader: TradeConfigLoader, val auctionConfigLoader: AuctionConfigLoader, val claimConfigLoader: ClaimConfigLoader, val combatConfig: CombatConfig, val skillsConfig: SkillsConfig, val classesConfig: ClassesConfig, val experienceConfig: ExperienceConfig, val armorRegistry: Map&lt;String, ArmorDefinition>, val weaponRegistry: Map&lt;String, WeaponDefinition>, val toolRegistry: Map&lt;String, ToolDefinition>, val weaponCategories: Map&lt;EquipmentCategory, WeaponCategoryDefinition>, val toolCategories: Map&lt;EquipmentCategory, ToolCategoryDefinition>, val attackRegistry: Map&lt;String, AttackDefinition>, val spellRegistry: Map&lt;String, SpellDefinition>, val combatConfigData: CombatConfigData, val classesConfigData: ClassesConfigData, val experienceConfigData: ExperienceConfigData, )</ID>
+    <ID>LongParameterList:TestFixtures.kt$( id: String = "test-id", name: String = "Alice", pos: Vec3 = Vec3(8f, 8f, 8f), orientation: Orientation = Orientation(0f, 0f), language: String = "en", flying: Boolean = false, stance: PlayerStance = PlayerStance.STANDING, speedMultiplier: Float = 1f, shadersEnabled: Boolean = true, )</ID>
+    <ID>LongParameterList:TestFixtures.kt$( world: WorldState = testWorld(), sessions: List&lt;PlayerSession> = emptyList(), persistence: WorldPersistence? = null, broadcast: suspend (ServerMessage) -> Unit = {}, kickSession: suspend (String) -> Unit = {}, reloadConfig: (suspend (String) -> String)? = null, savePlayer: (PlayerSession) -> Unit = {}, worldItems: WorldItemManager? = null, npcManager: NpcManager? = null, i18n: I18nConfig = testI18n(), getGameTime: () -> Long = { 0L }, setGameTime: (Long) -> Unit = {}, refetchChunks: (suspend (PlayerSession) -> Unit)? = null, liquidManager: LiquidManager? = null, configRegistry: ConfigRegistry? = null, reloadBlocks: (suspend () -> Unit)? = null, reloadNpcs: (suspend () -> Unit)? = null, authProvider: AuthProvider? = null, groupsConfig: GroupsConfig? = null, tradeManager: TradeManager? = null, auctionManager: AuctionManager? = null, chatService: ChatService? = null, chatChannelManager: ChatChannelManager? = null, weatherManager: WeatherManager? = null, armorRegistry: () -> Map&lt;String, ArmorDefinition> = { emptyMap() }, weaponRegistry: () -> Map&lt;String, WeaponDefinition> = { emptyMap() }, toolRegistry: () -> Map&lt;String, ToolDefinition> = { emptyMap() }, weaponCategories: () -> Map&lt;EquipmentCategory, WeaponCategoryDefinition> = { emptyMap() }, toolCategories: () -> Map&lt;EquipmentCategory, ToolCategoryDefinition> = { emptyMap() }, namedPoints: () -> Map&lt;String, Vec3> = { emptyMap() }, scenes: SceneRegistry? = null, vehicleManager: VehicleManager? = null, petManager: PetManager? = null, actionBlockRegistry: ActionBlockRegistry? = null, questManager: QuestManager? = null, )</ID>
+    <ID>LongParameterList:VegetationGenerator.kt$( generator: ProceduralChunkGenerator, blocks: ByteArray, ox: Int, oz: Int, wx: Int, wz: Int, surfaceY: Int, leavesType: BlockType, )</ID>
+    <ID>LongParameterList:VegetationGenerator.kt$( generator: ProceduralChunkGenerator, blocks: ByteArray, ox: Int, oz: Int, wx: Int, wz: Int, surfaceY: Int, surfaceBlock: BlockType, type: VegetationType, )</ID>
+    <ID>LoopWithTooManyJumpStatements:AdminController.kt$AdminController$for</ID>
+    <ID>LoopWithTooManyJumpStatements:AnimalInteractionProcessor.kt$AnimalInteractionProcessor$for</ID>
+    <ID>LoopWithTooManyJumpStatements:ArmorLootGranter.kt$ArmorLootGranter$for</ID>
+    <ID>LoopWithTooManyJumpStatements:CavernGenerator.kt$CavernGenerator$for</ID>
+    <ID>LoopWithTooManyJumpStatements:ChunkStreamer.kt$ChunkStreamer$for</ID>
+    <ID>LoopWithTooManyJumpStatements:ExperienceProcessor.kt$ExperienceProcessor$for</ID>
+    <ID>LoopWithTooManyJumpStatements:ExplodeCommand.kt$ExplodeCommand$for</ID>
+    <ID>LoopWithTooManyJumpStatements:ExtractKayKitAnimations.kt$for</ID>
+    <ID>LoopWithTooManyJumpStatements:HibernationProcessor.kt$HibernationProcessor$for</ID>
+    <ID>LoopWithTooManyJumpStatements:HouseZones.kt$HouseZones$for</ID>
+    <ID>LoopWithTooManyJumpStatements:LiquidManager.kt$LiquidManager$for</ID>
+    <ID>LoopWithTooManyJumpStatements:MapController.kt$MapController$for</ID>
+    <ID>LoopWithTooManyJumpStatements:NpcManager.kt$NpcManager$for</ID>
+    <ID>LoopWithTooManyJumpStatements:NpcSpawner.kt$NpcSpawner$for</ID>
+    <ID>LoopWithTooManyJumpStatements:ObjToBbmodel.kt$ObjToBbmodel$for</ID>
+    <ID>LoopWithTooManyJumpStatements:PackCoordinator.kt$PackCoordinator$for</ID>
+    <ID>LoopWithTooManyJumpStatements:PackCoordinator.kt$PackCoordinator$while</ID>
+    <ID>LoopWithTooManyJumpStatements:PetManager.kt$PetManager$for</ID>
+    <ID>LoopWithTooManyJumpStatements:ProceduralChunkGenerator.kt$ProceduralChunkGenerator$for</ID>
+    <ID>LoopWithTooManyJumpStatements:PumpCommand.kt$PumpCommand$for</ID>
+    <ID>LoopWithTooManyJumpStatements:QuestGiverSpawner.kt$QuestGiverSpawner$for</ID>
+    <ID>LoopWithTooManyJumpStatements:QuestManager.kt$QuestManager$for</ID>
+    <ID>LoopWithTooManyJumpStatements:RegenProcessor.kt$RegenProcessor$for</ID>
+    <ID>LoopWithTooManyJumpStatements:RoadVoronoiZones.kt$RoadVoronoiZones$for</ID>
+    <ID>LoopWithTooManyJumpStatements:ShippedEntityConfigTest.kt$ShippedEntityConfigTest$for</ID>
+    <ID>LoopWithTooManyJumpStatements:SiegeProjectileManager.kt$SiegeProjectileManager$for</ID>
+    <ID>LoopWithTooManyJumpStatements:SimulationController.kt$SimulationController$for</ID>
+    <ID>LoopWithTooManyJumpStatements:SimulationControllerTest.kt$SimulationControllerTest$while</ID>
+    <ID>LoopWithTooManyJumpStatements:StatusEffectProcessor.kt$StatusEffectProcessor$for</ID>
+    <ID>LoopWithTooManyJumpStatements:TerrainCache.kt$TerrainCache$for</ID>
+    <ID>LoopWithTooManyJumpStatements:TerrainCache.kt$for</ID>
+    <ID>LoopWithTooManyJumpStatements:VegetationGenerator.kt$for</ID>
+    <ID>LoopWithTooManyJumpStatements:VegetationManager.kt$VegetationManager$for</ID>
+    <ID>LoopWithTooManyJumpStatements:VoronoiBiomeZones.kt$VoronoiBiomeZones$for</ID>
+    <ID>LoopWithTooManyJumpStatements:WeatherManager.kt$WeatherManager$for</ID>
+    <ID>LoopWithTooManyJumpStatements:WorldSimulator.kt$WorldSimulator$for</ID>
+    <ID>LoopWithTooManyJumpStatements:WorldState.kt$WorldState$for</ID>
+    <ID>LoopWithTooManyJumpStatements:YamlPatchWriter.kt$while</ID>
+    <ID>MatchingDeclarationName:BiomeMapCommand.kt$IngameMapCommand : CommandHandler</ID>
+    <ID>MatchingDeclarationName:BiomeMapCommandTest.kt$IngameMapCommandTest</ID>
+    <ID>MatchingDeclarationName:GameWorldFactory.kt$GameWorldOptions</ID>
+    <ID>MatchingDeclarationName:HouseGenerator.kt$PlacedHouse</ID>
+    <ID>MatchingDeclarationName:PlayerRbac.kt$PlayerRbacResult</ID>
+    <ID>MayBeConst:ExtractKayKitAnimations.kt$private val GLB_DIR = "resources/game-assets/KayKit_Character_Animations_1.1/Animations/gltf/Rig_Medium"</ID>
+    <ID>NestedBlockDepth:AnimalInteractionProcessor.kt$AnimalInteractionProcessor$private fun updateTargets(allAnimal: List&lt;NpcInstance>, currentDay: Double)</ID>
+    <ID>NestedBlockDepth:AnimalInteractionProcessor.kt$AnimalInteractionProcessor$private suspend fun tickHerbivoreFeeding(allAnimal: List&lt;NpcInstance>)</ID>
+    <ID>NestedBlockDepth:BlockBreaker.kt$BlockBreaker.Companion$fun removeAt(pos: BlockPos, xOffset: Int, zOffset: Int, world: BlockStore): RemoveResult</ID>
+    <ID>NestedBlockDepth:BlockPlacer.kt$BlockPlacer.Companion$fun placeAt( rawPos: BlockPos, blockType: BlockType, rotation: Int, colorIndex: Int, xOffset: Int, zOffset: Int, world: BlockStore, extraState: Byte = 0, ): PlaceResult</ID>
+    <ID>NestedBlockDepth:BlockRegistryLoader.kt$BlockRegistryLoader$private fun generateFromResources(): Map&lt;String, BlockYamlEntry></ID>
+    <ID>NestedBlockDepth:CavernGenerator.kt$CavernGenerator$fun carve( blocks: ByteArray, ox: Int, oz: Int, surfaceAt: (lx: Int, lz: Int) -> Int, cavernsAt: (lx: Int, lz: Int) -> CavernConfig?, )</ID>
+    <ID>NestedBlockDepth:CavernGenerator.kt$CavernGenerator$private fun carveStaircaseSegment( blocks: ByteArray, ox: Int, oz: Int, seed: CavernSeed, startY: Int, localSurfaceAt: (lx: Int, lz: Int) -> Int, airWire: Byte, chunkSize: Int, )</ID>
+    <ID>NestedBlockDepth:CavernGenerator.kt$CavernGenerator$private fun isWithinPatatoid(wx: Int, wy: Int, wz: Int, config: CavernConfig): Boolean</ID>
+    <ID>NestedBlockDepth:CavernGeneratorTest.kt$CavernGeneratorTest$@Test fun carve_neverPunchesThroughSurface()</ID>
+    <ID>NestedBlockDepth:CavernGeneratorTest.kt$CavernGeneratorTest$private fun solidChunk(): ByteArray</ID>
+    <ID>NestedBlockDepth:CircularTempleRenderer.kt$internal fun PlacedHouse.renderCircularTemple(blocks: ByteArray, ox: Int, oz: Int)</ID>
+    <ID>NestedBlockDepth:ExplodeCommand.kt$ExplodeCommand$override suspend fun execute(session: PlayerSession, args: String, context: CommandContext)</ID>
+    <ID>NestedBlockDepth:FurnitureRegistryLoader.kt$FurnitureRegistryLoader$private fun generateFromResources(): Map&lt;String, FurnitureYamlEntry></ID>
+    <ID>NestedBlockDepth:GameWorld.kt$GameWorld$private suspend fun fullSimulationTick()</ID>
+    <ID>NestedBlockDepth:HouseGeneratorTest.kt$HouseGeneratorTest$@Test fun flatRoofHouse_roofBlocksPresent()</ID>
+    <ID>NestedBlockDepth:HouseGeneratorTest.kt$HouseGeneratorTest$@Test fun houseBlocksAppearedInChunk()</ID>
+    <ID>NestedBlockDepth:LiquidManager.kt$LiquidManager$suspend fun tick(broadcast: suspend (ServerMessage) -> Unit)</ID>
+    <ID>NestedBlockDepth:NpcManager.kt$NpcManager$private suspend fun tickEffects()</ID>
+    <ID>NestedBlockDepth:NpcManager.kt$NpcManager$suspend fun applyDamage(npcId: String, damage: Int, attackerId: String)</ID>
+    <ID>NestedBlockDepth:NpcManager.kt$NpcManager$suspend fun tick(world: WorldState)</ID>
+    <ID>NestedBlockDepth:NpcManager.kt$NpcManager$suspend fun tickAggro( sessions: Collection&lt;PlayerSession>, combatProcessor: CombatProcessor, spellProcessor: SpellProcessor? = null, )</ID>
+    <ID>NestedBlockDepth:NpcSpawner.kt$NpcSpawner$suspend fun trySpawn( world: WorldState, npcManager: NpcManager, definitions: Map&lt;String, NpcDefinition>, loadedChunks: Collection&lt;ChunkPos>, ctx: NpcTickContext = NpcTickContext.live, canSpawn: () -> Boolean = { true }, )</ID>
+    <ID>NestedBlockDepth:NpcTickPipeline.kt$NpcTickPipeline$private fun nearChunks(world: WorldState, sessions: Collection&lt;PlayerSession>): List&lt;ChunkPos></ID>
+    <ID>NestedBlockDepth:ObjToBbmodel.kt$ObjToBbmodel$fun convert( objName: String, objContent: String, mtlContent: String?, resolveTexture: (String) -> ResolvedTexture?, scale: Float = 16f, ): String</ID>
+    <ID>NestedBlockDepth:PackCoordinator.kt$PackCoordinator$private fun recruit( pack: Pack, initiator: NpcInstance, target: NpcInstance, alive: List&lt;NpcInstance>, now: Long, )</ID>
+    <ID>NestedBlockDepth:PetCommand.kt$PetCommand$override suspend fun execute(session: PlayerSession, args: String, context: CommandContext)</ID>
+    <ID>NestedBlockDepth:ProceduralChunkGenerator.kt$ProceduralChunkGenerator$fun namedStaircasePoints(cellRadius: Int = 5): Map&lt;String, Vec3></ID>
+    <ID>NestedBlockDepth:ProceduralChunkGeneratorTest.kt$ProceduralChunkGeneratorTest$@Test fun generate_aquaticRelief_noExposedWaterAndDeterministic()</ID>
+    <ID>NestedBlockDepth:ProceduralChunkGeneratorTest.kt$ProceduralChunkGeneratorTest$@Test fun generate_withCavernConfig_producesUndergroundAir()</ID>
+    <ID>NestedBlockDepth:ProceduralChunkGeneratorTest.kt$ProceduralChunkGeneratorTest$@Test fun generate_withCaverns_sandstoneWallBlockAppearsUnderground()</ID>
+    <ID>NestedBlockDepth:ProceduralChunkGeneratorTest.kt$ProceduralChunkGeneratorTest$private fun aquaticWorld(): Map&lt;Triple&lt;Int, Int, Int>, BlockType></ID>
+    <ID>NestedBlockDepth:QuestManager.kt$QuestManager$suspend fun onNpcKilled(npc: NpcInstance)</ID>
+    <ID>NestedBlockDepth:RectangularHouseRenderer.kt$private fun PlacedHouse.placeGabledRoof( blocks: ByteArray, ox: Int, oz: Int, baseY: Int, overhang: Boolean, )</ID>
+    <ID>NestedBlockDepth:RectangularHouseRenderer.kt$private fun PlacedHouse.placeRoomWalls( blocks: ByteArray, ox: Int, oz: Int, baseY: Int, wallHeight: Int, )</ID>
+    <ID>NestedBlockDepth:RoadVoronoiZones.kt$RoadVoronoiZones$fun roadVertexSegmentsInArea(wx1: Int, wz1: Int, wx2: Int, wz2: Int): List&lt;RoadVertexSegment></ID>
+    <ID>NestedBlockDepth:ScenePlacementTarget.kt$ScenePlacementTarget$private fun entityCovers(entity: BlockEntity, targetIdx: Int): Boolean</ID>
+    <ID>NestedBlockDepth:ScenePlacer.kt$ScenePlacer$fun previewOccupancy(scene: Scene): ByteArray</ID>
+    <ID>NestedBlockDepth:SiegeProjectileRegistryLoader.kt$SiegeProjectileRegistryLoader$private fun generateFromResources(): Map&lt;String, SiegeProjectileYamlEntry></ID>
+    <ID>NestedBlockDepth:SiegeWeaponRegistryLoader.kt$SiegeWeaponRegistryLoader$private fun generateFromResources(): Map&lt;String, SiegeWeaponYamlEntry></ID>
+    <ID>NestedBlockDepth:SkillsConfig.kt$SkillsConfig$private inline fun &lt;reified T : Any> loadEntries( resourcesDir: Path, dataDir: Path, schemaHeader: String, serializer: KSerializer&lt;T>, crossinline isEnabled: (T) -> Boolean, ): Map&lt;String, T></ID>
+    <ID>NestedBlockDepth:StatusEffectProcessor.kt$StatusEffectProcessor$suspend fun tick(sessions: Collection&lt;PlayerSession>)</ID>
+    <ID>NestedBlockDepth:TerrainCache.kt$TerrainCache$fun prewarm(chunksDir: Path, cacheDir: Path)</ID>
+    <ID>NestedBlockDepth:TerrainCache.kt$TerrainCache$fun save(cacheDir: Path)</ID>
+    <ID>NestedBlockDepth:VegetationGenerator.kt$fun oakTreeBlocks(wx: Int, wz: Int, surfaceY: Int): List&lt;Pair&lt;BlockPos, BlockType>></ID>
+    <ID>NestedBlockDepth:VegetationGenerator.kt$fun pineTreeBlocks( wx: Int, wz: Int, surfaceY: Int, leavesType: BlockType ): List&lt;Pair&lt;BlockPos, BlockType>></ID>
+    <ID>NestedBlockDepth:VegetationGenerator.kt$fun placeVegetation(generator: ProceduralChunkGenerator, blocks: ByteArray, ox: Int, oz: Int)</ID>
+    <ID>NestedBlockDepth:VegetationGenerator.kt$private fun placeOakTree( generator: ProceduralChunkGenerator, blocks: ByteArray, ox: Int, oz: Int, wx: Int, wz: Int, surfaceY: Int )</ID>
+    <ID>NestedBlockDepth:VegetationGenerator.kt$private fun placePineTree( generator: ProceduralChunkGenerator, blocks: ByteArray, ox: Int, oz: Int, wx: Int, wz: Int, surfaceY: Int, leavesType: BlockType, )</ID>
+    <ID>NestedBlockDepth:VehicleManager.kt$VehicleManager$suspend fun tick(world: WorldState, sessions: Collection&lt;PlayerSession>)</ID>
+    <ID>NestedBlockDepth:VoronoiBiomeZones.kt$VoronoiBiomeZones$fun computeBorderEdges(centerX: Int, centerZ: Int, radiusBlocks: Int): List&lt;VoronoiEdge></ID>
+    <ID>NestedBlockDepth:VoronoiBiomeZones.kt$VoronoiBiomeZones$fun distinctLowLevelSpawns( count: Int, ringRadius: Double, maxLevel: Int = 5 ): List&lt;Pair&lt;Int, Int>></ID>
+    <ID>NestedBlockDepth:WorldPersistence.kt$WorldPersistence$fun loadChunk(pos: ChunkPos): Chunk?</ID>
+    <ID>NestedBlockDepth:WorldPersistence.kt$WorldPersistence$fun loadSceneBlocks(id: String): Triple&lt;ByteArray, ByteArray, ByteArray>?</ID>
+    <ID>NestedBlockDepth:YamlPatchWriter.kt$private fun findSectionBody( lines: List&lt;String>, from: Int, to: Int, indent: Int, key: String ): IntRange?</ID>
+    <ID>SpreadOperator:YamlPatchWriter.kt$(node, *(checkPath + name).toTypedArray())</ID>
+    <ID>SpreadOperator:YamlPatchWriter.kt$(node, *(path + name).toTypedArray())</ID>
+    <ID>SpreadOperator:YamlPatchWriter.kt$(node, *checkPath.toTypedArray())</ID>
+    <ID>SwallowedException:AdminController.kt$AdminController$e: Exception</ID>
+    <ID>SwallowedException:FactionManagerTest.kt$FactionManagerTest$e: FactionManager.AdminError</ID>
+    <ID>SwallowedException:GroupManagerTest.kt$GroupManagerTest$e: GroupManager.AdminError</ID>
+    <ID>SwallowedException:GuildManagerTest.kt$GuildManagerTest$e: GuildManager.AdminError</ID>
+    <ID>ThrowsCount:GroupManager.kt$GroupManager$suspend fun adminAddMember(groupId: String, playerName: String): GroupInfo</ID>
+    <ID>ThrowsCount:GuildManager.kt$GuildManager$suspend fun adminCreate(name: String, tag: String, ownerName: String): GuildInfoDto</ID>
+    <ID>ThrowsCount:GuildManager.kt$GuildManager$suspend fun adminRemoveMember(id: String, playerId: String): GuildInfoDto</ID>
+    <ID>ThrowsCount:GuildManager.kt$GuildManager$suspend fun adminSetRank(id: String, playerId: String, rankName: String): GuildInfoDto</ID>
+    <ID>ThrowsCount:GuildManager.kt$GuildManager$suspend fun adminUpdate(id: String, name: String?, tag: String?, motd: String?): GuildInfoDto</ID>
+    <ID>TooGenericExceptionCaught:ActionBlockScriptEngine.kt$ActionBlockScriptEngine$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AdminController.kt$AdminController$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AuctionPersistence.kt$AuctionPersistence$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ChunkStreamer.kt$ChunkStreamer$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MailPersistence.kt$MailPersistence$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:TerrainCache.kt$TerrainCache$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:WorldPersistence.kt$WorldPersistence$e: Exception</ID>
+    <ID>TooManyFunctions:AdminController.kt$AdminController</ID>
+    <ID>TooManyFunctions:CombatProcessor.kt$CombatProcessor</ID>
+    <ID>TooManyFunctions:ExtractKayKitAnimations.kt$org.micoli.micraft.tools.ExtractKayKitAnimations.kt</ID>
+    <ID>TooManyFunctions:FactionManager.kt$FactionManager</ID>
+    <ID>TooManyFunctions:GameLoop.kt$GameLoop</ID>
+    <ID>TooManyFunctions:GameLoopModule.kt$GameLoopModule</ID>
+    <ID>TooManyFunctions:GameWorld.kt$GameWorld</ID>
+    <ID>TooManyFunctions:GenerateReferenceDocs.kt$org.micoli.micraft.tools.GenerateReferenceDocs.kt</ID>
+    <ID>TooManyFunctions:GroupManager.kt$GroupManager</ID>
+    <ID>TooManyFunctions:GuildManager.kt$GuildManager</ID>
+    <ID>TooManyFunctions:NpcManager.kt$NpcManager</ID>
+    <ID>TooManyFunctions:RectangularHouseRenderer.kt$org.micoli.micraft.game.world.house.RectangularHouseRenderer.kt</ID>
+    <ID>TooManyFunctions:WorldPersistence.kt$WorldPersistence</ID>
+    <ID>TooManyFunctions:WorldSimulator.kt$WorldSimulator</ID>
+    <ID>TooManyFunctions:WorldState.kt$WorldState : BlockStoreRailWorldView</ID>
+    <ID>TooManyFunctions:YamlPatchWriter.kt$org.micoli.micraft.config.YamlPatchWriter.kt</ID>
+    <ID>UnusedParameter:AnimalInteractionProcessor.kt$AnimalInteractionProcessor$currentDay: Double</ID>
+    <ID>UnusedParameter:ChunkStreamer.kt$ChunkStreamer$cx: Int</ID>
+    <ID>UnusedParameter:ChunkStreamer.kt$ChunkStreamer$cz: Int</ID>
+    <ID>UnusedParameter:CombatProcessorTest.kt$CombatProcessorTest$power: Int = 0</ID>
+    <ID>UnusedParameter:FactionManager.kt$FactionManager$playerName: String</ID>
+    <ID>UnusedParameter:MovementProcessor.kt$MovementProcessor$session: PlayerSession</ID>
+    <ID>UnusedParameter:NpcCommand.kt$NpcCommand$context: CommandContext</ID>
+    <ID>UnusedParameter:PlainColorRegistryLoader.kt$PlainColorRegistryLoader$node: YamlNode?</ID>
+    <ID>UnusedParameter:SiegeWeaponManager.kt$SiegeWeaponManager$world: WorldState</ID>
+    <ID>UnusedPrivateClass:ObjToBbmodel.kt$ObjToBbmodel$MeshVertex</ID>
+    <ID>UnusedPrivateProperty:Application.kt$private val log = LoggerFactory.getLogger(Application::class.java)</ID>
+    <ID>UnusedPrivateProperty:AssetNotifyController.kt$AssetNotifyController$frame</ID>
+    <ID>UnusedPrivateProperty:BlockPlacerTest.kt$BlockPlacerTest$y</ID>
+    <ID>UnusedPrivateProperty:BuffCommand.kt$BuffCommand$val lang = session.state.language</ID>
+    <ID>UnusedPrivateProperty:FactionManager.kt$FactionManager$private val broadcast: suspend (ServerMessage) -> Unit</ID>
+    <ID>UnusedPrivateProperty:GuildCommand.kt$GuildCommand$val lang = session.state.language</ID>
+    <ID>UnusedPrivateProperty:GuildManager.kt$GuildManager$val lang = founder.state.language</ID>
+    <ID>UnusedPrivateProperty:RemoveGroupCommand.kt$RemoveGroupCommand$val result = mutatePlayerGroups( playerName, context.sessions(), context.persistence, groupsConfig, context.savePlayer) { current -> current.filter { it !in toRemove } }</ID>
+    <ID>UnusedPrivateProperty:SetGroupCommand.kt$SetGroupCommand$val result = mutatePlayerGroups( playerName, context.sessions(), context.persistence, groupsConfig, context.savePlayer) { current -> current + newGroups }</ID>
+    <ID>UnusedPrivateProperty:StatusEffectProcessor.kt$private val log = LoggerFactory.getLogger(StatusEffectProcessor::class.java)</ID>
+    <ID>UnusedPrivateProperty:TestFixtures.kt$private val _itemRegistryInit = ItemRegistry.load( mapOf( ItemType("COBBLESTONE") to ItemDefinition( buildable = true, placesBlock = BlockType.STONE, label = "COB", bg = "#7A7A7A"), ItemType("DIRT") to ItemDefinition( buildable = true, placesBlock = BlockType.DIRT, label = "DRT", bg = "#8B5A2B"), ItemType("SAND") to ItemDefinition( buildable = true, placesBlock = BlockType.SAND, label = "SND", bg = "#D5C89A"), ItemType("GRAVEL") to ItemDefinition( buildable = true, placesBlock = BlockType.GRAVEL, label = "GRV", bg = "#9A9A9A"), ItemType("SANDSTONE") to ItemDefinition( buildable = true, placesBlock = BlockType.SANDSTONE, label = "SST", bg = "#C8B46C"), ItemType("SNOWBALL") to ItemDefinition(buildable = false, label = "SNW", bg = "#DCE8F5"), ItemType("FLINT") to ItemDefinition(buildable = false, label = "FLT", bg = "#4A4A52"), ItemType("SEED") to ItemDefinition( buildable = true, placesBlock = BlockType.SEED, label = "SED", bg = "#C8A050"), ItemType("GRASS") to ItemDefinition( buildable = true, placesBlock = BlockType.GRASS, label = "GRS", bg = "#4A7A28"), ItemType("SNOW_BLOCK") to ItemDefinition( buildable = true, placesBlock = BlockType.SNOW, label = "SNB", bg = "#F0F0F0"), ItemType("OAK_LOG") to ItemDefinition( buildable = true, placesBlock = BlockType.OAK_LOG, label = "OLG", bg = "#654321"), ItemType("OAK_LEAVES") to ItemDefinition( buildable = true, placesBlock = BlockType.OAK_LEAVES, label = "OLV", bg = "#3C641E"), ItemType("PINE_LOG") to ItemDefinition( buildable = true, placesBlock = BlockType.PINE_LOG, label = "PLG", bg = "#503219"), ItemType("PINE_LEAVES") to ItemDefinition( buildable = true, placesBlock = BlockType.PINE_LEAVES, label = "PLV", bg = "#285A3C"), ItemType("PINE_LEAVES_SNOW") to ItemDefinition( buildable = true, placesBlock = BlockType.PINE_LEAVES_SNOW, label = "PLS", bg = "#C8D7DC"), ItemType("FLOWER") to ItemDefinition( buildable = true, placesBlock = BlockType.FLOWER, label = "FLW", bg = "#E6C832"), ItemType("WEED") to ItemDefinition( buildable = true, placesBlock = BlockType.WEED, label = "WED", bg = "#468228"), ItemType("LEGO_BRICK") to ItemDefinition( buildable = true, placesBlock = BlockType.LEGO_BRICK, label = "LGO", bg = "#DC3232"), ItemType("LEGO_SLOPE") to ItemDefinition( buildable = true, placesBlock = BlockType.LEGO_SLOPE, label = "LSL", bg = "#B43232"), ItemType("LEGO_PLATE") to ItemDefinition( buildable = true, placesBlock = BlockType.LEGO_PLATE, label = "LPL", bg = "#C86432"), ItemType("LEGO_BRICK_2X1") to ItemDefinition( buildable = true, placesBlock = BlockType.LEGO_BRICK_2X1, label = "L2X", bg = "#3264DC"), ItemType("LEGO_BRICK_1X2") to ItemDefinition( buildable = true, placesBlock = BlockType.LEGO_BRICK_1X2, label = "L1X", bg = "#32DC64"), ItemType("LEGO_PLATE_2X2") to ItemDefinition( buildable = true, placesBlock = BlockType.LEGO_PLATE_2X2, label = "P22", bg = "#B450B4"), ItemType("LEGO_PLATE_2X4") to ItemDefinition( buildable = true, placesBlock = BlockType.LEGO_PLATE_2X4, label = "P24", bg = "#50B450"), ItemType("LEGO_ARCH_4X1") to ItemDefinition( buildable = true, placesBlock = BlockType("LEGO_ARCH_4X1"), label = "LA4", bg = "#AA6622"), ItemType("LEGO_PIECE") to ItemDefinition( buildable = true, placesBlock = BlockType.LEGO_PIECE, label = "LPC", bg = "#B4B450"), ))</ID>
+    <ID>UnusedPrivateProperty:UndoCommandTest.kt$UndoCommandTest$val spawned = wim.spawnDrops(pos, BlockType.STONE) // no drops from empty config → empty</ID>
+    <ID>UseCheckOrError:ExtractKayKitAnimations.kt$Skeleton$throw IllegalStateException("Joint '$name' missing from rig")</ID>
+    <ID>VariableNaming:CircularTempleRenderer.kt$val R = minOf(width, depth) / 2</ID>
+    <ID>VariableNaming:RoadVoronoiZones.kt$RoadVoronoiZones$val D = 2.0 * (ax * (bz - cz) + bx * (cz - az) + cx * (az - bz))</ID>
+    <ID>VariableNaming:VoronoiBiomeZones.kt$VoronoiBiomeZones$val D = 2.0 * (ax * bz - az * bx)</ID>
+    <ID>VariableNaming:VoronoiBiomeZones.kt$VoronoiBiomeZones$val R2 = (vx - sx1) * (vx - sx1) + (vz - sz1) * (vz - sz1)</ID>
+    <ID>VariableNaming:VoronoiBiomeZones.kt$VoronoiBiomeZones$val V = circumcenter( sx1.toDouble(), sz1.toDouble(), sx2.toDouble(), sz2.toDouble(), sx3.toDouble(), sz3.toDouble()) ?: continue</ID>
+    <ID>WildcardImport:AdminClaimRoutesTest.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:AdminClaimRoutesTest.kt$import io.ktor.client.statement.*</ID>
+    <ID>WildcardImport:AdminClaimRoutesTest.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AdminClaimRoutesTest.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AdminClaimRoutesTest.kt$import io.ktor.server.testing.*</ID>
+    <ID>WildcardImport:AdminContentRoutesTest.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:AdminContentRoutesTest.kt$import io.ktor.client.statement.*</ID>
+    <ID>WildcardImport:AdminContentRoutesTest.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AdminContentRoutesTest.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AdminContentRoutesTest.kt$import io.ktor.server.testing.*</ID>
+    <ID>WildcardImport:AdminController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AdminController.kt$import io.ktor.server.request.*</ID>
+    <ID>WildcardImport:AdminController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:AdminController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AdminController.kt$import io.ktor.server.websocket.*</ID>
+    <ID>WildcardImport:AdminController.kt$import io.ktor.websocket.*</ID>
+    <ID>WildcardImport:AdminControllerAuthTest.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:AdminControllerAuthTest.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AdminControllerAuthTest.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AdminControllerAuthTest.kt$import io.ktor.server.testing.*</ID>
+    <ID>WildcardImport:AdminGroupsRoutesTest.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:AdminGroupsRoutesTest.kt$import io.ktor.client.statement.*</ID>
+    <ID>WildcardImport:AdminGroupsRoutesTest.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AdminGroupsRoutesTest.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AdminGroupsRoutesTest.kt$import io.ktor.server.testing.*</ID>
+    <ID>WildcardImport:AdminPlayerEquipmentRoutesTest.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:AdminPlayerEquipmentRoutesTest.kt$import io.ktor.client.statement.*</ID>
+    <ID>WildcardImport:AdminPlayerEquipmentRoutesTest.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AdminPlayerEquipmentRoutesTest.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AdminPlayerEquipmentRoutesTest.kt$import io.ktor.server.testing.*</ID>
+    <ID>WildcardImport:AdminSessionRoutingTest.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:AdminSessionRoutingTest.kt$import io.ktor.client.statement.*</ID>
+    <ID>WildcardImport:AdminSessionRoutingTest.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AdminSessionRoutingTest.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AdminSessionRoutingTest.kt$import io.ktor.server.testing.*</ID>
+    <ID>WildcardImport:AdminSocialRoutesTest.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:AdminSocialRoutesTest.kt$import io.ktor.client.statement.*</ID>
+    <ID>WildcardImport:AdminSocialRoutesTest.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AdminSocialRoutesTest.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AdminSocialRoutesTest.kt$import io.ktor.server.testing.*</ID>
+    <ID>WildcardImport:Application.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:Application.kt$import io.ktor.server.application.*</ID>
+    <ID>WildcardImport:Application.kt$import io.ktor.server.engine.*</ID>
+    <ID>WildcardImport:Application.kt$import io.ktor.server.http.content.*</ID>
+    <ID>WildcardImport:Application.kt$import io.ktor.server.netty.*</ID>
+    <ID>WildcardImport:Application.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:Application.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:Application.kt$import io.ktor.server.websocket.*</ID>
+    <ID>WildcardImport:ApplicationTest.kt$import io.ktor.client.plugins.websocket.*</ID>
+    <ID>WildcardImport:ApplicationTest.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:ApplicationTest.kt$import io.ktor.client.statement.*</ID>
+    <ID>WildcardImport:ApplicationTest.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:ApplicationTest.kt$import io.ktor.server.testing.*</ID>
+    <ID>WildcardImport:ApplicationTest.kt$import io.ktor.websocket.*</ID>
+    <ID>WildcardImport:ArmorsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:ArmorsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:ArmorsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AssetManifestController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AssetManifestController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:AssetManifestController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AssetNotifyController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AssetNotifyController.kt$import io.ktor.server.application.*</ID>
+    <ID>WildcardImport:AssetNotifyController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:AssetNotifyController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AssetNotifyController.kt$import io.ktor.server.websocket.*</ID>
+    <ID>WildcardImport:AssetNotifyController.kt$import io.ktor.websocket.*</ID>
+    <ID>WildcardImport:AttacksController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AttacksController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:AttacksController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AuthRoutes.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AuthRoutes.kt$import io.ktor.server.application.*</ID>
+    <ID>WildcardImport:AuthRoutes.kt$import io.ktor.server.request.*</ID>
+    <ID>WildcardImport:AuthRoutes.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:AuthRoutes.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:AuthRoutesTest.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:AuthRoutesTest.kt$import io.ktor.client.statement.*</ID>
+    <ID>WildcardImport:AuthRoutesTest.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AuthRoutesTest.kt$import io.ktor.server.testing.*</ID>
+    <ID>WildcardImport:AutocompleteController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:AutocompleteController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:AutocompleteController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:BiomesController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:BiomesController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:BiomesController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:CharacterController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:CharacterController.kt$import io.ktor.server.request.*</ID>
+    <ID>WildcardImport:CharacterController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:CharacterController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:ChunkConnectAuthTest.kt$import io.ktor.websocket.*</ID>
+    <ID>WildcardImport:ChunkController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:ChunkController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:ChunkController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:ChunkRoutesTest.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:ChunkRoutesTest.kt$import io.ktor.client.statement.*</ID>
+    <ID>WildcardImport:ChunkRoutesTest.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:ChunkRoutesTest.kt$import io.ktor.server.testing.*</ID>
+    <ID>WildcardImport:ChunkStreamer.kt$import kotlin.math.*</ID>
+    <ID>WildcardImport:DocsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:DocsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:DocsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:ExtractKayKitAnimations.kt$import kotlin.math.*</ID>
+    <ID>WildcardImport:ExtractKayKitAnimations.kt$import kotlinx.serialization.json.*</ID>
+    <ID>WildcardImport:FurnitureController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:FurnitureController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:FurnitureController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:GameAssetsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:GameAssetsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:GameAssetsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:GameLoop.kt$import io.ktor.server.application.*</ID>
+    <ID>WildcardImport:GameLoop.kt$import io.ktor.websocket.*</ID>
+    <ID>WildcardImport:GameLoop.kt$import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:HubConnection.kt$import io.ktor.websocket.*</ID>
+    <ID>WildcardImport:HubController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:HubController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:HubController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:HubController.kt$import io.ktor.server.websocket.*</ID>
+    <ID>WildcardImport:I18nController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:I18nController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:I18nController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:ItemsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:ItemsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:ItemsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:KeybindingsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:KeybindingsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:KeybindingsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:LayoutController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:LayoutController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:LayoutController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:MacrosController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:MacrosController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:MacrosController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:MapController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:MapController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:MapController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:MapControllerAuthTest.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:MapControllerAuthTest.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:MapControllerAuthTest.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:MapControllerAuthTest.kt$import io.ktor.server.testing.*</ID>
+    <ID>WildcardImport:MapRoutesTest.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:MapRoutesTest.kt$import io.ktor.client.statement.*</ID>
+    <ID>WildcardImport:MapRoutesTest.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:MapRoutesTest.kt$import io.ktor.server.testing.*</ID>
+    <ID>WildcardImport:MetricsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:MetricsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:MetricsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:OAuthProvider.kt$import io.ktor.client.*</ID>
+    <ID>WildcardImport:OAuthProvider.kt$import io.ktor.client.engine.cio.*</ID>
+    <ID>WildcardImport:OAuthProvider.kt$import io.ktor.client.request.*</ID>
+    <ID>WildcardImport:OAuthProvider.kt$import io.ktor.client.request.forms.*</ID>
+    <ID>WildcardImport:OAuthProvider.kt$import io.ktor.client.statement.*</ID>
+    <ID>WildcardImport:OAuthProvider.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:ObjToBbmodel.kt$import kotlinx.serialization.json.*</ID>
+    <ID>WildcardImport:PlayerArmorsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:PlayerArmorsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:PlayerArmorsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:PlayerHandsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:PlayerHandsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:PlayerHandsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:PlayerOwnedController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:PlayerOwnedController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:PlayerOwnedController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:PlayerRpgController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:PlayerRpgController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:PlayerRpgController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:PlayerSession.kt$import io.ktor.websocket.*</ID>
+    <ID>WildcardImport:PlayerSkinController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:PlayerSkinController.kt$import io.ktor.server.request.*</ID>
+    <ID>WildcardImport:PlayerSkinController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:PlayerSkinController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:PlayersController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:PlayersController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:PlayersController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:QuestsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:QuestsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:QuestsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:ScreenshotController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:ScreenshotController.kt$import io.ktor.server.request.*</ID>
+    <ID>WildcardImport:ScreenshotController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:ScreenshotController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:ServerInfoController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:ServerInfoController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:ServerInfoController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:SiegeWeaponsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:SiegeWeaponsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:SiegeWeaponsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:SkinsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:SkinsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:SkinsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:ToolsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:ToolsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:ToolsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:VehiclesController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:VehiclesController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:VehiclesController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:ViewModePersistenceTest.kt$import kotlin.test.*</ID>
+    <ID>WildcardImport:WeaponsController.kt$import io.ktor.http.*</ID>
+    <ID>WildcardImport:WeaponsController.kt$import io.ktor.server.response.*</ID>
+    <ID>WildcardImport:WeaponsController.kt$import io.ktor.server.routing.*</ID>
+    <ID>WildcardImport:WorldPersistence.kt$import kotlin.io.path.*</ID>
+  </CurrentIssues>
+</SmellBaseline>

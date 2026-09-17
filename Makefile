@@ -24,7 +24,7 @@ endif
         prod-up prod-down prod-restart prod-logs prod-build \
         build build-all build-client build-wasm build-js build-map build-admin build-hub build-docs \
         build-plugin-examples-hello-world trigger-wasm storybook gen-api \
-        code-standard check-docs check-openapi check-schemas ts-code-standard \
+        code-standard check-detekt check-docs check-openapi check-schemas ts-code-standard \
         check-configuration spotless-apply ts-typecheck ts-lint ts-lint-fix \
         ts-test-setup ts-test ts-test-storybook test kt-test kt-test-info kt-web-test \
         e2e e2e-server \
@@ -190,7 +190,10 @@ dev-nuke: ## Destroy all named build volumes + full restart (nuclear option, ~2 
 
 ##@ Standard & code analysis
 
-code-standard: spotless-apply ts-code-standard check-docs check-configuration check-openapi check-schemas ## Full lint on Kotlin + TypeScript
+code-standard: spotless-apply check-detekt ts-code-standard check-docs check-configuration check-openapi check-schemas ## Full lint on Kotlin + TypeScript
+
+check-detekt: ## Static analysis on Kotlin sources (detekt)
+	$(EXEC) "./gradlew detekt"
 
 check-docs: ## Verify generated docs are up to date (commands + reference tables)
 	$(EXEC) "./gradlew :server:checkCommandsDocs :server:checkReferenceDocs"
