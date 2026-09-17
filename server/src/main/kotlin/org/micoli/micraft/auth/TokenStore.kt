@@ -3,15 +3,38 @@ package org.micoli.micraft.auth
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.Date
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.micoli.micraft.config.ConfigPaths
 
-class TokenStore(scope: CoroutineScope, private val ttlSeconds: Long = 600) {
-    private val algorithm = Algorithm.HMAC256(UUID.randomUUID().toString().replace("-", ""))
+/**
+ * Reads the JWT signing secret from [path], generating and persisting one on first run. Keeping it
+ * stable across restarts is what lets a token issued before `make dev-restart-server` still
+ * validate after — a random per-boot secret would otherwise force every connected client back to
+ * the login screen on every server restart.
+ */
+fun loadOrCreateJwtSecret(path: Path = ConfigPaths.dataConfig("jwt.secret")): String {
+    if (Files.exists(path)) return Files.readString(path).trim()
+    val secret =
+        UUID.randomUUID().toString().replace("-", "") +
+            UUID.randomUUID().toString().replace("-", "")
+    Files.createDirectories(path.parent)
+    Files.writeString(path, secret)
+    return secret
+}
+
+class TokenStore(
+    scope: CoroutineScope,
+    private val ttlSeconds: Long = 600,
+    secret: String = loadOrCreateJwtSecret(),
+) {
+    private val algorithm = Algorithm.HMAC256(secret)
     private val verifier = JWT.require(algorithm).build()
     private val issued = ConcurrentHashMap.newKeySet<String>()
 
