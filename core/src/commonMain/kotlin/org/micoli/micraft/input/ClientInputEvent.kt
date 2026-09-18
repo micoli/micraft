@@ -64,69 +64,99 @@ sealed class ClientInputEvent {
 
     data class Macro(val name: String) : ClientInputEvent()
 
-    data class NpcChatSend(val json: String) : ClientInputEvent()
+    /** NPC dialogue payloads — routed as a group to `NpcChatEventHandler`. */
+    sealed interface NpcChatEvent
 
-    data class NpcChatAcceptGift(val json: String) : ClientInputEvent()
+    data class NpcChatSend(val json: String) : ClientInputEvent(), NpcChatEvent
 
-    data class MailSend(val json: String) : ClientInputEvent()
+    data class NpcChatAcceptGift(val json: String) : ClientInputEvent(), NpcChatEvent
 
-    data class MailSeen(val mailId: String) : ClientInputEvent()
+    /** Mailbox payloads — routed as a group to `MailEventHandler`. */
+    sealed interface MailEvent
 
-    data class MailDelete(val mailId: String) : ClientInputEvent()
+    data class MailSend(val json: String) : ClientInputEvent(), MailEvent
 
-    data class MailClaim(val mailId: String) : ClientInputEvent()
+    data class MailSeen(val mailId: String) : ClientInputEvent(), MailEvent
 
-    data class AuctionCreate(val json: String) : ClientInputEvent()
+    data class MailDelete(val mailId: String) : ClientInputEvent(), MailEvent
 
-    data class AuctionBid(val json: String) : ClientInputEvent()
+    data class MailClaim(val mailId: String) : ClientInputEvent(), MailEvent
 
-    data class AuctionBuyNow(val listingId: String) : ClientInputEvent()
+    /** Auction-house payloads — routed as a group to `AuctionEventHandler`. */
+    sealed interface AuctionEvent
 
-    data class AuctionCancel(val listingId: String) : ClientInputEvent()
+    data class AuctionCreate(val json: String) : ClientInputEvent(), AuctionEvent
 
-    data class AuctionSetFilter(val json: String) : ClientInputEvent()
+    data class AuctionBid(val json: String) : ClientInputEvent(), AuctionEvent
 
-    data class ClaimCreate(val json: String) : ClientInputEvent()
+    data class AuctionBuyNow(val listingId: String) : ClientInputEvent(), AuctionEvent
 
-    data class ClaimAbandon(val claimId: String) : ClientInputEvent()
+    data class AuctionCancel(val listingId: String) : ClientInputEvent(), AuctionEvent
 
-    data class ClaimSetTrusted(val json: String) : ClientInputEvent()
+    data class AuctionSetFilter(val json: String) : ClientInputEvent(), AuctionEvent
 
-    data class GroupInvite(val playerId: String) : ClientInputEvent()
+    /** Land-claim payloads — routed as a group to `ClaimEventHandler`. */
+    sealed interface ClaimEvent
 
-    data class GroupRespond(val groupId: String, val accept: Boolean) : ClientInputEvent()
+    data class ClaimCreate(val json: String) : ClientInputEvent(), ClaimEvent
 
-    data class GroupKick(val playerId: String) : ClientInputEvent()
+    data class ClaimAbandon(val claimId: String) : ClientInputEvent(), ClaimEvent
 
-    data class GroupTransfer(val playerId: String) : ClientInputEvent()
+    data class ClaimSetTrusted(val json: String) : ClientInputEvent(), ClaimEvent
 
-    data class GuildCreate(val name: String, val tag: String) : ClientInputEvent()
+    /** Party/group payloads — routed as a group to `GroupEventHandler`. */
+    sealed interface GroupEvent
 
-    data class GuildInvite(val playerId: String) : ClientInputEvent()
+    data class GroupInvite(val playerId: String) : ClientInputEvent(), GroupEvent
 
-    data class GuildRespond(val guildId: String, val accept: Boolean) : ClientInputEvent()
+    data class GroupRespond(val groupId: String, val accept: Boolean) :
+        ClientInputEvent(), GroupEvent
 
-    data class GuildKick(val playerId: String) : ClientInputEvent()
+    data class GroupKick(val playerId: String) : ClientInputEvent(), GroupEvent
 
-    data class GuildMotd(val text: String) : ClientInputEvent()
+    data class GroupTransfer(val playerId: String) : ClientInputEvent(), GroupEvent
 
-    data class GuildSetRank(val playerId: String, val rank: String) : ClientInputEvent()
+    /** Guild payloads — routed as a group to `GuildEventHandler`. */
+    sealed interface GuildEvent
 
-    data class GuildRankUpsert(val json: String) : ClientInputEvent()
+    data class GuildCreate(val name: String, val tag: String) : ClientInputEvent(), GuildEvent
 
-    data class GuildRankDelete(val rankId: String) : ClientInputEvent()
+    data class GuildInvite(val playerId: String) : ClientInputEvent(), GuildEvent
 
-    data class GuildTransfer(val playerId: String) : ClientInputEvent()
+    data class GuildRespond(val guildId: String, val accept: Boolean) :
+        ClientInputEvent(), GuildEvent
 
-    data class GuildBankDeposit(val item: String, val count: Int) : ClientInputEvent()
+    data class GuildKick(val playerId: String) : ClientInputEvent(), GuildEvent
 
-    data class GuildBankWithdraw(val item: String, val count: Int) : ClientInputEvent()
+    data class GuildMotd(val text: String) : ClientInputEvent(), GuildEvent
+
+    data class GuildSetRank(val playerId: String, val rank: String) :
+        ClientInputEvent(), GuildEvent
+
+    data class GuildRankUpsert(val json: String) : ClientInputEvent(), GuildEvent
+
+    data class GuildRankDelete(val rankId: String) : ClientInputEvent(), GuildEvent
+
+    data class GuildTransfer(val playerId: String) : ClientInputEvent(), GuildEvent
+
+    data class GuildBankDeposit(val item: String, val count: Int) : ClientInputEvent(), GuildEvent
+
+    data class GuildBankWithdraw(val item: String, val count: Int) : ClientInputEvent(), GuildEvent
 
     data class FactionSet(val factionId: String?) : ClientInputEvent()
 
-    data class Attack(val attackId: String, val rank: Int) : ClientInputEvent()
+    /**
+     * Combat-intent payloads (attack/spell casts) — routed as a group to
+     * `CombatIntentEventHandler`.
+     */
+    sealed interface CombatIntentEvent
 
-    data class Spell(val spellId: String, val rank: Int) : ClientInputEvent()
+    data class Attack(val attackId: String, val rank: Int) : ClientInputEvent(), CombatIntentEvent
+
+    data class Spell(val spellId: String, val rank: Int) : ClientInputEvent(), CombatIntentEvent
+
+    /** Creative-mode payloads — routed as a group to `CreativeEventHandler`. */
+    sealed interface CreativeEvent
 
     data class CreativePlace(
         val x: Int,
@@ -134,13 +164,14 @@ sealed class ClientInputEvent {
         val z: Int,
         val itemId: String,
         val rotation: Int,
-    ) : ClientInputEvent()
+    ) : ClientInputEvent(), CreativeEvent
 
-    data class CreativeFocus(val x: Float, val z: Float) : ClientInputEvent()
+    data class CreativeFocus(val x: Float, val z: Float) : ClientInputEvent(), CreativeEvent
 
-    data class CreativeBreak(val x: Int, val y: Int, val z: Int) : ClientInputEvent()
+    data class CreativeBreak(val x: Int, val y: Int, val z: Int) :
+        ClientInputEvent(), CreativeEvent
 
-    data class ScenePreviewRequest(val sceneId: String) : ClientInputEvent()
+    data class ScenePreviewRequest(val sceneId: String) : ClientInputEvent(), CreativeEvent
 
     companion object {
         /** Prefix -> payload parser. Order doesn't matter: every prefix here is distinct. */

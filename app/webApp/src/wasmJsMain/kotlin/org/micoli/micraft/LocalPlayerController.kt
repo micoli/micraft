@@ -12,12 +12,20 @@ import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ItemRegistry
-import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
+import org.micoli.micraft.input.AuctionEventHandler
+import org.micoli.micraft.input.ClaimEventHandler
+import org.micoli.micraft.input.ClientEventContext
 import org.micoli.micraft.input.ClientInputAction
 import org.micoli.micraft.input.ClientInputEvent
+import org.micoli.micraft.input.CombatIntentEventHandler
+import org.micoli.micraft.input.CreativeEventHandler
+import org.micoli.micraft.input.GroupEventHandler
+import org.micoli.micraft.input.GuildEventHandler
+import org.micoli.micraft.input.MailEventHandler
+import org.micoli.micraft.input.NpcChatEventHandler
 import org.micoli.micraft.physics.AabbCollider
 import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.player.PlayerStance
@@ -987,6 +995,25 @@ class LocalPlayerController(
         return animClip
     }
 
+    // Per-concern handlers for payload-carrying ClientInputEvents — see ClientEventHandlers.kt.
+    // Each is pure logic (decode payload, send ClientMessage) exercised through the narrow
+    // ClientEventContext below, with no reference to the wasm/JS bridge or this controller's
+    // other state.
+    private val clientEventContext =
+        ClientEventContext(
+            outMessages = outMessages,
+            currentCombatTargetId = { currentCombatTargetId },
+            onDecodeFailure = { label, error -> jsError("$label decode failed: $error") },
+        )
+    private val npcChatEvents = NpcChatEventHandler(clientEventContext)
+    private val mailEvents = MailEventHandler(clientEventContext)
+    private val auctionEvents = AuctionEventHandler(clientEventContext)
+    private val claimEvents = ClaimEventHandler(clientEventContext)
+    private val groupEvents = GroupEventHandler(clientEventContext)
+    private val guildEvents = GuildEventHandler(clientEventContext)
+    private val combatIntentEvents = CombatIntentEventHandler(clientEventContext)
+    private val creativeEvents = CreativeEventHandler(clientEventContext)
+
     private fun processDiscreteEvents() {
         val events = jsConsumeEvents()
         repeat(jsEventsLength(events)) { i ->
@@ -1000,125 +1027,16 @@ class LocalPlayerController(
             is ClientInputEvent.ShortcutPageGoto -> goToPage(event.page - 1)
             is ClientInputEvent.Command -> outMessages.trySend(ClientMessage.Command(event.text))
             is ClientInputEvent.Macro -> outMessages.trySend(ClientMessage.RunMacro(event.name))
-            is ClientInputEvent.NpcChatSend ->
-                runCatching {
-                    outMessages.trySend(
-                        Json.decodeFromString<ClientMessage.NpcChatSend>(event.json))
-                }
-            is ClientInputEvent.NpcChatAcceptGift ->
-                runCatching {
-                    outMessages.trySend(
-                        Json.decodeFromString<ClientMessage.NpcChatAcceptGift>(event.json))
-                }
-            is ClientInputEvent.MailSend ->
-                runCatching {
-                    outMessages.trySend(Json.decodeFromString<ClientMessage.SendMail>(event.json))
-                }
-            is ClientInputEvent.MailSeen ->
-                outMessages.trySend(ClientMessage.MarkMailSeen(event.mailId))
-            is ClientInputEvent.MailDelete ->
-                outMessages.trySend(ClientMessage.DeleteMail(event.mailId))
-            is ClientInputEvent.MailClaim ->
-                outMessages.trySend(ClientMessage.ClaimMailAttachments(event.mailId))
-            is ClientInputEvent.AuctionCreate ->
-                runCatching {
-                        outMessages.trySend(
-                            Json.decodeFromString<ClientMessage.AuctionCreateListing>(event.json))
-                    }
-                    .onFailure { jsError("auction_create decode failed: $it") }
-            is ClientInputEvent.AuctionBid ->
-                runCatching {
-                        outMessages.trySend(
-                            Json.decodeFromString<ClientMessage.AuctionPlaceBid>(event.json))
-                    }
-                    .onFailure { jsError("auction_bid decode failed: $it") }
-            is ClientInputEvent.AuctionBuyNow ->
-                outMessages.trySend(ClientMessage.AuctionBuyNow(event.listingId))
-            is ClientInputEvent.AuctionCancel ->
-                outMessages.trySend(ClientMessage.AuctionCancelListing(event.listingId))
-            is ClientInputEvent.AuctionSetFilter ->
-                runCatching {
-                        outMessages.trySend(
-                            Json.decodeFromString<ClientMessage.AuctionSetFilter>(event.json))
-                    }
-                    .onFailure { jsError("auction_set_filter decode failed: $it") }
-            is ClientInputEvent.ClaimCreate ->
-                runCatching {
-                        outMessages.trySend(
-                            Json.decodeFromString<ClientMessage.ClaimCreate>(event.json))
-                    }
-                    .onFailure { jsError("claim_create decode failed: $it") }
-            is ClientInputEvent.ClaimAbandon ->
-                outMessages.trySend(ClientMessage.ClaimAbandon(event.claimId))
-            is ClientInputEvent.ClaimSetTrusted ->
-                runCatching {
-                        outMessages.trySend(
-                            Json.decodeFromString<ClientMessage.ClaimSetTrusted>(event.json))
-                    }
-                    .onFailure { jsError("claim_set_trusted decode failed: $it") }
-            is ClientInputEvent.GroupInvite ->
-                outMessages.trySend(ClientMessage.GroupInvite(event.playerId))
-            is ClientInputEvent.GroupRespond ->
-                outMessages.trySend(ClientMessage.GroupInviteRespond(event.groupId, event.accept))
-            is ClientInputEvent.GroupKick ->
-                outMessages.trySend(ClientMessage.GroupKick(event.playerId))
-            is ClientInputEvent.GroupTransfer ->
-                outMessages.trySend(ClientMessage.GroupTransfer(event.playerId))
-            is ClientInputEvent.GuildCreate ->
-                outMessages.trySend(ClientMessage.GuildCreate(event.name, event.tag))
-            is ClientInputEvent.GuildInvite ->
-                outMessages.trySend(ClientMessage.GuildInvite(event.playerId))
-            is ClientInputEvent.GuildRespond ->
-                outMessages.trySend(ClientMessage.GuildInviteRespond(event.guildId, event.accept))
-            is ClientInputEvent.GuildKick ->
-                outMessages.trySend(ClientMessage.GuildKick(event.playerId))
-            is ClientInputEvent.GuildMotd ->
-                outMessages.trySend(ClientMessage.GuildSetMotd(event.text))
-            is ClientInputEvent.GuildSetRank ->
-                outMessages.trySend(ClientMessage.GuildSetRank(event.playerId, event.rank))
-            is ClientInputEvent.GuildRankUpsert ->
-                runCatching {
-                        outMessages.trySend(
-                            Json.decodeFromString<ClientMessage.GuildRankUpsert>(event.json))
-                    }
-                    .onFailure { jsError("guild_rank_upsert decode failed: $it") }
-            is ClientInputEvent.GuildRankDelete ->
-                outMessages.trySend(ClientMessage.GuildRankDelete(event.rankId))
-            is ClientInputEvent.GuildTransfer ->
-                outMessages.trySend(ClientMessage.GuildTransferOwner(event.playerId))
-            is ClientInputEvent.GuildBankDeposit ->
-                outMessages.trySend(
-                    ClientMessage.GuildBankDeposit(ItemType(event.item), event.count))
-            is ClientInputEvent.GuildBankWithdraw ->
-                outMessages.trySend(
-                    ClientMessage.GuildBankWithdraw(ItemType(event.item), event.count))
             is ClientInputEvent.FactionSet ->
                 outMessages.trySend(ClientMessage.FactionSetAffiliation(event.factionId))
-            is ClientInputEvent.Attack -> {
-                val targetId = currentCombatTargetId ?: return
-                outMessages.trySend(
-                    ClientMessage.AttackTarget(
-                        targetId = targetId,
-                        isNpc = true,
-                        attackId = event.attackId,
-                        attackRank = event.rank))
-            }
-            is ClientInputEvent.Spell ->
-                outMessages.trySend(
-                    ClientMessage.UseSpell(spellId = event.spellId, spellRank = event.rank))
-            is ClientInputEvent.CreativePlace ->
-                outMessages.trySend(
-                    ClientMessage.BlockPlace(
-                        BlockPos(event.x, event.y, event.z),
-                        ItemType(event.itemId),
-                        event.rotation.toByte()))
-            is ClientInputEvent.CreativeFocus ->
-                outMessages.trySend(ClientMessage.CreativeCameraFocus(event.x, event.z))
-            is ClientInputEvent.CreativeBreak ->
-                outMessages.trySend(
-                    ClientMessage.BlockBreakStart(BlockPos(event.x, event.y, event.z)))
-            is ClientInputEvent.ScenePreviewRequest ->
-                outMessages.trySend(ClientMessage.RequestScenePreview(event.sceneId))
+            is ClientInputEvent.NpcChatEvent -> npcChatEvents.handle(event)
+            is ClientInputEvent.MailEvent -> mailEvents.handle(event)
+            is ClientInputEvent.AuctionEvent -> auctionEvents.handle(event)
+            is ClientInputEvent.ClaimEvent -> claimEvents.handle(event)
+            is ClientInputEvent.GroupEvent -> groupEvents.handle(event)
+            is ClientInputEvent.GuildEvent -> guildEvents.handle(event)
+            is ClientInputEvent.CombatIntentEvent -> combatIntentEvents.handle(event)
+            is ClientInputEvent.CreativeEvent -> creativeEvents.handle(event)
         }
     }
 
