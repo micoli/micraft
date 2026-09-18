@@ -12,6 +12,7 @@ export function NpcChatTestPage() {
   const [conversations, setConversations] = useState<Record<string, NpcChatTestMessage[]>>({});
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [language, setLanguage] = useState("en");
 
   useEffect(() => {
     getApiAdminNpcs({ throwOnError: true }).then((r) => setNpcs(r.data));
@@ -33,7 +34,7 @@ export function NpcChatTestPage() {
     try {
       const res = await postApiAdminNpcsByIdChatTest({
         path: { id: selected.id },
-        body: { message: text, history },
+        body: { message: text, history, language },
         throwOnError: true,
       });
       setConversations((prev) => ({
@@ -58,7 +59,20 @@ export function NpcChatTestPage() {
 
   return (
     <div className="flex flex-col h-full gap-4">
-      <p className="text-sm text-[#8A99AF]">{t("npcChatTest.intro")}</p>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-[#8A99AF]">{t("npcChatTest.intro")}</p>
+        <label className="flex items-center gap-2 text-xs text-[#8A99AF] shrink-0">
+          {t("npcChatTest.language")}
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="bg-[#1C2434] border border-[#2E3A4E] rounded-lg px-2 py-1 text-sm text-white outline-none focus:border-[#3C50E0]"
+          >
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+          </select>
+        </label>
+      </div>
 
       {npcs && chatNpcs.length === 0 && <p className="text-sm text-[#8A99AF]">{t("npcChatTest.noChatNpcs")}</p>}
 

@@ -265,9 +265,10 @@ export const fr: Record<TranslationKey, string> = {
 
   // ── Page test chat PNJ ───────────────────────────────────────────────────
   "npcChatTest.intro":
-    "Discute directement avec le dialogue LLM d'un chat_npc en vie, hors session joueur réelle — pas d'éligibilité quête/don, réponses toujours en anglais.",
+    "Discute directement avec le dialogue LLM d'un chat_npc en vie, hors session joueur réelle — pas d'éligibilité quête/don.",
   "npcChatTest.noChatNpcs": "Aucun PNJ en vie n'a de capacité de chat pour l'instant.",
   "npcChatTest.selectNpc": "Sélectionner un PNJ",
+  "npcChatTest.language": "Langue de réponse",
   "npcChatTest.messagePlaceholder": "Dis quelque chose au PNJ…",
   "npcChatTest.send": "Envoyer",
   "npcChatTest.sending": "Envoi…",

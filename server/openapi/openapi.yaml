@@ -7311,11 +7311,15 @@ components:
           items:
             $ref: "#/components/schemas/org.micoli.micraft.http.NpcChatTestTurn"
           title: List<NpcChatTestTurn>
+        language:
+          type: string
+          title: String
         message:
           type: string
           title: String
       required:
       - history
+      - language
       - message
       title: NpcChatTestRequest
     org.micoli.micraft.protocol.NpcChatAction:

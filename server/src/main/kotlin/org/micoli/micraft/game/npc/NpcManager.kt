@@ -562,10 +562,7 @@ class NpcManager(
         val minZ = zz * tuning.npcZoneSize.toFloat()
         val maxZ = minZ + tuning.npcZoneSize
         return npcs.values.count {
-            it.state.pos.x >= minX &&
-                it.state.pos.x < maxX &&
-                it.state.pos.z >= minZ &&
-                it.state.pos.z < maxZ
+            (it.state.pos.x in minX..<maxX) && (it.state.pos.z in minZ..<maxZ)
         }
     }
 
@@ -618,10 +615,11 @@ class NpcManager(
         npcId: String,
         history: List<ChatTurn>,
         message: String,
+        language: String = "en",
     ): NpcChatService.ChatTestResult? {
         val instance = npcs[npcId] ?: return null
         val chatCtx = ctx.copy(questManager = getQuestManager(), ollamaClient = getOllamaClient())
-        return NpcChatService.testChat(instance, chatCtx, history, message)
+        return NpcChatService.testChat(instance, chatCtx, history, message, language)
     }
 
     suspend fun handleChatAcceptGift(

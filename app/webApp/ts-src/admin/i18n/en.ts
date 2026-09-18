@@ -269,9 +269,10 @@ export const en = {
 
   // ── NPC chat test page ─────────────────────────────────────────────────────
   "npcChatTest.intro":
-    "Talk directly to a live chat_npc's LLM dialogue, outside of any real player session — no quest/gift eligibility, always replies in English.",
+    "Talk directly to a live chat_npc's LLM dialogue, outside of any real player session — no quest/gift eligibility.",
   "npcChatTest.noChatNpcs": "No live NPC currently has a chat capability.",
   "npcChatTest.selectNpc": "Select an NPC",
+  "npcChatTest.language": "Reply language",
   "npcChatTest.messagePlaceholder": "Say something to the NPC…",
   "npcChatTest.send": "Send",
   "npcChatTest.sending": "Sending…",

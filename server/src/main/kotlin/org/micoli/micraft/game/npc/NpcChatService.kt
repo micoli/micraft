@@ -103,15 +103,18 @@ object NpcChatService {
             ))
     }
 
+    // Small local models (e.g. gemma3:1b) drop a language instruction buried mid-prompt — stating
+    // it first AND repeating it last measurably improves compliance (verified against the model in
+    // use here).
     private fun buildSystemPrompt(
         chat: NpcChatCapability,
         offerableQuests: List<QuestOfferSummary>,
         giftableItems: List<String>,
         languageInstruction: String,
     ): String = buildString {
-        append(chat.dialoguePrompt)
-        append("\n\n")
         append(languageInstruction)
+        append("\n\n")
+        append(chat.dialoguePrompt)
         if (offerableQuests.isNotEmpty()) {
             append("\n\nQuests you may offer if it fits the conversation: ")
             append(offerableQuests.joinToString(", ") { "${it.id} (${it.title})" })
@@ -120,6 +123,8 @@ object NpcChatService {
             append("\n\nItems you may gift if the player convinces you: ")
             append(giftableItems.joinToString(", "))
         }
+        append("\n\nReminder: ")
+        append(languageInstruction)
     }
 
     /**
@@ -134,6 +139,7 @@ object NpcChatService {
         ctx: NpcTickContext,
         history: List<ChatTurn>,
         text: String,
+        language: String = "en",
     ): ChatTestResult? {
         val chat = instance.definition.chat ?: return null
         val ollama = ctx.ollamaClient ?: return null
@@ -145,12 +151,12 @@ object NpcChatService {
             } ?: emptyList()
         val giftableItems = chat.giftableItems
 
+        val languageInstruction =
+            "This is an admin test conversation, not a real player. Always reply in the " +
+                "language with ISO code '$language', regardless of what language this prompt " +
+                "or the player's message is written in."
         val systemPrompt =
-            buildSystemPrompt(
-                chat,
-                offerableQuests,
-                giftableItems,
-                "This is an admin test conversation, not a real player — reply in English.")
+            buildSystemPrompt(chat, offerableQuests, giftableItems, languageInstruction)
 
         val result = ollama.chat(systemPrompt, history, text) ?: return null
         val (action, questOffer, itemOffer) =

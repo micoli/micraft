@@ -4188,6 +4188,10 @@ export const org_micoli_micraft_http_NpcChatTestRequestSchema = {
             },
             title: 'List<NpcChatTestTurn>'
         },
+        language: {
+            type: 'string',
+            title: 'String'
+        },
         message: {
             type: 'string',
             title: 'String'
@@ -4195,6 +4199,7 @@ export const org_micoli_micraft_http_NpcChatTestRequestSchema = {
     },
     required: [
         'history',
+        'language',
         'message'
     ],
     title: 'NpcChatTestRequest'

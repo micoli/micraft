@@ -159,7 +159,8 @@ data class NpcAdminDto(
 @Serializable
 data class NpcChatTestRequest(
     val message: String,
-    val history: List<NpcChatTestTurn> = emptyList()
+    val history: List<NpcChatTestTurn> = emptyList(),
+    val language: String = "en"
 )
 
 @Serializable
@@ -2223,7 +2224,8 @@ class AdminController(
                             .testChat(
                                 npcId,
                                 body.history.map { ChatTurn(it.role, it.content) },
-                                body.message)
+                                body.message,
+                                body.language)
                     if (result == null) {
                         call.respond(HttpStatusCode.ServiceUnavailable)
                         return@post

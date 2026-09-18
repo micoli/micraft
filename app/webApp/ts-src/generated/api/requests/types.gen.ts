@@ -2633,6 +2633,10 @@ export type OrgMicoliMicraftHttpNpcChatTestRequest = {
     /**
      * String
      */
+    language: string;
+    /**
+     * String
+     */
     message: string;
 };
 
