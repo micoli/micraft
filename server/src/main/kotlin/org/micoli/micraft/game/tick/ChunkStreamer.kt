@@ -148,8 +148,14 @@ class ChunkStreamer(private val world: WorldState) {
             pending.remove(cp)
             session.inFlightChunks.add(cp)
             ioScope.launch {
-                val chunk = world.getOrGenerate(cp)
-                pool[cp] = chunk
+                try {
+                    pool[cp] = world.getOrGenerate(cp)
+                } catch (e: Exception) {
+                    // Left in-flight forever otherwise: MAX_IN_FLIGHT slots fill up with poisoned
+                    // chunks and drainPending() stalls indefinitely for this session.
+                    log.warn("chunk generation failed for {} (session {}): {}", cp, session.id.take(8), e.message)
+                    session.inFlightChunks.remove(cp)
+                }
             }
         }
     }

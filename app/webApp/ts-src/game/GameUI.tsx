@@ -703,7 +703,7 @@ export function GameUI() {
         return;
       }
       document.exitPointerLock();
-      navigateRef.current?.(player ? "/chars" : "/auth", reason ? { state: { reason } } : undefined);
+      navigateRef.current?.(player && token ? "/chars" : "/auth", reason ? { state: { reason } } : undefined);
     };
     window.mc.hideLoginOverlay = () => navigateRef.current?.(lastGameUrl());
     window.mc.showDisconnectedOverlay = (msg: string) => {

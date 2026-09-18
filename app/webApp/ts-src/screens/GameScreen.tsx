@@ -2,7 +2,16 @@ import { useMemo, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { startPreloading } from "../game/shared/blockPreviewCache";
 import { ClientEventPrefix } from "../generated/input/clientEvents";
-import { getStoredToken, getLastLang, getAccountEmail, getLastPlayer, getPlayerEntries } from "../lib/authStorage";
+import {
+  getStoredToken,
+  getLastLang,
+  getAccountEmail,
+  getLastPlayer,
+  getPlayerEntries,
+  getUsers,
+  saveUsers,
+} from "../lib/authStorage";
+import { getApiPlayersByEmailByEmail } from "../generated/api/requests";
 import { GameLayout, ChannelSubscription } from "../game/types";
 import { NpcDialog } from "../game/components/npc/NpcDialog";
 import { NpcShopDialog } from "../game/components/npc/NpcShopDialog";
@@ -112,16 +121,39 @@ export function GameScreen() {
     const token = getStoredToken();
     const lang = getLastLang();
     const accountKey = getAccountEmail() || email;
-    // The URL's charId identifies which of this account's characters this tab belongs to —
-    // getLastPlayer() is a single account-wide cache shared across tabs and would resolve every
-    // tab to whichever character was played most recently, regardless of which one this tab is for.
-    const charByUrl = charId ? getPlayerEntries(accountKey).find((e) => e.id === charId)?.name : undefined;
-    const charName = charByUrl || getLastPlayer(accountKey) || getLastPlayer(email);
-    if (charName) {
-      loginResultRef.current = `${email}\t${charName}\t${lang}\t${token}`;
-    } else {
-      navigate("/auth");
+
+    async function resolveCharName(): Promise<string> {
+      // The URL's charId identifies which of this account's characters this tab belongs to —
+      // getLastPlayer() is a single account-wide cache shared across tabs and would resolve every
+      // tab to whichever character was played most recently, regardless of which one this tab is for.
+      const cached = charId ? getPlayerEntries(accountKey).find((e) => e.id === charId)?.name : undefined;
+      if (cached) return cached;
+      if (!charId) return getLastPlayer(accountKey) || getLastPlayer(email);
+
+      // Local cache can be stale or missing entirely on a fresh reload of a direct /game/:email/:charId
+      // URL (no CharacterSelectionScreen mount to populate it) — fall back to the server-authoritative list.
+      try {
+        const { data: serverChars } = await getApiPlayersByEmailByEmail({ path: { email: accountKey } });
+        if (Array.isArray(serverChars) && serverChars.length > 0) {
+          const updated = getUsers();
+          updated[accountKey] = serverChars;
+          saveUsers(updated);
+          const match = serverChars.find((c) => c.id === charId)?.name;
+          if (match) return match;
+        }
+      } catch {
+        // fall through to local last-player fallback
+      }
+      return getLastPlayer(accountKey) || getLastPlayer(email);
     }
+
+    resolveCharName().then((charName) => {
+      if (charName) {
+        loginResultRef.current = `${email}\t${charName}\t${lang}\t${token}`;
+      } else {
+        navigate("/auth");
+      }
+    });
   }, [encodedEmail, charId, loginResultRef, navigate]);
 
   const activeLayout = resolveActiveLayout(state.layouts, state.activeLayout);
