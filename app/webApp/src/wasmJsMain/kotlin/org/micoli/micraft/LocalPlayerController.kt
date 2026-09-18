@@ -15,16 +15,24 @@ import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
+import org.micoli.micraft.input.AuctionEvent
 import org.micoli.micraft.input.AuctionEventHandler
+import org.micoli.micraft.input.ClaimEvent
 import org.micoli.micraft.input.ClaimEventHandler
 import org.micoli.micraft.input.ClientEventContext
 import org.micoli.micraft.input.ClientInputAction
 import org.micoli.micraft.input.ClientInputEvent
+import org.micoli.micraft.input.CombatIntentEvent
 import org.micoli.micraft.input.CombatIntentEventHandler
+import org.micoli.micraft.input.CreativeEvent
 import org.micoli.micraft.input.CreativeEventHandler
+import org.micoli.micraft.input.GroupEvent
 import org.micoli.micraft.input.GroupEventHandler
+import org.micoli.micraft.input.GuildEvent
 import org.micoli.micraft.input.GuildEventHandler
+import org.micoli.micraft.input.MailEvent
 import org.micoli.micraft.input.MailEventHandler
+import org.micoli.micraft.input.NpcChatEvent
 import org.micoli.micraft.input.NpcChatEventHandler
 import org.micoli.micraft.physics.AabbCollider
 import org.micoli.micraft.placeable.PlaceableRegistry
@@ -1029,14 +1037,14 @@ class LocalPlayerController(
             is ClientInputEvent.Macro -> outMessages.trySend(ClientMessage.RunMacro(event.name))
             is ClientInputEvent.FactionSet ->
                 outMessages.trySend(ClientMessage.FactionSetAffiliation(event.factionId))
-            is ClientInputEvent.NpcChatEvent -> npcChatEvents.handle(event)
-            is ClientInputEvent.MailEvent -> mailEvents.handle(event)
-            is ClientInputEvent.AuctionEvent -> auctionEvents.handle(event)
-            is ClientInputEvent.ClaimEvent -> claimEvents.handle(event)
-            is ClientInputEvent.GroupEvent -> groupEvents.handle(event)
-            is ClientInputEvent.GuildEvent -> guildEvents.handle(event)
-            is ClientInputEvent.CombatIntentEvent -> combatIntentEvents.handle(event)
-            is ClientInputEvent.CreativeEvent -> creativeEvents.handle(event)
+            is NpcChatEvent -> npcChatEvents.handle(event)
+            is MailEvent -> mailEvents.handle(event)
+            is AuctionEvent -> auctionEvents.handle(event)
+            is ClaimEvent -> claimEvents.handle(event)
+            is GroupEvent -> groupEvents.handle(event)
+            is GuildEvent -> guildEvents.handle(event)
+            is CombatIntentEvent -> combatIntentEvents.handle(event)
+            is CreativeEvent -> creativeEvents.handle(event)
         }
     }
 

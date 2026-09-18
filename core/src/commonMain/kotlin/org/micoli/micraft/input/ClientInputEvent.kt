@@ -50,10 +50,18 @@ enum class ClientInputAction(val wire: String) {
 
 /**
  * Client input events carrying a payload, encoded on the wire as `<prefix><payload>` (e.g.
- * `"attack:fireball:2"`). [ClientInputEvent.parse] is the single place decoding the raw string —
- * every prefix used there is also what `:server:generateClientEventTypes` emits into the generated
- * TypeScript, so a typo in either language fails loudly (Kotlin: exhaustive `when`; TypeScript:
- * unresolved generated constant) instead of silently dropping an event at runtime.
+ * `"attack:fireball:2"`). [parse] is the single place decoding the raw string — every prefix used
+ * there is also what `:server:generateClientEventTypes` emits into the generated TypeScript, so a
+ * typo in either language fails loudly (Kotlin: exhaustive `when`; TypeScript: unresolved generated
+ * constant) instead of silently dropping an event at runtime.
+ *
+ * This class only holds the variants with no dedicated handler (`Simple`/`ShortcutPageGoto`
+ * dispatch straight to `LocalPlayerController`; `Command`/`Macro`/`FactionSet` are one-liners) plus
+ * the wire-format registry ([parse]/[payloadPrefixes]), which necessarily knows every concrete
+ * subclass. Every other concern's payload variants live next to their handler — see
+ * `MailEvents.kt`, `AuctionEvents.kt`, `ClaimEvents.kt`, `GroupEvents.kt`, `GuildEvents.kt`,
+ * `CombatIntentEvents.kt`, `CreativeEvents.kt`, `NpcChatEvents.kt` — each also owning the
+ * payload-shape parsing its own multi-field constructors can't do inline.
  */
 sealed class ClientInputEvent {
     data class Simple(val action: ClientInputAction) : ClientInputEvent()
@@ -64,114 +72,7 @@ sealed class ClientInputEvent {
 
     data class Macro(val name: String) : ClientInputEvent()
 
-    /** NPC dialogue payloads — routed as a group to `NpcChatEventHandler`. */
-    sealed interface NpcChatEvent
-
-    data class NpcChatSend(val json: String) : ClientInputEvent(), NpcChatEvent
-
-    data class NpcChatAcceptGift(val json: String) : ClientInputEvent(), NpcChatEvent
-
-    /** Mailbox payloads — routed as a group to `MailEventHandler`. */
-    sealed interface MailEvent
-
-    data class MailSend(val json: String) : ClientInputEvent(), MailEvent
-
-    data class MailSeen(val mailId: String) : ClientInputEvent(), MailEvent
-
-    data class MailDelete(val mailId: String) : ClientInputEvent(), MailEvent
-
-    data class MailClaim(val mailId: String) : ClientInputEvent(), MailEvent
-
-    /** Auction-house payloads — routed as a group to `AuctionEventHandler`. */
-    sealed interface AuctionEvent
-
-    data class AuctionCreate(val json: String) : ClientInputEvent(), AuctionEvent
-
-    data class AuctionBid(val json: String) : ClientInputEvent(), AuctionEvent
-
-    data class AuctionBuyNow(val listingId: String) : ClientInputEvent(), AuctionEvent
-
-    data class AuctionCancel(val listingId: String) : ClientInputEvent(), AuctionEvent
-
-    data class AuctionSetFilter(val json: String) : ClientInputEvent(), AuctionEvent
-
-    /** Land-claim payloads — routed as a group to `ClaimEventHandler`. */
-    sealed interface ClaimEvent
-
-    data class ClaimCreate(val json: String) : ClientInputEvent(), ClaimEvent
-
-    data class ClaimAbandon(val claimId: String) : ClientInputEvent(), ClaimEvent
-
-    data class ClaimSetTrusted(val json: String) : ClientInputEvent(), ClaimEvent
-
-    /** Party/group payloads — routed as a group to `GroupEventHandler`. */
-    sealed interface GroupEvent
-
-    data class GroupInvite(val playerId: String) : ClientInputEvent(), GroupEvent
-
-    data class GroupRespond(val groupId: String, val accept: Boolean) :
-        ClientInputEvent(), GroupEvent
-
-    data class GroupKick(val playerId: String) : ClientInputEvent(), GroupEvent
-
-    data class GroupTransfer(val playerId: String) : ClientInputEvent(), GroupEvent
-
-    /** Guild payloads — routed as a group to `GuildEventHandler`. */
-    sealed interface GuildEvent
-
-    data class GuildCreate(val name: String, val tag: String) : ClientInputEvent(), GuildEvent
-
-    data class GuildInvite(val playerId: String) : ClientInputEvent(), GuildEvent
-
-    data class GuildRespond(val guildId: String, val accept: Boolean) :
-        ClientInputEvent(), GuildEvent
-
-    data class GuildKick(val playerId: String) : ClientInputEvent(), GuildEvent
-
-    data class GuildMotd(val text: String) : ClientInputEvent(), GuildEvent
-
-    data class GuildSetRank(val playerId: String, val rank: String) :
-        ClientInputEvent(), GuildEvent
-
-    data class GuildRankUpsert(val json: String) : ClientInputEvent(), GuildEvent
-
-    data class GuildRankDelete(val rankId: String) : ClientInputEvent(), GuildEvent
-
-    data class GuildTransfer(val playerId: String) : ClientInputEvent(), GuildEvent
-
-    data class GuildBankDeposit(val item: String, val count: Int) : ClientInputEvent(), GuildEvent
-
-    data class GuildBankWithdraw(val item: String, val count: Int) : ClientInputEvent(), GuildEvent
-
     data class FactionSet(val factionId: String?) : ClientInputEvent()
-
-    /**
-     * Combat-intent payloads (attack/spell casts) — routed as a group to
-     * `CombatIntentEventHandler`.
-     */
-    sealed interface CombatIntentEvent
-
-    data class Attack(val attackId: String, val rank: Int) : ClientInputEvent(), CombatIntentEvent
-
-    data class Spell(val spellId: String, val rank: Int) : ClientInputEvent(), CombatIntentEvent
-
-    /** Creative-mode payloads — routed as a group to `CreativeEventHandler`. */
-    sealed interface CreativeEvent
-
-    data class CreativePlace(
-        val x: Int,
-        val y: Int,
-        val z: Int,
-        val itemId: String,
-        val rotation: Int,
-    ) : ClientInputEvent(), CreativeEvent
-
-    data class CreativeFocus(val x: Float, val z: Float) : ClientInputEvent(), CreativeEvent
-
-    data class CreativeBreak(val x: Int, val y: Int, val z: Int) :
-        ClientInputEvent(), CreativeEvent
-
-    data class ScenePreviewRequest(val sceneId: String) : ClientInputEvent(), CreativeEvent
 
     companion object {
         /** Prefix -> payload parser. Order doesn't matter: every prefix here is distinct. */
@@ -234,84 +135,6 @@ sealed class ClientInputEvent {
                 if (raw.startsWith(prefix)) return parser(raw.removePrefix(prefix))
             }
             return null
-        }
-
-        private fun parseGroupRespond(payload: String): ClientInputEvent? {
-            val parts = payload.split("\t")
-            if (parts.size != 2) return null
-            return GroupRespond(parts[0], parts[1] == "1")
-        }
-
-        private fun parseGuildCreate(payload: String): ClientInputEvent? {
-            val parts = payload.split("\t")
-            if (parts.size != 2) return null
-            return GuildCreate(parts[0], parts[1])
-        }
-
-        private fun parseGuildRespond(payload: String): ClientInputEvent? {
-            val parts = payload.split("\t")
-            if (parts.size != 2) return null
-            return GuildRespond(parts[0], parts[1] == "1")
-        }
-
-        private fun parseGuildSetRank(payload: String): ClientInputEvent? {
-            val parts = payload.split("\t")
-            if (parts.size != 2) return null
-            return GuildSetRank(parts[0], parts[1])
-        }
-
-        private fun parseGuildBankDeposit(payload: String): ClientInputEvent? {
-            val parts = payload.split("\t")
-            if (parts.size != 2) return null
-            return GuildBankDeposit(parts[0], parts[1].toIntOrNull() ?: 0)
-        }
-
-        private fun parseGuildBankWithdraw(payload: String): ClientInputEvent? {
-            val parts = payload.split("\t")
-            if (parts.size != 2) return null
-            return GuildBankWithdraw(parts[0], parts[1].toIntOrNull() ?: 0)
-        }
-
-        private fun parseAttack(payload: String): ClientInputEvent {
-            val lastColon = payload.lastIndexOf(':')
-            val attackId = if (lastColon > 0) payload.substring(0, lastColon) else payload
-            val rank = if (lastColon > 0) payload.substring(lastColon + 1).toIntOrNull() ?: 1 else 1
-            return Attack(attackId, rank)
-        }
-
-        private fun parseSpell(payload: String): ClientInputEvent {
-            val lastColon = payload.lastIndexOf(':')
-            val spellId = if (lastColon > 0) payload.substring(0, lastColon) else payload
-            val rank = if (lastColon > 0) payload.substring(lastColon + 1).toIntOrNull() ?: 1 else 1
-            return Spell(spellId, rank)
-        }
-
-        private fun parseCreativePlace(payload: String): ClientInputEvent? {
-            val parts = payload.split(",")
-            val x = parts.getOrNull(0)?.toIntOrNull()
-            val y = parts.getOrNull(1)?.toIntOrNull()
-            val z = parts.getOrNull(2)?.toIntOrNull()
-            val itemId = parts.getOrNull(3)
-            val rotation = parts.getOrNull(4)?.toIntOrNull() ?: 0
-            if (x == null || y == null || z == null || itemId.isNullOrEmpty()) return null
-            return CreativePlace(x, y, z, itemId, rotation)
-        }
-
-        private fun parseCreativeFocus(payload: String): ClientInputEvent? {
-            val parts = payload.split(",")
-            val x = parts.getOrNull(0)?.toFloatOrNull()
-            val z = parts.getOrNull(1)?.toFloatOrNull()
-            if (x == null || z == null) return null
-            return CreativeFocus(x, z)
-        }
-
-        private fun parseCreativeBreak(payload: String): ClientInputEvent? {
-            val parts = payload.split(",")
-            val x = parts.getOrNull(0)?.toIntOrNull()
-            val y = parts.getOrNull(1)?.toIntOrNull()
-            val z = parts.getOrNull(2)?.toIntOrNull()
-            if (x == null || y == null || z == null) return null
-            return CreativeBreak(x, y, z)
         }
     }
 }
