@@ -1570,6 +1570,10 @@ export type OrgMicoliMicraftHttpCreatePlayerRequest = {
      */
     email?: null | string;
     /**
+     * List<String>
+     */
+    groups?: null | Array<string>;
+    /**
      * Int
      */
     intel: number;
@@ -1697,6 +1701,10 @@ export type OrgMicoliMicraftPlayerPlayerState = {
      * Boolean
      */
     godMode: boolean;
+    /**
+     * List<String>
+     */
+    groups: Array<string>;
     /**
      * String
      */
@@ -2523,6 +2531,10 @@ export type OrgMicoliMicraftHttpNpcAdminDto = {
      */
     gestationRemainingDays?: null | number;
     /**
+     * Boolean
+     */
+    hasChat: boolean;
+    /**
      * Double
      */
     hunger?: null | number;
@@ -2594,6 +2606,101 @@ export type OrgMicoliMicraftHttpNpcAdminDto = {
      * String
      */
     zone: string;
+};
+
+/**
+ * NpcChatTestTurn
+ */
+export type OrgMicoliMicraftHttpNpcChatTestTurn = {
+    /**
+     * String
+     */
+    content: string;
+    /**
+     * String
+     */
+    role: string;
+};
+
+/**
+ * NpcChatTestRequest
+ */
+export type OrgMicoliMicraftHttpNpcChatTestRequest = {
+    /**
+     * List<NpcChatTestTurn>
+     */
+    history: Array<OrgMicoliMicraftHttpNpcChatTestTurn>;
+    /**
+     * String
+     */
+    message: string;
+};
+
+/**
+ * NpcChatAction
+ */
+export type OrgMicoliMicraftProtocolNpcChatAction = {
+    /**
+     * String
+     */
+    itemId?: null | string;
+    /**
+     * String
+     */
+    questId?: null | string;
+    /**
+     * String
+     */
+    type: string;
+};
+
+/**
+ * ItemOfferSummary
+ */
+export type OrgMicoliMicraftProtocolItemOfferSummary = {
+    /**
+     * String
+     */
+    displayName: string;
+    /**
+     * String
+     */
+    itemId: string;
+};
+
+/**
+ * QuestOfferSummary
+ */
+export type OrgMicoliMicraftQuestQuestOfferSummary = {
+    /**
+     * String
+     */
+    description: string;
+    /**
+     * String
+     */
+    id: string;
+    /**
+     * Int
+     */
+    level: number;
+    /**
+     * String
+     */
+    title: string;
+};
+
+/**
+ * NpcChatTestResponse
+ */
+export type OrgMicoliMicraftHttpNpcChatTestResponse = {
+    action: OrgMicoliMicraftProtocolNpcChatAction;
+    itemOffer?: null | OrgMicoliMicraftProtocolItemOfferSummary;
+    questOffer?: null | OrgMicoliMicraftQuestQuestOfferSummary;
+    /**
+     * String
+     */
+    reply: string;
 };
 
 /**
@@ -5586,6 +5693,86 @@ export type PutApiAdminPlayersByNameKeybindingsResponses = {
 
 export type PutApiAdminPlayersByNameKeybindingsResponse = PutApiAdminPlayersByNameKeybindingsResponses[keyof PutApiAdminPlayersByNameKeybindingsResponses];
 
+export type GetApiAdminPlayersByNameGroupsData = {
+    body?: never;
+    path: {
+        /**
+         * String
+         *
+         * Player name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/api/admin/players/{name}/groups';
+};
+
+export type GetApiAdminPlayersByNameGroupsErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Player not found
+     */
+    404: unknown;
+};
+
+export type GetApiAdminPlayersByNameGroupsResponses = {
+    /**
+     * List<String>
+     */
+    200: Array<string>;
+};
+
+export type GetApiAdminPlayersByNameGroupsResponse = GetApiAdminPlayersByNameGroupsResponses[keyof GetApiAdminPlayersByNameGroupsResponses];
+
+export type PutApiAdminPlayersByNameGroupsData = {
+    /**
+     * List<String>
+     */
+    body?: Array<string>;
+    path: {
+        /**
+         * String
+         *
+         * Player name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/api/admin/players/{name}/groups';
+};
+
+export type PutApiAdminPlayersByNameGroupsErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    /**
+     * Player not found
+     */
+    404: unknown;
+    /**
+     * No group storage
+     */
+    503: unknown;
+};
+
+export type PutApiAdminPlayersByNameGroupsResponses = {
+    204: void;
+};
+
+export type PutApiAdminPlayersByNameGroupsResponse = PutApiAdminPlayersByNameGroupsResponses[keyof PutApiAdminPlayersByNameGroupsResponses];
+
 export type PutApiAdminPlayersByNamePreferencesData = {
     body?: OrgMicoliMicraftHttpUpdatePlayerPreferencesRequest;
     path: {
@@ -6088,6 +6275,39 @@ export type GetApiAdminNpcsResponses = {
 };
 
 export type GetApiAdminNpcsResponse = GetApiAdminNpcsResponses[keyof GetApiAdminNpcsResponses];
+
+export type PostApiAdminNpcsByIdChatTestData = {
+    body?: OrgMicoliMicraftHttpNpcChatTestRequest;
+    path: {
+        /**
+         * String
+         *
+         * NPC instance id
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/admin/npcs/{id}/chat-test';
+};
+
+export type PostApiAdminNpcsByIdChatTestErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+    404: unknown;
+    503: unknown;
+};
+
+export type PostApiAdminNpcsByIdChatTestResponses = {
+    200: OrgMicoliMicraftHttpNpcChatTestResponse;
+};
+
+export type PostApiAdminNpcsByIdChatTestResponse = PostApiAdminNpcsByIdChatTestResponses[keyof PostApiAdminNpcsByIdChatTestResponses];
 
 export type GetApiAdminBlocksData = {
     body?: never;

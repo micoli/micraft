@@ -162,6 +162,7 @@ export function NpcsPage() {
                   lastReproductionDay: null,
                   motherLevel: null,
                   animalStats: null,
+                  hasChat: false,
                 },
               ];
             case "npcDespawned":

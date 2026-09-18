@@ -12,6 +12,11 @@ import org.slf4j.LoggerFactory
 private val chatNpcLog = LoggerFactory.getLogger("NpcChatService")
 
 /**
+ * Stand-in "player level" for [NpcChatService.testChat] — high enough that no quest's level gate.
+ */
+private const val TEST_CHAT_PLAYER_LEVEL = 9_999
+
+/**
  * Drives the [NpcChatCapability] dialogue — not an [NpcBehavior] itself, since chat is a capability
  * layered on top of whatever behavior the NPC already has ([NpcManager.handleInteract] decides
  * whether to route here instead of `behavior.onInteract`). The model only ever produces text plus a
@@ -66,19 +71,11 @@ object NpcChatService {
             } ?: emptyList()
         val giftableItems = chat.giftableItems
 
-        val systemPrompt = buildString {
-            append(chat.dialoguePrompt)
-            append("\n\nAlways reply in the language with ISO code '${session.state.language}', ")
-            append("regardless of what language this prompt or the player's message is written in.")
-            if (offerableQuests.isNotEmpty()) {
-                append("\n\nQuests you may offer if it fits the conversation: ")
-                append(offerableQuests.joinToString(", ") { "${it.id} (${it.title})" })
-            }
-            if (giftableItems.isNotEmpty()) {
-                append("\n\nItems you may gift if the player convinces you: ")
-                append(giftableItems.joinToString(", "))
-            }
-        }
+        val languageInstruction =
+            "Always reply in the language with ISO code '${session.state.language}', " +
+                "regardless of what language this prompt or the player's message is written in."
+        val systemPrompt =
+            buildSystemPrompt(chat, offerableQuests, giftableItems, languageInstruction)
 
         val result = ollama.chat(systemPrompt, history.get(session.id, instance.state.id), text)
         if (result == null) {
@@ -105,6 +102,68 @@ object NpcChatService {
                 itemOffer = itemOffer,
             ))
     }
+
+    private fun buildSystemPrompt(
+        chat: NpcChatCapability,
+        offerableQuests: List<QuestOfferSummary>,
+        giftableItems: List<String>,
+        languageInstruction: String,
+    ): String = buildString {
+        append(chat.dialoguePrompt)
+        append("\n\n")
+        append(languageInstruction)
+        if (offerableQuests.isNotEmpty()) {
+            append("\n\nQuests you may offer if it fits the conversation: ")
+            append(offerableQuests.joinToString(", ") { "${it.id} (${it.title})" })
+        }
+        if (giftableItems.isNotEmpty()) {
+            append("\n\nItems you may gift if the player convinces you: ")
+            append(giftableItems.joinToString(", "))
+        }
+    }
+
+    /**
+     * Admin-only sandbox: drives the same [OllamaClient] call and whitelist validation as
+     * [onChatMessage], but without a [PlayerSession] — no rate limiting, no shared chat history
+     * (the caller supplies/keeps [history] itself), quest offers computed at max level with no
+     * player quest progress. Used by the admin "test chat_npc" page to iterate on
+     * [NpcChatCapability.dialoguePrompt] without a live player.
+     */
+    suspend fun testChat(
+        instance: NpcInstance,
+        ctx: NpcTickContext,
+        history: List<ChatTurn>,
+        text: String,
+    ): ChatTestResult? {
+        val chat = instance.definition.chat ?: return null
+        val ollama = ctx.ollamaClient ?: return null
+
+        val offerableQuests =
+            ctx.questManager?.let {
+                computeOfferableQuests(
+                    it, instance.definition.offersQuests, TEST_CHAT_PLAYER_LEVEL, emptyMap())
+            } ?: emptyList()
+        val giftableItems = chat.giftableItems
+
+        val systemPrompt =
+            buildSystemPrompt(
+                chat,
+                offerableQuests,
+                giftableItems,
+                "This is an admin test conversation, not a real player — reply in English.")
+
+        val result = ollama.chat(systemPrompt, history, text) ?: return null
+        val (action, questOffer, itemOffer) =
+            validateAction(result, instance.state.type, offerableQuests, giftableItems)
+        return ChatTestResult(result.reply, action, questOffer, itemOffer)
+    }
+
+    data class ChatTestResult(
+        val reply: String,
+        val action: NpcChatAction,
+        val questOffer: QuestOfferSummary?,
+        val itemOffer: ItemOfferSummary?,
+    )
 
     /**
      * Revalidates the model's proposed [OllamaChatResult] against the NPC's own whitelists — never

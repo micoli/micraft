@@ -2421,6 +2421,17 @@ export const org_micoli_micraft_http_CreatePlayerRequestSchema = {
             ],
             title: 'String'
         },
+        groups: {
+            type: [
+                'null',
+                'array'
+            ],
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
+        },
         intel: {
             type: 'integer',
             format: 'int32',
@@ -2622,6 +2633,14 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         godMode: {
             type: 'boolean',
             title: 'Boolean'
+        },
+        groups: {
+            type: 'array',
+            items: {
+                type: 'string',
+                title: 'String'
+            },
+            title: 'List<String>'
         },
         guildId: {
             type: [
@@ -2901,6 +2920,7 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'fieldOfView',
         'flying',
         'godMode',
+        'groups',
         'headInLiquid',
         'id',
         'inventory',
@@ -4012,6 +4032,10 @@ export const org_micoli_micraft_http_NpcAdminDtoSchema = {
             format: 'double',
             title: 'Double'
         },
+        hasChat: {
+            type: 'boolean',
+            title: 'Boolean'
+        },
         hunger: {
             type: [
                 'null',
@@ -4115,6 +4139,7 @@ export const org_micoli_micraft_http_NpcAdminDtoSchema = {
     required: [
         'aggroMode',
         'currentHp',
+        'hasChat',
         'id',
         'isDead',
         'level',
@@ -4132,6 +4157,162 @@ export const org_micoli_micraft_http_NpcAdminDtoSchema = {
         'zone'
     ],
     title: 'NpcAdminDto'
+} as const;
+
+export const org_micoli_micraft_http_NpcChatTestTurnSchema = {
+    type: 'object',
+    properties: {
+        content: {
+            type: 'string',
+            title: 'String'
+        },
+        role: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'content',
+        'role'
+    ],
+    title: 'NpcChatTestTurn'
+} as const;
+
+export const org_micoli_micraft_http_NpcChatTestRequestSchema = {
+    type: 'object',
+    properties: {
+        history: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.http.NpcChatTestTurn'
+            },
+            title: 'List<NpcChatTestTurn>'
+        },
+        message: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'history',
+        'message'
+    ],
+    title: 'NpcChatTestRequest'
+} as const;
+
+export const org_micoli_micraft_protocol_NpcChatActionSchema = {
+    type: 'object',
+    properties: {
+        itemId: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        questId: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        },
+        type: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'type'
+    ],
+    title: 'NpcChatAction'
+} as const;
+
+export const org_micoli_micraft_protocol_ItemOfferSummarySchema = {
+    type: 'object',
+    properties: {
+        displayName: {
+            type: 'string',
+            title: 'String'
+        },
+        itemId: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'displayName',
+        'itemId'
+    ],
+    title: 'ItemOfferSummary'
+} as const;
+
+export const org_micoli_micraft_quest_QuestOfferSummarySchema = {
+    type: 'object',
+    properties: {
+        description: {
+            type: 'string',
+            title: 'String'
+        },
+        id: {
+            type: 'string',
+            title: 'String'
+        },
+        level: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        title: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'description',
+        'id',
+        'level',
+        'title'
+    ],
+    title: 'QuestOfferSummary'
+} as const;
+
+export const org_micoli_micraft_http_NpcChatTestResponseSchema = {
+    type: 'object',
+    properties: {
+        action: {
+            $ref: '#/components/schemas/org.micoli.micraft.protocol.NpcChatAction'
+        },
+        itemOffer: {
+            oneOf: [
+                {
+                    type: 'null'
+                },
+                {
+                    $ref: '#/components/schemas/org.micoli.micraft.protocol.ItemOfferSummary'
+                }
+            ]
+        },
+        questOffer: {
+            oneOf: [
+                {
+                    type: 'null'
+                },
+                {
+                    $ref: '#/components/schemas/org.micoli.micraft.quest.QuestOfferSummary'
+                }
+            ]
+        },
+        reply: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'action',
+        'reply'
+    ],
+    title: 'NpcChatTestResponse'
 } as const;
 
 export const org_micoli_micraft_protocol_BlockInfoSchema = {

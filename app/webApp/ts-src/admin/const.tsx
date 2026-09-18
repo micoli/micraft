@@ -4,6 +4,7 @@ import { StatusPage } from "./pages/status/StatusPage";
 import { UsersPage } from "./pages/user/UsersPage";
 import { PlayersPage } from "./pages/players/PlayersPage";
 import { NpcsPage } from "./pages/npcs/NpcsPage";
+import { NpcChatTestPage } from "./pages/npcChatTest/NpcChatTestPage";
 import { ClassesPage } from "./pages/classes/ClassesPage";
 import { ConfigEditorPage } from "./pages/configEditor/ConfigEditorPage";
 import { LoggersPage } from "./pages/loggers/LoggersPage";
@@ -29,6 +30,7 @@ export const ROUTES = [
   { path: "/admin/players/:playerName", page: <PlayersPage /> },
   { path: "/admin/players/:playerName/:tab", page: <PlayersPage /> },
   { path: "/admin/npcs", page: <NpcsPage /> },
+  { path: "/admin/npc-chat-test", page: <NpcChatTestPage /> },
   { path: "/admin/classes", page: <ClassesPage /> },
   { path: "/admin/config", page: <ConfigEditorPage /> },
   { path: "/admin/loggers", page: <LoggersPage /> },
@@ -63,6 +65,12 @@ export const NAV: NavItem[] = [
   { path: "/admin/rbac", labelKey: "nav.rbac", pageLabelKey: "page.rbac", icon: ICONS.rbac },
   { path: "/admin/players", labelKey: "nav.players", pageLabelKey: "page.players", icon: ICONS.players },
   { path: "/admin/npcs", labelKey: "nav.npcs", pageLabelKey: "page.npcs", icon: ICONS.npcs },
+  {
+    path: "/admin/npc-chat-test",
+    labelKey: "nav.npcChatTest",
+    pageLabelKey: "page.npcChatTest",
+    icon: ICONS.chat,
+  },
   { path: "/admin/classes", labelKey: "nav.classes", pageLabelKey: "page.classes", icon: ICONS.classes },
   { path: "/admin/config", labelKey: "nav.config", pageLabelKey: "page.config", icon: ICONS.config },
   { path: "/admin/loggers", labelKey: "nav.loggers", pageLabelKey: "page.loggers", icon: ICONS.loggers },

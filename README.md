@@ -183,6 +183,7 @@ never hand-edit either.
 | GET | `/api/admin/npc-types` | NPC type definitions (codex info), keyed by type id |
 | POST | `/api/admin/npc-types/reload` | Reload NPC type definitions from resources/entities and despawn live instances so the spawner recreates them with the new model. Use after editing an entity bbmodel/yaml. |
 | GET | `/api/admin/npcs` | Live NPC instances with full animal/combat state |
+| POST | `/api/admin/npcs/{id}/chat-test` | Send a message to a live chat_npc's LLM dialogue outside of any real player session — for iterating on its dialoguePrompt |
 | GET | `/api/admin/permissions` | Every known permission string — slash commands' `permission` field (discovered live from the command registry) plus the fixed set checked outside the command system. For autocomplete, not validation — a group may still be given any free-form permission string. |
 | GET | `/api/admin/plain-colors` | All registered plain paint colors |
 | GET | `/api/admin/players` | All player names |

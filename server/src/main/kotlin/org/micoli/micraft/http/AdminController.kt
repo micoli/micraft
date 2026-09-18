@@ -69,6 +69,7 @@ import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.equipment.ToolRegistryLoader
 import org.micoli.micraft.game.equipment.WeaponRegistryLoader
+import org.micoli.micraft.game.npc.ChatTurn
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.character.RpgCharacterBuilder
@@ -104,10 +105,13 @@ import org.micoli.micraft.protocol.BlockEntityProto
 import org.micoli.micraft.protocol.BlockInfo
 import org.micoli.micraft.protocol.EntityRemoveAt
 import org.micoli.micraft.protocol.ItemInfo
+import org.micoli.micraft.protocol.ItemOfferSummary
+import org.micoli.micraft.protocol.NpcChatAction
 import org.micoli.micraft.protocol.NpcCodexInfo
 import org.micoli.micraft.protocol.PlainColorInfo
 import org.micoli.micraft.protocol.RailInfo
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.quest.QuestOfferSummary
 import org.micoli.micraft.social.FactionDefinition
 import org.micoli.micraft.social.GroupInfo
 import org.micoli.micraft.social.GuildInfoDto
@@ -147,6 +151,23 @@ data class NpcAdminDto(
     val lastReproductionDay: Double?,
     val motherLevel: Int?,
     val animalStats: BaseStats?,
+    val hasChat: Boolean,
+)
+
+@Serializable data class NpcChatTestTurn(val role: String, val content: String)
+
+@Serializable
+data class NpcChatTestRequest(
+    val message: String,
+    val history: List<NpcChatTestTurn> = emptyList()
+)
+
+@Serializable
+data class NpcChatTestResponse(
+    val reply: String,
+    val action: NpcChatAction,
+    val questOffer: QuestOfferSummary?,
+    val itemOffer: ItemOfferSummary?,
 )
 
 @Serializable data class ClaimBoundsRequest(val yMin: Int, val yMax: Int)
@@ -2157,10 +2178,65 @@ class AdminController(
                                 lastReproductionDay = ad?.lastReproductionDay,
                                 motherLevel = ad?.motherLevel,
                                 animalStats = ad?.stats,
+                                hasChat = npc.definition.chat != null,
                             )
                         }
                     call.respondText(
                         adminJson.encodeToString(ListSerializer(NpcAdminDto.serializer()), dtos),
+                        ContentType.Application.Json)
+                }
+
+            post(
+                "/api/admin/npcs/{id}/chat-test",
+                {
+                    description =
+                        "Send a message to a live chat_npc's LLM dialogue outside of any real " +
+                            "player session — for iterating on its dialoguePrompt"
+                    request {
+                        pathParameter<String>("id") { description = "NPC instance id" }
+                        body<NpcChatTestRequest>()
+                    }
+                    response {
+                        code(HttpStatusCode.OK) { body<NpcChatTestResponse>() }
+                        code(HttpStatusCode.NotFound) {}
+                        code(HttpStatusCode.ServiceUnavailable) {}
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    val npcId = call.parameters["id"]
+                    if (npcId == null) {
+                        call.respond(HttpStatusCode.BadRequest)
+                        return@post
+                    }
+                    val body =
+                        adminJson.decodeFromString(
+                            NpcChatTestRequest.serializer(), call.receiveText())
+                    val instance = adminWorld().getNpcInstances().find { it.state.id == npcId }
+                    if (instance == null || instance.definition.chat == null) {
+                        call.respond(HttpStatusCode.NotFound)
+                        return@post
+                    }
+                    val result =
+                        adminWorld()
+                            .npcManager
+                            .testChat(
+                                npcId,
+                                body.history.map { ChatTurn(it.role, it.content) },
+                                body.message)
+                    if (result == null) {
+                        call.respond(HttpStatusCode.ServiceUnavailable)
+                        return@post
+                    }
+                    call.respondText(
+                        adminJson.encodeToString(
+                            NpcChatTestResponse.serializer(),
+                            NpcChatTestResponse(
+                                reply = result.reply,
+                                action = result.action,
+                                questOffer = result.questOffer,
+                                itemOffer = result.itemOffer,
+                            )),
                         ContentType.Application.Json)
                 }
 

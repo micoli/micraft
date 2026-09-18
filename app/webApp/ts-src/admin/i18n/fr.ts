@@ -18,6 +18,7 @@ export const fr: Record<TranslationKey, string> = {
   "nav.rbac": "Rôles & permissions",
   "nav.players": "Joueurs",
   "nav.npcs": "NPC",
+  "nav.npcChatTest": "Test chat PNJ",
   "nav.classes": "Classes",
   "nav.config": "Config",
   "nav.loggers": "Loggers",
@@ -36,6 +37,7 @@ export const fr: Record<TranslationKey, string> = {
   "page.rbac": "Rôles & permissions",
   "page.players": "Joueurs",
   "page.npcs": "NPC",
+  "page.npcChatTest": "Test chat PNJ",
   "page.classes": "Classes & compétences",
   "page.config": "Éditeur de configEditor",
   "page.loggers": "Niveaux de logs",
@@ -260,6 +262,21 @@ export const fr: Record<TranslationKey, string> = {
   "npcs.lastRepro": "Dernière repro.",
   "npcs.dayValue": "jour {0}",
   "npcs.stats": "Statistiques",
+
+  // ── Page test chat PNJ ───────────────────────────────────────────────────
+  "npcChatTest.intro":
+    "Discute directement avec le dialogue LLM d'un chat_npc en vie, hors session joueur réelle — pas d'éligibilité quête/don, réponses toujours en anglais.",
+  "npcChatTest.noChatNpcs": "Aucun PNJ en vie n'a de capacité de chat pour l'instant.",
+  "npcChatTest.selectNpc": "Sélectionner un PNJ",
+  "npcChatTest.messagePlaceholder": "Dis quelque chose au PNJ…",
+  "npcChatTest.send": "Envoyer",
+  "npcChatTest.sending": "Envoi…",
+  "npcChatTest.clear": "Effacer la conversation",
+  "npcChatTest.you": "Toi",
+  "npcChatTest.error": "Échec du test de chat — PNJ indisponible ou LLM injoignable",
+  "npcChatTest.actionOfferQuest": "→ quête proposée : {0}",
+  "npcChatTest.actionGiveItem": "→ don proposé : {0}",
+  "npcChatTest.emptyConversation": "Aucun message pour l'instant — dis bonjour.",
 
   // ── Classes page ────────────────────────────────────────────────────────────
   "classes.failedToLoad": "Échec du chargement des classes",

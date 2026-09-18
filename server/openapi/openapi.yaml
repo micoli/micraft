@@ -2469,6 +2469,45 @@ paths:
           description: Missing admin permission
           headers: {}
       deprecated: false
+  /api/admin/npcs/{id}/chat-test:
+    post:
+      tags: []
+      description: Send a message to a live chat_npc's LLM dialogue outside of any
+        real player session — for iterating on its dialoguePrompt
+      parameters:
+      - name: id
+        in: path
+        description: NPC instance id
+        required: true
+        deprecated: false
+        explode: false
+        schema:
+          type: string
+          title: String
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.http.NpcChatTestRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.NpcChatTestResponse"
+        "404":
+          headers: {}
+        "503":
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/admin/blocks:
     get:
       tags: []
@@ -7152,6 +7191,9 @@ components:
           - number
           format: double
           title: Double
+        hasChat:
+          type: boolean
+          title: Boolean
         hunger:
           type:
           - "null"
@@ -7231,6 +7273,7 @@ components:
       required:
       - aggroMode
       - currentHp
+      - hasChat
       - id
       - isDead
       - level
@@ -7247,6 +7290,108 @@ components:
       - z
       - zone
       title: NpcAdminDto
+    org.micoli.micraft.http.NpcChatTestTurn:
+      type: object
+      properties:
+        content:
+          type: string
+          title: String
+        role:
+          type: string
+          title: String
+      required:
+      - content
+      - role
+      title: NpcChatTestTurn
+    org.micoli.micraft.http.NpcChatTestRequest:
+      type: object
+      properties:
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.http.NpcChatTestTurn"
+          title: List<NpcChatTestTurn>
+        message:
+          type: string
+          title: String
+      required:
+      - history
+      - message
+      title: NpcChatTestRequest
+    org.micoli.micraft.protocol.NpcChatAction:
+      type: object
+      properties:
+        itemId:
+          type:
+          - "null"
+          - string
+          title: String
+        questId:
+          type:
+          - "null"
+          - string
+          title: String
+        type:
+          type: string
+          title: String
+      required:
+      - type
+      title: NpcChatAction
+    org.micoli.micraft.protocol.ItemOfferSummary:
+      type: object
+      properties:
+        displayName:
+          type: string
+          title: String
+        itemId:
+          type: string
+          title: String
+      required:
+      - displayName
+      - itemId
+      title: ItemOfferSummary
+    org.micoli.micraft.quest.QuestOfferSummary:
+      type: object
+      properties:
+        description:
+          type: string
+          title: String
+        id:
+          type: string
+          title: String
+        level:
+          type: integer
+          format: int32
+          title: Int
+        title:
+          type: string
+          title: String
+      required:
+      - description
+      - id
+      - level
+      - title
+      title: QuestOfferSummary
+    org.micoli.micraft.http.NpcChatTestResponse:
+      type: object
+      properties:
+        action:
+          $ref: "#/components/schemas/org.micoli.micraft.protocol.NpcChatAction"
+        itemOffer:
+          oneOf:
+          - type: "null"
+          - $ref: "#/components/schemas/org.micoli.micraft.protocol.ItemOfferSummary"
+        questOffer:
+          oneOf:
+          - type: "null"
+          - $ref: "#/components/schemas/org.micoli.micraft.quest.QuestOfferSummary"
+        reply:
+          type: string
+          title: String
+      required:
+      - action
+      - reply
+      title: NpcChatTestResponse
     org.micoli.micraft.protocol.BlockInfo:
       type: object
       properties:

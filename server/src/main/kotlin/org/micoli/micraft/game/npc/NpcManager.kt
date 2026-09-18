@@ -613,6 +613,17 @@ class NpcManager(
         NpcChatService.onChatMessage(instance, session, chatCtx, text) { msg -> session.send(msg) }
     }
 
+    /** Admin-only sandbox test of a `chat_npc`'s dialogue — see [NpcChatService.testChat]. */
+    suspend fun testChat(
+        npcId: String,
+        history: List<ChatTurn>,
+        message: String,
+    ): NpcChatService.ChatTestResult? {
+        val instance = npcs[npcId] ?: return null
+        val chatCtx = ctx.copy(questManager = getQuestManager(), ollamaClient = getOllamaClient())
+        return NpcChatService.testChat(instance, chatCtx, history, message)
+    }
+
     suspend fun handleChatAcceptGift(
         session: PlayerSession,
         npcId: String,

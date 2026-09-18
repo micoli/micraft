@@ -23,6 +23,7 @@ export const en = {
   "nav.rbac": "Roles & Permissions",
   "nav.players": "Players",
   "nav.npcs": "NPCs",
+  "nav.npcChatTest": "NPC Chat Test",
   "nav.classes": "Classes",
   "nav.config": "Config",
   "nav.loggers": "Loggers",
@@ -41,6 +42,7 @@ export const en = {
   "page.rbac": "Roles & Permissions",
   "page.players": "Players",
   "page.npcs": "NPCs",
+  "page.npcChatTest": "NPC Chat Test",
   "page.classes": "Classes & Skills",
   "page.config": "Config Editor",
   "page.loggers": "Log Levels",
@@ -264,6 +266,21 @@ export const en = {
   "npcs.lastRepro": "Last repro.",
   "npcs.dayValue": "day {0}",
   "npcs.stats": "Stats",
+
+  // ── NPC chat test page ─────────────────────────────────────────────────────
+  "npcChatTest.intro":
+    "Talk directly to a live chat_npc's LLM dialogue, outside of any real player session — no quest/gift eligibility, always replies in English.",
+  "npcChatTest.noChatNpcs": "No live NPC currently has a chat capability.",
+  "npcChatTest.selectNpc": "Select an NPC",
+  "npcChatTest.messagePlaceholder": "Say something to the NPC…",
+  "npcChatTest.send": "Send",
+  "npcChatTest.sending": "Sending…",
+  "npcChatTest.clear": "Clear conversation",
+  "npcChatTest.you": "You",
+  "npcChatTest.error": "Chat test failed — NPC unavailable or LLM unreachable",
+  "npcChatTest.actionOfferQuest": "→ proposed quest: {0}",
+  "npcChatTest.actionGiveItem": "→ proposed gift: {0}",
+  "npcChatTest.emptyConversation": "No messages yet — say hello.",
 
   // ── Classes page ────────────────────────────────────────────────────────────
   "classes.failedToLoad": "Failed to load classes",

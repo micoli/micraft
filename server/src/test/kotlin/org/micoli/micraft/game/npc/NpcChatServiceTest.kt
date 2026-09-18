@@ -195,6 +195,58 @@ class NpcChatServiceTest {
     }
 
     @Test
+    fun testChat_withoutChatCapability_returnsNull() = runBlocking {
+        val npc = instance(chat = null)
+        val ollama = FakeOllamaClient(OllamaChatResult("Hi", "none"))
+        val result =
+            NpcChatService.testChat(
+                npc, NpcTickContext.live.copy(ollamaClient = ollama), emptyList(), "hello")
+        assertNull(result)
+        assertEquals(0, ollama.calls)
+    }
+
+    @Test
+    fun testChat_hallucinatedItemId_isDowngradedToNone() = runBlocking {
+        val npc =
+            instance(
+                chat = NpcChatCapability(dialoguePrompt = "hi", giftableItems = listOf("FLINT")))
+        val ollama =
+            FakeOllamaClient(OllamaChatResult("Here!", "give_item", itemId = "COBBLESTONE"))
+        val result =
+            NpcChatService.testChat(
+                npc,
+                NpcTickContext.live.copy(ollamaClient = ollama),
+                emptyList(),
+                "give me something")
+        assertEquals("none", result?.action?.type)
+        assertNull(result?.itemOffer)
+    }
+
+    @Test
+    fun testChat_legitimateQuestOffer_ignoresPlayerLevelAndProgress() = runBlocking {
+        val npc = instance(offersQuests = listOf("q1"))
+        val quest =
+            QuestDefinition(
+                id = "q1", title = "Q1", description = "d", type = QuestType.EXPLORE, level = 50)
+        val qm = questManagerWith(quest)
+        val ollama = FakeOllamaClient(OllamaChatResult("Sure!", "offer_quest", questId = "q1"))
+        val ctx = NpcTickContext.live.copy(questManager = qm, ollamaClient = ollama)
+        val result = NpcChatService.testChat(npc, ctx, emptyList(), "any quest for me?")
+        assertEquals("offer_quest", result?.action?.type)
+        assertEquals("q1", result?.questOffer?.id)
+    }
+
+    @Test
+    fun testChat_ollamaUnavailable_returnsNull() = runBlocking {
+        val npc = instance()
+        val ollama = FakeOllamaClient(null)
+        val result =
+            NpcChatService.testChat(
+                npc, NpcTickContext.live.copy(ollamaClient = ollama), emptyList(), "hello")
+        assertNull(result)
+    }
+
+    @Test
     fun onAcceptGift_itemOutsideWhitelist_isRefused() = runBlocking {
         val npc =
             instance(
