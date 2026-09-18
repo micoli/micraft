@@ -66,3 +66,10 @@ factions:
   #     name: "Pacte d'Azur"
   #     color: "#2980b9"
   #     description: "Les marchands du littoral."
+llm:
+  ollama:
+    # If the server runs inside the dev container while Ollama runs on the host, 127.0.0.1 here
+    # points at the container itself, not the host — use host.docker.internal instead in that case.
+    baseUrl: "http://127.0.0.1:11434"
+    model: "gemma3:1b"
+    requestTimeoutMs: 8000

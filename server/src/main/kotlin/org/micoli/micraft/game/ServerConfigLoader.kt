@@ -103,6 +103,20 @@ data class FactionsSection(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
+data class OllamaConfig(
+    @EncodeDefault(ALWAYS) val baseUrl: String = "http://127.0.0.1:11434",
+    @EncodeDefault(ALWAYS) val model: String = "gemma:2b",
+    @EncodeDefault(ALWAYS) val requestTimeoutMs: Long = 8_000,
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class LlmSection(
+    @EncodeDefault(ALWAYS) val ollama: OllamaConfig = OllamaConfig(),
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
 @JsonSchemaRoot(file = "server.schema.json")
 data class ServerConfig(
     @EncodeDefault(ALWAYS) val world: WorldSection = WorldSection(),
@@ -112,6 +126,7 @@ data class ServerConfig(
     @EncodeDefault(ALWAYS) val network: NetworkSection = NetworkSection(),
     @EncodeDefault(ALWAYS) val game: GameConfig = GameConfig(),
     @EncodeDefault(ALWAYS) val factions: FactionsSection = FactionsSection(),
+    @EncodeDefault(ALWAYS) val llm: LlmSection = LlmSection(),
 )
 
 fun loadServerConfig(

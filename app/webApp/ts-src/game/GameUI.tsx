@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { getApiItemsMeta, getApiAttacks, getApiClasses, getApiSpells, getApiQuests } from "../generated/api/requests";
 import {
   GameLayout,
+  NpcChatReplyData,
   NpcDialogData,
   QuestGiverDialogData,
   PreferencesData,
@@ -75,6 +76,7 @@ const initial: UiState = {
   layoutEditorOpen: false,
   npcDialog: null,
   questGiverDialog: null,
+  chatDialog: null,
   codexOpen: false,
   craftOpen: false,
   craftRecipes: {},
@@ -769,6 +771,11 @@ export function GameUI() {
       const data = JSON.parse(json) as QuestGiverDialogData;
       document.exitPointerLock();
       dispatch("quest_giver_dialog_open", { data });
+    };
+    window.mc.openNpcChatDialog = (json: string) => {
+      const data = JSON.parse(json) as NpcChatReplyData;
+      document.exitPointerLock();
+      dispatch("npc_chat_reply", { data });
     };
 
     window.mc.consumeLayoutUpdate = () => {

@@ -14,7 +14,15 @@ import org.micoli.micraft.schema.JsonSchemaRoot
 @JsonSchemaRoot(file = "npcs.schema.json")
 data class NpcYamlEntry(
     @JsonSchemaConstraint(
-        enum = ["static", "random_movable", "interactionable", "animal", "seller", "quest_giver"])
+        enum =
+            [
+                "static",
+                "random_movable",
+                "interactionable",
+                "animal",
+                "seller",
+                "quest_giver",
+            ])
     val behavior: String = "static",
     @JsonSchemaConstraint(exclusiveMinimum = 0.0) val width: Float = 0.6f,
     @JsonSchemaConstraint(exclusiveMinimum = 0.0) val height: Float = 1.8f,
@@ -43,6 +51,8 @@ data class NpcYamlEntry(
     val tameable: Boolean = false,
     @JsonSchemaConstraint(minimum = 0.0, maximum = 1.0) val tameBaseChance: Float = 0.5f,
     val offersQuests: List<String> = emptyList(),
+    /** Optional LLM-dialogue capability, orthogonal to [behavior]. */
+    val chat: NpcChatCapability? = null,
     val armorLoot: List<ArmorDropEntry> = emptyList(),
     /** How this NPC moves — see [MovementMode]. Defaults to `[WALKING]`. */
     val movementMode: List<MovementMode> = listOf(MovementMode.WALKING),

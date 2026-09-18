@@ -364,4 +364,16 @@ sealed class ClientMessage {
 
     /** Remove the action-block logic at [pos] (the block itself stays). */
     @ProtoId(69) @Serializable data class DeleteActionBlock(val pos: BlockPos) : ClientMessage()
+
+    /** Free-text message sent to a `chat_npc` NPC currently open in dialogue. */
+    @ProtoId(70)
+    @Serializable
+    data class NpcChatSend(val npcId: String, val text: String) : ClientMessage()
+
+    /**
+     * Accepts an item gift previously offered by a `chat_npc` NPC in [ServerMessage.NpcChatReply].
+     */
+    @ProtoId(71)
+    @Serializable
+    data class NpcChatAcceptGift(val npcId: String, val itemId: String) : ClientMessage()
 }

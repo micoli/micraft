@@ -4,11 +4,11 @@ import org.micoli.micraft.game.npc.NpcBehavior
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcPhysics
 import org.micoli.micraft.game.npc.NpcTickContext
+import org.micoli.micraft.game.npc.computeOfferableQuests
 import org.micoli.micraft.game.npc.tooFarToInteract
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.protocol.ServerMessage
-import org.micoli.micraft.quest.QuestOfferSummary
 import org.micoli.micraft.quest.QuestStatus
 
 /**
@@ -32,33 +32,11 @@ class QuestGiverNpcBehavior : NpcBehavior {
         if (ctx.tooFarToInteract(instance, session, send)) return
 
         val qm = ctx.questManager ?: return
-        val definitions = qm.getDefinitions()
         val playerLevel = session.characterData?.level ?: 1
         val playerQuests = session.state.quests
 
         val offerable =
-            instance.definition.offersQuests.mapNotNull { questId ->
-                val def = definitions[questId] ?: return@mapNotNull null
-                val current = playerQuests[questId]
-                if (current?.status == QuestStatus.IN_PROGRESS ||
-                    current?.status == QuestStatus.READY_TO_TURN_IN) {
-                    return@mapNotNull null
-                }
-                if (current?.status == QuestStatus.COMPLETED && !def.repeatable) {
-                    return@mapNotNull null
-                }
-                if (def.level > playerLevel + 2) return@mapNotNull null
-                if (def.dependsOn.any { playerQuests[it]?.status != QuestStatus.COMPLETED }) {
-                    return@mapNotNull null
-                }
-                val lastCompletedAt = current?.lastCompletedAt
-                if (def.repeatable && def.cooldownSeconds > 0 && lastCompletedAt != null) {
-                    val remainingMs =
-                        lastCompletedAt + def.cooldownSeconds * 1000 - System.currentTimeMillis()
-                    if (remainingMs > 0) return@mapNotNull null
-                }
-                QuestOfferSummary(def.id, def.title, def.description, def.level)
-            }
+            computeOfferableQuests(qm, instance.definition.offersQuests, playerLevel, playerQuests)
 
         val turnInable =
             instance.definition.offersQuests.filter { questId ->

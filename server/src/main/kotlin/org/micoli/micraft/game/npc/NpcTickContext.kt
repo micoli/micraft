@@ -20,6 +20,10 @@ data class NpcTickContext(
      * tick contexts and in tests that don't care about that feedback.
      */
     val i18n: I18nConfig? = null,
+    /** Set only for calls routed to a `chat_npc` behavior. */
+    val ollamaClient: OllamaClient? = null,
+    /** Set only for calls routed to a `chat_npc` behavior. */
+    val chatHistoryStore: NpcChatHistoryStore? = null,
 ) {
     companion object {
         /** Context backed by the live server tunables. */

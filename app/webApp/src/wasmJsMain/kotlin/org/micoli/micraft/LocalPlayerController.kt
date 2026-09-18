@@ -1046,6 +1046,18 @@ class LocalPlayerController(
                 }
                 event.startsWith("cmd:") ->
                     outMessages.trySend(ClientMessage.Command(event.removePrefix("cmd:")))
+                event.startsWith("npc_chat_send:") ->
+                    runCatching {
+                        outMessages.trySend(
+                            Json.decodeFromString<ClientMessage.NpcChatSend>(
+                                event.removePrefix("npc_chat_send:")))
+                    }
+                event.startsWith("npc_chat_accept_gift:") ->
+                    runCatching {
+                        outMessages.trySend(
+                            Json.decodeFromString<ClientMessage.NpcChatAcceptGift>(
+                                event.removePrefix("npc_chat_accept_gift:")))
+                    }
                 event.startsWith("macro:") ->
                     outMessages.trySend(ClientMessage.RunMacro(event.removePrefix("macro:")))
                 event.startsWith("mail_send:") ->

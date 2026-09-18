@@ -218,6 +218,8 @@ fun buildGameWorld(
             },
             canSpawn = { opts.npcAutoSpawn },
             getQuestManager = { questManager },
+            getOllamaClient = { shared.ollamaClient },
+            getChatHistoryStore = { shared.npcChatHistoryStore },
         )
     val hooks = opts.npcHooksDecorator(baseHooks)
     val npcSubsystemFactory =

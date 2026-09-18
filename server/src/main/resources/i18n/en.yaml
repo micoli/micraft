@@ -394,6 +394,10 @@ npc:
     buy_done: "Purchased {0}x {1}."
     sell_done: "Sold {0}x {1}."
     too_far: "Too far away to interact."
+    chat_greeting: "..."
+    chat_rate_limited: "Wait a moment before talking to this NPC again."
+    llm_unavailable: "This NPC seems distracted right now. Try again in a moment."
+    chat_gift_received: "You received {0}."
 
 mail:
   server:

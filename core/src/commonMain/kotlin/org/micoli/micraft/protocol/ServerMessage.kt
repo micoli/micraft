@@ -603,7 +603,29 @@ sealed class ServerMessage {
         val offerable: List<QuestOfferSummary>,
         val turnInable: List<String>,
     ) : ServerMessage()
+
+    /**
+     * Reply from a `chat_npc` NPC — a greeting (on interact) or an answer to
+     * [ClientMessage.NpcChatSend]. [action] is already validated server-side against the NPC's
+     * whitelists ([org.micoli.micraft.game.npc.NpcDefinition.offersQuests]/`giftableItems`); the
+     * client only ever displays what the server decided, it never resolves the intent itself.
+     */
+    @ProtoId(90)
+    @Serializable
+    data class NpcChatReply(
+        val npcId: String,
+        val npcType: String,
+        val text: String,
+        val action: NpcChatAction? = null,
+        val questOffer: QuestOfferSummary? = null,
+        val itemOffer: ItemOfferSummary? = null,
+    ) : ServerMessage()
 }
+
+@Serializable
+data class NpcChatAction(val type: String, val questId: String? = null, val itemId: String? = null)
+
+@Serializable data class ItemOfferSummary(val itemId: String, val displayName: String)
 
 @Serializable
 data class PetInfo(

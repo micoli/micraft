@@ -40,6 +40,12 @@ data class NpcDefinition(
     /** Quest ids a `quest_giver` behavior NPC can offer. Ignored by every other behavior. */
     val offersQuests: List<String> = emptyList(),
     /**
+     * Optional LLM-dialogue capability, orthogonal to [behavior] — null disables chat entirely and
+     * `onInteract` goes to [behavior] as usual (e.g. a `quest_giver` still shows its static offer
+     * dialog).
+     */
+    val chat: NpcChatCapability? = null,
+    /**
      * Armor pieces this NPC may drop on death — capped 5 levels above [maxLevel], see
      * NpcLootValidator.
      */

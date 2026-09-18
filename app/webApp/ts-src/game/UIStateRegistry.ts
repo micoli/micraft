@@ -14,6 +14,8 @@ import {
   ItemMetaEntry,
   LogEntry,
   MailData,
+  NpcChatDialogData,
+  NpcChatReplyData,
   NpcDialogData,
   BreathData,
   NpcProximityEntry,
@@ -62,6 +64,7 @@ export interface UiState {
   layoutEditorOpen: boolean;
   npcDialog: NpcDialogData | null;
   questGiverDialog: QuestGiverDialogData | null;
+  chatDialog: NpcChatDialogData | null;
   codexOpen: boolean;
   craftOpen: boolean;
   craftRecipes: Record<string, RecipeDefinition>;
@@ -272,6 +275,36 @@ const componentVisibilityRegistry = {
     ...state,
     questGiverDialog: null,
   }),
+  npc_chat_reply: (state: UiState, payload: { data: NpcChatReplyData }) => {
+    const { data } = payload;
+    const existing = state.chatDialog?.npcId === data.npcId ? state.chatDialog : null;
+    return {
+      ...state,
+      chatDialog: {
+        npcId: data.npcId,
+        npcType: data.npcType,
+        history: [...(existing?.history ?? []), { role: "npc" as const, text: data.text }],
+        pending: false,
+        questOffer: data.questOffer ?? null,
+        itemOffer: data.itemOffer ?? null,
+      },
+    };
+  },
+  npc_chat_sending: (state: UiState, payload: { npcId: string; npcType: string; text: string }) => {
+    const existing = state.chatDialog?.npcId === payload.npcId ? state.chatDialog : null;
+    return {
+      ...state,
+      chatDialog: {
+        npcId: payload.npcId,
+        npcType: payload.npcType,
+        history: [...(existing?.history ?? []), { role: "user" as const, text: payload.text }],
+        pending: true,
+        questOffer: existing?.questOffer ?? null,
+        itemOffer: existing?.itemOffer ?? null,
+      },
+    };
+  },
+  npc_chat_dialog_close: (state: UiState) => ({ ...state, chatDialog: null }),
   codex_open: (state: UiState) => ({ ...state, codexOpen: true }),
   codex_close: (state: UiState) => ({ ...state, codexOpen: false }),
   craft_open: (state: UiState) => ({ ...state, craftOpen: true }),

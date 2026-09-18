@@ -6,6 +6,7 @@ import { GameLayout, ChannelSubscription } from "../game/types";
 import { NpcDialog } from "../game/components/npc/NpcDialog";
 import { NpcShopDialog } from "../game/components/npc/NpcShopDialog";
 import { NpcQuestDialog } from "../game/components/npc/NpcQuestDialog";
+import { NpcChatDialog } from "../game/components/npc/NpcChatDialog";
 import { LoadingOverlay } from "../game/overlays/LoadingOverlay";
 import { Preferences } from "../game/components/preferences/Preferences";
 import { HUD } from "../game/components/hud/HUD";
@@ -453,6 +454,22 @@ export function GameScreen() {
               onTurnIn={(questId) => {
                 window.mcState.events.push(`cmd:/quest turnin ${questId}`);
                 dispatch("quest_giver_dialog_close");
+              }}
+            />
+          )}
+          {state.chatDialog && (
+            <NpcChatDialog
+              data={state.chatDialog}
+              onClose={() => dispatch("npc_chat_dialog_close")}
+              onSend={(npcId, text) => {
+                dispatch("npc_chat_sending", { npcId, npcType: state.chatDialog!.npcType, text });
+                window.mcState.events.push(`npc_chat_send:${JSON.stringify({ npcId, text })}`);
+              }}
+              onAcceptQuest={(questId) => {
+                window.mcState.events.push(`cmd:/quest accept ${questId}`);
+              }}
+              onAcceptGift={(npcId, itemId) => {
+                window.mcState.events.push(`npc_chat_accept_gift:${JSON.stringify({ npcId, itemId })}`);
               }}
             />
           )}

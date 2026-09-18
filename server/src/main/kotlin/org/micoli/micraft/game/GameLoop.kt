@@ -242,6 +242,9 @@ fun validatePluginSystemIds(commands: Map<String, CommandHandler>, plugins: List
     }
 }
 
+/** Guards against sending a disproportionate prompt to Ollama. */
+private const val MAX_NPC_CHAT_TEXT_LENGTH = 500
+
 class GameLoop(
     private val world: WorldState,
     private val persistence: WorldPersistence? = null,
@@ -1592,6 +1595,170 @@ class GameLoop(
         savePlayer(session)
     }
 
+    /**
+     * The per-frame message dispatch, extracted out of `onConnect`'s inlined `consumeEach` lambda —
+     * that method sits right at the JVM 64KB bytecode ceiling, so any dispatch branch added inline
+     * there risks tripping `MethodTooLargeException`. Returns true if the caller should
+     * `return@consumeEach` (only for [ClientMessage.Disconnect], preserved from the original inline
+     * `when`).
+     */
+    private suspend fun dispatchClientMessage(
+        msg: ClientMessage,
+        session: PlayerSession,
+        gw: GameWorld,
+    ): Boolean {
+        val npcManager = gw.npcManager
+        val vehicleManager = gw.vehicleManager
+        val placeableManager = gw.placeableManager
+        val siegeWeaponManager = gw.siegeWeaponManager
+        val siegeProjectileManager = gw.siegeProjectileManager
+        val sceneRegistry = gw.sceneRegistry
+        val mailManager = gw.mailManager
+        val auctionManager = gw.auctionManager
+        val claimManager = gw.claimManager
+        val groupManager = gw.groupManager
+        val guildManager = gw.guildManager
+        val factionManager = gw.factionManager
+        when (msg) {
+            is ClientMessage.Disconnect -> return true
+            is ClientMessage.ChunkUnload -> {
+                msg.positions.forEach { session.loadedChunks.remove(it) }
+                log.debug("{} chunks unloaded by {}", msg.positions.size, session.id.take(8))
+            }
+            is ClientMessage.LayoutUpdate -> handleLayoutUpdate(session, msg)
+            is ClientMessage.PreferencesUpdate -> handlePreferencesUpdate(session, msg)
+            is ClientMessage.ViewModeUpdate -> {
+                session.state = session.state.copy(viewMode = msg.viewMode)
+                savePlayer(session)
+            }
+            is ClientMessage.NpcInteract -> npcManager.handleInteract(session, msg.npcId, i18n)
+            is ClientMessage.NpcChatSend -> handleNpcChatSend(npcManager, session, msg, i18n)
+            is ClientMessage.NpcChatAcceptGift ->
+                handleNpcChatAcceptGift(npcManager, session, msg, i18n)
+            is ClientMessage.VehicleInteract -> vehicleManager.handleInteract(msg.vehicleId)
+            is ClientMessage.PlaceableInteract -> {
+                placeableManager.handleInteract(msg.id, session)
+                siegeWeaponManager.despawnFor(msg.id)
+            }
+            is ClientMessage.PlaceableRotate -> placeableManager.handleRotate(msg.id)
+            is ClientMessage.SiegeWeaponSetPitch ->
+                siegeWeaponManager.getByPlaceableId(msg.id)?.let {
+                    siegeWeaponManager.handleSetPitch(it.id, msg.value)
+                }
+            is ClientMessage.SiegeWeaponNudgePitch ->
+                siegeWeaponManager.getByPlaceableId(msg.id)?.let {
+                    siegeWeaponManager.handleNudgePitch(session, it.id)
+                }
+            is ClientMessage.SiegeWeaponSetPower ->
+                siegeWeaponManager.getByPlaceableId(msg.id)?.let {
+                    siegeWeaponManager.handleSetPower(it.id, msg.value)
+                }
+            is ClientMessage.SiegeWeaponNudgePower ->
+                siegeWeaponManager.getByPlaceableId(msg.id)?.let {
+                    siegeWeaponManager.handleNudgePower(session, it.id)
+                }
+            is ClientMessage.SiegeWeaponFire ->
+                siegeWeaponManager.fire(
+                    session, msg.weaponId, placeableManager, siegeProjectileManager)
+            is ClientMessage.RequestScenePreview -> {
+                if (session.hasPermission(CorePermissions.ADMIN)) {
+                    sceneRegistry.get(msg.sceneId)?.let { scene ->
+                        session.send(
+                            ServerMessage.ScenePreviewData(
+                                scene.id,
+                                scene.width,
+                                scene.height,
+                                scene.depth,
+                                ScenePlacer.previewOccupancy(scene),
+                                scene.states,
+                            ))
+                    }
+                }
+            }
+            is ClientMessage.ActionBlockTarget,
+            is ClientMessage.RequestActionBlock,
+            is ClientMessage.SaveActionBlock,
+            is ClientMessage.DeleteActionBlock -> handleActionBlockMessage(gw, session, msg)
+            is ClientMessage.RunMacro -> handleRunMacro(session, msg)
+            is ClientMessage.RunMacroContent -> handleRunMacroContent(session, msg)
+            is ClientMessage.SendMail -> mailManager?.handleSendMail(session, msg)
+            is ClientMessage.MarkMailSeen -> mailManager?.handleMarkSeen(session, msg.mailId)
+            is ClientMessage.DeleteMail -> mailManager?.handleDelete(session, msg.mailId)
+            is ClientMessage.ClaimMailAttachments ->
+                mailManager?.handleClaimAttachments(session, msg.mailId)
+            is ClientMessage.AuctionCreateListing ->
+                auctionManager?.createListing(
+                    session,
+                    msg.itemType,
+                    msg.quantity,
+                    msg.duration,
+                    msg.startingPrice,
+                    msg.buyNowPrice)
+            is ClientMessage.AuctionPlaceBid ->
+                auctionManager?.placeBid(session, msg.listingId, msg.amount)
+            is ClientMessage.AuctionBuyNow -> auctionManager?.buyNow(session, msg.listingId)
+            is ClientMessage.AuctionCancelListing -> auctionManager?.cancel(session, msg.listingId)
+            is ClientMessage.AuctionSetFilter -> auctionManager?.setFilter(session, msg.filter)
+            is ClientMessage.ClaimCreate -> claimManager.createClaim(session, msg.pos1, msg.pos2)
+            is ClientMessage.ClaimAbandon -> claimManager.abandonClaim(session, msg.claimId)
+            is ClientMessage.ClaimSetTrusted ->
+                claimManager.setTrusted(session, msg.claimId, msg.playerName, msg.trusted)
+            is ClientMessage.GroupCreate -> groupManager.create(session)
+            is ClientMessage.GroupInvite -> groupManager.invite(session, msg.targetName)
+            is ClientMessage.GroupInviteRespond ->
+                groupManager.respondInvite(session, msg.groupId, msg.accept)
+            is ClientMessage.GroupLeave -> groupManager.leave(session)
+            is ClientMessage.GroupKick -> groupManager.kick(session, msg.targetId)
+            is ClientMessage.GroupTransfer -> groupManager.transfer(session, msg.targetId)
+            is ClientMessage.GroupDisband -> groupManager.disband(session)
+            is ClientMessage.GuildCreate -> guildManager.create(session, msg.name, msg.tag)
+            is ClientMessage.GuildInvite -> guildManager.invite(session, msg.targetName)
+            is ClientMessage.GuildInviteRespond ->
+                guildManager.respondInvite(session, msg.guildId, msg.accept)
+            is ClientMessage.GuildLeave -> guildManager.leave(session)
+            is ClientMessage.GuildKick -> guildManager.kick(session, msg.targetId)
+            is ClientMessage.GuildSetMotd -> guildManager.setMotd(session, msg.text)
+            is ClientMessage.GuildSetRank ->
+                guildManager.setRank(session, msg.targetId, msg.rankName)
+            is ClientMessage.GuildRankUpsert -> guildManager.upsertRank(session, msg.rank)
+            is ClientMessage.GuildRankDelete -> guildManager.deleteRank(session, msg.rankName)
+            is ClientMessage.GuildTransferOwner -> guildManager.transferOwner(session, msg.targetId)
+            is ClientMessage.GuildDisband -> guildManager.disband(session)
+            is ClientMessage.GuildBankDeposit ->
+                guildManager.bankDeposit(session, msg.itemType, msg.count)
+            is ClientMessage.GuildBankWithdraw ->
+                guildManager.bankWithdraw(session, msg.itemType, msg.count)
+            is ClientMessage.FactionSetAffiliation ->
+                factionManager.setAffiliation(session, msg.factionId)
+            is ClientMessage.CreativeCameraFocus -> {
+                if (session.state.editMode == EditMode.CREATIVE) {
+                    session.creativeFocusPos = msg.x to msg.z
+                }
+            }
+            else -> session.intents.trySend(msg)
+        }
+        return false
+    }
+
+    private suspend fun handleNpcChatSend(
+        npcManager: NpcManager,
+        session: PlayerSession,
+        msg: ClientMessage.NpcChatSend,
+        i18n: I18nConfig,
+    ) {
+        if (msg.text.length > MAX_NPC_CHAT_TEXT_LENGTH) return
+        npcManager.handleChatSend(session, msg.npcId, msg.text, i18n)
+    }
+
+    private suspend fun handleNpcChatAcceptGift(
+        npcManager: NpcManager,
+        session: PlayerSession,
+        msg: ClientMessage.NpcChatAcceptGift,
+        i18n: I18nConfig,
+    ) {
+        npcManager.handleChatAcceptGift(session, msg.npcId, msg.itemId, i18n)
+    }
+
     private suspend fun handleCommand(session: PlayerSession, text: String) {
         val trimmed = text.trim()
         val name = trimmed.substringBefore(' ').lowercase()
@@ -1971,163 +2138,8 @@ class GameLoop(
                         .getOrNull()
                         ?.let { msg ->
                             runCatching {
-                                    when (msg) {
-                                        is ClientMessage.Disconnect -> return@consumeEach
-                                        is ClientMessage.ChunkUnload -> {
-                                            msg.positions.forEach {
-                                                session.loadedChunks.remove(it)
-                                            }
-                                            log.debug(
-                                                "{} chunks unloaded by {}",
-                                                msg.positions.size,
-                                                session.id.take(8))
-                                        }
-                                        is ClientMessage.LayoutUpdate ->
-                                            handleLayoutUpdate(session, msg)
-                                        is ClientMessage.PreferencesUpdate ->
-                                            handlePreferencesUpdate(session, msg)
-                                        is ClientMessage.ViewModeUpdate -> {
-                                            session.state =
-                                                session.state.copy(viewMode = msg.viewMode)
-                                            savePlayer(session)
-                                        }
-                                        is ClientMessage.NpcInteract ->
-                                            npcManager.handleInteract(session, msg.npcId, i18n)
-                                        is ClientMessage.VehicleInteract ->
-                                            vehicleManager.handleInteract(msg.vehicleId)
-                                        is ClientMessage.PlaceableInteract -> {
-                                            placeableManager.handleInteract(msg.id, session)
-                                            siegeWeaponManager.despawnFor(msg.id)
-                                        }
-                                        is ClientMessage.PlaceableRotate ->
-                                            placeableManager.handleRotate(msg.id)
-                                        is ClientMessage.SiegeWeaponSetPitch ->
-                                            siegeWeaponManager.getByPlaceableId(msg.id)?.let {
-                                                siegeWeaponManager.handleSetPitch(it.id, msg.value)
-                                            }
-                                        is ClientMessage.SiegeWeaponNudgePitch ->
-                                            siegeWeaponManager.getByPlaceableId(msg.id)?.let {
-                                                siegeWeaponManager.handleNudgePitch(session, it.id)
-                                            }
-                                        is ClientMessage.SiegeWeaponSetPower ->
-                                            siegeWeaponManager.getByPlaceableId(msg.id)?.let {
-                                                siegeWeaponManager.handleSetPower(it.id, msg.value)
-                                            }
-                                        is ClientMessage.SiegeWeaponNudgePower ->
-                                            siegeWeaponManager.getByPlaceableId(msg.id)?.let {
-                                                siegeWeaponManager.handleNudgePower(session, it.id)
-                                            }
-                                        is ClientMessage.SiegeWeaponFire ->
-                                            siegeWeaponManager.fire(
-                                                session,
-                                                msg.weaponId,
-                                                placeableManager,
-                                                siegeProjectileManager)
-                                        is ClientMessage.RequestScenePreview -> {
-                                            if (session.hasPermission(CorePermissions.ADMIN)) {
-                                                sceneRegistry.get(msg.sceneId)?.let { scene ->
-                                                    session.send(
-                                                        ServerMessage.ScenePreviewData(
-                                                            scene.id,
-                                                            scene.width,
-                                                            scene.height,
-                                                            scene.depth,
-                                                            ScenePlacer.previewOccupancy(scene),
-                                                            scene.states,
-                                                        ))
-                                                }
-                                            }
-                                        }
-                                        is ClientMessage.ActionBlockTarget,
-                                        is ClientMessage.RequestActionBlock,
-                                        is ClientMessage.SaveActionBlock,
-                                        is ClientMessage.DeleteActionBlock ->
-                                            handleActionBlockMessage(gw, session, msg)
-                                        is ClientMessage.RunMacro -> handleRunMacro(session, msg)
-                                        is ClientMessage.RunMacroContent ->
-                                            handleRunMacroContent(session, msg)
-                                        is ClientMessage.SendMail ->
-                                            mailManager?.handleSendMail(session, msg)
-                                        is ClientMessage.MarkMailSeen ->
-                                            mailManager?.handleMarkSeen(session, msg.mailId)
-                                        is ClientMessage.DeleteMail ->
-                                            mailManager?.handleDelete(session, msg.mailId)
-                                        is ClientMessage.ClaimMailAttachments ->
-                                            mailManager?.handleClaimAttachments(session, msg.mailId)
-                                        is ClientMessage.AuctionCreateListing ->
-                                            auctionManager?.createListing(
-                                                session,
-                                                msg.itemType,
-                                                msg.quantity,
-                                                msg.duration,
-                                                msg.startingPrice,
-                                                msg.buyNowPrice)
-                                        is ClientMessage.AuctionPlaceBid ->
-                                            auctionManager?.placeBid(
-                                                session, msg.listingId, msg.amount)
-                                        is ClientMessage.AuctionBuyNow ->
-                                            auctionManager?.buyNow(session, msg.listingId)
-                                        is ClientMessage.AuctionCancelListing ->
-                                            auctionManager?.cancel(session, msg.listingId)
-                                        is ClientMessage.AuctionSetFilter ->
-                                            auctionManager?.setFilter(session, msg.filter)
-                                        is ClientMessage.ClaimCreate ->
-                                            claimManager.createClaim(session, msg.pos1, msg.pos2)
-                                        is ClientMessage.ClaimAbandon ->
-                                            claimManager.abandonClaim(session, msg.claimId)
-                                        is ClientMessage.ClaimSetTrusted ->
-                                            claimManager.setTrusted(
-                                                session, msg.claimId, msg.playerName, msg.trusted)
-                                        is ClientMessage.GroupCreate -> groupManager.create(session)
-                                        is ClientMessage.GroupInvite ->
-                                            groupManager.invite(session, msg.targetName)
-                                        is ClientMessage.GroupInviteRespond ->
-                                            groupManager.respondInvite(
-                                                session, msg.groupId, msg.accept)
-                                        is ClientMessage.GroupLeave -> groupManager.leave(session)
-                                        is ClientMessage.GroupKick ->
-                                            groupManager.kick(session, msg.targetId)
-                                        is ClientMessage.GroupTransfer ->
-                                            groupManager.transfer(session, msg.targetId)
-                                        is ClientMessage.GroupDisband ->
-                                            groupManager.disband(session)
-                                        is ClientMessage.GuildCreate ->
-                                            guildManager.create(session, msg.name, msg.tag)
-                                        is ClientMessage.GuildInvite ->
-                                            guildManager.invite(session, msg.targetName)
-                                        is ClientMessage.GuildInviteRespond ->
-                                            guildManager.respondInvite(
-                                                session, msg.guildId, msg.accept)
-                                        is ClientMessage.GuildLeave -> guildManager.leave(session)
-                                        is ClientMessage.GuildKick ->
-                                            guildManager.kick(session, msg.targetId)
-                                        is ClientMessage.GuildSetMotd ->
-                                            guildManager.setMotd(session, msg.text)
-                                        is ClientMessage.GuildSetRank ->
-                                            guildManager.setRank(
-                                                session, msg.targetId, msg.rankName)
-                                        is ClientMessage.GuildRankUpsert ->
-                                            guildManager.upsertRank(session, msg.rank)
-                                        is ClientMessage.GuildRankDelete ->
-                                            guildManager.deleteRank(session, msg.rankName)
-                                        is ClientMessage.GuildTransferOwner ->
-                                            guildManager.transferOwner(session, msg.targetId)
-                                        is ClientMessage.GuildDisband ->
-                                            guildManager.disband(session)
-                                        is ClientMessage.GuildBankDeposit ->
-                                            guildManager.bankDeposit(
-                                                session, msg.itemType, msg.count)
-                                        is ClientMessage.GuildBankWithdraw ->
-                                            guildManager.bankWithdraw(
-                                                session, msg.itemType, msg.count)
-                                        is ClientMessage.FactionSetAffiliation ->
-                                            factionManager.setAffiliation(session, msg.factionId)
-                                        is ClientMessage.CreativeCameraFocus -> {
-                                            if (session.state.editMode == EditMode.CREATIVE) {
-                                                session.creativeFocusPos = msg.x to msg.z
-                                            }
-                                        }
-                                        else -> session.intents.trySend(msg)
+                                    if (dispatchClientMessage(msg, session, gw)) {
+                                        return@consumeEach
                                     }
                                 }
                                 .onFailure { e ->

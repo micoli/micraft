@@ -534,6 +534,7 @@ declare global {
     disposeNpcModel(model: McPlayerModel): void;
     openNpcDialog(json: string): void;
     openQuestGiverDialog(json: string): void;
+    openNpcChatDialog(json: string): void;
     // Vehicle
     initVehicleModels(vehicleTypesJson: string): void;
     isVehicleModelsReady(): boolean;

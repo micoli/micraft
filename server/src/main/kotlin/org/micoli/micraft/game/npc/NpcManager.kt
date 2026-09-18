@@ -75,6 +75,10 @@ class NpcManager(
     },
     /** Quest manager for the quest-giver behavior's dialog. Null hosts get no quest offers. */
     private val getQuestManager: () -> QuestManager? = { null },
+    /** Ollama client for the `chat_npc` behavior. Null hosts get no LLM dialogue. */
+    private val getOllamaClient: () -> OllamaClient? = { null },
+    /** Per-(session, npc) chat history/rate-limit for the `chat_npc` behavior. */
+    private val getChatHistoryStore: () -> NpcChatHistoryStore? = { null },
     /** Host-provided check so a generated NPC name never collides with a player's. */
     private val isPlayerName: (String) -> Boolean = { false },
 ) {
@@ -575,6 +579,11 @@ class NpcManager(
         i18n: I18nConfig? = null,
     ) {
         val instance = npcs[npcId] ?: return
+        if (instance.definition.chat != null) {
+            val chatCtx = ctx.copy(questManager = getQuestManager(), i18n = i18n)
+            NpcChatService.onInteract(instance, session, chatCtx) { msg -> session.send(msg) }
+            return
+        }
         val interactCtx =
             ctx.copy(
                 questManager =
@@ -584,6 +593,36 @@ class NpcManager(
         instance.definition.behavior.onInteract(instance, session, interactCtx) { msg ->
             session.send(msg)
         }
+    }
+
+    suspend fun handleChatSend(
+        session: PlayerSession,
+        npcId: String,
+        text: String,
+        i18n: I18nConfig? = null,
+    ) {
+        val instance = npcs[npcId] ?: return
+        if (instance.definition.chat == null) return
+        val chatCtx =
+            ctx.copy(
+                questManager = getQuestManager(),
+                i18n = i18n,
+                ollamaClient = getOllamaClient(),
+                chatHistoryStore = getChatHistoryStore(),
+            )
+        NpcChatService.onChatMessage(instance, session, chatCtx, text) { msg -> session.send(msg) }
+    }
+
+    suspend fun handleChatAcceptGift(
+        session: PlayerSession,
+        npcId: String,
+        itemId: String,
+        i18n: I18nConfig? = null,
+    ) {
+        val instance = npcs[npcId] ?: return
+        if (instance.definition.chat == null) return
+        val chatCtx = ctx.copy(i18n = i18n)
+        NpcChatService.onAcceptGift(instance, session, chatCtx, itemId) { msg -> session.send(msg) }
     }
 
     fun getSellerItems(npcId: String): List<ShopItemEntry>? {

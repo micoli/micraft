@@ -219,6 +219,8 @@ fun jsCharacterSync(json: String): Unit = js("mc.characterSync(json)")
 
 fun jsOpenQuestGiverDialog(json: String): Unit = js("mc.openQuestGiverDialog(json)")
 
+fun jsOpenNpcChatDialog(json: String): Unit = js("mc.openNpcChatDialog(json)")
+
 // ── Combat ────────────────────────────────────────────────────────────────────
 
 fun jsCombatTargetUpdate(json: String): Unit = js("mc.combatTargetUpdate(json)")

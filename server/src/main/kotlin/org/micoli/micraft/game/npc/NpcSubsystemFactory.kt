@@ -51,6 +51,10 @@ data class NpcSubsystemHooks(
     val onPackEvent: (PackEvent) -> Unit = {},
     /** Quest manager for the quest-giver behavior's dialog. Null hosts get no quest offers. */
     val getQuestManager: () -> QuestManager? = { null },
+    /** Ollama client for the `chat_npc` behavior. Null hosts get no LLM dialogue. */
+    val getOllamaClient: () -> OllamaClient? = { null },
+    /** Per-(session, npc) chat history/rate-limit for the `chat_npc` behavior. */
+    val getChatHistoryStore: () -> NpcChatHistoryStore? = { null },
     /** Host-provided check so a generated NPC name never collides with a player's. */
     val isPlayerName: (String) -> Boolean = { false },
 )
@@ -96,6 +100,8 @@ class NpcSubsystemFactory(
             grantNpcKillXp = hooks.grantNpcKillXp,
             ctxOf = hooks.ctxOf,
             getQuestManager = hooks.getQuestManager,
+            getOllamaClient = hooks.getOllamaClient,
+            getChatHistoryStore = hooks.getChatHistoryStore,
             isPlayerName = hooks.isPlayerName,
         )
 

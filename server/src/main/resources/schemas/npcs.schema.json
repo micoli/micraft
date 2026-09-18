@@ -454,6 +454,28 @@
         "type": "string"
       }
     },
+    "chat": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "dialoguePrompt": {
+              "type": "string"
+            },
+            "giftableItems": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
     "armorLoot": {
       "type": "array",
       "items": {

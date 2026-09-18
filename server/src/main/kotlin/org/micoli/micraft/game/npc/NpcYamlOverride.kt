@@ -43,5 +43,6 @@ data class NpcYamlOverride(
     val tameBaseChance: Float? = null,
     val movementMode: List<MovementMode>? = null,
     val offersQuests: List<String>? = null,
+    val chat: NpcChatCapability? = null,
     val armorLoot: List<ArmorDropEntry>? = null,
 )

@@ -773,6 +773,11 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 typedHandler { msg: ServerMessage.QuestGiverDialog ->
                     jsOpenQuestGiverDialog(Json.encodeToString(msg))
                 })
+            put(
+                ServerMessage.NpcChatReply::class,
+                typedHandler { msg: ServerMessage.NpcChatReply ->
+                    jsOpenNpcChatDialog(Json.encodeToString(msg))
+                })
 
             // Vehicle — single handler object registered for all vehicle message types
             put(ServerMessage.VehicleSpawned::class, vehicleManager)

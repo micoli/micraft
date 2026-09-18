@@ -9,6 +9,7 @@ import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.GameConfig
+import org.micoli.micraft.game.ServerConfig
 import org.micoli.micraft.game.SharedGameServices
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.armor.ArmorLootGranter
@@ -39,6 +40,7 @@ import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.equipment.WeaponRegistryLoader
 import org.micoli.micraft.game.mail.MailManager
 import org.micoli.micraft.game.mail.MailPersistence
+import org.micoli.micraft.game.npc.NpcChatHistoryStore
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcManager
@@ -46,6 +48,7 @@ import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.npc.NpcSubsystemHooks
+import org.micoli.micraft.game.npc.OllamaClient
 import org.micoli.micraft.game.pet.PetCoordinator
 import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.placeable.PlaceableManager
@@ -226,6 +229,12 @@ class GameLoopModule {
      * its own hooks, which is what makes a simulated run comparable to the real game.
      */
     @Single
+    fun ollamaClient(serverConfig: ServerConfig): OllamaClient =
+        OllamaClient(serverConfig.llm.ollama)
+
+    @Single fun npcChatHistoryStore(): NpcChatHistoryStore = NpcChatHistoryStore()
+
+    @Single
     fun npcSubsystemHooks(
         sessionRegistry: SessionRegistry,
         experienceProcessor: ExperienceProcessor,
@@ -238,6 +247,8 @@ class GameLoopModule {
         playerPersister: PlayerPersister,
         i18nConfig: I18nConfig,
         optionalWorldPersistence: OptionalWorldPersistence,
+        ollamaClient: OllamaClient,
+        npcChatHistoryStore: NpcChatHistoryStore,
     ): NpcSubsystemHooks =
         NpcSubsystemHooks(
             broadcast = sessionRegistry::broadcast,
@@ -278,6 +289,8 @@ class GameLoopModule {
                 experienceProcessor.grantXpToNpcForKill(predator, prey)
             },
             getQuestManager = { questManager },
+            getOllamaClient = { ollamaClient },
+            getChatHistoryStore = { npcChatHistoryStore },
         )
 
     @Single
@@ -739,6 +752,8 @@ class GameLoopModule {
         combatConfigData: CombatConfigData,
         classesConfigData: ClassesConfigData,
         experienceConfigData: ExperienceConfigData,
+        ollamaClient: OllamaClient,
+        npcChatHistoryStore: NpcChatHistoryStore,
     ): SharedGameServices =
         SharedGameServices(
             gameConfig = gameConfig,
@@ -775,5 +790,7 @@ class GameLoopModule {
             combatConfigData = combatConfigData,
             classesConfigData = classesConfigData,
             experienceConfigData = experienceConfigData,
+            ollamaClient = ollamaClient,
+            npcChatHistoryStore = npcChatHistoryStore,
         )
 }

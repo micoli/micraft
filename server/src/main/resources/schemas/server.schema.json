@@ -255,6 +255,27 @@
           "maxItems": 5
         }
       }
+    },
+    "llm": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ollama": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "baseUrl": {
+              "type": "string"
+            },
+            "model": {
+              "type": "string"
+            },
+            "requestTimeoutMs": {
+              "type": "integer"
+            }
+          }
+        }
+      }
     }
   }
 }

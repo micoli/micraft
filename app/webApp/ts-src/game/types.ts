@@ -91,6 +91,42 @@ export interface QuestGiverDialogData {
   turnInable: string[];
 }
 
+export interface ItemOfferSummary {
+  itemId: string;
+  displayName: string;
+}
+
+export interface NpcChatAction {
+  type: string;
+  questId?: string | null;
+  itemId?: string | null;
+}
+
+/** Raw `NpcChatReply` payload as sent by the server — one message per turn. */
+export interface NpcChatReplyData {
+  npcId: string;
+  npcType: string;
+  text: string;
+  action?: NpcChatAction | null;
+  questOffer?: QuestOfferSummary | null;
+  itemOffer?: ItemOfferSummary | null;
+}
+
+export interface NpcChatTurn {
+  role: "user" | "npc";
+  text: string;
+}
+
+/** Accumulated client-side across replies — the server sends one turn at a time, not history. */
+export interface NpcChatDialogData {
+  npcId: string;
+  npcType: string;
+  history: NpcChatTurn[];
+  pending: boolean;
+  questOffer: QuestOfferSummary | null;
+  itemOffer: ItemOfferSummary | null;
+}
+
 export interface ActionBlockHudData {
   name: string;
   values: Record<string, string>;
