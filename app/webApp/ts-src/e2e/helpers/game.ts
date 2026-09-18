@@ -1,6 +1,7 @@
 /// <reference path="../../global.d.ts" />
 import { Page } from "@playwright/test";
 import type { E2eActions } from "../../game/lib/e2eBridge";
+import { ClientEventPrefix } from "../../generated/input/clientEvents";
 
 type PageBound<T> = {
   [K in keyof T]: T[K] extends (...a: infer A) => infer R ? (...a: A) => Promise<Awaited<R>> : never;
@@ -50,8 +51,8 @@ export async function targetBlockIs(page: Page, target: { x: number; y: number; 
 
 export async function creativePlaceBlock(page: Page, target: { x: number; y: number; z: number }, blockType: string) {
   return await page.evaluate(
-    ({ t, type }) => window.mcState.events.push(`creative_place:${t.x},${t.y},${t.z},${type},0`),
-    { t: target, type: blockType },
+    ({ t, type, prefix }) => window.mcState.events.push(`${prefix}${t.x},${t.y},${t.z},${type},0`),
+    { t: target, type: blockType, prefix: ClientEventPrefix.CREATIVE_PLACE },
   );
 }
 

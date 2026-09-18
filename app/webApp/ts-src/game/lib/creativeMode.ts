@@ -2,6 +2,7 @@ import { createOrbitCamera } from "../../admin/pages/shared/voxelEditor/orbitCam
 import { saveCameraState } from "../../admin/pages/shared/voxelEditor/cameraStorage";
 import { setupOrbitPointerController } from "../../admin/pages/shared/voxelEditor/orbitPointerController";
 import { getAccountEmail } from "../../lib/authStorage";
+import { ClientEventPrefix } from "../../generated/input/clientEvents";
 import { showScenePreview, hideScenePreview, SceneGhostCell } from "./targeting/sceneGhost";
 
 export interface CreativeSceneSummary {
@@ -55,7 +56,7 @@ export function setCreativeSelectedScene(scene: CreativeSceneSummary | null): vo
   selectedItem = null;
   selectedScene = scene;
   window.mcState.sceneGhostActive = true;
-  window.mcState.events.push(`scene_preview_request:${scene.id}`);
+  window.mcState.events.push(`${ClientEventPrefix.SCENE_PREVIEW_REQUEST}${scene.id}`);
 }
 
 // Called from GameUI's window.mc.scenePreviewData handler once the server responds to the
@@ -131,7 +132,7 @@ export function confirmScenePlacement(): void {
   }
   const { id } = selectedScene;
   const { x, y, z } = lastGhostBase;
-  window.mcState.events.push(`cmd:/scene:place ${id} ${sceneRotation} ${x} ${y} ${z}`);
+  window.mcState.events.push(`${ClientEventPrefix.CMD}/scene:place ${id} ${sceneRotation} ${x} ${y} ${z}`);
   setCreativeSelectedScene(null);
 }
 
@@ -188,9 +189,9 @@ export function enterCreativeMode(): void {
       targetY: orbitCamera.target.y,
       targetZ: orbitCamera.target.z,
     });
-    window.mcState.events.push(`creative_focus:${orbitCamera.target.x},${orbitCamera.target.z}`);
+    window.mcState.events.push(`${ClientEventPrefix.CREATIVE_FOCUS}${orbitCamera.target.x},${orbitCamera.target.z}`);
   });
-  window.mcState.events.push(`creative_focus:${orbitCamera.target.x},${orbitCamera.target.z}`);
+  window.mcState.events.push(`${ClientEventPrefix.CREATIVE_FOCUS}${orbitCamera.target.x},${orbitCamera.target.z}`);
 
   teardownController = setupOrbitPointerController({
     B: BABYLON,
@@ -244,9 +245,9 @@ export function enterCreativeMode(): void {
       const bz = Math.floor(hit.z + n.z * sign);
       if (mode === "place") {
         if (!selectedItem) return;
-        window.mcState.events.push(`creative_place:${bx},${by},${bz},${selectedItem},0`);
+        window.mcState.events.push(`${ClientEventPrefix.CREATIVE_PLACE}${bx},${by},${bz},${selectedItem},0`);
       } else {
-        window.mcState.events.push(`creative_break:${bx},${by},${bz}`);
+        window.mcState.events.push(`${ClientEventPrefix.CREATIVE_BREAK}${bx},${by},${bz}`);
       }
     },
   });

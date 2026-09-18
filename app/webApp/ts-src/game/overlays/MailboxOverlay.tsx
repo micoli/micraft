@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { getApiPlayersNames } from "../../generated/api/requests";
+import { ClientEventPrefix } from "../../generated/input/clientEvents";
 import { Dialog } from "../../primitives/Dialog";
 import { DialogContent } from "../../primitives/DialogContent";
 import { DialogTitle } from "../../primitives/DialogTitle";
@@ -57,6 +58,17 @@ function fmtDate(ms: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+// Bare event-type names (no trailing ":") — shared between the wasm-bridge sender below and the
+// `/hub` companion's own switch (see MailRoute.tsx onEvent). Derived from the generated
+// ClientEventPrefix so a Kotlin-side rename can't silently desync this from
+// `ClientInputEvent.parse`'s prefixes.
+export const MailEventType = {
+  SEND: ClientEventPrefix.MAIL_SEND.slice(0, -1),
+  SEEN: ClientEventPrefix.MAIL_SEEN.slice(0, -1),
+  DELETE: ClientEventPrefix.MAIL_DELETE.slice(0, -1),
+  CLAIM: ClientEventPrefix.MAIL_CLAIM.slice(0, -1),
+} as const;
+
 function defaultSendEvent(type: string, payload: string) {
   window.mcState.events.push(`${type}:${payload}`);
 }
@@ -99,7 +111,7 @@ export function MailboxOverlay({
         }
       }
       onEvent(
-        "mail_send",
+        MailEventType.SEND,
         JSON.stringify({
           to: toTrimmed,
           subject: value.subject.trim(),
@@ -130,7 +142,7 @@ export function MailboxOverlay({
   function openRead(mail: MailData) {
     setSelected(mail);
     setView("read");
-    if (!mail.seen) onEvent("mail_seen", mail.id);
+    if (!mail.seen) onEvent(MailEventType.SEEN, mail.id);
   }
 
   function openCompose() {
@@ -142,13 +154,13 @@ export function MailboxOverlay({
   }
 
   function handleDelete(mail: MailData) {
-    onEvent("mail_delete", mail.id);
+    onEvent(MailEventType.DELETE, mail.id);
     setView("inbox");
     setSelected(null);
   }
 
   function handleClaim(mail: MailData) {
-    onEvent("mail_claim", mail.id);
+    onEvent(MailEventType.CLAIM, mail.id);
     setClaimedIds((prev) => new Set(prev).add(mail.id));
   }
 

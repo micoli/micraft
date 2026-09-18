@@ -156,6 +156,9 @@ gen-api: ## Regenerate TanStack Query hooks/types from server/openapi/openapi.ya
 	$(EXEC) "./gradlew :server:exportOpenApi"
 	$(EXEC) "cd app/webApp/ts-src && npm run gen:api"
 
+gen-client-events: ## Regenerate ts-src/generated/input/clientEvents.ts from core's ClientInputEvent
+	$(EXEC) "./gradlew :server:generateClientEventTypes"
+
 storybook: ## Launch Storybook dev server
 	$(EXEC) "cd app/webApp/ts-src && npm run storybook"
 
@@ -190,13 +193,16 @@ dev-nuke: ## Destroy all named build volumes + full restart (nuclear option, ~2 
 
 ##@ Standard & code analysis
 
-code-standard: spotless-apply check-detekt ts-code-standard check-docs check-configuration check-openapi check-schemas ## Full lint on Kotlin + TypeScript
+code-standard: spotless-apply check-detekt ts-code-standard check-docs check-configuration check-openapi check-schemas check-client-events ## Full lint on Kotlin + TypeScript
 
 check-detekt: ## Static analysis on Kotlin sources (detekt)
 	$(EXEC) "./gradlew detekt"
 
 check-docs: ## Verify generated docs are up to date (commands + reference tables)
 	$(EXEC) "./gradlew :server:checkCommandsDocs :server:checkReferenceDocs"
+
+check-client-events: ## Fail if ts-src/generated/input/clientEvents.ts drifts from core's ClientInputEvent
+	$(EXEC) "./gradlew :server:checkClientEventTypes"
 
 check-openapi: ## Fail if server/openapi/openapi.yaml drifts from annotated routes
 	$(EXEC) "./gradlew :server:checkOpenApi"

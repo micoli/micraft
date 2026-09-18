@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { RefObject } from "react";
+import { ClientEventPrefix } from "../../../generated/input/clientEvents";
 import { CodexCard } from "./CodexCard";
 import { CssBlockCube } from "../../shared/BlockPreview";
 import { Block3DPreview } from "../../shared/Block3DPreview";
@@ -146,7 +147,9 @@ export function BlockDetail({
         />
         <button
           disabled={!giveItemName}
-          onClick={() => giveItemName && window.mcState.events.push(`cmd:/give ${giveItemName} ${qty}`)}
+          onClick={() =>
+            giveItemName && window.mcState.events.push(`${ClientEventPrefix.CMD}/give ${giveItemName} ${qty}`)
+          }
           style={{
             flex: 1,
             background: giveItemName ? "#2a3d2a" : "#1e1e1e",

@@ -1,6 +1,7 @@
 import { useMemo, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { startPreloading } from "../game/shared/blockPreviewCache";
+import { ClientEventPrefix } from "../generated/input/clientEvents";
 import { getStoredToken, getLastLang, getAccountEmail, getLastPlayer, getPlayerEntries } from "../lib/authStorage";
 import { GameLayout, ChannelSubscription } from "../game/types";
 import { NpcDialog } from "../game/components/npc/NpcDialog";
@@ -433,11 +434,11 @@ export function GameScreen() {
                 onClose={() => dispatch("npc_dialog_close")}
                 onBuy={(npcId, orders) => {
                   for (const { itemType, qty } of orders)
-                    window.mcState.events.push(`cmd:/npcbuy ${npcId} ${itemType} ${qty}`);
+                    window.mcState.events.push(`${ClientEventPrefix.CMD}/npcbuy ${npcId} ${itemType} ${qty}`);
                 }}
                 onSell={(npcId, orders) => {
                   for (const { itemType, qty } of orders)
-                    window.mcState.events.push(`cmd:/npcsell ${npcId} ${itemType} ${qty}`);
+                    window.mcState.events.push(`${ClientEventPrefix.CMD}/npcsell ${npcId} ${itemType} ${qty}`);
                 }}
               />
             ) : (
@@ -448,11 +449,11 @@ export function GameScreen() {
               data={state.questGiverDialog}
               onClose={() => dispatch("quest_giver_dialog_close")}
               onAccept={(questId) => {
-                window.mcState.events.push(`cmd:/quest accept ${questId}`);
+                window.mcState.events.push(`${ClientEventPrefix.CMD}/quest accept ${questId}`);
                 dispatch("quest_giver_dialog_close");
               }}
               onTurnIn={(questId) => {
-                window.mcState.events.push(`cmd:/quest turnin ${questId}`);
+                window.mcState.events.push(`${ClientEventPrefix.CMD}/quest turnin ${questId}`);
                 dispatch("quest_giver_dialog_close");
               }}
             />
@@ -463,13 +464,15 @@ export function GameScreen() {
               onClose={() => dispatch("npc_chat_dialog_close")}
               onSend={(npcId, text) => {
                 dispatch("npc_chat_sending", { npcId, npcType: state.chatDialog!.npcType, text });
-                window.mcState.events.push(`npc_chat_send:${JSON.stringify({ npcId, text })}`);
+                window.mcState.events.push(`${ClientEventPrefix.NPC_CHAT_SEND}${JSON.stringify({ npcId, text })}`);
               }}
               onAcceptQuest={(questId) => {
-                window.mcState.events.push(`cmd:/quest accept ${questId}`);
+                window.mcState.events.push(`${ClientEventPrefix.CMD}/quest accept ${questId}`);
               }}
               onAcceptGift={(npcId, itemId) => {
-                window.mcState.events.push(`npc_chat_accept_gift:${JSON.stringify({ npcId, itemId })}`);
+                window.mcState.events.push(
+                  `${ClientEventPrefix.NPC_CHAT_ACCEPT_GIFT}${JSON.stringify({ npcId, itemId })}`,
+                );
               }}
             />
           )}
@@ -759,21 +762,21 @@ export function GameScreen() {
             resumePointerLock();
           }}
           onBid={(auctionId, amount) => {
-            window.mcState.events.push(`auction_bid:${JSON.stringify({ auctionId, amount })}`);
+            window.mcState.events.push(`${ClientEventPrefix.AUCTION_BID}${JSON.stringify({ auctionId, amount })}`);
           }}
           onBuyNow={(auctionId) => {
-            window.mcState.events.push(`auction_buynow:${auctionId}`);
+            window.mcState.events.push(`${ClientEventPrefix.AUCTION_BUYNOW}${auctionId}`);
           }}
           onCancel={(auctionId) => {
-            window.mcState.events.push(`auction_cancel:${auctionId}`);
+            window.mcState.events.push(`${ClientEventPrefix.AUCTION_CANCEL}${auctionId}`);
           }}
           onCreateListing={(itemType, quantity, duration, startingPrice, buyNowPrice) => {
             window.mcState.events.push(
-              `auction_create:${JSON.stringify({ itemType, quantity, duration, startingPrice, buyNowPrice })}`,
+              `${ClientEventPrefix.AUCTION_CREATE}${JSON.stringify({ itemType, quantity, duration, startingPrice, buyNowPrice })}`,
             );
           }}
           onFilterChange={(filter) => {
-            window.mcState.events.push(`auction_set_filter:${JSON.stringify({ filter })}`);
+            window.mcState.events.push(`${ClientEventPrefix.AUCTION_SET_FILTER}${JSON.stringify({ filter })}`);
           }}
         />
       )}
@@ -787,10 +790,12 @@ export function GameScreen() {
             resumePointerLock();
           }}
           onAbandon={(claimId) => {
-            window.mcState.events.push(`claim_abandon:${claimId}`);
+            window.mcState.events.push(`${ClientEventPrefix.CLAIM_ABANDON}${claimId}`);
           }}
           onSetTrusted={(claimId, playerName, trusted) => {
-            window.mcState.events.push(`claim_set_trusted:${JSON.stringify({ claimId, playerName, trusted })}`);
+            window.mcState.events.push(
+              `${ClientEventPrefix.CLAIM_SET_TRUSTED}${JSON.stringify({ claimId, playerName, trusted })}`,
+            );
           }}
         />
       )}

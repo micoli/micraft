@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MailboxOverlay } from "../../game/overlays/MailboxOverlay";
+import { MailboxOverlay, MailEventType } from "../../game/overlays/MailboxOverlay";
 import type { MailData } from "../../game/types";
 import { useHubMessage, useHubSend, useHubSocket } from "../state/HubSocketProvider";
 import type { MailDeletedMsg, MailReceivedMsg, MailSyncMsg, MailUpdateMsg } from "../lib/hubCodec";
@@ -26,7 +26,7 @@ export function MailRoute() {
 
   function onEvent(type: string, payload: string) {
     switch (type) {
-      case "mail_send": {
+      case MailEventType.SEND: {
         const data = JSON.parse(payload) as {
           to: string;
           subject: string;
@@ -37,13 +37,13 @@ export function MailRoute() {
         send("SendMail", data);
         break;
       }
-      case "mail_seen":
+      case MailEventType.SEEN:
         send("MarkMailSeen", { mailId: payload });
         break;
-      case "mail_delete":
+      case MailEventType.DELETE:
         send("DeleteMail", { mailId: payload });
         break;
-      case "mail_claim":
+      case MailEventType.CLAIM:
         send("ClaimMailAttachments", { mailId: payload });
         break;
     }

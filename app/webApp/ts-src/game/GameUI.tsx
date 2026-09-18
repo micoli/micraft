@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useReducer, useState, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { getApiItemsMeta, getApiAttacks, getApiClasses, getApiSpells, getApiQuests } from "../generated/api/requests";
+import { ClientEventPrefix } from "../generated/input/clientEvents";
 import {
   GameLayout,
   NpcChatReplyData,
@@ -596,18 +597,19 @@ export function GameUI() {
         },
         breakTargeted: () => {
           const t = window.mcE2E?.targetBlock;
-          if (t) window.mcState.events.push(`creative_break:${t.x},${t.y},${t.z}`);
+          if (t) window.mcState.events.push(`${ClientEventPrefix.CREATIVE_BREAK}${t.x},${t.y},${t.z}`);
         },
         placeTargeted: () => {
           const t = window.mcE2E?.targetBlock;
-          if (t) window.mcState.events.push(`creative_place:${t.x},${t.y + 1},${t.z},cobblestone,0`);
+          if (t)
+            window.mcState.events.push(`${ClientEventPrefix.CREATIVE_PLACE}${t.x},${t.y + 1},${t.z},cobblestone,0`);
         },
         selectHotbar: (i) => window.mcState.events.push(`slot_${i + 1}`),
         setBreaking: (down) => {
           window.mcState.mouseLeft = down;
           if (down) window.mcState.mouseDownAt = Date.now() - 200;
         },
-        attack: (attackId) => window.mcState.events.push(`attack:${attackId}`),
+        attack: (attackId) => window.mcState.events.push(`${ClientEventPrefix.ATTACK}${attackId}`),
         runCommand: (cmd) => {
           // Same path as the in-game console: the wasm loop polls consumeConsoleInput() and
           // dispatches a "/..." string as ClientMessage.Command, anything else as ChatSend.

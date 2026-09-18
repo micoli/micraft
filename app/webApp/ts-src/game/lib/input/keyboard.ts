@@ -1,3 +1,5 @@
+import { ClientAction, ClientEventPrefix } from "../../../generated/input/clientEvents";
+
 interface ParsedKey {
   mods: { ctrl: boolean; shift: boolean; alt: boolean; meta: boolean };
   key: string;
@@ -172,7 +174,7 @@ export function registerKeyboard(): Pick<
 
       window.mcRunMacro = (name: string): void => {
         if (window.mcState?.events !== undefined) {
-          window.mcState.events.push("macro:" + name);
+          window.mcState.events.push(ClientEventPrefix.MACRO + name);
         }
       };
 
@@ -207,10 +209,10 @@ export function registerKeyboard(): Pick<
 
         const matched = resolveEventActions(b, e);
 
-        if (matched.has("view_toggle")) window.mcState.events.push("view_toggle");
+        if (matched.has(ClientAction.VIEW_TOGGLE)) window.mcState.events.push(ClientAction.VIEW_TOGGLE);
         if (matched.has("console_toggle")) window.mc?.toggleConsole?.();
-        if (matched.has("inventory")) window.mcState.events.push("inventory");
-        if (matched.has("undo")) window.mcState.events.push("undo");
+        if (matched.has(ClientAction.INVENTORY)) window.mcState.events.push(ClientAction.INVENTORY);
+        if (matched.has(ClientAction.UNDO)) window.mcState.events.push(ClientAction.UNDO);
         if (matched.has("layout_editor")) window.mc?.showLayoutEditor?.();
         if (matched.has("character")) window.mc?.openCharacter?.();
         if (matched.has("craft")) window.mc?.openCraft?.();
@@ -226,16 +228,16 @@ export function registerKeyboard(): Pick<
         if (matched.has("minimap_zoom_in")) window.mc?.minimapZoomIn?.();
         if (matched.has("minimap_zoom_out")) window.mc?.minimapZoomOut?.();
         if (matched.has("ingame_map")) window.mc?.IngameMap?.();
-        if (matched.has("fly_toggle")) window.mcState.events.push("fly_toggle");
-        if (matched.has("auto_forward")) window.mcState.events.push("auto_forward");
-        if (matched.has("place_rotate")) {
+        if (matched.has(ClientAction.FLY_TOGGLE)) window.mcState.events.push(ClientAction.FLY_TOGGLE);
+        if (matched.has(ClientAction.AUTO_FORWARD)) window.mcState.events.push(ClientAction.AUTO_FORWARD);
+        if (matched.has(ClientAction.PLACE_ROTATE)) {
           // While a scene ghost is active, R rotates the scene preview instead of the FPS
           // hotbar placement ghost — these two placement modes are mutually exclusive.
           if (window.mcState.sceneGhostActive) window.mc?.sceneRotate?.();
-          else window.mcState.events.push("place_rotate");
+          else window.mcState.events.push(ClientAction.PLACE_ROTATE);
         }
-        if (matched.has("block_interact")) window.mcState.events.push("block_interact");
-        if (matched.has("actionblock_edit")) window.mcState.events.push("actionblock_edit");
+        if (matched.has(ClientAction.BLOCK_INTERACT)) window.mcState.events.push(ClientAction.BLOCK_INTERACT);
+        if (matched.has(ClientAction.ACTIONBLOCK_EDIT)) window.mcState.events.push(ClientAction.ACTIONBLOCK_EDIT);
         if (matched.has("claim_mark_corner")) window.mc?.claimMarkCorner?.();
         if (matched.has("claim_cancel_selection")) window.mc?.claimCancelSelection?.();
         if (matched.has("claim_panel")) window.mc?.toggleClaimPanel?.();
@@ -245,22 +247,26 @@ export function registerKeyboard(): Pick<
         if (matched.has("scene_cancel") && window.mcState.sceneGhostActive) {
           window.mc?.sceneCancel?.();
         }
-        if (matched.has("combat_target_cycle")) window.mcState.events.push("combat_target_cycle");
-        if (matched.has("vehicle_mount")) window.mcState.events.push("vehicle_mount");
-        if (matched.has("tame")) window.mcState.events.push("tame");
-        if (matched.has("pet_dismiss")) window.mcState.events.push("pet_dismiss");
-        if (matched.has("npc_interact")) window.mcState.events.push("npc_interact");
-        if (matched.has("siege_weapon_pitch")) window.mcState.events.push("siege_weapon_pitch");
-        if (matched.has("siege_weapon_power")) window.mcState.events.push("siege_weapon_power");
-        if (matched.has("combat_attack")) window.mcState.events.push("combat_attack");
-        if (matched.has("siege_weapon_rotate")) window.mcState.events.push("siege_weapon_rotate");
-        if (matched.has("siege_weapon_fire")) window.mcState.events.push("siege_weapon_fire");
-        if (matched.has("screenshot")) window.mcState.events.push("screenshot");
+        if (matched.has(ClientAction.COMBAT_TARGET_CYCLE)) window.mcState.events.push(ClientAction.COMBAT_TARGET_CYCLE);
+        if (matched.has(ClientAction.VEHICLE_MOUNT)) window.mcState.events.push(ClientAction.VEHICLE_MOUNT);
+        if (matched.has(ClientAction.TAME)) window.mcState.events.push(ClientAction.TAME);
+        if (matched.has(ClientAction.PET_DISMISS)) window.mcState.events.push(ClientAction.PET_DISMISS);
+        if (matched.has(ClientAction.NPC_INTERACT)) window.mcState.events.push(ClientAction.NPC_INTERACT);
+        if (matched.has(ClientAction.SIEGE_WEAPON_PITCH)) window.mcState.events.push(ClientAction.SIEGE_WEAPON_PITCH);
+        if (matched.has(ClientAction.SIEGE_WEAPON_POWER)) window.mcState.events.push(ClientAction.SIEGE_WEAPON_POWER);
+        if (matched.has(ClientAction.COMBAT_ATTACK)) window.mcState.events.push(ClientAction.COMBAT_ATTACK);
+        if (matched.has(ClientAction.SIEGE_WEAPON_ROTATE)) window.mcState.events.push(ClientAction.SIEGE_WEAPON_ROTATE);
+        if (matched.has(ClientAction.SIEGE_WEAPON_FIRE)) window.mcState.events.push(ClientAction.SIEGE_WEAPON_FIRE);
+        if (matched.has(ClientAction.SCREENSHOT)) window.mcState.events.push(ClientAction.SCREENSHOT);
         if (matched.has("quest_journal")) window.mc?.openQuestJournal?.();
         if (matched.has("quest_tracking")) window.mc?.toggleQuestTracker?.();
-        if (matched.has("toggle_compass")) window.mcState.events.push("toggle_compass");
+        if (matched.has(ClientAction.TOGGLE_COMPASS)) window.mcState.events.push(ClientAction.TOGGLE_COMPASS);
         const pageActionMatched = Array.from({ length: 12 }, (_, i) =>
-          i < 10 ? `shortcut_page_${i + 1}` : i === 10 ? "shortcut_page_prev" : "shortcut_page_next",
+          i < 10
+            ? `${ClientEventPrefix.SHORTCUT_PAGE_}${i + 1}`
+            : i === 10
+              ? ClientAction.SHORTCUT_PAGE_PREV
+              : ClientAction.SHORTCUT_PAGE_NEXT,
         ).some((action) => matched.has(action));
         if (!pageActionMatched) {
           for (let s = 1; s <= 10; s++) {
@@ -272,7 +278,9 @@ export function registerKeyboard(): Pick<
 
         for (const [cmdText, keys] of Object.entries(window.mcState.customCommands || {})) {
           if (keys.some((k) => (isSequenceBinding(k) ? matchesSequence(k, e) : matchesEvent(k, e)))) {
-            window.mcState.events.push(cmdText.startsWith("macro:") ? cmdText : "cmd:" + cmdText);
+            window.mcState.events.push(
+              cmdText.startsWith(ClientEventPrefix.MACRO) ? cmdText : ClientEventPrefix.CMD + cmdText,
+            );
             e.preventDefault();
           }
         }

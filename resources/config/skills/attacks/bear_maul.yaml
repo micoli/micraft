@@ -1,4 +1,4 @@
-wdamageType: PHYSICAL
+damageType: PHYSICAL
 enabled: true
 ranks:
   1:

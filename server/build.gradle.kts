@@ -174,6 +174,25 @@ tasks.register<JavaExec>("checkReferenceDocs") {
     args("--check")
 }
 
+tasks.register<JavaExec>("generateClientEventTypes") {
+    group = "documentation"
+    description =
+        "Regenerates app/webApp/ts-src/generated/input/clientEvents.ts from core's ClientInputEvent."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.tools.GenerateClientEventTypesKt")
+    workingDir = rootProject.projectDir
+}
+
+tasks.register<JavaExec>("checkClientEventTypes") {
+    group = "verification"
+    description =
+        "Fails if app/webApp/ts-src/generated/input/clientEvents.ts drifts from core's ClientInputEvent."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.tools.GenerateClientEventTypesKt")
+    workingDir = rootProject.projectDir
+    args("--check")
+}
+
 tasks.register<Test>("exportOpenApi") {
     description = "Regenerates server/openapi/openapi.yaml and the README.md API Routes section."
     group = "documentation"

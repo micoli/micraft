@@ -16,6 +16,8 @@ import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
+import org.micoli.micraft.input.ClientInputAction
+import org.micoli.micraft.input.ClientInputEvent
 import org.micoli.micraft.physics.AabbCollider
 import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.player.PlayerStance
@@ -988,280 +990,214 @@ class LocalPlayerController(
     private fun processDiscreteEvents() {
         val events = jsConsumeEvents()
         repeat(jsEventsLength(events)) { i ->
-            val event = jsEventsGet(events, i)
-            when {
-                event == "view_toggle" -> switchViewMode(nextEnabledViewMode())
-                event == "inventory" -> jsToggleHotbar()
-                event == "screenshot" -> jsTakeScreenshot(scene, camera, playerId())
-                event == "undo" -> outMessages.trySend(ClientMessage.Command("/undo 1"))
-                event == "fly_toggle" -> pendingFlyToggle = true
-                event == "block_interact" -> pendingBlockInteract = true
-                event == "auto_forward" -> autoAdvance = !autoAdvance
-                event == "place_rotate" -> placementRotation = (placementRotation + 1) % 4
-                event == "slot_1" -> activateSlot(0)
-                event == "slot_2" -> activateSlot(1)
-                event == "slot_3" -> activateSlot(2)
-                event == "slot_4" -> activateSlot(3)
-                event == "slot_5" -> activateSlot(4)
-                event == "slot_6" -> activateSlot(5)
-                event == "slot_7" -> activateSlot(6)
-                event == "slot_8" -> activateSlot(7)
-                event == "slot_9" -> activateSlot(8)
-                event == "slot_10" -> activateSlot(9)
-                event == "shortcut_page_prev" -> cyclePage(-1)
-                event == "shortcut_page_next" -> cyclePage(1)
-                event.startsWith("shortcut_page_") -> {
-                    val n = event.removePrefix("shortcut_page_").toIntOrNull()
-                    if (n != null && n in 1..10) goToPage(n - 1)
-                }
-                event == "combat_target_cycle" -> cycleUnifiedTarget()
-                event == "actionblock_edit" -> {
-                    val pos =
-                        currentActionBlockTarget ?: raycastBlock(maxInteractionDistance)?.target
-                    if (pos != null) outMessages.trySend(ClientMessage.RequestActionBlock(pos))
-                }
-                event == "npc_interact" -> {
-                    val targetId = currentCombatTargetId ?: return@repeat
+            handleClientInputEvent(ClientInputEvent.parse(jsEventsGet(events, i)) ?: return@repeat)
+        }
+    }
+
+    private fun handleClientInputEvent(event: ClientInputEvent) {
+        when (event) {
+            is ClientInputEvent.Simple -> handleSimpleAction(event.action)
+            is ClientInputEvent.ShortcutPageGoto -> goToPage(event.page - 1)
+            is ClientInputEvent.Command -> outMessages.trySend(ClientMessage.Command(event.text))
+            is ClientInputEvent.Macro -> outMessages.trySend(ClientMessage.RunMacro(event.name))
+            is ClientInputEvent.NpcChatSend ->
+                runCatching {
                     outMessages.trySend(
-                        if (isVehicleTarget(targetId)) ClientMessage.VehicleInteract(targetId)
-                        else if (isPlaceableTarget(targetId))
-                            ClientMessage.PlaceableInteract(targetId)
-                        else ClientMessage.NpcInteract(targetId))
+                        Json.decodeFromString<ClientMessage.NpcChatSend>(event.json))
                 }
-                event == "vehicle_mount" -> outMessages.trySend(ClientMessage.Command("/mount"))
-                event == "tame" -> outMessages.trySend(ClientMessage.Command("/tame"))
-                event == "pet_dismiss" -> outMessages.trySend(ClientMessage.Command("/pet dismiss"))
-                event == "toggle_compass" ->
-                    outMessages.trySend(ClientMessage.Command("/compass toggle"))
-                event == "siege_weapon_rotate" -> {
-                    val targetId = currentCombatTargetId ?: return@repeat
-                    if (isPlaceableTarget(targetId))
-                        outMessages.trySend(ClientMessage.PlaceableRotate(targetId))
-                }
-                event == "siege_weapon_pitch" -> {
-                    val targetId = currentCombatTargetId ?: return@repeat
-                    if (isPlaceableTarget(targetId))
-                        outMessages.trySend(ClientMessage.SiegeWeaponNudgePitch(targetId))
-                }
-                event == "siege_weapon_power" -> {
-                    val targetId = currentCombatTargetId ?: return@repeat
-                    if (isPlaceableTarget(targetId))
-                        outMessages.trySend(ClientMessage.SiegeWeaponNudgePower(targetId))
-                }
-                event == "siege_weapon_fire" -> {
-                    val targetId = currentCombatTargetId ?: return@repeat
-                    if (isPlaceableTarget(targetId))
-                        outMessages.trySend(ClientMessage.SiegeWeaponFire(targetId))
-                }
-                event == "combat_attack" -> {
-                    val targetId = currentCombatTargetId ?: return@repeat
-                    val slot =
-                        shortcutBarPages[currentPage].getOrNull(selectedSlot)
-                            as? ShortcutSlot.Attack
+            is ClientInputEvent.NpcChatAcceptGift ->
+                runCatching {
                     outMessages.trySend(
-                        ClientMessage.AttackTarget(
-                            targetId = targetId,
-                            isNpc = true,
-                            attackId = slot?.attackId ?: "basic_attack",
-                            attackRank = slot?.rank ?: 1))
+                        Json.decodeFromString<ClientMessage.NpcChatAcceptGift>(event.json))
                 }
-                event.startsWith("cmd:") ->
-                    outMessages.trySend(ClientMessage.Command(event.removePrefix("cmd:")))
-                event.startsWith("npc_chat_send:") ->
-                    runCatching {
+            is ClientInputEvent.MailSend ->
+                runCatching {
+                    outMessages.trySend(Json.decodeFromString<ClientMessage.SendMail>(event.json))
+                }
+            is ClientInputEvent.MailSeen ->
+                outMessages.trySend(ClientMessage.MarkMailSeen(event.mailId))
+            is ClientInputEvent.MailDelete ->
+                outMessages.trySend(ClientMessage.DeleteMail(event.mailId))
+            is ClientInputEvent.MailClaim ->
+                outMessages.trySend(ClientMessage.ClaimMailAttachments(event.mailId))
+            is ClientInputEvent.AuctionCreate ->
+                runCatching {
                         outMessages.trySend(
-                            Json.decodeFromString<ClientMessage.NpcChatSend>(
-                                event.removePrefix("npc_chat_send:")))
+                            Json.decodeFromString<ClientMessage.AuctionCreateListing>(event.json))
                     }
-                event.startsWith("npc_chat_accept_gift:") ->
-                    runCatching {
+                    .onFailure { jsError("auction_create decode failed: $it") }
+            is ClientInputEvent.AuctionBid ->
+                runCatching {
                         outMessages.trySend(
-                            Json.decodeFromString<ClientMessage.NpcChatAcceptGift>(
-                                event.removePrefix("npc_chat_accept_gift:")))
+                            Json.decodeFromString<ClientMessage.AuctionPlaceBid>(event.json))
                     }
-                event.startsWith("macro:") ->
-                    outMessages.trySend(ClientMessage.RunMacro(event.removePrefix("macro:")))
-                event.startsWith("mail_send:") ->
-                    runCatching {
+                    .onFailure { jsError("auction_bid decode failed: $it") }
+            is ClientInputEvent.AuctionBuyNow ->
+                outMessages.trySend(ClientMessage.AuctionBuyNow(event.listingId))
+            is ClientInputEvent.AuctionCancel ->
+                outMessages.trySend(ClientMessage.AuctionCancelListing(event.listingId))
+            is ClientInputEvent.AuctionSetFilter ->
+                runCatching {
                         outMessages.trySend(
-                            Json.decodeFromString<ClientMessage.SendMail>(
-                                event.removePrefix("mail_send:")))
+                            Json.decodeFromString<ClientMessage.AuctionSetFilter>(event.json))
                     }
-                event.startsWith("mail_seen:") ->
-                    outMessages.trySend(
-                        ClientMessage.MarkMailSeen(event.removePrefix("mail_seen:")))
-                event.startsWith("mail_delete:") ->
-                    outMessages.trySend(
-                        ClientMessage.DeleteMail(event.removePrefix("mail_delete:")))
-                event.startsWith("mail_claim:") ->
-                    outMessages.trySend(
-                        ClientMessage.ClaimMailAttachments(event.removePrefix("mail_claim:")))
-                event.startsWith("auction_create:") ->
-                    runCatching {
-                            outMessages.trySend(
-                                Json.decodeFromString<ClientMessage.AuctionCreateListing>(
-                                    event.removePrefix("auction_create:")))
-                        }
-                        .onFailure { jsError("auction_create decode failed: $it") }
-                event.startsWith("auction_bid:") ->
-                    runCatching {
-                            outMessages.trySend(
-                                Json.decodeFromString<ClientMessage.AuctionPlaceBid>(
-                                    event.removePrefix("auction_bid:")))
-                        }
-                        .onFailure { jsError("auction_bid decode failed: $it") }
-                event.startsWith("auction_buynow:") ->
-                    outMessages.trySend(
-                        ClientMessage.AuctionBuyNow(event.removePrefix("auction_buynow:")))
-                event.startsWith("auction_cancel:") ->
-                    outMessages.trySend(
-                        ClientMessage.AuctionCancelListing(event.removePrefix("auction_cancel:")))
-                event.startsWith("auction_set_filter:") ->
-                    runCatching {
-                            outMessages.trySend(
-                                Json.decodeFromString<ClientMessage.AuctionSetFilter>(
-                                    event.removePrefix("auction_set_filter:")))
-                        }
-                        .onFailure { jsError("auction_set_filter decode failed: $it") }
-                event.startsWith("claim_create:") ->
-                    runCatching {
-                            outMessages.trySend(
-                                Json.decodeFromString<ClientMessage.ClaimCreate>(
-                                    event.removePrefix("claim_create:")))
-                        }
-                        .onFailure { jsError("claim_create decode failed: $it") }
-                event.startsWith("claim_abandon:") ->
-                    outMessages.trySend(
-                        ClientMessage.ClaimAbandon(event.removePrefix("claim_abandon:")))
-                event.startsWith("claim_set_trusted:") ->
-                    runCatching {
-                            outMessages.trySend(
-                                Json.decodeFromString<ClientMessage.ClaimSetTrusted>(
-                                    event.removePrefix("claim_set_trusted:")))
-                        }
-                        .onFailure { jsError("claim_set_trusted decode failed: $it") }
-                event == "group_create" -> outMessages.trySend(ClientMessage.GroupCreate)
-                event.startsWith("group_invite:") ->
-                    outMessages.trySend(
-                        ClientMessage.GroupInvite(event.removePrefix("group_invite:")))
-                event.startsWith("group_respond:") -> {
-                    val (gid, acc) = event.removePrefix("group_respond:").split("\t")
-                    outMessages.trySend(ClientMessage.GroupInviteRespond(gid, acc == "1"))
-                }
-                event == "group_leave" -> outMessages.trySend(ClientMessage.GroupLeave)
-                event.startsWith("group_kick:") ->
-                    outMessages.trySend(ClientMessage.GroupKick(event.removePrefix("group_kick:")))
-                event.startsWith("group_transfer:") ->
-                    outMessages.trySend(
-                        ClientMessage.GroupTransfer(event.removePrefix("group_transfer:")))
-                event == "group_disband" -> outMessages.trySend(ClientMessage.GroupDisband)
-                event.startsWith("guild_create:") -> {
-                    val (n, tg) = event.removePrefix("guild_create:").split("\t")
-                    outMessages.trySend(ClientMessage.GuildCreate(n, tg))
-                }
-                event.startsWith("guild_invite:") ->
-                    outMessages.trySend(
-                        ClientMessage.GuildInvite(event.removePrefix("guild_invite:")))
-                event.startsWith("guild_respond:") -> {
-                    val (gid, acc) = event.removePrefix("guild_respond:").split("\t")
-                    outMessages.trySend(ClientMessage.GuildInviteRespond(gid, acc == "1"))
-                }
-                event == "guild_leave" -> outMessages.trySend(ClientMessage.GuildLeave)
-                event.startsWith("guild_kick:") ->
-                    outMessages.trySend(ClientMessage.GuildKick(event.removePrefix("guild_kick:")))
-                event.startsWith("guild_motd:") ->
-                    outMessages.trySend(
-                        ClientMessage.GuildSetMotd(event.removePrefix("guild_motd:")))
-                event.startsWith("guild_setrank:") -> {
-                    val (pid, rank) = event.removePrefix("guild_setrank:").split("\t")
-                    outMessages.trySend(ClientMessage.GuildSetRank(pid, rank))
-                }
-                event.startsWith("guild_rank_upsert:") ->
-                    runCatching {
-                            outMessages.trySend(
-                                Json.decodeFromString<ClientMessage.GuildRankUpsert>(
-                                    event.removePrefix("guild_rank_upsert:")))
-                        }
-                        .onFailure { jsError("guild_rank_upsert decode failed: $it") }
-                event.startsWith("guild_rank_delete:") ->
-                    outMessages.trySend(
-                        ClientMessage.GuildRankDelete(event.removePrefix("guild_rank_delete:")))
-                event.startsWith("guild_transfer:") ->
-                    outMessages.trySend(
-                        ClientMessage.GuildTransferOwner(event.removePrefix("guild_transfer:")))
-                event == "guild_disband" -> outMessages.trySend(ClientMessage.GuildDisband)
-                event.startsWith("guild_bank_deposit:") -> {
-                    val (item, n) = event.removePrefix("guild_bank_deposit:").split("\t")
-                    outMessages.trySend(
-                        ClientMessage.GuildBankDeposit(ItemType(item), n.toIntOrNull() ?: 0))
-                }
-                event.startsWith("guild_bank_withdraw:") -> {
-                    val (item, n) = event.removePrefix("guild_bank_withdraw:").split("\t")
-                    outMessages.trySend(
-                        ClientMessage.GuildBankWithdraw(ItemType(item), n.toIntOrNull() ?: 0))
-                }
-                event.startsWith("faction_set:") ->
-                    outMessages.trySend(
-                        ClientMessage.FactionSetAffiliation(
-                            event.removePrefix("faction_set:").ifBlank { null }))
-                event.startsWith("attack:") -> {
-                    val targetId = currentCombatTargetId ?: return@repeat
-                    val rest = event.removePrefix("attack:")
-                    val lastColon = rest.lastIndexOf(':')
-                    val attackId = if (lastColon > 0) rest.substring(0, lastColon) else rest
-                    val attackRank =
-                        if (lastColon > 0) rest.substring(lastColon + 1).toIntOrNull() ?: 1 else 1
-                    outMessages.trySend(
-                        ClientMessage.AttackTarget(
-                            targetId = targetId,
-                            isNpc = true,
-                            attackId = attackId,
-                            attackRank = attackRank))
-                }
-                event.startsWith("spell:") -> {
-                    val rest = event.removePrefix("spell:")
-                    val lastColon = rest.lastIndexOf(':')
-                    val spellId = if (lastColon > 0) rest.substring(0, lastColon) else rest
-                    val spellRank =
-                        if (lastColon > 0) rest.substring(lastColon + 1).toIntOrNull() ?: 1 else 1
-                    outMessages.trySend(
-                        ClientMessage.UseSpell(spellId = spellId, spellRank = spellRank))
-                }
-                event.startsWith("creative_place:") -> {
-                    val parts = event.removePrefix("creative_place:").split(",")
-                    val x = parts.getOrNull(0)?.toIntOrNull()
-                    val y = parts.getOrNull(1)?.toIntOrNull()
-                    val z = parts.getOrNull(2)?.toIntOrNull()
-                    val itemId = parts.getOrNull(3)
-                    val rotation = parts.getOrNull(4)?.toIntOrNull() ?: 0
-                    if (x != null && y != null && z != null && !itemId.isNullOrEmpty()) {
+                    .onFailure { jsError("auction_set_filter decode failed: $it") }
+            is ClientInputEvent.ClaimCreate ->
+                runCatching {
                         outMessages.trySend(
-                            ClientMessage.BlockPlace(
-                                BlockPos(x, y, z), ItemType(itemId), rotation.toByte()))
+                            Json.decodeFromString<ClientMessage.ClaimCreate>(event.json))
                     }
-                }
-                event.startsWith("creative_focus:") -> {
-                    val parts = event.removePrefix("creative_focus:").split(",")
-                    val x = parts.getOrNull(0)?.toFloatOrNull()
-                    val z = parts.getOrNull(1)?.toFloatOrNull()
-                    if (x != null && z != null) {
-                        outMessages.trySend(ClientMessage.CreativeCameraFocus(x, z))
+                    .onFailure { jsError("claim_create decode failed: $it") }
+            is ClientInputEvent.ClaimAbandon ->
+                outMessages.trySend(ClientMessage.ClaimAbandon(event.claimId))
+            is ClientInputEvent.ClaimSetTrusted ->
+                runCatching {
+                        outMessages.trySend(
+                            Json.decodeFromString<ClientMessage.ClaimSetTrusted>(event.json))
                     }
-                }
-                event.startsWith("creative_break:") -> {
-                    val parts = event.removePrefix("creative_break:").split(",")
-                    val x = parts.getOrNull(0)?.toIntOrNull()
-                    val y = parts.getOrNull(1)?.toIntOrNull()
-                    val z = parts.getOrNull(2)?.toIntOrNull()
-                    if (x != null && y != null && z != null) {
-                        outMessages.trySend(ClientMessage.BlockBreakStart(BlockPos(x, y, z)))
+                    .onFailure { jsError("claim_set_trusted decode failed: $it") }
+            is ClientInputEvent.GroupInvite ->
+                outMessages.trySend(ClientMessage.GroupInvite(event.playerId))
+            is ClientInputEvent.GroupRespond ->
+                outMessages.trySend(ClientMessage.GroupInviteRespond(event.groupId, event.accept))
+            is ClientInputEvent.GroupKick ->
+                outMessages.trySend(ClientMessage.GroupKick(event.playerId))
+            is ClientInputEvent.GroupTransfer ->
+                outMessages.trySend(ClientMessage.GroupTransfer(event.playerId))
+            is ClientInputEvent.GuildCreate ->
+                outMessages.trySend(ClientMessage.GuildCreate(event.name, event.tag))
+            is ClientInputEvent.GuildInvite ->
+                outMessages.trySend(ClientMessage.GuildInvite(event.playerId))
+            is ClientInputEvent.GuildRespond ->
+                outMessages.trySend(ClientMessage.GuildInviteRespond(event.guildId, event.accept))
+            is ClientInputEvent.GuildKick ->
+                outMessages.trySend(ClientMessage.GuildKick(event.playerId))
+            is ClientInputEvent.GuildMotd ->
+                outMessages.trySend(ClientMessage.GuildSetMotd(event.text))
+            is ClientInputEvent.GuildSetRank ->
+                outMessages.trySend(ClientMessage.GuildSetRank(event.playerId, event.rank))
+            is ClientInputEvent.GuildRankUpsert ->
+                runCatching {
+                        outMessages.trySend(
+                            Json.decodeFromString<ClientMessage.GuildRankUpsert>(event.json))
                     }
-                }
-                event.startsWith("scene_preview_request:") ->
-                    outMessages.trySend(
-                        ClientMessage.RequestScenePreview(
-                            event.removePrefix("scene_preview_request:")))
+                    .onFailure { jsError("guild_rank_upsert decode failed: $it") }
+            is ClientInputEvent.GuildRankDelete ->
+                outMessages.trySend(ClientMessage.GuildRankDelete(event.rankId))
+            is ClientInputEvent.GuildTransfer ->
+                outMessages.trySend(ClientMessage.GuildTransferOwner(event.playerId))
+            is ClientInputEvent.GuildBankDeposit ->
+                outMessages.trySend(
+                    ClientMessage.GuildBankDeposit(ItemType(event.item), event.count))
+            is ClientInputEvent.GuildBankWithdraw ->
+                outMessages.trySend(
+                    ClientMessage.GuildBankWithdraw(ItemType(event.item), event.count))
+            is ClientInputEvent.FactionSet ->
+                outMessages.trySend(ClientMessage.FactionSetAffiliation(event.factionId))
+            is ClientInputEvent.Attack -> {
+                val targetId = currentCombatTargetId ?: return
+                outMessages.trySend(
+                    ClientMessage.AttackTarget(
+                        targetId = targetId,
+                        isNpc = true,
+                        attackId = event.attackId,
+                        attackRank = event.rank))
             }
+            is ClientInputEvent.Spell ->
+                outMessages.trySend(
+                    ClientMessage.UseSpell(spellId = event.spellId, spellRank = event.rank))
+            is ClientInputEvent.CreativePlace ->
+                outMessages.trySend(
+                    ClientMessage.BlockPlace(
+                        BlockPos(event.x, event.y, event.z),
+                        ItemType(event.itemId),
+                        event.rotation.toByte()))
+            is ClientInputEvent.CreativeFocus ->
+                outMessages.trySend(ClientMessage.CreativeCameraFocus(event.x, event.z))
+            is ClientInputEvent.CreativeBreak ->
+                outMessages.trySend(
+                    ClientMessage.BlockBreakStart(BlockPos(event.x, event.y, event.z)))
+            is ClientInputEvent.ScenePreviewRequest ->
+                outMessages.trySend(ClientMessage.RequestScenePreview(event.sceneId))
+        }
+    }
+
+    private fun handleSimpleAction(action: ClientInputAction) {
+        when (action) {
+            ClientInputAction.VIEW_TOGGLE -> switchViewMode(nextEnabledViewMode())
+            ClientInputAction.INVENTORY -> jsToggleHotbar()
+            ClientInputAction.SCREENSHOT -> jsTakeScreenshot(scene, camera, playerId())
+            ClientInputAction.UNDO -> outMessages.trySend(ClientMessage.Command("/undo 1"))
+            ClientInputAction.FLY_TOGGLE -> pendingFlyToggle = true
+            ClientInputAction.BLOCK_INTERACT -> pendingBlockInteract = true
+            ClientInputAction.AUTO_FORWARD -> autoAdvance = !autoAdvance
+            ClientInputAction.PLACE_ROTATE -> placementRotation = (placementRotation + 1) % 4
+            ClientInputAction.SLOT_1 -> activateSlot(0)
+            ClientInputAction.SLOT_2 -> activateSlot(1)
+            ClientInputAction.SLOT_3 -> activateSlot(2)
+            ClientInputAction.SLOT_4 -> activateSlot(3)
+            ClientInputAction.SLOT_5 -> activateSlot(4)
+            ClientInputAction.SLOT_6 -> activateSlot(5)
+            ClientInputAction.SLOT_7 -> activateSlot(6)
+            ClientInputAction.SLOT_8 -> activateSlot(7)
+            ClientInputAction.SLOT_9 -> activateSlot(8)
+            ClientInputAction.SLOT_10 -> activateSlot(9)
+            ClientInputAction.SHORTCUT_PAGE_PREV -> cyclePage(-1)
+            ClientInputAction.SHORTCUT_PAGE_NEXT -> cyclePage(1)
+            ClientInputAction.COMBAT_TARGET_CYCLE -> cycleUnifiedTarget()
+            ClientInputAction.ACTIONBLOCK_EDIT -> {
+                val pos = currentActionBlockTarget ?: raycastBlock(maxInteractionDistance)?.target
+                if (pos != null) outMessages.trySend(ClientMessage.RequestActionBlock(pos))
+            }
+            ClientInputAction.NPC_INTERACT -> {
+                val targetId = currentCombatTargetId ?: return
+                outMessages.trySend(
+                    if (isVehicleTarget(targetId)) ClientMessage.VehicleInteract(targetId)
+                    else if (isPlaceableTarget(targetId)) ClientMessage.PlaceableInteract(targetId)
+                    else ClientMessage.NpcInteract(targetId))
+            }
+            ClientInputAction.VEHICLE_MOUNT -> outMessages.trySend(ClientMessage.Command("/mount"))
+            ClientInputAction.TAME -> outMessages.trySend(ClientMessage.Command("/tame"))
+            ClientInputAction.PET_DISMISS ->
+                outMessages.trySend(ClientMessage.Command("/pet dismiss"))
+            ClientInputAction.TOGGLE_COMPASS ->
+                outMessages.trySend(ClientMessage.Command("/compass toggle"))
+            ClientInputAction.SIEGE_WEAPON_ROTATE -> {
+                val targetId = currentCombatTargetId ?: return
+                if (isPlaceableTarget(targetId))
+                    outMessages.trySend(ClientMessage.PlaceableRotate(targetId))
+            }
+            ClientInputAction.SIEGE_WEAPON_PITCH -> {
+                val targetId = currentCombatTargetId ?: return
+                if (isPlaceableTarget(targetId))
+                    outMessages.trySend(ClientMessage.SiegeWeaponNudgePitch(targetId))
+            }
+            ClientInputAction.SIEGE_WEAPON_POWER -> {
+                val targetId = currentCombatTargetId ?: return
+                if (isPlaceableTarget(targetId))
+                    outMessages.trySend(ClientMessage.SiegeWeaponNudgePower(targetId))
+            }
+            ClientInputAction.SIEGE_WEAPON_FIRE -> {
+                val targetId = currentCombatTargetId ?: return
+                if (isPlaceableTarget(targetId))
+                    outMessages.trySend(ClientMessage.SiegeWeaponFire(targetId))
+            }
+            ClientInputAction.COMBAT_ATTACK -> {
+                val targetId = currentCombatTargetId ?: return
+                val slot =
+                    shortcutBarPages[currentPage].getOrNull(selectedSlot) as? ShortcutSlot.Attack
+                outMessages.trySend(
+                    ClientMessage.AttackTarget(
+                        targetId = targetId,
+                        isNpc = true,
+                        attackId = slot?.attackId ?: "basic_attack",
+                        attackRank = slot?.rank ?: 1))
+            }
+            ClientInputAction.GROUP_CREATE -> outMessages.trySend(ClientMessage.GroupCreate)
+            ClientInputAction.GROUP_LEAVE -> outMessages.trySend(ClientMessage.GroupLeave)
+            ClientInputAction.GROUP_DISBAND -> outMessages.trySend(ClientMessage.GroupDisband)
+            ClientInputAction.GUILD_LEAVE -> outMessages.trySend(ClientMessage.GuildLeave)
+            ClientInputAction.GUILD_DISBAND -> outMessages.trySend(ClientMessage.GuildDisband)
         }
     }
 

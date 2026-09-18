@@ -1,4 +1,5 @@
 import type { Scene } from "@babylonjs/core";
+import { ClientEventPrefix } from "../../../generated/input/clientEvents";
 import { boxLines } from "./targeting";
 
 // Draws/refreshes the live wireframe box between the fixed first corner and the block currently
@@ -66,7 +67,7 @@ export function registerClaimTool(): Pick<McBindings, "claimMarkCorner" | "claim
       window.mcState.claimCorner1 = null;
       hideClaimPreview();
       if (!corner1) return;
-      window.mcState.events.push(`claim_create:${JSON.stringify({ pos1: corner1, pos2: target })}`);
+      window.mcState.events.push(`${ClientEventPrefix.CLAIM_CREATE}${JSON.stringify({ pos1: corner1, pos2: target })}`);
     },
 
     claimCancelSelection: (): void => {

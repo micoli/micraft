@@ -1,3 +1,5 @@
+import { ClientAction } from "../../../generated/input/clientEvents";
+
 export function registerMouse(): Pick<McBindings, "setupMouse" | "isBreaking" | "isMouseDown"> {
   return {
     setupMouse: (): void => {
@@ -27,7 +29,7 @@ export function registerMouse(): Pick<McBindings, "setupMouse" | "isBreaking" | 
         // Ctrl+click is block interaction (same as the block_interact key), never a break/place —
         // in THIRD_PERSON_ORBIT it is the only pointer action.
         if (e.ctrlKey) {
-          window.mcState.events.push("block_interact");
+          window.mcState.events.push(ClientAction.BLOCK_INTERACT);
           return;
         }
         window.mcState.mouseLeft = true;

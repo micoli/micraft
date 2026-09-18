@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { RefObject } from "react";
+import { ClientEventPrefix } from "../../../generated/input/clientEvents";
 import { CodexCard } from "./CodexCard";
 import { EmojiThumbnail } from "./EmojiThumbnail";
 import { SkinModelPreview } from "./SkinModelPreview";
@@ -77,7 +78,7 @@ export function SkinDetail({ name }: { name: string }) {
       </div>
       <div style={{ display: "flex", justifyContent: "center" }}>
         <button
-          onClick={() => window.mcState.events.push(`cmd:/skin ${name}`)}
+          onClick={() => window.mcState.events.push(`${ClientEventPrefix.CMD}/skin ${name}`)}
           style={{
             background: "#2a3d2a",
             border: "1px solid #4a7a4a",
