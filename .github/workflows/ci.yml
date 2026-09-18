@@ -10,6 +10,8 @@ permissions:
   contents: read
 
 jobs:
+  # Split into independent jobs (each own runner) instead of one long sequential job — typecheck,
+  # typecheck:e2e, lint and the storybook/screenshot check share no state and can run concurrently.
   ts-typecheck:
     name: TypeScript typecheck
     runs-on: ubuntu-latest
@@ -25,10 +27,52 @@ jobs:
       - run: echo "export const MC_BUILD_TIMESTAMP = '20260718-12.22.06';" > app/webApp/ts-src/buildConfig.ts
       - run: npm run typecheck
         working-directory: app/webApp/ts-src
+
+  ts-typecheck-e2e:
+    name: TypeScript typecheck (e2e)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/webApp/ts-src/package-lock.json
+      - run: npm ci
+        working-directory: app/webApp/ts-src
+      - run: echo "export const MC_BUILD_TIMESTAMP = '20260718-12.22.06';" > app/webApp/ts-src/buildConfig.ts
       - run: npm run typecheck:e2e
         working-directory: app/webApp/ts-src
+
+  ts-lint:
+    name: TypeScript lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/webApp/ts-src/package-lock.json
+      - run: npm ci
+        working-directory: app/webApp/ts-src
+      - run: echo "export const MC_BUILD_TIMESTAMP = '20260718-12.22.06';" > app/webApp/ts-src/buildConfig.ts
       - run: npm run lint
         working-directory: app/webApp/ts-src
+
+  ts-storybook:
+    name: Storybook tests + screenshot check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: app/webApp/ts-src/package-lock.json
+      - run: npm ci
+        working-directory: app/webApp/ts-src
+      - run: echo "export const MC_BUILD_TIMESTAMP = '20260718-12.22.06';" > app/webApp/ts-src/buildConfig.ts
       - run: npx playwright install chromium --with-deps
         working-directory: app/webApp/ts-src
       - run: npm run test-storybook:ci
@@ -125,7 +169,7 @@ jobs:
   e2e:
     name: Browser E2E (${{ matrix.name }})
     runs-on: ubuntu-latest
-    needs: [build-jvm, build-wasm, ts-typecheck]
+    needs: [build-jvm, build-wasm, ts-typecheck, ts-typecheck-e2e, ts-lint, ts-storybook]
     if: github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
