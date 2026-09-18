@@ -664,6 +664,18 @@ class LocalPlayerController(
     }
 
     fun tick() {
+        val actualDt = beginTickTiming()
+        if (consumeConsoleInput()) return
+
+        val animClip = updateMovementAndPhysics(actualDt)
+        val (yaw, pitch, target) = updateInteractions(animClip)
+
+        val now = updateFpsAndPerfSamples()
+        updateAuxSystems(yaw)
+        updateHudTickCounters(now, yaw, pitch, target)
+    }
+
+    private fun beginTickTiming(): Double {
         if (totalClientTicks == 0) {
             jsConsoleLog("[debug] build $BUILD_TIMESTAMP (wasm)")
             jsSetWasmBuildTimestamp(BUILD_TIMESTAMP)
@@ -680,6 +692,10 @@ class LocalPlayerController(
             blockTickMaxMs = maxOf(blockTickMaxMs, tickIntervalMs)
         }
         lastTickMs = nowMs
+        return actualDt
+    }
+
+    private fun consumeConsoleInput(): Boolean {
         val consoleInput = jsConsumeConsoleInput()
         if (consoleInput.isNotEmpty()) {
             val trimmed = consoleInput.trim()
@@ -713,8 +729,10 @@ class LocalPlayerController(
                 }
                 .onFailure { jsConsoleLog("bad DeleteActionBlock: ${it.message}") }
         }
-        if (jsIsConsoleInputFocused()) return
+        return jsIsConsoleInputFocused()
+    }
 
+    private fun updateMovementAndPhysics(actualDt: Double): String {
         val physicsT0 = jsNow()
         val basis = moveBasis()
         val fwdX = basis.fwdX
@@ -964,7 +982,10 @@ class LocalPlayerController(
         }
 
         blockPhysicsMsSum += jsNow() - physicsT0
-        val interactionT0 = jsNow()
+        return animClip
+    }
+
+    private fun processDiscreteEvents() {
         val events = jsConsumeEvents()
         repeat(jsEventsLength(events)) { i ->
             val event = jsEventsGet(events, i)
@@ -1242,7 +1263,9 @@ class LocalPlayerController(
                             event.removePrefix("scene_preview_request:")))
             }
         }
+    }
 
+    private fun updateAutoCombatTarget() {
         val targetId = currentCombatTargetId
         if (targetId != null) {
             val dist2 = npcManager.npcDistanceSquared(targetId, predX, predY, predZ)
@@ -1262,9 +1285,9 @@ class LocalPlayerController(
                 outMessages.trySend(ClientMessage.SetCombatTarget(nearest, isNpc = true))
             }
         }
+    }
 
-        updateSiegeTrajectoryPreview()
-
+    private fun pollUiNetworkMessages() {
         val layoutUpdateJson = jsConsumeLayoutUpdate()
         if (layoutUpdateJson.isNotEmpty()) {
             runCatching {
@@ -1334,7 +1357,9 @@ class LocalPlayerController(
                 }
             }
         }
+    }
 
+    private fun syncPlayerModelAttachments() {
         if (jsIsPlayerBbmodelReady(localSkin) && localPlayerModel == null) {
             localPlayerModel = jsCreatePlayerModelNow(scene, localSkin)
             jsSetPlayerVisible(localPlayerModel!!, false)
@@ -1368,10 +1393,9 @@ class LocalPlayerController(
                 }
             }
         }
+    }
 
-        val yaw = jsGetCameraRotationY(camera)
-        val pitch = jsGetCameraRotationX(camera)
-
+    private fun updateCameraAndModelTransform(yaw: Double, pitch: Double, animClip: String) {
         val eyeOffset = cameraEyeOffset()
         if (viewMode.isThirdPerson) {
             // Camera orbits along its own yaw (mouse); the body faces playerYaw in orbit mode,
@@ -1428,25 +1452,22 @@ class LocalPlayerController(
         prevPredY = predY
         prevPredZ = predZ
         prevEyeOffset = eyeOffset
+    }
 
-        // In cursor-orbit the ray starts at the camera, so extend the budget by the chase distance
-        // to keep the same effective reach around the player.
-        val rayReach =
-            if (isOrbitCursor) maxInteractionDistance + jsGetOrbitZoomDist().toFloat()
-            else maxInteractionDistance
-        val rayResult = raycastBlock(rayReach)
-        val target = rayResult?.target
-        e2eTarget = target
-
+    private fun handleBlockInteractRequest(target: BlockPos?) {
         if (pendingBlockInteract) {
             pendingBlockInteract = false
             target?.let { outMessages.trySend(ClientMessage.BlockInteract(it)) }
         }
+    }
 
+    private fun updateThirdPersonTargetAlpha(target: BlockPos?) {
         if (viewMode.isThirdPerson) {
             localPlayerModel?.let { jsSetPlayerAlpha(it, if (target != null) 0.35 else 1.0) }
         }
+    }
 
+    private fun updateHoverOutline(target: BlockPos?) {
         if (target != hoverTarget) {
             hoverTarget = target
             if (target != null) {
@@ -1457,7 +1478,9 @@ class LocalPlayerController(
                 jsHideTargetOutline()
             }
         }
+    }
 
+    private fun handleBlockPlacementAndBreaking(rayResult: RaycastResult?, target: BlockPos?) {
         val mouseDownNow = jsIsMouseDown()
         if (mouseDownNow && !wasMouseDown) breakArmed = true
         wasMouseDown = mouseDownNow
@@ -1689,7 +1712,7 @@ class LocalPlayerController(
                     val breakXOffset: Int
                     val breakZOffset: Int
                     if (breakStudStepX > 0f || breakStudStepZ > 0f) {
-                        val hitX = rayResult.hitX
+                        val hitX = rayResult!!.hitX
                         val hitZ = rayResult.hitZ
                         val fracX = (hitX - target.x).coerceIn(0f, 0.9999f)
                         val fracZ = (hitZ - target.z).coerceIn(0f, 0.9999f)
@@ -1757,8 +1780,39 @@ class LocalPlayerController(
             lastMinimapPlacementRot = newMinimapRot
             jsSetPlacementRotation(newMinimapRot)
         }
+    }
+
+    private fun updateInteractions(animClip: String): Triple<Double, Double, BlockPos?> {
+        val interactionT0 = jsNow()
+        processDiscreteEvents()
+        updateAutoCombatTarget()
+        updateSiegeTrajectoryPreview()
+        pollUiNetworkMessages()
+        syncPlayerModelAttachments()
+
+        val yaw = jsGetCameraRotationY(camera)
+        val pitch = jsGetCameraRotationX(camera)
+        updateCameraAndModelTransform(yaw, pitch, animClip)
+
+        // In cursor-orbit the ray starts at the camera, so extend the budget by the chase distance
+        // to keep the same effective reach around the player.
+        val rayReach =
+            if (isOrbitCursor) maxInteractionDistance + jsGetOrbitZoomDist().toFloat()
+            else maxInteractionDistance
+        val rayResult = raycastBlock(rayReach)
+        val target = rayResult?.target
+        e2eTarget = target
+
+        handleBlockInteractRequest(target)
+        updateThirdPersonTargetAlpha(target)
+        updateHoverOutline(target)
+        handleBlockPlacementAndBreaking(rayResult, target)
 
         blockInteractionMsSum += jsNow() - interactionT0
+        return Triple(yaw, pitch, target)
+    }
+
+    private fun updateFpsAndPerfSamples(): Double {
         fpsFrameCount++
         val now = jsNow()
         val elapsed = now - fpsWindowStart
@@ -1799,7 +1853,10 @@ class LocalPlayerController(
             otherTickMsSamples.addCapped(now, otherTickMs)
             blockOtherTickMsSum += otherTickMs
         }
+        return now
+    }
 
+    private fun updateAuxSystems(yaw: Double) {
         val auxT0 = jsNow()
         val normalizedTime =
             (currentGameTicks % TICKS_PER_DAY_CLIENT).toDouble() / TICKS_PER_DAY_CLIENT
@@ -1810,7 +1867,9 @@ class LocalPlayerController(
 
         jsDrawMinimap(predX, predZ, yaw)
         blockAuxMsSum += jsNow() - auxT0
+    }
 
+    private fun updateHudTickCounters(now: Double, yaw: Double, pitch: Double, target: BlockPos?) {
         val toDeg = 180.0 / kotlin.math.PI
         val tickJitter = tickIntervals.tickJitter()
         jitterSnapshots.addCapped(now, tickJitter)
