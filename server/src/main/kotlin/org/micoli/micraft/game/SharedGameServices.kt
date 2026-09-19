@@ -23,6 +23,7 @@ import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryRegistryLoader
 import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.equipment.WeaponRegistryLoader
+import org.micoli.micraft.game.minigame.MiniGameRegistry
 import org.micoli.micraft.game.npc.NpcChatHistoryStore
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcRegistryLoader
@@ -84,6 +85,7 @@ class SharedGameServices(
     val experienceConfigData: ExperienceConfigData,
     val ollamaClient: OllamaClient,
     val npcChatHistoryStore: NpcChatHistoryStore,
+    val miniGameRegistry: MiniGameRegistry,
 ) {
     companion object {
         /**
@@ -138,6 +140,7 @@ class SharedGameServices(
                 experienceConfigData = experience.data,
                 ollamaClient = OllamaClient(loadServerConfig().llm.ollama),
                 npcChatHistoryStore = NpcChatHistoryStore(),
+                miniGameRegistry = MiniGameRegistry(),
             )
         }
     }

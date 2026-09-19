@@ -8,17 +8,17 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 |---|---|---|
 | `movement` | `forward` | KeyW, ArrowUp |
 | `movement` | `backward` | KeyS, ArrowDown |
-| `movement` | `strafe_left` | KeyA, ArrowLeft |
-| `movement` | `strafe_right` | KeyD, ArrowRight |
-| `movement` | `rotate_left` | KeyQ, Ctrl+ArrowLeft |
-| `movement` | `rotate_right` | KeyE, Ctrl+ArrowRight |
+| `movement` | `strafe_left` | KeyQ, ArrowLeft |
+| `movement` | `strafe_right` | KeyE, ArrowRight |
+| `movement` | `rotate_left` | KeyA, Ctrl+ArrowLeft |
+| `movement` | `rotate_right` | KeyD, Ctrl+ArrowRight |
 | `movement` | `rotate_up` | Alt+ArrowUp |
 | `movement` | `rotate_down` | Alt+ArrowDown |
 | `movement` | `sneak` | KeyZ |
 | `movement` | `crawl` | KeyC |
 | `movement` | `auto_forward` | KeyW+KeyW, ArrowUp+ArrowUp |
-| `movement` | `speed_up` | F4 |
 | `movement` | `speed_down` | F3 |
+| `movement` | `speed_up` | F4 |
 | `flight` | `fly_toggle` | Space+Space |
 | `flight` | `ascend` | Space |
 | `flight` | `descend` | KeyZ |

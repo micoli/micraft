@@ -98,6 +98,16 @@ export interface E2eSnapshot {
     leaderName: string;
     members: { playerId: string; playerName: string; online: boolean }[];
   } | null;
+  /** Current mini-game room, mirrored from MiniGameRoomSync. `null` when not in one. */
+  miniGameRoom: {
+    id: string;
+    hostId: string;
+    hostName: string;
+    gameType: string;
+    members: { playerId: string; playerName: string; online: boolean }[];
+  } | null;
+  /** Latest broadcast MiniGameAction for the current room, mirrored from MiniGameAction. */
+  miniGameLastAction: { roomId: string; fromPlayerId: string; payload: string } | null;
 }
 
 /**

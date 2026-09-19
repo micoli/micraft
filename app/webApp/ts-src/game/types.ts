@@ -291,10 +291,38 @@ export interface FactionSyncData {
 }
 
 export interface SocialInvite {
-  kind: "group" | "guild";
+  kind: "group" | "guild" | "minigame";
   id: string;
   name: string;
   from: string;
+}
+
+export interface MiniGameMember {
+  playerId: string;
+  playerName: string;
+  online: boolean;
+}
+
+export interface MiniGameRoom {
+  id: string;
+  hostId: string;
+  hostName: string;
+  gameType: string;
+  members: MiniGameMember[];
+}
+
+export interface MiniGameDefinition {
+  gameType: string;
+  displayName: string;
+  entryUrl: string;
+  minPlayers: number;
+  maxPlayers: number;
+}
+
+export interface MiniGameActionMsg {
+  roomId: string;
+  fromPlayerId: string;
+  payload: string;
 }
 
 export interface InstanceZoneData {

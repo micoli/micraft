@@ -13,6 +13,7 @@
     - [Crafting](gameplay/crafting.md)
     - [Codex](gameplay/codex.md)
     - [Quests](gameplay/quests.md)
+    - [Mini-games](gameplay/mini-games.md)
     - [HUD, stats & visuals](gameplay/statistics-hud.md)
 - Systems
     - [Server configuration](systems/server-config.md)
@@ -66,6 +67,7 @@
     - [Instances](admin/instances.md)
     - [Scenes](admin/scenes.md)
     - [Social](admin/social.md)
+    - [Mini-game test](admin/minigame-test.md)
 - Architecture
     - [Overview](architecture/index.md)
     - [World generation pipeline](architecture/world-generation.md)

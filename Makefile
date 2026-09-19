@@ -137,6 +137,9 @@ trigger-wasm: ## Force wasm rebuild via source touch (use when wasm-watch is run
 build-js: ## Rebuild mc_bindings bundle (also copies babylon.js)
 	$(EXEC) "cd app/webApp/ts-src && npm run build"
 
+build-minigames: ## Build every app/minigames/<name>/ project and publish its dist/ under build/web/minigames/<name>/
+	$(EXEC) "bash ./scripts/build-minigames.sh"
+
 build-map: ## Rebuild map.js + map.css
 	$(EXEC) "cd app/webApp/ts-src && npm run build:map && npm run build:map:css"
 

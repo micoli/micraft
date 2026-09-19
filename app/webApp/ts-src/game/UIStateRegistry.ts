@@ -113,6 +113,10 @@ export interface UiState {
   factionPanelOpen: boolean;
   socialInvites: import("./types").SocialInvite[];
   petRoster: import("./types").PetRosterData;
+  miniGameRoom: import("./types").MiniGameRoom | null;
+  miniGameLastAction: import("./types").MiniGameActionMsg | null;
+  miniGameAvailable: import("./types").MiniGameDefinition[];
+  miniGameDialogOpen: boolean;
 }
 
 const ingameMapRegistry = {
@@ -526,6 +530,23 @@ const instanceRegistry = {
   }),
 };
 
+const miniGameRegistry = {
+  minigame_room_sync: (state: UiState, payload: { room: import("./types").MiniGameRoom | null }) => ({
+    ...state,
+    miniGameRoom: payload.room,
+  }),
+  minigame_action_received: (state: UiState, payload: { action: import("./types").MiniGameActionMsg }) => ({
+    ...state,
+    miniGameLastAction: payload.action,
+  }),
+  minigame_available_set: (state: UiState, payload: { list: import("./types").MiniGameDefinition[] }) => ({
+    ...state,
+    miniGameAvailable: payload.list,
+  }),
+  minigame_dialog_open: (state: UiState) => ({ ...state, miniGameDialogOpen: true }),
+  minigame_dialog_close: (state: UiState) => ({ ...state, miniGameDialogOpen: false }),
+};
+
 export const actionRegistry = {
   ...auctionRegistry,
   ...claimRegistry,
@@ -540,6 +561,7 @@ export const actionRegistry = {
   ...layoutEditorRegistry,
   ...loadingRegistry,
   ...mailRegistry,
+  ...miniGameRegistry,
   ...preferencesRegistry,
   ...questRegistry,
   ...tradeRegistry,

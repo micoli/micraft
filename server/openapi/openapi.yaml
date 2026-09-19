@@ -788,6 +788,22 @@ paths:
                   $ref: "#/components/schemas/org.micoli.micraft.game.armor.ArmorDefinition"
                 title: "Map<String,ArmorDefinition>"
       deprecated: false
+  /api/minigames:
+    get:
+      tags: []
+      description: "List all registered mini-games (id, display name, bundle URL)"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/org.micoli.micraft.game.minigame.MiniGameDefinition"
+                title: List<MiniGameDefinition>
+      deprecated: false
   /api/weapons:
     get:
       tags: []
@@ -4912,6 +4928,33 @@ components:
       - rightHand
       - rightThigh
       title: WearableSlots
+    org.micoli.micraft.game.minigame.MiniGameDefinition:
+      type: object
+      properties:
+        displayName:
+          type: string
+          title: String
+        entryUrl:
+          type: string
+          title: String
+        gameType:
+          type: string
+          title: String
+        maxPlayers:
+          type: integer
+          format: int32
+          title: Int
+        minPlayers:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - displayName
+      - entryUrl
+      - gameType
+      - maxPlayers
+      - minPlayers
+      title: MiniGameDefinition
     org.micoli.micraft.game.equipment.WeaponDefinition:
       type: object
       properties:

@@ -60,8 +60,8 @@ enum class ClientInputAction(val wire: String) {
  * the wire-format registry ([parse]/[payloadPrefixes]), which necessarily knows every concrete
  * subclass. Every other concern's payload variants live next to their handler — see
  * `MailEvents.kt`, `AuctionEvents.kt`, `ClaimEvents.kt`, `GroupEvents.kt`, `GuildEvents.kt`,
- * `CombatIntentEvents.kt`, `CreativeEvents.kt`, `NpcChatEvents.kt` — each also owning the
- * payload-shape parsing its own multi-field constructors can't do inline.
+ * `CombatIntentEvents.kt`, `CreativeEvents.kt`, `NpcChatEvents.kt`, `MiniGameEvents.kt` — each also
+ * owning the payload-shape parsing its own multi-field constructors can't do inline.
  */
 sealed class ClientInputEvent {
     data class Simple(val action: ClientInputAction) : ClientInputEvent()
@@ -110,6 +110,11 @@ sealed class ClientInputEvent {
                 "guild_bank_deposit:" to ::parseGuildBankDeposit,
                 "guild_bank_withdraw:" to ::parseGuildBankWithdraw,
                 "faction_set:" to { p -> FactionSet(p.ifBlank { null }) },
+                "minigame_create:" to { p -> MiniGameCreateEvent(p) },
+                "minigame_invite:" to { p -> MiniGameInviteEvent(p) },
+                "minigame_respond:" to { p -> MiniGameRespondEvent(p) },
+                "minigame_leave:" to { p -> MiniGameLeaveEvent(p) },
+                "minigame_action:" to { p -> MiniGameActionEvent(p) },
                 "attack:" to ::parseAttack,
                 "spell:" to ::parseSpell,
                 "creative_place:" to ::parseCreativePlace,

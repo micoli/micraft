@@ -15,6 +15,7 @@ Every file is optional: on first run the server writes a fully-commented templat
 | `data/config/houses.yaml` | `houses.schema.json` | `resources/config/houses.yaml` |
 | `data/config/items.yaml` | `items.schema.json` | `resources/config/items.yaml` |
 | `data/config/keybindings.yaml` | `keybindings.schema.json` | `resources/config/keybindings.yaml` |
+| `data/config/minigames.yaml` | `minigames.schema.json` | `resources/config/minigames.yaml` |
 | `data/config/plain_colors.yaml` | `plain_colors.schema.json` | `resources/config/plain_colors.yaml` |
 | `data/config/recipes.yaml` | `recipes.schema.json` | `resources/config/recipes.yaml` |
 | `data/config/roads.yaml` | `roads.schema.json` | `resources/config/roads.yaml` |

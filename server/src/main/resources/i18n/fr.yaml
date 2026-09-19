@@ -33,6 +33,7 @@ reload:
     rbac: "Groupes RBAC rechargés"
     combat_systems: "Combat/compétences/classes/XP rechargés"
     factions: "Config des factions rechargée"
+    minigames: "Registre des mini-jeux rechargé"
 undo:
   server:
     nothing: "Rien à annuler."
@@ -438,6 +439,20 @@ group:
     invited: "{0} a été invité dans votre groupe."
     joined: "Vous avez rejoint le groupe de {0}."
     invite_expired: "Cette invitation de groupe a expiré."
+minigame:
+  server:
+    usage: "Usage : /minigame create <typeDeJeu>|invite <joueur>|accept|decline|leave|who"
+    created: "Salon de mini-jeu créé."
+    already_in_room: "Vous êtes déjà dans un salon de mini-jeu."
+    not_in_room: "Vous n'êtes pas dans un salon de mini-jeu."
+    not_host: "Seul l'hôte du salon peut faire cela."
+    full: "Le salon est complet."
+    player_not_found: "Joueur '{0}' introuvable."
+    target_in_room: "Ce joueur est déjà dans un salon de mini-jeu."
+    invited: "{0} a été invité au mini-jeu."
+    joined: "Vous avez rejoint le mini-jeu de {0}."
+    invite_expired: "Cette invitation de mini-jeu a expiré."
+    unknown_game_type: "Type de mini-jeu inconnu '{0}'."
 guild:
   server:
     usage: "Usage : /guild create <nom> <tag>|invite <joueur>|accept|leave|kick <joueur>|motd <texte>|rank <joueur> <grade>|transfer <joueur>|disband|info"

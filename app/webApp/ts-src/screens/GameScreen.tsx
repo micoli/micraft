@@ -52,6 +52,9 @@ import { BuffBar } from "../game/components/buffs/BuffBar";
 import { MailboxOverlay } from "../game/overlays/MailboxOverlay";
 import { AuctionHouse } from "../game/components/auction/AuctionHouse";
 import { ClaimPanel } from "../game/components/claim/ClaimPanel";
+import { MiniGameContainer } from "../game/minigames/MiniGameContainer";
+import { MiniGameDialog } from "../game/overlays/MiniGameDialog";
+import { MiniGameInvitePrompt } from "../game/overlays/MiniGameInvitePrompt";
 import { GroupPanel } from "../game/components/social/GroupPanel";
 import { GuildPanel } from "../game/components/social/GuildPanel";
 import { FactionPanel } from "../game/components/social/FactionPanel";
@@ -865,6 +868,20 @@ export function GameScreen() {
           }}
         />
       )}
+      {state.miniGameRoom && !state.disconnectMsg && <MiniGameContainer room={state.miniGameRoom} />}
+      {state.miniGameDialogOpen && !state.disconnectMsg && (
+        <MiniGameDialog onClose={() => dispatch("minigame_dialog_close")} />
+      )}
+      {(() => {
+        const invite = state.socialInvites.find((i) => i.kind === "minigame");
+        if (!invite || state.disconnectMsg) return null;
+        return (
+          <MiniGameInvitePrompt
+            invite={invite}
+            onRespond={() => dispatch("social_invite_clear", { kind: "minigame" })}
+          />
+        );
+      })()}
       <LoadingOverlay progress={state.chunkLoading} />
     </>
   );

@@ -161,8 +161,7 @@ export function CharacterSelectionScreen() {
     saveLastUser(username);
     saveLastPlayer(accountKey, selected);
     saveLastLang(lang);
-    loginResultRef.current =
-      accountKey + "\t" + selected + "\t" + lang + "\t" + token + "\t" + getStoredRefreshToken();
+    loginResultRef.current = accountKey + "\t" + selected + "\t" + lang + "\t" + token + "\t" + getStoredRefreshToken();
     navigate(`/game/${encodeURIComponent(accountKey)}/${charEntry.id}`);
   }
 

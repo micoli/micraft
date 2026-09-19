@@ -84,6 +84,7 @@ make test                     # all test suites
 | `/light:on` | `/light:on` | Boosts ambient light underground (cavern lighting override). | — |
 | `/mail` | `/mail` | Open your mailbox. | — |
 | `/map` | `/map` | Toggles the biome map overlay. | — |
+| `/minigame` | `/minigame create <gameType>\|invite <player>\|accept\|decline\|leave\|who` | Play a mini-game with other players (e.g. tic-tac-toe). | create, invite, accept, decline, leave, who |
 | `/mode` | `/mode <game\|creative>` | Switch between normal game mode and creative edit mode. (admin) | game, creative |
 | `/mount` | `/mount` | Mount or dismount the vehicle you're targeting. | — |
 | `/npc` | `/npc <spawn\|list\|remove\|tp> [args]` | Manage NPCs in the world. | — |
@@ -278,6 +279,7 @@ never hand-edit either.
 | GET | `/api/map/terrain-raster.png` | Rasterized terrain overlay as a PNG image |
 | GET | `/api/map/voronoi` | Voronoi biome cells around a point |
 | GET | `/api/map/voronoi-borders` | Voronoi cell border segments within an area |
+| GET | `/api/minigames` | List all registered mini-games (id, display name, bundle URL) |
 | GET | `/api/player/{id}/armors` | Armor names currently equipped by a player |
 | GET | `/api/player/{id}/hands` | Wielded weapon/tool names and dominant hand for a player |
 | GET | `/api/player/{id}/owned` | Armor/weapon/tool names owned by a player |

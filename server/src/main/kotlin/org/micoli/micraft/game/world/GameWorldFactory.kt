@@ -379,6 +379,9 @@ fun buildGameWorld(
             i18n = shared.i18n,
         )
     val groupManager = GroupManager(sessions::all, chatService, chatChannelManager, shared.i18n)
+    val miniGameManager =
+        org.micoli.micraft.game.minigame.MiniGameManager(
+            sessions::all, shared.miniGameRegistry, shared.i18n)
 
     val actionBlockService =
         ActionBlockService(
@@ -431,6 +434,7 @@ fun buildGameWorld(
         petManager = petManager,
         tradeManager = tradeManager,
         groupManager = groupManager,
+        miniGameManager = miniGameManager,
         guildManager = guildManager,
         guildRegistry = guildRegistry,
         factionManager = factionManager,

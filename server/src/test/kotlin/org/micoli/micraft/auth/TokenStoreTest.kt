@@ -64,7 +64,8 @@ class TokenStoreTest {
     @Test
     fun refresh_validToken_returnsNewAccessAndRefreshTokens() {
         val store = TokenStore(scope)
-        val refreshToken = store.issueRefreshToken(AuthResult(playerId = "p1", displayName = "Player One"))
+        val refreshToken =
+            store.issueRefreshToken(AuthResult(playerId = "p1", displayName = "Player One"))
 
         val refreshed = assertNotNull(store.refresh(refreshToken))
         assertEquals("p1", refreshed.authResult.playerId)
@@ -75,7 +76,8 @@ class TokenStoreTest {
     @Test
     fun refresh_rotatesToken_oldRefreshTokenNoLongerWorks() {
         val store = TokenStore(scope)
-        val refreshToken = store.issueRefreshToken(AuthResult(playerId = "p1", displayName = "Player One"))
+        val refreshToken =
+            store.issueRefreshToken(AuthResult(playerId = "p1", displayName = "Player One"))
 
         assertNotNull(store.refresh(refreshToken))
         assertNull(store.refresh(refreshToken))
@@ -90,7 +92,8 @@ class TokenStoreTest {
     @Test
     fun refresh_expiredRefreshToken_returnsNull() {
         val store = TokenStore(scope, refreshTtlSeconds = -1)
-        val refreshToken = store.issueRefreshToken(AuthResult(playerId = "p1", displayName = "Player One"))
+        val refreshToken =
+            store.issueRefreshToken(AuthResult(playerId = "p1", displayName = "Player One"))
         assertNull(store.refresh(refreshToken))
     }
 }

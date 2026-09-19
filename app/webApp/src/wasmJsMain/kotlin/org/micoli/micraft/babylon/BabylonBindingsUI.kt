@@ -306,6 +306,12 @@ fun jsPetRosterUpdate(json: String): Unit = js("mc.petRosterUpdate(json)")
 fun jsSocialInvite(kind: String, id: String, name: String, from: String): Unit =
     js("mc.socialInvite(kind, id, name, from)")
 
+// ── Mini-games ─────────────────────────────────────────────────────────────────
+
+fun jsMiniGameRoomSync(json: String): Unit = js("mc.miniGameRoomSync(json)")
+
+fun jsMiniGameAction(json: String): Unit = js("mc.miniGameAction(json)")
+
 // ── Instance zones ────────────────────────────────────────────────────────────
 
 fun jsAdminZoneWireframe(json: String): Unit = js("mc.adminZoneWireframe(json)")

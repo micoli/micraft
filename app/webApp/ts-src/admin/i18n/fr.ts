@@ -31,6 +31,7 @@ export const fr: Record<TranslationKey, string> = {
   "nav.auctions": "Enchères",
   "nav.claims": "Claims",
   "nav.social": "Social",
+  "nav.miniGameTest": "Test mini-jeux",
 
   "page.status": "État du serveur",
   "page.users": "Utilisateurs",
@@ -50,6 +51,7 @@ export const fr: Record<TranslationKey, string> = {
   "page.auctions": "Hôtel des ventes",
   "page.claims": "Claims de terrain",
   "page.social": "Social",
+  "page.miniGameTest": "Test mini-jeux",
   "administration.tabGroups": "Groupes",
   "administration.tabGuilds": "Guildes",
   "administration.tabFactions": "Factions",
@@ -278,6 +280,27 @@ export const fr: Record<TranslationKey, string> = {
   "npcChatTest.actionOfferQuest": "→ quête proposée : {0}",
   "npcChatTest.actionGiveItem": "→ don proposé : {0}",
   "npcChatTest.emptyConversation": "Aucun message pour l'instant — dis bonjour.",
+
+  // ── Page test mini-jeux ──────────────────────────────────────────────────
+  "miniGameTest.intro":
+    "Simule le protocole de room mini-jeu (création/invitation/acceptation/départ/broadcast) avec des joueurs fictifs, entièrement dans le navigateur — pas de websocket réel, pas besoin d'un second client.",
+  "miniGameTest.newPlayerName": "Nom du joueur fictif",
+  "miniGameTest.addPlayer": "Ajouter un joueur fictif",
+  "miniGameTest.remove": "Retirer",
+  "miniGameTest.noGames": "Aucun mini-jeu enregistré (data/config/minigames.yaml).",
+  "miniGameTest.noPlayers": "Ajoute un joueur fictif pour commencer.",
+  "miniGameTest.noRoom": "Pas dans une room.",
+  "miniGameTest.create": "Créer",
+  "miniGameTest.invite": "Inviter",
+  "miniGameTest.accept": "Accepter",
+  "miniGameTest.decline": "Refuser",
+  "miniGameTest.leave": "Quitter",
+  "miniGameTest.room": "Room",
+  "miniGameTest.host": "hôte",
+  "miniGameTest.member": "membre",
+  "miniGameTest.sendAction": "Envoyer une action fictive",
+  "miniGameTest.log": "Journal d'événements",
+  "miniGameTest.emptyLog": "Aucun événement pour l'instant.",
 
   // ── Classes page ────────────────────────────────────────────────────────────
   "classes.failedToLoad": "Échec du chargement des classes",

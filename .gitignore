@@ -14,6 +14,8 @@ app/webApp/src/wasmJsMain/kotlin/org/micoli/micraft/WasmBuildTrigger.kt
 app/webApp/ts-src/buildConfig.ts
 app/webApp/src/wasmJsMain/resources/models/
 app/webApp/ts-src/node_modules/
+app/minigames/*/node_modules/
+app/minigames/*/dist/
 app/webApp/ts-src/storybook-static/
 app/webApp/ts-src/playwright-report/
 app/webApp/ts-src/test-results/

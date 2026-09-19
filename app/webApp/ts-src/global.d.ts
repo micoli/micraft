@@ -716,6 +716,8 @@ declare global {
     factionSync(json: string): void;
     socialDenied(scope: string, reason: string): void;
     socialInvite(kind: string, id: string, name: string, from: string): void;
+    miniGameRoomSync(json: string): void;
+    miniGameAction(json: string): void;
     petRosterUpdate(json: string): void;
     toggleGroupPanel(): void;
     toggleGuildPanel(): void;
@@ -751,6 +753,11 @@ declare global {
     mcState: McState;
     mcRunMacro: (name: string) => void;
     mcBuildInfo: { mcBindings: string; webApp: string; wasm: string; server: string };
+    /** The host's single React instance, re-exported to dynamically-loaded mini-game bundles via
+     * the import map (minigame-shims/*.js) — never a second copy of React. */
+    React: typeof import("react");
+    ReactJsxRuntime: typeof import("react/jsx-runtime");
+    ReactDomClient: typeof import("react-dom/client");
     __mcDragItem?: string | null;
     __mcFB?: Int32Array;
     __mcFI?: number;

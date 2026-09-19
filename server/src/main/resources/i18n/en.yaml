@@ -33,6 +33,7 @@ reload:
     rbac: "RBAC groups reloaded"
     combat_systems: "Combat/skills/classes/XP reloaded"
     factions: "Factions config reloaded"
+    minigames: "Mini-game registry reloaded"
 undo:
   server:
     nothing: "Nothing to undo."
@@ -438,6 +439,20 @@ group:
     invited: "Invited {0} to your group."
     joined: "You joined {0}'s group."
     invite_expired: "That group invitation has expired."
+minigame:
+  server:
+    usage: "Usage: /minigame create <gameType>|invite <player>|accept|decline|leave|who"
+    created: "Mini-game room created."
+    already_in_room: "You are already in a mini-game room."
+    not_in_room: "You are not in a mini-game room."
+    not_host: "Only the room host can do that."
+    full: "The room is full."
+    player_not_found: "Player '{0}' not found."
+    target_in_room: "That player is already in a mini-game room."
+    invited: "Invited {0} to the mini-game."
+    joined: "You joined {0}'s mini-game."
+    invite_expired: "That mini-game invitation has expired."
+    unknown_game_type: "Unknown mini-game type '{0}'."
 guild:
   server:
     usage: "Usage: /guild create <name> <tag>|invite <player>|accept|leave|kick <player>|motd <text>|rank <player> <rankName>|transfer <player>|disband|info"

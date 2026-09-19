@@ -1,6 +1,16 @@
 import { TooltipShell } from "./TooltipShell";
 
-export function MacroTooltip({ id, icon, script, keybind }: { id: string; icon?: string; script?: string; keybind?: string }) {
+export function MacroTooltip({
+  id,
+  icon,
+  script,
+  keybind,
+}: {
+  id: string;
+  icon?: string;
+  script?: string;
+  keybind?: string;
+}) {
   return (
     <TooltipShell>
       <div className="font-bold text-[11px] text-white">

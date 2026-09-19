@@ -36,6 +36,7 @@ export const en = {
   "nav.auctions": "Auctions",
   "nav.claims": "Claims",
   "nav.social": "Social",
+  "nav.miniGameTest": "Mini-game Test",
 
   "page.status": "Server Status",
   "page.users": "Users",
@@ -55,6 +56,7 @@ export const en = {
   "page.auctions": "Auction House",
   "page.claims": "Land Claims",
   "page.social": "Social",
+  "page.miniGameTest": "Mini-game Test",
   "administration.tabGroups": "Groups",
   "administration.tabGuilds": "Guilds",
   "administration.tabFactions": "Factions",
@@ -282,6 +284,27 @@ export const en = {
   "npcChatTest.actionOfferQuest": "→ proposed quest: {0}",
   "npcChatTest.actionGiveItem": "→ proposed gift: {0}",
   "npcChatTest.emptyConversation": "No messages yet — say hello.",
+
+  // ── Mini-game test page ─────────────────────────────────────────────────────
+  "miniGameTest.intro":
+    "Simulates the mini-game room protocol (create/invite/accept/leave/broadcast) with fake players, entirely in the browser — no real websocket, no second client needed.",
+  "miniGameTest.newPlayerName": "Fake player name",
+  "miniGameTest.addPlayer": "Add fake player",
+  "miniGameTest.remove": "Remove",
+  "miniGameTest.noGames": "No mini-game registered (data/config/minigames.yaml).",
+  "miniGameTest.noPlayers": "Add a fake player to start.",
+  "miniGameTest.noRoom": "Not in a room.",
+  "miniGameTest.create": "Create",
+  "miniGameTest.invite": "Invite",
+  "miniGameTest.accept": "Accept",
+  "miniGameTest.decline": "Decline",
+  "miniGameTest.leave": "Leave",
+  "miniGameTest.room": "Room",
+  "miniGameTest.host": "host",
+  "miniGameTest.member": "member",
+  "miniGameTest.sendAction": "Send fake action",
+  "miniGameTest.log": "Event log",
+  "miniGameTest.emptyLog": "No events yet.",
 
   // ── Classes page ────────────────────────────────────────────────────────────
   "classes.failedToLoad": "Failed to load classes",

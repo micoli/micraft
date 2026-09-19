@@ -613,6 +613,32 @@ export type OrgMicoliMicraftGameArmorWearableSlots = {
 };
 
 /**
+ * MiniGameDefinition
+ */
+export type OrgMicoliMicraftGameMinigameMiniGameDefinition = {
+    /**
+     * String
+     */
+    displayName: string;
+    /**
+     * String
+     */
+    entryUrl: string;
+    /**
+     * String
+     */
+    gameType: string;
+    /**
+     * Int
+     */
+    maxPlayers: number;
+    /**
+     * Int
+     */
+    minPlayers: number;
+};
+
+/**
  * WeaponDefinition
  */
 export type OrgMicoliMicraftGameEquipmentWeaponDefinition = {
@@ -4519,6 +4545,22 @@ export type GetApiArmorsResponses = {
 };
 
 export type GetApiArmorsResponse = GetApiArmorsResponses[keyof GetApiArmorsResponses];
+
+export type GetApiMinigamesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/minigames';
+};
+
+export type GetApiMinigamesResponses = {
+    /**
+     * List<MiniGameDefinition>
+     */
+    200: Array<OrgMicoliMicraftGameMinigameMiniGameDefinition>;
+};
+
+export type GetApiMinigamesResponse = GetApiMinigamesResponses[keyof GetApiMinigamesResponses];
 
 export type GetApiWeaponsData = {
     body?: never;

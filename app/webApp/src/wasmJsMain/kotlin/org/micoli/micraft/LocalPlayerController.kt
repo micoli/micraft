@@ -32,6 +32,8 @@ import org.micoli.micraft.input.GuildEvent
 import org.micoli.micraft.input.GuildEventHandler
 import org.micoli.micraft.input.MailEvent
 import org.micoli.micraft.input.MailEventHandler
+import org.micoli.micraft.input.MiniGameEvent
+import org.micoli.micraft.input.MiniGameEventHandler
 import org.micoli.micraft.input.MovementAction
 import org.micoli.micraft.input.NpcChatEvent
 import org.micoli.micraft.input.NpcChatEventHandler
@@ -1030,6 +1032,7 @@ class LocalPlayerController(
     private val guildEvents = GuildEventHandler(clientEventContext)
     private val combatIntentEvents = CombatIntentEventHandler(clientEventContext)
     private val creativeEvents = CreativeEventHandler(clientEventContext)
+    private val miniGameEvents = MiniGameEventHandler(clientEventContext)
 
     private fun processDiscreteEvents() {
         val events = jsConsumeEvents()
@@ -1054,6 +1057,7 @@ class LocalPlayerController(
             is GuildEvent -> guildEvents.handle(event)
             is CombatIntentEvent -> combatIntentEvents.handle(event)
             is CreativeEvent -> creativeEvents.handle(event)
+            is MiniGameEvent -> miniGameEvents.handle(event)
         }
     }
 

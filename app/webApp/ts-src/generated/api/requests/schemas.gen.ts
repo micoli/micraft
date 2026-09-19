@@ -919,6 +919,42 @@ export const org_micoli_micraft_game_armor_WearableSlotsSchema = {
     title: 'WearableSlots'
 } as const;
 
+export const org_micoli_micraft_game_minigame_MiniGameDefinitionSchema = {
+    type: 'object',
+    properties: {
+        displayName: {
+            type: 'string',
+            title: 'String'
+        },
+        entryUrl: {
+            type: 'string',
+            title: 'String'
+        },
+        gameType: {
+            type: 'string',
+            title: 'String'
+        },
+        maxPlayers: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        minPlayers: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        }
+    },
+    required: [
+        'displayName',
+        'entryUrl',
+        'gameType',
+        'maxPlayers',
+        'minPlayers'
+    ],
+    title: 'MiniGameDefinition'
+} as const;
+
 export const org_micoli_micraft_game_equipment_WeaponDefinitionSchema = {
     type: 'object',
     properties: {

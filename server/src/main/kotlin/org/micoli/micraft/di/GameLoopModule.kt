@@ -40,6 +40,7 @@ import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.equipment.WeaponRegistryLoader
 import org.micoli.micraft.game.mail.MailManager
 import org.micoli.micraft.game.mail.MailPersistence
+import org.micoli.micraft.game.minigame.MiniGameRegistry
 import org.micoli.micraft.game.npc.NpcChatHistoryStore
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcConstants
@@ -712,6 +713,8 @@ class GameLoopModule {
 
     @Single fun networkStats(): NetworkStats = NetworkStats()
 
+    @Single fun miniGameRegistry(): MiniGameRegistry = MiniGameRegistry()
+
     /**
      * JVM-global services every `GameWorld` shares (A9.1 of the E2E-GameWorld extraction). Bundled
      * so the future per-world constructor stays readable. Not consumed yet.
@@ -754,6 +757,7 @@ class GameLoopModule {
         experienceConfigData: ExperienceConfigData,
         ollamaClient: OllamaClient,
         npcChatHistoryStore: NpcChatHistoryStore,
+        miniGameRegistry: MiniGameRegistry,
     ): SharedGameServices =
         SharedGameServices(
             gameConfig = gameConfig,
@@ -792,5 +796,6 @@ class GameLoopModule {
             experienceConfigData = experienceConfigData,
             ollamaClient = ollamaClient,
             npcChatHistoryStore = npcChatHistoryStore,
+            miniGameRegistry = miniGameRegistry,
         )
 }

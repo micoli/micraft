@@ -23,6 +23,18 @@
 <body>
     <canvas id="renderCanvas" width="1280" height="720"></canvas>
     <div id="mc-ui"></div>
+    <!-- Lets dynamically import()'d mini-game bundles (app/minigames/<name>/) resolve their bare
+         react imports to the host's own instance (window.React, set by mc_bindings.js) instead of
+         bundling a second copy — see app/minigames/README.md. -->
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "/minigame-shims/react.js",
+                "react/jsx-runtime": "/minigame-shims/react-jsx-runtime.js",
+                "react-dom/client": "/minigame-shims/react-dom-client.js"
+            }
+        }
+    </script>
     <script>
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", function () {

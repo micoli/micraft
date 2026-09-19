@@ -376,4 +376,21 @@ sealed class ClientMessage {
     @ProtoId(71)
     @Serializable
     data class NpcChatAcceptGift(val npcId: String, val itemId: String) : ClientMessage()
+
+    @ProtoId(72) @Serializable data class MiniGameCreate(val gameType: String) : ClientMessage()
+
+    @ProtoId(73)
+    @Serializable
+    data class MiniGameInvite(val roomId: String, val targetName: String) : ClientMessage()
+
+    @ProtoId(74)
+    @Serializable
+    data class MiniGameRespondInvite(val roomId: String, val accept: Boolean) : ClientMessage()
+
+    @ProtoId(75) @Serializable data class MiniGameLeave(val roomId: String) : ClientMessage()
+
+    /** Opaque game payload; the server never parses it, it only broadcasts it to other members. */
+    @ProtoId(76)
+    @Serializable
+    data class MiniGameAction(val roomId: String, val payload: String) : ClientMessage()
 }

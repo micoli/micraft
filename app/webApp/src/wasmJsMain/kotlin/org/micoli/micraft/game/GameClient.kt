@@ -224,8 +224,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
 
     /**
      * Exchanges [refreshToken] for a fresh access + refresh token pair via `POST /auth/refresh`.
-     * Returns null on any failure (network error, expired/unknown refresh token) — the caller
-     * falls back to a full re-login in that case.
+     * Returns null on any failure (network error, expired/unknown refresh token) — the caller falls
+     * back to a full re-login in that case.
      */
     private suspend fun refreshAccessToken(refreshToken: String): Pair<String, String>? {
         if (refreshToken.isEmpty()) return null
@@ -242,7 +242,9 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 val newRefreshToken = obj["refreshToken"]?.jsonPrimitive?.content ?: return null
                 newToken to newRefreshToken
             }
-            .onFailure { e -> jsError("Token refresh failed: ${e::class.simpleName}: ${e.message}") }
+            .onFailure { e ->
+                jsError("Token refresh failed: ${e::class.simpleName}: ${e.message}")
+            }
             .getOrNull()
     }
 
@@ -1172,6 +1174,21 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 ServerMessage.GuildInviteReceived::class,
                 typedHandler { msg: ServerMessage.GuildInviteReceived ->
                     jsSocialInvite("guild", msg.guildId, msg.guildName, msg.fromName)
+                })
+            put(
+                ServerMessage.MiniGameRoomSync::class,
+                typedHandler { msg: ServerMessage.MiniGameRoomSync ->
+                    jsMiniGameRoomSync(Json.encodeToString(msg))
+                })
+            put(
+                ServerMessage.MiniGameInviteReceived::class,
+                typedHandler { msg: ServerMessage.MiniGameInviteReceived ->
+                    jsSocialInvite("minigame", msg.roomId, msg.gameType, msg.fromName)
+                })
+            put(
+                ServerMessage.MiniGameAction::class,
+                typedHandler { msg: ServerMessage.MiniGameAction ->
+                    jsMiniGameAction(Json.encodeToString(msg))
                 })
             put(
                 ServerMessage.AdminZoneWireframe::class,

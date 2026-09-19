@@ -16,6 +16,8 @@ import org.micoli.micraft.game.equipment.ToolCategoryDefinition
 import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
 import org.micoli.micraft.game.equipment.WeaponDefinition
+import org.micoli.micraft.game.minigame.MiniGameManager
+import org.micoli.micraft.game.minigame.MiniGameRegistry
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.quest.QuestManager
@@ -62,6 +64,8 @@ data class CommandContextClosures(
     val toolCategories: () -> Map<EquipmentCategory, ToolCategoryDefinition>,
     val applyBuff: suspend (PlayerSession, StatusEffect, Float) -> Unit,
     val groupManager: GroupManager,
+    val miniGameManager: MiniGameManager,
+    val miniGameRegistry: MiniGameRegistry,
     val guildManager: GuildManager,
     val guildRegistry: GuildRegistry,
     val factionManager: FactionManager,
@@ -154,6 +158,8 @@ class CommandContextModule {
             claimManager = claimManager,
             actionBlockRegistry = actionBlockRegistry,
             groupManager = closures.groupManager,
+            miniGameManager = closures.miniGameManager,
+            miniGameRegistry = closures.miniGameRegistry,
             guildManager = closures.guildManager,
             guildRegistry = closures.guildRegistry,
             factionManager = closures.factionManager,

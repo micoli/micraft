@@ -103,6 +103,7 @@ class GameWorld(
     val petManager: PetManager,
     val tradeManager: TradeManager,
     val groupManager: GroupManager,
+    val miniGameManager: org.micoli.micraft.game.minigame.MiniGameManager,
     val guildManager: GuildManager,
     val guildRegistry: org.micoli.micraft.game.social.GuildRegistry,
     val factionManager: FactionManager,
@@ -269,6 +270,7 @@ class GameWorld(
         tradeManager.onPlayerDisconnect(id)
         auctionManager?.clearFilter(id)
         groupManager.onDisconnect(session)
+        miniGameManager.onDisconnect(session)
         playerPersister.save(session)
         log.info(
             "player disconnected: {} name={} (total={})",

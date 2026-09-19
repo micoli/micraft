@@ -1,6 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useReducer, useState, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
-import { getApiItemsMeta, getApiAttacks, getApiClasses, getApiSpells, getApiQuests } from "../generated/api/requests";
+import {
+  getApiItemsMeta,
+  getApiAttacks,
+  getApiClasses,
+  getApiSpells,
+  getApiQuests,
+  getApiMinigames,
+} from "../generated/api/requests";
 import { ClientEventPrefix } from "../generated/input/clientEvents";
 import {
   GameLayout,
@@ -130,6 +137,10 @@ const initial: UiState = {
   factionPanelOpen: false,
   socialInvites: [],
   petRoster: { pets: [], activePetId: null },
+  miniGameRoom: null,
+  miniGameLastAction: null,
+  miniGameAvailable: [],
+  miniGameDialogOpen: false,
 };
 
 export function GameUI() {
@@ -211,6 +222,19 @@ export function GameUI() {
           if (!cancelled) setTimeout(load, 2000);
         });
     load();
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getApiMinigames({ throwOnError: true })
+      .then((r) => r.data as unknown as import("./types").MiniGameDefinition[])
+      .then((list) => {
+        if (!cancelled) dispatch("minigame_available_set", { list });
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -739,6 +763,12 @@ export function GameUI() {
     window.mc.consumeConsoleInput = () => {
       const v = consoleSubmittedRef.current || "";
       consoleSubmittedRef.current = null;
+      // `/minigame` with no argument opens the framework dialog client-side instead of a no-op
+      // round trip to the server (mirrors the slash command's own subcommands).
+      if (v.trim() === "/minigame") {
+        dispatch("minigame_dialog_open");
+        return "";
+      }
       return v;
     };
 
@@ -1149,8 +1179,31 @@ export function GameUI() {
       }
     };
     window.mc.socialInvite = (kind: string, id: string, name: string, from: string) => {
-      dispatch("social_invite_add", { invite: { kind: kind as "group" | "guild", id, name, from } });
-      dispatch("notification", { msg: `${from} invited you to ${kind === "guild" ? name : "a group"}` });
+      dispatch("social_invite_add", { invite: { kind: kind as "group" | "guild" | "minigame", id, name, from } });
+      dispatch("notification", {
+        msg:
+          kind === "minigame"
+            ? `${from} invited you to a game of ${name}`
+            : `${from} invited you to ${kind === "guild" ? name : "a group"}`,
+      });
+    };
+    window.mc.miniGameRoomSync = (json: string) => {
+      try {
+        const room = JSON.parse(json).room ?? null;
+        if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), miniGameRoom: room };
+        dispatch("minigame_room_sync", { room });
+      } catch (e) {
+        console.error("[minigame] miniGameRoomSync parse error:", e, json);
+      }
+    };
+    window.mc.miniGameAction = (json: string) => {
+      try {
+        const action = JSON.parse(json);
+        if (window.__mcE2E) window.mcE2E = { ...(window.mcE2E ?? {}), miniGameLastAction: action };
+        dispatch("minigame_action_received", { action });
+      } catch (e) {
+        console.error("[minigame] miniGameAction parse error:", e, json);
+      }
     };
     window.mc.toggleGroupPanel = () => dispatch("group_panel_toggle");
     window.mc.toggleGuildPanel = () => dispatch("guild_panel_toggle");

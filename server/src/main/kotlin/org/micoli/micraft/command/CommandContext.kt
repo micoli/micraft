@@ -13,6 +13,8 @@ import org.micoli.micraft.game.equipment.ToolCategoryDefinition
 import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
 import org.micoli.micraft.game.equipment.WeaponDefinition
+import org.micoli.micraft.game.minigame.MiniGameManager
+import org.micoli.micraft.game.minigame.MiniGameRegistry
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.placeable.PlaceableManager
@@ -85,6 +87,8 @@ data class CommandContext(
     val claimManager: ClaimManager? = null,
     val actionBlockRegistry: ActionBlockRegistry? = null,
     val groupManager: GroupManager? = null,
+    val miniGameManager: MiniGameManager? = null,
+    val miniGameRegistry: MiniGameRegistry? = null,
     val guildManager: GuildManager? = null,
     val guildRegistry: GuildRegistry? = null,
     val factionManager: FactionManager? = null,

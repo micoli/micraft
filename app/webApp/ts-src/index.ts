@@ -32,6 +32,9 @@ import { registerScreenshot } from "./game/lib/screenshot";
 import { registerAoeEffect } from "./game/lib/aoeEffect";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
+import * as React from "react";
+import * as ReactJsxRuntime from "react/jsx-runtime";
+import * as ReactDomClient from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { configureApiClient } from "./lib/apiClient";
 import { queryClient } from "./lib/queryClient";
@@ -48,6 +51,14 @@ import { GameUI } from "./game/GameUI";
 import { setWidgetRegistry } from "./game/layout/LayoutEngine";
 import { initFaviconAnimator, setFaviconAnimated } from "./favicon/faviconAnimator";
 import { MC_BUILD_TIMESTAMP } from "./buildConfig";
+
+// Exposed so an independently-built mini-game bundle (app/minigames/<name>/, loaded at runtime
+// via a dynamic import()) can resolve its bare "react"/"react-dom/client"/"react/jsx-runtime"
+// imports to THIS instance through the import map in index.html/admin.html — a mini-game bundling
+// its own copy of React would break hooks (two React instances can't share a dispatcher).
+window.React = React;
+window.ReactJsxRuntime = ReactJsxRuntime;
+window.ReactDomClient = ReactDomClient;
 
 window.mcBuildInfo = { mcBindings: MC_BUILD_TIMESTAMP, webApp: "", wasm: "", server: "" };
 getApiServerInfo()
@@ -416,6 +427,8 @@ window.mc = {
   factionSync: () => {},
   socialDenied: () => {},
   socialInvite: () => {},
+  miniGameRoomSync: () => {},
+  miniGameAction: () => {},
   petRosterUpdate: () => {},
   toggleGroupPanel: () => {},
   toggleGuildPanel: () => {},

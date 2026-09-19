@@ -156,12 +156,15 @@ fun Application.installAuthRoutes(
         post(
             "/auth/refresh",
             {
-                description = "Exchange a refresh token for a new access token + rotated refresh token"
+                description =
+                    "Exchange a refresh token for a new access token + rotated refresh token"
                 request { body<RefreshRequest>() }
                 response {
                     code(HttpStatusCode.OK) { body<RefreshResponse>() }
                     code(HttpStatusCode.BadRequest) { description = "Missing refreshToken" }
-                    code(HttpStatusCode.Unauthorized) { description = "Invalid or expired refresh token" }
+                    code(HttpStatusCode.Unauthorized) {
+                        description = "Invalid or expired refresh token"
+                    }
                 }
             }) {
                 val body =

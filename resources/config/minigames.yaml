@@ -1,0 +1,5 @@
+tictactoe:
+  displayName: "Morpion"
+  entryUrl: /minigames/tictactoe/bundle.js
+  minPlayers: 2
+  maxPlayers: 2

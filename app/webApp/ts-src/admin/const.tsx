@@ -19,6 +19,7 @@ import { ClaimsPage } from "./pages/claim/ClaimsPage";
 import { SocialPage } from "./pages/social/SocialPage";
 import { RbacPage } from "./pages/rbac/RbacPage";
 import { GroupFormPage } from "./pages/rbac/GroupFormPage";
+import { MiniGameTestPage } from "./pages/miniGameTest/MiniGameTestPage";
 
 export const ROUTES = [
   { path: "/admin", page: <StatusPage /> },
@@ -49,6 +50,7 @@ export const ROUTES = [
   { path: "/admin/social", page: <SocialPage /> },
   { path: "/admin/social/:tab", page: <SocialPage /> },
   { path: "/admin/social/:tab/:id", page: <SocialPage /> },
+  { path: "/admin/minigame-test", page: <MiniGameTestPage /> },
 ];
 export interface NavItem {
   path: string;
@@ -111,6 +113,12 @@ export const NAV: NavItem[] = [
     labelKey: "nav.social",
     pageLabelKey: "page.social",
     icon: ICONS.social,
+  },
+  {
+    path: "/admin/minigame-test",
+    labelKey: "nav.miniGameTest",
+    pageLabelKey: "page.miniGameTest",
+    icon: ICONS.simulator,
   },
 ];
 

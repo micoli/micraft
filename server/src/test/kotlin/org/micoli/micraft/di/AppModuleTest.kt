@@ -7,6 +7,8 @@ import org.koin.test.check.checkModules
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.minigame.MiniGameManager
+import org.micoli.micraft.game.minigame.MiniGameRegistry
 import org.micoli.micraft.game.social.FactionManager
 import org.micoli.micraft.game.social.GroupManager
 import org.micoli.micraft.game.social.GuildManager
@@ -24,6 +26,7 @@ class AppModuleTest {
                     val chat = ChatService(cm, {}, { emptyList() })
                     val i18n = testI18n()
                     val guildReg = GuildRegistry(null)
+                    val miniGameReg = MiniGameRegistry()
                     CommandContextClosures(
                         broadcast = {},
                         sessions = { emptyList() },
@@ -45,6 +48,8 @@ class AppModuleTest {
                         toolCategories = { emptyMap() },
                         applyBuff = { _, _, _ -> },
                         groupManager = GroupManager({ emptyList() }, chat, cm, i18n),
+                        miniGameManager = MiniGameManager({ emptyList() }, miniGameReg, i18n),
+                        miniGameRegistry = miniGameReg,
                         guildManager = GuildManager(guildReg, { emptyList() }, {}, chat, cm, i18n),
                         guildRegistry = guildReg,
                         factionManager = FactionManager({ emptyList() }, {}, chat, cm, i18n),

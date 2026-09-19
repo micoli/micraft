@@ -13,6 +13,7 @@ import org.micoli.micraft.game.world.RecipeDefinition
 import org.micoli.micraft.game.world.WeatherZoneInfo
 import org.micoli.micraft.game.world.WorldItem
 import org.micoli.micraft.game.world.actionblock.ActionBlockInfo
+import org.micoli.micraft.minigame.MiniGameRoomInfo
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.placeable.PlaceableState
 import org.micoli.micraft.placeable.siege.SiegeProjectileState
@@ -620,6 +621,27 @@ sealed class ServerMessage {
         val questOffer: QuestOfferSummary? = null,
         val itemOffer: ItemOfferSummary? = null,
     ) : ServerMessage()
+
+    /** Sent on connect and on every membership change. `null` = player has no mini-game room. */
+    @ProtoId(91)
+    @Serializable
+    data class MiniGameRoomSync(val room: MiniGameRoomInfo? = null) : ServerMessage()
+
+    @ProtoId(92)
+    @Serializable
+    data class MiniGameInviteReceived(
+        val roomId: String,
+        val gameType: String,
+        val fromName: String
+    ) : ServerMessage()
+
+    /**
+     * Opaque game payload rebroadcast to every other member of [roomId]; never parsed server-side.
+     */
+    @ProtoId(93)
+    @Serializable
+    data class MiniGameAction(val roomId: String, val fromPlayerId: String, val payload: String) :
+        ServerMessage()
 }
 
 @Serializable

@@ -39,6 +39,12 @@ fi
 
 BUILD_WEB="$(pwd)/app/webApp/build/web"
 
+# ── 0. Mini-games ──────────────────────────────────────────────────────────────
+# Always rebuilt: each is a separate independent npm project outside JS/WASM/SERVER change
+# detection above, and esbuild is fast enough to not warrant its own tracking file.
+echo "[build] Building mini-games..."
+bash ./scripts/build-minigames.sh
+
 # ── 1. JS / CSS ────────────────────────────────────────────────────────────────
 if $BUILD_JS; then
     echo "[build] Building JS/CSS..."

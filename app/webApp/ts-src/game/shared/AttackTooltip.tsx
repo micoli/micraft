@@ -8,10 +8,7 @@ export function AttackTooltip({ id, meta }: { id: string; meta: AttackMeta | nul
   if (!meta) return <TooltipShell>{id}</TooltipShell>;
   return (
     <TooltipShell>
-      <div
-        className="w-3 h-3 rounded-full mb-0.5"
-        style={{ background: damageTypeColor(meta.damageType) }}
-      />
+      <div className="w-3 h-3 rounded-full mb-0.5" style={{ background: damageTypeColor(meta.damageType) }} />
       <div className="font-bold text-[11px] text-white">{id}</div>
       <div className="text-white/50 text-[9px]">
         {meta.damageType} · rang {meta.rank}

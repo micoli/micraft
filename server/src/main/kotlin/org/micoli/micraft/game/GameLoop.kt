@@ -74,6 +74,7 @@ import org.micoli.micraft.game.macro.MacroContext
 import org.micoli.micraft.game.macro.MacroExecutor
 import org.micoli.micraft.game.mail.MailManager
 import org.micoli.micraft.game.mail.MailPersistence
+import org.micoli.micraft.game.minigame.MiniGameManager
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.npc.NpcLootValidator
@@ -600,6 +601,13 @@ class GameLoop(
             i18n = i18n,
         )
 
+    private val miniGameManager: MiniGameManager =
+        MiniGameManager(
+            getSessions = sessionRegistry::all,
+            registry = shared.miniGameRegistry,
+            i18n = i18n,
+        )
+
     init {
         npcManager.onPetDied = { pet -> petManager.onPetDied(pet) }
         npcManager.onNpcKilledForPets = { killed -> petManager.grantSharedXpForKill(killed) }
@@ -687,6 +695,7 @@ class GameLoop(
             petManager = petManager,
             tradeManager = tradeManager,
             groupManager = groupManager,
+            miniGameManager = miniGameManager,
             guildManager = guildManager,
             guildRegistry = guildRegistry,
             factionManager = factionManager,
@@ -786,6 +795,8 @@ class GameLoop(
                     session, effect, durationSec, System.currentTimeMillis())
             },
             groupManager = groupManager,
+            miniGameManager = miniGameManager,
+            miniGameRegistry = shared.miniGameRegistry,
             guildManager = guildManager,
             guildRegistry = guildRegistry,
             factionManager = factionManager,
@@ -834,6 +845,8 @@ class GameLoop(
             claimManager = claimManager,
             actionBlockRegistry = actionBlockRegistry,
             groupManager = groupManager,
+            miniGameManager = miniGameManager,
+            miniGameRegistry = shared.miniGameRegistry,
             guildManager = guildManager,
             guildRegistry = guildRegistry,
             factionManager = factionManager,
@@ -911,6 +924,7 @@ class GameLoop(
                 claimManager = gw.claimManager,
                 actionBlockRegistry = gw.actionBlockService.registry,
                 groupManager = gw.groupManager,
+                miniGameManager = gw.miniGameManager,
                 guildManager = gw.guildManager,
                 guildRegistry = gw.guildRegistry,
                 factionManager = gw.factionManager,
@@ -1447,6 +1461,7 @@ class GameLoop(
                     experienceConfigLoader != null)
                     ::reloadCombatSystems
                 else null,
+            reloadMiniGames = { shared.miniGameRegistry.reload() },
         )
 
     suspend fun reload(lang: String): String = reloadCoordinator.reload(lang)
@@ -1617,6 +1632,7 @@ class GameLoop(
         val auctionManager = gw.auctionManager
         val claimManager = gw.claimManager
         val groupManager = gw.groupManager
+        val miniGameManager = gw.miniGameManager
         val guildManager = gw.guildManager
         val factionManager = gw.factionManager
         when (msg) {
@@ -1711,6 +1727,14 @@ class GameLoop(
             is ClientMessage.GroupKick -> groupManager.kick(session, msg.targetId)
             is ClientMessage.GroupTransfer -> groupManager.transfer(session, msg.targetId)
             is ClientMessage.GroupDisband -> groupManager.disband(session)
+            is ClientMessage.MiniGameCreate -> miniGameManager.create(session, msg.gameType)
+            is ClientMessage.MiniGameInvite ->
+                miniGameManager.invite(session, msg.roomId, msg.targetName)
+            is ClientMessage.MiniGameRespondInvite ->
+                miniGameManager.respondInvite(session, msg.roomId, msg.accept)
+            is ClientMessage.MiniGameLeave -> miniGameManager.leave(session, msg.roomId)
+            is ClientMessage.MiniGameAction ->
+                miniGameManager.broadcastAction(session, msg.roomId, msg.payload)
             is ClientMessage.GuildCreate -> guildManager.create(session, msg.name, msg.tag)
             is ClientMessage.GuildInvite -> guildManager.invite(session, msg.targetName)
             is ClientMessage.GuildInviteRespond ->
@@ -2069,6 +2093,7 @@ class GameLoop(
         session.state.guildId?.let { gw.chatService.subscribe(session, "guild:$it") }
         session.state.factionId?.let { gw.chatService.subscribe(session, "faction:$it") }
         gw.groupManager.sendSync(session)
+        gw.miniGameManager.sendSync(session)
         gw.guildManager.sendSync(session)
         gw.factionManager.sendSync(session)
         sendPostConnectSyncs(session, gw, playerName)

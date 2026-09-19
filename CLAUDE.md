@@ -235,3 +235,37 @@ Armor configs in `resources/armors/<name>/<name>.yaml`. Each defines `wearable` 
 
 **In-game**: `/equip <name>` / `/unequip <name>`. Client resolves slot conflicts before sending commands.
 **UI**: `Character.tsx` (key `Y`, or Pause → Character). Shared preview: `PlayerModelPreview.tsx`.
+
+## Mini-games
+
+Framework for 1..N-player mini-games (e.g. tic-tac-toe) played inside the game. **The server only
+routes** — it knows a mini-game's identity and player bounds (`data/config/minigames.yaml` →
+`MiniGameRegistry`), never its rules. All game logic (turns, win conditions, board state) lives in
+the mini-game's own client-side React bundle.
+
+- **Room lifecycle** (`MiniGameManager`, `server/.../game/minigame/`): ephemeral, in-RAM, never
+  persisted — same shape as `GroupManager` but without a chat channel. Host-only invites (TTL
+  `MiniGameConstants.INVITE_TTL_MS`). Unlike `GroupManager`, **any member leaving or disconnecting
+  mid-game dissolves the room for everyone** (no host promotion, no partial continuation) — every
+  remaining member gets `MiniGameRoomSync(null)` and its client resets by unmounting the game.
+- **Protocol**: `ClientMessage.MiniGameCreate/Invite/RespondInvite/Leave/Action` (ProtoId 72-76),
+  `ServerMessage.MiniGameRoomSync/InviteReceived/Action` (ProtoId 91-93). `MiniGameAction.payload`
+  is an opaque JSON string the server never deserializes — it only rebroadcasts it to every other
+  room member.
+- **Registry**: `data/config/minigames.yaml` (schema `minigames.schema.json`, generated —
+  never hand-edit), one entry per `gameType` with `displayName`, `entryUrl`, `minPlayers`,
+  `maxPlayers`. Exposed via `GET /api/minigames`. Reloaded by `/reload`.
+- **Mini-games are independent client modules**, not part of `app/webApp`'s own build:
+  `app/minigames/<name>/` is its own npm project (see `app/minigames/README.md` for the contract:
+  props received, payload format, how to build/publish). `make build-minigames` builds every
+  mini-game and copies its `dist/` into `app/webApp/build/web/minigames/<name>/` (chained into
+  `make build`). The host loads the right bundle at runtime via a dynamic `import(entryUrl)`
+  resolved from `GET /api/minigames` (`game/minigames/MiniGameContainer.tsx`) — adding a mini-game
+  never requires touching `server/` or `app/webApp/`.
+- **Slash command**: `/minigame create <type>|invite <player>|accept|decline|leave|who`.
+  `/minigame` with no argument opens `game/overlays/MiniGameDialog.tsx` instead (same actions,
+  driven by clicks — see `game/minigames/minigameActions.ts` for the shared network helpers).
+- **Admin test page**: `/admin/minigame-test` (`admin/pages/miniGameTest/`) simulates the whole
+  room protocol client-side with fake players (`miniGameSimulator.ts` mirrors `MiniGameManager`'s
+  rules) — lets you exercise create/invite/accept/leave/broadcast without two real logged-in
+  clients or a live websocket.

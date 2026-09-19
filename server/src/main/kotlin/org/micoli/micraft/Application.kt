@@ -68,6 +68,7 @@ import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
 import org.micoli.micraft.game.item.ItemRegistryLoader
 import org.micoli.micraft.game.loadServerConfig
+import org.micoli.micraft.game.minigame.MiniGameRegistry
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
@@ -137,6 +138,7 @@ import org.micoli.micraft.http.LayoutController
 import org.micoli.micraft.http.MacrosController
 import org.micoli.micraft.http.MapController
 import org.micoli.micraft.http.MetricsController
+import org.micoli.micraft.http.MiniGamesController
 import org.micoli.micraft.http.PlayerArmorsController
 import org.micoli.micraft.http.PlayerHandsController
 import org.micoli.micraft.http.PlayerOwnedController
@@ -402,6 +404,7 @@ fun Application.module() {
         SkinsController().register(this)
         VehiclesController().register(this)
         ArmorsController().register(this)
+        MiniGamesController(get<MiniGameRegistry>()).register(this)
         WeaponsController().register(this)
         ToolsController().register(this)
         SiegeWeaponsController().register(this)

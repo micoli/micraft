@@ -18,6 +18,7 @@ title: Admin panel
 | [Instances](instances.md) | instance zones over generated chunks |
 | [Scenes](scenes.md) | off-world block-structure buffers |
 | [World simulator](../world/world-simulator.md) | exercise world systems safely |
+| [Mini-game test](minigame-test.md) | simulate the mini-game room protocol with fake players |
 
 All admin data is also available under `GET /api/admin/*` — see the
 [HTTP API routes](../api-routes.md).

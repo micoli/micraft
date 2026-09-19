@@ -44,6 +44,7 @@ class ReloadCoordinator(
     private val reloadEquipmentCategories: (() -> Unit)? = null,
     private val reloadRecipeRegistry: (() -> Unit)? = null,
     private val reloadCombatSystems: (() -> Unit)? = null,
+    private val reloadMiniGames: (() -> Unit)? = null,
 ) {
     suspend fun reload(lang: String): String {
         val lines = mutableListOf<String>()
@@ -102,6 +103,10 @@ class ReloadCoordinator(
         if (reloadCombatSystems != null) {
             reloadCombatSystems.invoke()
             lines += i18n.t(lang, "reload:server:combat_systems")
+        }
+        if (reloadMiniGames != null) {
+            reloadMiniGames.invoke()
+            lines += i18n.t(lang, "reload:server:minigames")
         }
         return lines.joinToString(", ")
     }
