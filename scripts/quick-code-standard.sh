@@ -34,7 +34,7 @@ fi
 
 # Keep only paths that still exist (a deleted file needs no formatting).
 CHANGED=()
-for f in "${candidates[@]}"; do
+for f in "${candidates[@]+"${candidates[@]}"}"; do
     [ -n "$f" ] && [ -f "$f" ] && CHANGED+=("$f")
 done
 
@@ -80,7 +80,7 @@ else
 fi
 
 kt_only_files=()
-for f in "${kotlin_files[@]}"; do
+for f in "${kotlin_files[@]+"${kotlin_files[@]}"}"; do
     case "$f" in
     *.kt) kt_only_files+=("$f") ;;
     esac
@@ -97,14 +97,14 @@ fi
 
 if [ ${#prettier_files[@]} -gt 0 ]; then
     echo "→ prettier (${#prettier_files[@]} file(s))"
-    (cd "$TS_DIR" && npx --no-install prettier --write --log-level warn "${prettier_files[@]}")
+    (cd "$TS_DIR" && npx --no-install prettier --write --log-level warn "${prettier_files[@]+"${prettier_files[@]}"}")
 else
     echo "→ prettier: skipped (no ts-src change)"
 fi
 
 if [ ${#eslint_files[@]} -gt 0 ]; then
     echo "→ eslint (${#eslint_files[@]} file(s))"
-    (cd "$TS_DIR" && npx --no-install eslint "${eslint_files[@]}") || status=$?
+    (cd "$TS_DIR" && npx --no-install eslint "${eslint_files[@]+"${eslint_files[@]}"}") || status=$?
 else
     echo "→ eslint: skipped (no ts-src change)"
 fi
