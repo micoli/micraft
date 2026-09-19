@@ -1,4 +1,24 @@
 {
+  "admin-npcchattest-npcchatdialog--default": {
+    "title": "Admin/NpcChatTest/NpcChatDialog",
+    "name": "Default",
+    "source": ".stories/admin/npcChatTest/NpcChatDialog.stories.tsx"
+  },
+  "admin-npcchattest-npcchatdialog--empty": {
+    "title": "Admin/NpcChatTest/NpcChatDialog",
+    "name": "Empty",
+    "source": ".stories/admin/npcChatTest/NpcChatDialog.stories.tsx"
+  },
+  "admin-npcchattest-npcchatdialog--sending": {
+    "title": "Admin/NpcChatTest/NpcChatDialog",
+    "name": "Sending",
+    "source": ".stories/admin/npcChatTest/NpcChatDialog.stories.tsx"
+  },
+  "admin-npcchattest-npcchatdialog--with-error": {
+    "title": "Admin/NpcChatTest/NpcChatDialog",
+    "name": "With Error",
+    "source": ".stories/admin/npcChatTest/NpcChatDialog.stories.tsx"
+  },
   "game-components-bbmodelanimationviewer--all-entities": {
     "title": "Game/Components/BbmodelAnimationViewer",
     "name": "All Entities",
@@ -62,6 +82,16 @@
   "game-layout-attackpanel--on-cooldown-and-out-of-resources": {
     "title": "Game/Layout/AttackPanel",
     "name": "On Cooldown And Out Of Resources",
+    "source": ".stories/game/layout/AttackPanel.stories.tsx"
+  },
+  "game-layout-attackpanel--spell-tree": {
+    "title": "Game/Layout/AttackPanel",
+    "name": "Spell Tree",
+    "source": ".stories/game/layout/AttackPanel.stories.tsx"
+  },
+  "game-layout-attackpanel--spell-tree-with-locked-ranks": {
+    "title": "Game/Layout/AttackPanel",
+    "name": "Spell Tree With Locked Ranks",
     "source": ".stories/game/layout/AttackPanel.stories.tsx"
   },
   "game-layout-attackpanel--with-spells-and-macros": {
@@ -278,6 +308,31 @@
     "title": "Game/Layout/QuestTracker",
     "name": "Tracking",
     "source": ".stories/game/layout/QuestTracker.stories.tsx"
+  },
+  "game-layout-shortcutbar--empty": {
+    "title": "Game/Layout/ShortcutBar",
+    "name": "Empty",
+    "source": ".stories/game/layout/ShortcutBar.stories.tsx"
+  },
+  "game-layout-shortcutbar--mixed-content": {
+    "title": "Game/Layout/ShortcutBar",
+    "name": "Mixed Content",
+    "source": ".stories/game/layout/ShortcutBar.stories.tsx"
+  },
+  "game-layout-shortcutbar--multiple-pages": {
+    "title": "Game/Layout/ShortcutBar",
+    "name": "Multiple Pages",
+    "source": ".stories/game/layout/ShortcutBar.stories.tsx"
+  },
+  "game-layout-shortcutbar--on-cooldown": {
+    "title": "Game/Layout/ShortcutBar",
+    "name": "On Cooldown",
+    "source": ".stories/game/layout/ShortcutBar.stories.tsx"
+  },
+  "game-layout-shortcutbar--spells-showcase": {
+    "title": "Game/Layout/ShortcutBar",
+    "name": "Spells Showcase",
+    "source": ".stories/game/layout/ShortcutBar.stories.tsx"
   },
   "game-layout-xpbar--almost-level-up": {
     "title": "Game/Layout/XpBar",
