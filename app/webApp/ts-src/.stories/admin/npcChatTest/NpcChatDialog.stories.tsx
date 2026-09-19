@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, fn, within } from "storybook/test";
+import { useArgs } from "storybook/preview-api";
+import { expect, within } from "storybook/test";
 import { NpcChatDialog, type NpcChatTestMessage } from "../../../admin/pages/npcChatTest/NpcChatDialog";
 import { translate } from "../../../admin/i18n";
 
@@ -21,10 +22,16 @@ const meta: Meta<typeof NpcChatDialog> = {
   title: "Admin/NpcChatTest/NpcChatDialog",
   component: NpcChatDialog,
   parameters: { layout: "padded" },
-  args: { onSend: (text)=>{
-      messages.push({ role: "user", text: text })
-      messages.push({ role: "npc", text: `${text}response` })
-    }, sending: false, error: null, t },
+  args: { sending: false, error: null, t },
+  render: (args) => {
+    const [{ messages: currentMessages = [] }, updateArgs] = useArgs<{ messages: NpcChatTestMessage[] }>();
+    const onSend = (text: string) => {
+      updateArgs({
+        messages: [...currentMessages, { role: "user", text }, { role: "npc", text: `${text}response` }],
+      });
+    };
+    return <NpcChatDialog {...args} messages={currentMessages} onSend={onSend} />;
+  },
   decorators: [
     (Story) => (
       <div style={{ height: 480 }}>

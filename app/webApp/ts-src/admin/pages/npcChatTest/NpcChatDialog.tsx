@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ItemOfferSummaryDto, NpcChatActionDto, QuestOfferSummaryDto } from "../../apiTypes";
 import type { Translate } from "../../i18n";
 import { ActionHint } from "./ActionHint";
@@ -27,6 +27,11 @@ export function NpcChatDialog({
   t: Translate;
 }) {
   const [draft, setDraft] = useState("");
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ block: "end" });
+  }, [messages]);
 
   const submit = () => {
     const text = draft.trim();
@@ -59,6 +64,7 @@ export function NpcChatDialog({
           </div>
         ))}
         {sending && <p className="text-xs text-[#8A99AF]">{t("npcChatTest.sending")}</p>}
+        <div ref={bottomRef} />
       </div>
 
       {error && <p className="px-4 py-2 text-xs text-red-400 border-t border-[#2E3A4E]">{error}</p>}
