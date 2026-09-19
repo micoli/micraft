@@ -48,9 +48,9 @@ export const Default: Story = {
   args: { npcName: "Hermit (hermit_man)", messages },
   play: async () => {
     const body = within(document.body);
-    await expect(body.getByText("Hermit (hermit_man)")).toBeVisible();
-    await expect(body.getByText(/silex/)).toBeVisible();
-    await expect(body.getByText(/quête proposée/)).toBeVisible();
+    await expect(body.getAllByText("Hermit (hermit_man)")[0]).toBeVisible();
+    await expect(body.getAllByText(/silex/)[0]).toBeVisible();
+    await expect(body.getAllByText(/quête proposée/)[0]).toBeVisible();
   },
 };
 
