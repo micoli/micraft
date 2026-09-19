@@ -3,6 +3,12 @@ package org.micoli.micraft.game
 import io.ktor.client.*
 import io.ktor.client.engine.js.*
 import io.ktor.client.plugins.websocket.*
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.websocket.*
 import kotlin.math.abs
 import kotlin.random.Random
@@ -11,6 +17,8 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.micoli.micraft.ChunkManager
 import org.micoli.micraft.HttpChunkFetcher
 import org.micoli.micraft.LocalPlayerController
@@ -140,6 +148,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private var serverHost = ""
     private var serverPort = 0
     private var token = ""
+    private var refreshToken = ""
     private val e2eSession: String = if (jsE2eEnabled()) jsE2eSessionId() else ""
     // Random id generated once per client instance (tab/window) — sent in every Connect so the
     // server can tell a genuine reconnect apart from a second tab racing for the same player id.
@@ -213,6 +222,30 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         jsInitBlockDefs()
     }
 
+    /**
+     * Exchanges [refreshToken] for a fresh access + refresh token pair via `POST /auth/refresh`.
+     * Returns null on any failure (network error, expired/unknown refresh token) — the caller
+     * falls back to a full re-login in that case.
+     */
+    private suspend fun refreshAccessToken(refreshToken: String): Pair<String, String>? {
+        if (refreshToken.isEmpty()) return null
+        return runCatching {
+                val client = HttpClient(Js)
+                val response =
+                    client.post("http://$serverHost:$serverPort/auth/refresh") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""{"refreshToken":"$refreshToken"}""")
+                    }
+                if (!response.status.isSuccess()) return null
+                val obj = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+                val newToken = obj["token"]?.jsonPrimitive?.content ?: return null
+                val newRefreshToken = obj["refreshToken"]?.jsonPrimitive?.content ?: return null
+                newToken to newRefreshToken
+            }
+            .onFailure { e -> jsError("Token refresh failed: ${e::class.simpleName}: ${e.message}") }
+            .getOrNull()
+    }
+
     fun connect(
         host: String,
         port: Int,
@@ -220,11 +253,32 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         playerName: String,
         preferredLanguage: String = "en",
         token: String = "",
+        refreshToken: String = "",
     ) {
         serverHost = host
         serverPort = port
         currentPlayerName = playerName
         this.token = token
+        this.refreshToken = refreshToken
+
+        // Keeps the stored access token from ever going stale across a network blip or page
+        // reload — the WS session itself is never re-validated mid-connection (only at connect
+        // time), so this only needs to run comfortably under TokenStore's 600s default TTL.
+        scope.launch {
+            while (isActive) {
+                delay(5 * 60 * 1000L)
+                val rt = this@GameClient.refreshToken
+                if (rt.isEmpty()) continue
+                val refreshed = refreshAccessToken(rt)
+                if (refreshed != null) {
+                    val (newToken, newRefreshToken) = refreshed
+                    this@GameClient.token = newToken
+                    this@GameClient.refreshToken = newRefreshToken
+                    jsStoreToken(newToken)
+                    jsStoreRefreshToken(newRefreshToken)
+                }
+            }
+        }
 
         scope.launch {
             while (isActive) {
@@ -345,7 +399,12 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             var currentPlayerNameLocal = playerName
             var currentLang = preferredLanguage
             var currentToken = token
+            var currentRefreshToken = refreshToken
             while (isActive) {
+                // Pick up whatever the proactive refresh coroutine (or a prior reactive refresh
+                // below) last landed, in case this attempt starts after either one ran.
+                currentToken = this@GameClient.token
+                currentRefreshToken = this@GameClient.refreshToken
                 var sessionWelcomed = false
                 var lastCloseCode: Short? = null
                 try {
@@ -477,13 +536,36 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     jsShowLoginOverlay("superseded")
                     break
                 }
-                val authRejected = lastCloseCode == CloseReason.Codes.VIOLATED_POLICY.code
+                var authRejected = lastCloseCode == CloseReason.Codes.VIOLATED_POLICY.code
+                if (authRejected && currentRefreshToken.isNotEmpty()) {
+                    jsLog("WS auth rejected (1008) — trying refresh token before forcing re-login")
+                    val refreshed = refreshAccessToken(currentRefreshToken)
+                    if (refreshed != null) {
+                        val (newToken, newRefreshToken) = refreshed
+                        currentToken = newToken
+                        currentRefreshToken = newRefreshToken
+                        this@GameClient.token = newToken
+                        this@GameClient.refreshToken = newRefreshToken
+                        jsStoreToken(newToken)
+                        jsStoreRefreshToken(newRefreshToken)
+                        authRejected = false
+                        retryDelay = 1000L
+                        jsLog("Token refreshed — retrying connection silently")
+                        delay(retryDelay)
+                        continue
+                    }
+                    jsLog("Refresh token invalid/expired — falling back to full re-login")
+                }
                 if (sessionWelcomed || authRejected) {
                     retryDelay = 1000L
                     if (authRejected) {
                         jsLog("WS auth rejected (1008) — clearing token, returning to login")
                         jsClearStoredToken()
+                        jsClearStoredRefreshToken()
                         currentToken = ""
+                        currentRefreshToken = ""
+                        this@GameClient.token = ""
+                        this@GameClient.refreshToken = ""
                         // A non-empty reason skips showLoginOverlay's silent-reconnect fast path in
                         // GameUI.tsx, which would otherwise immediately retry with the (now empty)
                         // stored token and loop forever without ever showing a login screen.
@@ -502,8 +584,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     currentPlayerNameLocal = if (parts.size > 1) parts[1] else parts[0]
                     currentLang = if (parts.size > 2) parts[2] else "en"
                     currentToken = if (parts.size > 3) parts[3] else ""
+                    currentRefreshToken = if (parts.size > 4) parts[4] else ""
                     currentPlayerName = currentPlayerNameLocal
                     this@GameClient.token = currentToken
+                    this@GameClient.refreshToken = currentRefreshToken
                     jsFetchI18n(currentLang)
                     jsHideLoginOverlay()
                 } else {

@@ -644,6 +644,10 @@ declare global {
     showLoginOverlay(reason?: string): void;
     hideLoginOverlay(): void;
     clearStoredToken(): void;
+    clearStoredRefreshToken(): void;
+    getStoredRefreshToken(): string;
+    storeToken(token: string): void;
+    storeRefreshToken(token: string): void;
     showDisconnectedOverlay(msg: string): void;
     hideDisconnectedOverlay(): void;
     updateChunkLoading(meshed: number, downloaded: number, total: number): void;

@@ -93,6 +93,32 @@ export function clearStoredToken() {
   }
 }
 
+// Long-lived, unlike the access token above — kept in localStorage so it survives a tab close
+// and lets a returning player skip a full re-login as long as it hasn't expired server-side.
+export function getStoredRefreshToken(): string {
+  try {
+    return localStorage.getItem("micraft_refresh_token") || "";
+  } catch {
+    return "";
+  }
+}
+
+export function storeRefreshToken(token: string) {
+  try {
+    localStorage.setItem("micraft_refresh_token", token);
+  } catch {
+    /* empty */
+  }
+}
+
+export function clearStoredRefreshToken() {
+  try {
+    localStorage.removeItem("micraft_refresh_token");
+  } catch {
+    /* empty */
+  }
+}
+
 export function getLastUser(): string {
   try {
     return localStorage.getItem("micraft_last_user") || "";

@@ -92,6 +92,7 @@ fun main() {
         val playerName = if (parts.size > 1) parts[1] else parts[0]
         val lang = if (parts.size > 2) parts[2] else "en"
         val token = if (parts.size > 3) parts[3] else ""
+        val refreshToken = if (parts.size > 4) parts[4] else ""
         runCatching {
                 val config = HttpClient(Js).get("http://$host:$port/api/auth/config").bodyAsText()
                 Json.parseToJsonElement(config).jsonObject["messageEncoder"]?.jsonPrimitive?.content
@@ -106,6 +107,6 @@ fun main() {
         jsEngineRunRenderLoop(engine, scene)
         jsSetupResize(engine)
         jsLog("render loop started")
-        client.connect(host, port, username, playerName, lang, token)
+        client.connect(host, port, username, playerName, lang, token, refreshToken)
     }
 }

@@ -29,6 +29,14 @@ fun jsConsumeLoginResult(): String = js("mc.consumeLoginResult()")
 
 fun jsClearStoredToken(): Unit = js("mc.clearStoredToken()")
 
+fun jsClearStoredRefreshToken(): Unit = js("mc.clearStoredRefreshToken()")
+
+fun jsGetStoredRefreshToken(): String = js("mc.getStoredRefreshToken()")
+
+fun jsStoreToken(token: String): Unit = js("mc.storeToken(token)")
+
+fun jsStoreRefreshToken(token: String): Unit = js("mc.storeRefreshToken(token)")
+
 // ── Console / Server log ──────────────────────────────────────────────────────
 
 fun jsCreateConsole(): Unit = js("mc.createConsole()")

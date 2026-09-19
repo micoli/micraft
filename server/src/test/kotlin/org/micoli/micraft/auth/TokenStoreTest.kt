@@ -60,4 +60,37 @@ class TokenStoreTest {
         val validated = assertNotNull(store.validate(token))
         assertEquals(setOf(Permission("admin")), validated.permissions)
     }
+
+    @Test
+    fun refresh_validToken_returnsNewAccessAndRefreshTokens() {
+        val store = TokenStore(scope)
+        val refreshToken = store.issueRefreshToken(AuthResult(playerId = "p1", displayName = "Player One"))
+
+        val refreshed = assertNotNull(store.refresh(refreshToken))
+        assertEquals("p1", refreshed.authResult.playerId)
+        assertNotEquals(refreshToken, refreshed.refreshToken)
+        assertNotNull(store.validate(refreshed.authResult.token))
+    }
+
+    @Test
+    fun refresh_rotatesToken_oldRefreshTokenNoLongerWorks() {
+        val store = TokenStore(scope)
+        val refreshToken = store.issueRefreshToken(AuthResult(playerId = "p1", displayName = "Player One"))
+
+        assertNotNull(store.refresh(refreshToken))
+        assertNull(store.refresh(refreshToken))
+    }
+
+    @Test
+    fun refresh_unknownToken_returnsNull() {
+        val store = TokenStore(scope)
+        assertNull(store.refresh("does-not-exist"))
+    }
+
+    @Test
+    fun refresh_expiredRefreshToken_returnsNull() {
+        val store = TokenStore(scope, refreshTtlSeconds = -1)
+        val refreshToken = store.issueRefreshToken(AuthResult(playerId = "p1", displayName = "Player One"))
+        assertNull(store.refresh(refreshToken))
+    }
 }

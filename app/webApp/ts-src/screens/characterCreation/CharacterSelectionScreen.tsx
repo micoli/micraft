@@ -21,7 +21,9 @@ import {
   getLastLang,
   saveLastLang,
   getStoredToken,
+  getStoredRefreshToken,
   clearStoredToken,
+  clearStoredRefreshToken,
   getLastUser,
   saveLastUser,
   clearLastUser,
@@ -159,12 +161,14 @@ export function CharacterSelectionScreen() {
     saveLastUser(username);
     saveLastPlayer(accountKey, selected);
     saveLastLang(lang);
-    loginResultRef.current = accountKey + "\t" + selected + "\t" + lang + "\t" + token;
+    loginResultRef.current =
+      accountKey + "\t" + selected + "\t" + lang + "\t" + token + "\t" + getStoredRefreshToken();
     navigate(`/game/${encodeURIComponent(accountKey)}/${charEntry.id}`);
   }
 
   function doLogout() {
     clearStoredToken();
+    clearStoredRefreshToken();
     setToken("");
     saveLastUser("");
     navigate("/auth");

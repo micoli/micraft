@@ -19,7 +19,38 @@ import {
   getStoredDisplayName,
   getLastPlayer,
   saveAccountEmail,
+  getStoredRefreshToken,
+  storeRefreshToken,
+  clearStoredRefreshToken,
 } from "../lib/authStorage";
+
+// No generated client for /auth/refresh yet — this route was added alongside this screen and
+// needs `make gen-api` (server must be running) before a typed helper exists; raw fetch mirrors
+// the pattern already used for /auth/me in AdminAuthGate.tsx.
+async function tryRefresh(): Promise<boolean> {
+  const refreshToken = getStoredRefreshToken();
+  if (!refreshToken) return false;
+  try {
+    const res = await fetch("/auth/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!res.ok) {
+      clearStoredRefreshToken();
+      return false;
+    }
+    const data = await res.json();
+    storeToken(data.token);
+    storeRefreshToken(data.refreshToken);
+    storeDisplayName(data.displayName || "");
+    if (data.email) saveAccountEmail(data.email);
+    saveLastUser(data.displayName || "");
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export function AuthScreen() {
   const navigate = useNavigate();
@@ -50,6 +81,7 @@ export function AuthScreen() {
           return;
         }
         storeToken(data.token);
+        storeRefreshToken(data.refreshToken);
         storeDisplayName(data.displayName || user);
         saveAccountEmail(data.email || user);
         saveLastUser(data.displayName || user);
@@ -81,10 +113,12 @@ export function AuthScreen() {
     if (hash.includes("auth_token=")) {
       const params = new URLSearchParams(hash.replace(/^#/, ""));
       const oauthToken = params.get("auth_token") || "";
+      const oauthRefreshToken = params.get("auth_refresh") || "";
       const oauthName = decodeURIComponent(params.get("auth_name") || "");
       const oauthEmail = decodeURIComponent(params.get("auth_email") || "");
       if (oauthToken) {
         storeToken(oauthToken);
+        if (oauthRefreshToken) storeRefreshToken(oauthRefreshToken);
         storeDisplayName(oauthName || "player");
         if (oauthEmail) saveAccountEmail(oauthEmail);
         window.history.replaceState(null, "", window.location.pathname + window.location.search);
@@ -121,8 +155,20 @@ export function AuthScreen() {
               clearStoredToken();
             }
           })
-          .catch(() => clearStoredToken());
+          .catch(() => {
+            // Access token expired/invalid — try the refresh token before forcing a full re-login.
+            tryRefresh().then((ok) => {
+              if (ok) navigate("/chars");
+              else clearStoredToken();
+            });
+          });
       }
+      return;
+    }
+    if (getStoredRefreshToken()) {
+      tryRefresh().then((ok) => {
+        if (ok) navigate("/chars");
+      });
       return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- navigate/refs are stable; only authMode drives this logic

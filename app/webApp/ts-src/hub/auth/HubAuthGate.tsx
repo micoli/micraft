@@ -6,6 +6,7 @@ import {
   storeDisplayName,
   saveAccountEmail,
   clearStoredToken,
+  clearStoredRefreshToken,
   clearAccountEmail,
 } from "../../lib/authStorage";
 
@@ -65,6 +66,7 @@ export function HubAuthGate({ children }: { children: React.ReactNode }) {
 /** Clears the stored session and sends the user back to the login screen. */
 export function hubLogout(navigate: (to: string) => void) {
   clearStoredToken();
+  clearStoredRefreshToken();
   clearAccountEmail();
   navigate("/hub/login");
 }

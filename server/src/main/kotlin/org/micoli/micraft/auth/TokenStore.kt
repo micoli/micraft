@@ -29,20 +29,29 @@ fun loadOrCreateJwtSecret(path: Path = ConfigPaths.dataConfig("jwt.secret")): St
     return secret
 }
 
+// Identity to re-issue on refresh, plus when this specific refresh token itself expires.
+private data class RefreshRecord(val result: AuthResult, val expiresAtMillis: Long)
+
+data class RefreshResult(val authResult: AuthResult, val refreshToken: String)
+
 class TokenStore(
     scope: CoroutineScope,
     private val ttlSeconds: Long = 600,
+    private val refreshTtlSeconds: Long = 30L * 24 * 3600,
     secret: String = loadOrCreateJwtSecret(),
 ) {
     private val algorithm = Algorithm.HMAC256(secret)
     private val verifier = JWT.require(algorithm).build()
     private val issued = ConcurrentHashMap.newKeySet<String>()
+    private val refreshTokens = ConcurrentHashMap<String, RefreshRecord>()
 
     init {
         scope.launch {
             while (true) {
                 delay(60_000)
                 issued.removeIf { !isJwtValid(it) }
+                val now = System.currentTimeMillis()
+                refreshTokens.entries.removeIf { it.value.expiresAtMillis < now }
             }
         }
     }
@@ -85,5 +94,28 @@ class TokenStore(
             issued.remove(token)
             null
         }
+    }
+
+    fun issueRefreshToken(result: AuthResult): String {
+        val token = UUID.randomUUID().toString() + UUID.randomUUID().toString()
+        refreshTokens[token] =
+            RefreshRecord(
+                result = result.copy(token = ""),
+                expiresAtMillis = System.currentTimeMillis() + refreshTtlSeconds * 1000L,
+            )
+        return token
+    }
+
+    /**
+     * Consumes [refreshToken] and issues a fresh access token + refresh token pair. Rotation: the
+     * old refresh token is removed regardless of outcome, so a stale or replayed one can never be
+     * used twice.
+     */
+    fun refresh(refreshToken: String): RefreshResult? {
+        val record = refreshTokens.remove(refreshToken) ?: return null
+        if (record.expiresAtMillis < System.currentTimeMillis()) return null
+        val newAccessToken = issue(record.result)
+        val newRefreshToken = issueRefreshToken(record.result)
+        return RefreshResult(record.result.copy(token = newAccessToken), newRefreshToken)
     }
 }

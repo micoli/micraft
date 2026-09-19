@@ -27,6 +27,10 @@ import {
   getLastLang,
   getStoredToken,
   clearStoredToken,
+  getStoredRefreshToken,
+  storeToken,
+  storeRefreshToken,
+  clearStoredRefreshToken,
   getAccountEmail,
   getLastPlayerEntry,
   getPlayerEntries,
@@ -667,6 +671,10 @@ export function GameUI() {
     };
 
     window.mc.clearStoredToken = () => clearStoredToken();
+    window.mc.clearStoredRefreshToken = () => clearStoredRefreshToken();
+    window.mc.getStoredRefreshToken = () => getStoredRefreshToken();
+    window.mc.storeToken = (token: string) => storeToken(token);
+    window.mc.storeRefreshToken = (token: string) => storeRefreshToken(token);
 
     const lastGameUrl = () => {
       if (window.location.pathname.startsWith("/game/")) return window.location.pathname;
@@ -698,7 +706,7 @@ export function GameUI() {
       // that never shows a real login screen. Only take the silent-reconnect shortcut when there's
       // actually a token to reconnect with.
       if (player && token && !intentional && !reason) {
-        loginResultRef.current = `${accountKey}\t${player}\t${lang}\t${token}`;
+        loginResultRef.current = `${accountKey}\t${player}\t${lang}\t${token}\t${getStoredRefreshToken()}`;
         navigateRef.current?.(lastGameUrl());
         return;
       }

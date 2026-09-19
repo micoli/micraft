@@ -83,7 +83,9 @@ Provider selected via `data/config/server.yaml` → `auth.provider` (`local` | `
 
 **Extending auth**: implement `AuthProvider` interface (`login`, `oauthStartUrl`, `oauthCallback`, `oauthReturnUrl`), add branch in `Application.module()`. Commands needing auth access `context.authProvider`.
 
-**Login overlay** (`LoginOverlay.tsx`): fetches `/api/auth/config` on mount. Token stored in `sessionStorage`. OAuth token arrives in URL fragment `#auth_token=`. Result written to `loginResultRef.current` as `user\tplayerName\tlang\ttoken` — tab-separated, parsed in `main.kt`.
+**Login overlay** (`LoginOverlay.tsx`): fetches `/api/auth/config` on mount. Token stored in `sessionStorage`. OAuth token arrives in URL fragment `#auth_token=`. Result written to `loginResultRef.current` as `user\tplayerName\tlang\ttoken\trefreshToken` — tab-separated, parsed in `main.kt`.
+
+**Refresh token**: `POST /auth/login`, `GET /auth/callback` and `POST /auth/refresh` all issue a refresh token alongside the access token (`TokenStore.issueRefreshToken` / `TokenStore.refresh`). Rotated on every use (old one is invalidated) and long-lived (30 days) versus the 10-min access token, stored client-side in `localStorage` (`authStorage.ts`) so it survives a tab close, unlike the access token in `sessionStorage`. `GameClient.kt` refreshes proactively every 5 min and reactively on a `1008 VIOLATED_POLICY` close before falling back to a full re-login.
 
 **Admin API + E2E worlds**: world-scoped admin routes (`status`, `players/*`, `gametime`, `instances/*`, `claims/*`, `scenes/*`, `social/*`, `npcs`) honor an `X-Micraft-Game-Session` header (WS edit/npcs sockets: `?gameSession=`). Absent / `default` / outside `MICRAFT_E2E` => the default world; under `MICRAFT_E2E` a fresh id spawns a dedicated `GameWorld` (like the `/game` WS). Process-level routes (`restart`, `reload`, `users`, `configs`, `schemas`, `loggers`) ignore it. `AdminController.adminWorld()` resolves it via `GameWorldRegistry`.
 
