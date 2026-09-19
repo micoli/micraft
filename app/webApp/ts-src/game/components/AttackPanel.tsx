@@ -4,7 +4,9 @@ import { AttackMeta, SpellMeta } from "../types";
 import { UiState } from "../UIReducer";
 import { useAttackDrag } from "../hooks/useAttackDrag";
 import { AttackCooldownOverlay } from "../shared/AttackCooldownOverlay";
-import { AttackTooltip, SpellTooltip, MacroTooltip } from "../shared/AttackSpellTooltip";
+import { AttackTooltip } from "../shared/AttackTooltip";
+import { SpellTooltip } from "../shared/SpellTooltip";
+import { MacroTooltip } from "../shared/MacroTooltip";
 
 export function damageTypeColor(damageType: string): string {
   switch (damageType) {

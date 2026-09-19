@@ -2,7 +2,8 @@ import { useState } from "react";
 import { AttackMeta, SpellMeta } from "../../types";
 import { damageTypeColor } from "../AttackPanel";
 import { useAttackDrag } from "../../hooks/useAttackDrag";
-import { AttackTooltip, SpellTooltip } from "../../shared/AttackSpellTooltip";
+import { AttackTooltip } from "../../shared/AttackTooltip";
+import { SpellTooltip } from "../../shared/SpellTooltip";
 
 export function AttacksTab({
   attackMeta,

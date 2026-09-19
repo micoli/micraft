@@ -8,7 +8,9 @@ import { damageTypeColor } from "../AttackPanel";
 import { AttackCooldownOverlay } from "../../shared/AttackCooldownOverlay";
 import { useBlockDefsReady, useBlockPreviews } from "../../shared/BlockPreview";
 import { ItemTooltip } from "../../shared/ItemTooltip";
-import { AttackTooltip, SpellTooltip, MacroTooltip } from "../../shared/AttackSpellTooltip";
+import { AttackTooltip } from "../../shared/AttackTooltip";
+import { SpellTooltip } from "../../shared/SpellTooltip";
+import { MacroTooltip } from "../../shared/MacroTooltip";
 import { SlotBlockIcon } from "./SlotBlockIcon";
 
 interface Props {
