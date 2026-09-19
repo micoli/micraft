@@ -82,6 +82,10 @@ export const org_micoli_micraft_auth_LoginResponseSchema = {
             type: 'string',
             title: 'String'
         },
+        refreshToken: {
+            type: 'string',
+            title: 'String'
+        },
         token: {
             type: 'string',
             title: 'String'
@@ -91,9 +95,58 @@ export const org_micoli_micraft_auth_LoginResponseSchema = {
         'displayName',
         'email',
         'playerId',
+        'refreshToken',
         'token'
     ],
     title: 'LoginResponse'
+} as const;
+
+export const org_micoli_micraft_auth_RefreshRequestSchema = {
+    type: 'object',
+    properties: {
+        refreshToken: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'refreshToken'
+    ],
+    title: 'RefreshRequest'
+} as const;
+
+export const org_micoli_micraft_auth_RefreshResponseSchema = {
+    type: 'object',
+    properties: {
+        displayName: {
+            type: 'string',
+            title: 'String'
+        },
+        email: {
+            type: 'string',
+            title: 'String'
+        },
+        playerId: {
+            type: 'string',
+            title: 'String'
+        },
+        refreshToken: {
+            type: 'string',
+            title: 'String'
+        },
+        token: {
+            type: 'string',
+            title: 'String'
+        }
+    },
+    required: [
+        'displayName',
+        'email',
+        'playerId',
+        'refreshToken',
+        'token'
+    ],
+    title: 'RefreshResponse'
 } as const;
 
 export const org_micoli_micraft_command_CompletionSchema = {

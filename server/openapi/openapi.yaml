@@ -63,6 +63,32 @@ paths:
           description: Invalid credentials
           headers: {}
       deprecated: false
+  /auth/refresh:
+    post:
+      tags: []
+      description: Exchange a refresh token for a new access token + rotated refresh
+        token
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/org.micoli.micraft.auth.RefreshRequest"
+        required: false
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.auth.RefreshResponse"
+        "400":
+          description: Missing refreshToken
+          headers: {}
+        "401":
+          description: Invalid or expired refresh token
+          headers: {}
+      deprecated: false
   /auth/oauth/start:
     get:
       tags: []
@@ -4279,6 +4305,9 @@ components:
         playerId:
           type: string
           title: String
+        refreshToken:
+          type: string
+          title: String
         token:
           type: string
           title: String
@@ -4286,8 +4315,43 @@ components:
       - displayName
       - email
       - playerId
+      - refreshToken
       - token
       title: LoginResponse
+    org.micoli.micraft.auth.RefreshRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          title: String
+      required:
+      - refreshToken
+      title: RefreshRequest
+    org.micoli.micraft.auth.RefreshResponse:
+      type: object
+      properties:
+        displayName:
+          type: string
+          title: String
+        email:
+          type: string
+          title: String
+        playerId:
+          type: string
+          title: String
+        refreshToken:
+          type: string
+          title: String
+        token:
+          type: string
+          title: String
+      required:
+      - displayName
+      - email
+      - playerId
+      - refreshToken
+      - token
+      title: RefreshResponse
     org.micoli.micraft.command.Completion:
       type: object
       properties:

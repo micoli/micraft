@@ -300,6 +300,7 @@ never hand-edit either.
 | POST | `/auth/login` | Log in with email/password (local auth provider) |
 | GET | `/auth/me` | Resolve the current session from its bearer token |
 | GET | `/auth/oauth/start` | Redirect to the OAuth provider's consent screen |
+| POST | `/auth/refresh` | Exchange a refresh token for a new access token + rotated refresh token |
 
 <!-- END_API_ROUTES -->
 

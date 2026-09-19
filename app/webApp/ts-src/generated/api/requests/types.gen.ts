@@ -73,6 +73,46 @@ export type OrgMicoliMicraftAuthLoginResponse = {
     /**
      * String
      */
+    refreshToken: string;
+    /**
+     * String
+     */
+    token: string;
+};
+
+/**
+ * RefreshRequest
+ */
+export type OrgMicoliMicraftAuthRefreshRequest = {
+    /**
+     * String
+     */
+    refreshToken: string;
+};
+
+/**
+ * RefreshResponse
+ */
+export type OrgMicoliMicraftAuthRefreshResponse = {
+    /**
+     * String
+     */
+    displayName: string;
+    /**
+     * String
+     */
+    email: string;
+    /**
+     * String
+     */
+    playerId: string;
+    /**
+     * String
+     */
+    refreshToken: string;
+    /**
+     * String
+     */
     token: string;
 };
 
@@ -3778,6 +3818,30 @@ export type PostAuthLoginResponses = {
 };
 
 export type PostAuthLoginResponse = PostAuthLoginResponses[keyof PostAuthLoginResponses];
+
+export type PostAuthRefreshData = {
+    body?: OrgMicoliMicraftAuthRefreshRequest;
+    path?: never;
+    query?: never;
+    url: '/auth/refresh';
+};
+
+export type PostAuthRefreshErrors = {
+    /**
+     * Missing refreshToken
+     */
+    400: unknown;
+    /**
+     * Invalid or expired refresh token
+     */
+    401: unknown;
+};
+
+export type PostAuthRefreshResponses = {
+    200: OrgMicoliMicraftAuthRefreshResponse;
+};
+
+export type PostAuthRefreshResponse = PostAuthRefreshResponses[keyof PostAuthRefreshResponses];
 
 export type GetAuthOauthStartData = {
     body?: never;
