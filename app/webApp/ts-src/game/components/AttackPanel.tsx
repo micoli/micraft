@@ -24,6 +24,19 @@ export function damageTypeColor(damageType: string): string {
   }
 }
 
+export function spellTypeColor(type: string): string {
+  switch (type) {
+    case "DAMAGE":
+      return "#7b2fe0";
+    case "HEAL":
+      return "#2fae4a";
+    case "BUFF":
+      return "#d4af37";
+    default:
+      return "#ea580c";
+  }
+}
+
 export function hasEnoughResources(meta: AttackMeta | SpellMeta, status: UiState["playerStatus"] | undefined): boolean {
   if (!status) return true;
   if (meta.manaCost > 0 && status.currentMana < meta.manaCost) return false;
@@ -52,6 +65,14 @@ export function AttackPanel({
 }: Props) {
   const attacks = Object.entries(attackMeta);
   const spells = Object.entries(spellMeta);
+  const spellsByRank = new Map<number, [string, SpellMeta][]>();
+  for (const entry of spells) {
+    const rank = entry[1].rank;
+    const floor = spellsByRank.get(rank);
+    if (floor) floor.push(entry);
+    else spellsByRank.set(rank, [entry]);
+  }
+  const spellRanks = [...spellsByRank.keys()].sort((a, b) => a - b);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const { startDrag, moveDrag, endDrag, guardClick } = useAttackDrag((id) =>
     damageTypeColor(attackMeta[id]?.damageType ?? ""),
@@ -141,43 +162,72 @@ export function AttackPanel({
             </div>
           );
         })}
-        {spells.map(([id, meta]) => {
-          const hasRes = hasEnoughResources(meta, playerStatus);
-          const isLocked = unlockedSpellIds !== undefined && !unlockedSpellIds.has(id);
-          return (
-            <div
-              key={`spell-${id}`}
-              onClick={() => guardSpellClick(() => window.mcState?.events?.push(`spell:${id}`))}
-              onPointerDown={(e) => startSpellDrag(e, id)}
-              onPointerMove={moveSpellDrag}
-              onPointerUp={endSpellDrag}
-              onPointerCancel={endSpellDrag}
-              onPointerEnter={() => setHoveredKey(`spell-${id}`)}
-              onPointerLeave={() => setHoveredKey(null)}
-              className={cn(
-                "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-orange-400/60 bg-black/72 cursor-grab hover:border-orange-400 transition-colors touch-none",
-                (!hasRes || isLocked) && "opacity-50",
-                isLocked && "grayscale",
-              )}
-            >
-              <div className="text-orange-400 text-lg leading-none">⚡</div>
-              <div className="text-orange-300/80 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
-                {id}
-              </div>
-              {meta.tokenCost > 0 && (
-                <div className="absolute top-0.5 right-1 text-orange-300 font-mono font-bold text-[8px]">
-                  {meta.tokenCost}t
-                </div>
-              )}
-              {isLocked && (
-                <div className="absolute top-0.5 left-1 text-white/70 font-mono font-bold text-[9px]">🔒</div>
-              )}
-              <AttackCooldownOverlay id={id} meta={meta} playerStatus={playerStatus} />
-              {hoveredKey === `spell-${id}` && <SpellTooltip id={id} meta={meta} isLocked={isLocked} />}
-            </div>
-          );
-        })}
       </div>
+      {spellRanks.length > 0 && (
+        <div className="relative flex flex-col-reverse items-center gap-3 mt-2">
+          <div className="absolute top-0 bottom-0 w-px bg-orange-400/25" />
+          {spellRanks.map((rank) => (
+            <div key={`floor-${rank}`} className="relative flex flex-col items-center gap-1">
+              <div className="text-orange-300/50 font-mono text-[8px] tracking-[0.5px]">Niveau {rank}</div>
+              <div className="flex flex-wrap justify-center gap-1">
+                {spellsByRank.get(rank)!.map(([id, meta]) => {
+                  const hasRes = hasEnoughResources(meta, playerStatus);
+                  const isLocked = unlockedSpellIds !== undefined && !unlockedSpellIds.has(id);
+                  return (
+                    <div
+                      key={`spell-${id}`}
+                      onClick={() => guardSpellClick(() => window.mcState?.events?.push(`spell:${id}`))}
+                      onPointerDown={(e) => startSpellDrag(e, id)}
+                      onPointerMove={moveSpellDrag}
+                      onPointerUp={endSpellDrag}
+                      onPointerCancel={endSpellDrag}
+                      onPointerEnter={() => setHoveredKey(`spell-${id}`)}
+                      onPointerLeave={() => setHoveredKey(null)}
+                      className={cn(
+                        "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-orange-400/60 bg-black/72 cursor-grab hover:border-orange-400 transition-colors touch-none",
+                        (!hasRes || isLocked) && "opacity-50",
+                        isLocked && "grayscale",
+                      )}
+                    >
+                      <div
+                        className="w-[26px] h-[26px] rounded-full"
+                        style={{
+                          background: spellTypeColor(meta.type),
+                          boxShadow: "inset -3px -3px 0 rgba(0,0,0,0.3),inset 3px 3px 0 rgba(255,255,255,0.2)",
+                        }}
+                      />
+                      <div className="text-orange-300/80 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
+                        {id}
+                      </div>
+                      {isLocked ? (
+                        <div className="absolute top-0.5 left-1 text-white/70 font-mono font-bold text-[9px]">🔒</div>
+                      ) : (
+                        meta.rank > 1 && (
+                          <div className="absolute top-0.5 left-1 text-yellow-300 font-mono font-bold text-[8px]">
+                            {meta.rank}
+                          </div>
+                        )
+                      )}
+                      {meta.manaCost > 0 && (
+                        <div className="absolute top-0.5 right-1 text-blue-300 font-mono font-bold text-[8px]">
+                          {meta.manaCost}
+                        </div>
+                      )}
+                      {meta.tokenCost > 0 && (
+                        <div className="absolute bottom-0.5 right-1 text-orange-300 font-mono font-bold text-[8px]">
+                          {meta.tokenCost}t
+                        </div>
+                      )}
+                      <AttackCooldownOverlay id={id} meta={meta} playerStatus={playerStatus} />
+                      {hoveredKey === `spell-${id}` && <SpellTooltip id={id} meta={meta} isLocked={isLocked} />}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
