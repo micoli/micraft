@@ -1,17 +1,17 @@
 movement:
   forward: ["KeyW", "ArrowUp"]
   backward: ["KeyS", "ArrowDown"]
-  strafe_left: ["KeyA", "ArrowLeft"]
-  strafe_right: ["KeyD", "ArrowRight"]
-  rotate_left: ["KeyQ", "Ctrl+ArrowLeft"]
-  rotate_right: ["KeyE", "Ctrl+ArrowRight"]
+  strafe_left: ["KeyQ", "ArrowLeft"]
+  strafe_right: ["KeyE", "ArrowRight"]
+  rotate_left: ["KeyA", "Ctrl+ArrowLeft"]
+  rotate_right: ["KeyD", "Ctrl+ArrowRight"]
   rotate_up: ["Alt+ArrowUp"]
   rotate_down: ["Alt+ArrowDown"]
   sneak: ["KeyZ"]
   crawl: ["KeyC"]
   auto_forward: ["KeyW+KeyW", "ArrowUp+ArrowUp"]
-  speed_up: ["F4"]
   speed_down: ["F3"]
+  speed_up: ["F4"]
 
 flight:
   fly_toggle: ["Space+Space"]

@@ -32,6 +32,7 @@ import org.micoli.micraft.input.GuildEvent
 import org.micoli.micraft.input.GuildEventHandler
 import org.micoli.micraft.input.MailEvent
 import org.micoli.micraft.input.MailEventHandler
+import org.micoli.micraft.input.MovementAction
 import org.micoli.micraft.input.NpcChatEvent
 import org.micoli.micraft.input.NpcChatEventHandler
 import org.micoli.micraft.physics.AabbCollider
@@ -446,14 +447,14 @@ class LocalPlayerController(
             MoveBasis(
                 kotlin.math.sin(playerYaw),
                 kotlin.math.cos(playerYaw),
-                jsIsActionDown("rotate_left"),
-                jsIsActionDown("rotate_right"))
+                jsIsActionDown(MovementAction.ROTATE_LEFT.wire),
+                jsIsActionDown(MovementAction.ROTATE_RIGHT.wire))
         else
             MoveBasis(
                 jsGetCameraForwardX(camera).toFloat(),
                 jsGetCameraForwardZ(camera).toFloat(),
-                jsIsActionDown("strafe_left"),
-                jsIsActionDown("strafe_right"))
+                jsIsActionDown(MovementAction.STRAFE_LEFT.wire),
+                jsIsActionDown(MovementAction.STRAFE_RIGHT.wire))
 
     private fun lerpAngle(from: Float, to: Float, t: Float): Float {
         var diff = to - from
@@ -762,16 +763,18 @@ class LocalPlayerController(
         val yawStep = (turnSpeedHorizontal * actualDt).toFloat()
         val pitchStep = (turnSpeedVertical * actualDt).toFloat()
         if (isOrbit) {
-            if (jsIsActionDown("strafe_left")) playerYaw -= yawStep
-            if (jsIsActionDown("strafe_right")) playerYaw += yawStep
-            if (jsIsActionDown("rotate_up")) jsRotateCameraPitch(camera, -pitchStep)
-            if (jsIsActionDown("rotate_down")) jsRotateCameraPitch(camera, pitchStep)
+            if (jsIsActionDown(MovementAction.STRAFE_LEFT.wire)) playerYaw -= yawStep
+            if (jsIsActionDown(MovementAction.STRAFE_RIGHT.wire)) playerYaw += yawStep
+            if (jsIsActionDown(MovementAction.ROTATE_UP.wire))
+                jsRotateCameraPitch(camera, -pitchStep)
+            if (jsIsActionDown(MovementAction.ROTATE_DOWN.wire))
+                jsRotateCameraPitch(camera, pitchStep)
         } else {
-            if (jsIsActionDown("rotate_left")) jsRotateCameraYaw(camera, -yawStep)
-            if (jsIsActionDown("rotate_right")) jsRotateCameraYaw(camera, yawStep)
+            if (jsIsActionDown(MovementAction.ROTATE_LEFT.wire)) jsRotateCameraYaw(camera, -yawStep)
+            if (jsIsActionDown(MovementAction.ROTATE_RIGHT.wire)) jsRotateCameraYaw(camera, yawStep)
         }
 
-        if (jsIsActionDown("backward")) autoAdvance = false
+        if (jsIsActionDown(MovementAction.BACKWARD.wire)) autoAdvance = false
 
         val animClip: String
         if (isMounted) {
@@ -789,11 +792,11 @@ class LocalPlayerController(
         } else {
             var dx = 0f
             var dz = 0f
-            if (jsIsActionDown("forward") || autoAdvance) {
+            if (jsIsActionDown(MovementAction.FORWARD.wire) || autoAdvance) {
                 dx += fwdX
                 dz += fwdZ
             }
-            if (jsIsActionDown("backward")) {
+            if (jsIsActionDown(MovementAction.BACKWARD.wire)) {
                 dx -= fwdX
                 dz -= fwdZ
             }
@@ -816,8 +819,10 @@ class LocalPlayerController(
 
             val stance =
                 when {
-                    !localFlying && jsIsActionDown("crawl") -> PlayerStance.CRAWLING
-                    !localFlying && jsIsActionDown("sneak") -> PlayerStance.SNEAKING
+                    !localFlying && jsIsActionDown(MovementAction.CRAWL.wire) ->
+                        PlayerStance.CRAWLING
+                    !localFlying && jsIsActionDown(MovementAction.SNEAK.wire) ->
+                        PlayerStance.SNEAKING
                     else -> PlayerStance.STANDING
                 }
 
@@ -840,8 +845,8 @@ class LocalPlayerController(
                     effStance == PlayerStance.CRAWLING -> "crawling"
                     effStance == PlayerStance.SNEAKING -> "sneaking"
                     !isMovingXZ -> "idle"
-                    jsIsActionDown("backward") -> "walking_backward"
-                    jsIsActionDown("forward") || autoAdvance -> "walking_forward"
+                    jsIsActionDown(MovementAction.BACKWARD.wire) -> "walking_backward"
+                    jsIsActionDown(MovementAction.FORWARD.wire) || autoAdvance -> "walking_forward"
                     basis.strafeLeft -> "strafe_left"
                     basis.strafeRight -> "strafe_right"
                     else -> "walking_forward"
@@ -894,11 +899,11 @@ class LocalPlayerController(
             if (localFlying) {
                 val fwdY = jsGetCameraForwardY(camera).toFloat()
                 var dy = 0f
-                if (jsIsActionDown("ascend")) dy = 1f
-                else if (jsIsActionDown("descend")) dy = -1f
+                if (jsIsActionDown(MovementAction.ASCEND.wire)) dy = 1f
+                else if (jsIsActionDown(MovementAction.DESCEND.wire)) dy = -1f
                 else {
-                    if (jsIsActionDown("forward") || autoAdvance) dy += fwdY
-                    if (jsIsActionDown("backward")) dy -= fwdY
+                    if (jsIsActionDown(MovementAction.FORWARD.wire) || autoAdvance) dy += fwdY
+                    if (jsIsActionDown(MovementAction.BACKWARD.wire)) dy -= fwdY
                 }
                 val flyDy = (dy * FLY_VERTICAL_SPEED * localSpeedMult * actualDt).toFloat()
                 val resolvedFlyDy =
@@ -927,8 +932,10 @@ class LocalPlayerController(
                 if (swimming) {
                     predVy =
                         when {
-                            jsIsActionDown("ascend") -> PlayerConstants.SWIM_UP_SPEED.toDouble()
-                            jsIsActionDown("descend") -> -PlayerConstants.SWIM_DOWN_SPEED.toDouble()
+                            jsIsActionDown(MovementAction.ASCEND.wire) ->
+                                PlayerConstants.SWIM_UP_SPEED.toDouble()
+                            jsIsActionDown(MovementAction.DESCEND.wire) ->
+                                -PlayerConstants.SWIM_DOWN_SPEED.toDouble()
                             else ->
                                 (predVy + CLIENT_GRAVITY * 0.2 * actualDt).coerceIn(
                                     -2.0, PlayerConstants.SWIM_UP_SPEED.toDouble())
@@ -946,7 +953,8 @@ class LocalPlayerController(
                     if (resolvedDy != dy) predVy = 0.0
                     predY = (predY + resolvedDy).coerceAtLeast(0.0)
                 } else if (grounded && predVy <= 0.0) {
-                    predVy = if (jsIsActionDown("ascend")) CLIENT_JUMP_SPEED else 0.0
+                    predVy =
+                        if (jsIsActionDown(MovementAction.ASCEND.wire)) CLIENT_JUMP_SPEED else 0.0
                 } else {
                     predVy += CLIENT_GRAVITY * actualDt
                     val dy = (predVy * actualDt).toFloat()
@@ -1991,11 +1999,11 @@ class LocalPlayerController(
 
         var dx = 0f
         var dz = 0f
-        if (jsIsActionDown("forward") || autoAdvance) {
+        if (jsIsActionDown(MovementAction.FORWARD.wire) || autoAdvance) {
             dx += fwdX
             dz += fwdZ
         }
-        if (jsIsActionDown("backward")) {
+        if (jsIsActionDown(MovementAction.BACKWARD.wire)) {
             dx -= fwdX
             dz -= fwdZ
         }
@@ -2022,19 +2030,19 @@ class LocalPlayerController(
         }
 
         val flyToggle = pendingFlyToggle.also { pendingFlyToggle = false }
-        val speedUp = jsIsActionDown("speed_up")
-        val speedDown = jsIsActionDown("speed_down")
+        val speedUp = jsIsActionDown(MovementAction.SPEED_UP.wire)
+        val speedDown = jsIsActionDown(MovementAction.SPEED_DOWN.wire)
 
         return if (localFlying) {
             val dy =
                 when {
-                    jsIsActionDown("ascend") -> 1f
-                    jsIsActionDown("descend") -> -1f
+                    jsIsActionDown(MovementAction.ASCEND.wire) -> 1f
+                    jsIsActionDown(MovementAction.DESCEND.wire) -> -1f
                     else -> {
                         val fwdY = jsGetCameraForwardY(camera).toFloat()
                         var d = 0f
-                        if (jsIsActionDown("forward") || autoAdvance) d += fwdY
-                        if (jsIsActionDown("backward")) d -= fwdY
+                        if (jsIsActionDown(MovementAction.FORWARD.wire) || autoAdvance) d += fwdY
+                        if (jsIsActionDown(MovementAction.BACKWARD.wire)) d -= fwdY
                         d
                     }
                 }
@@ -2053,16 +2061,16 @@ class LocalPlayerController(
         } else {
             val stance =
                 when {
-                    jsIsActionDown("crawl") -> PlayerStance.CRAWLING
-                    jsIsActionDown("sneak") -> PlayerStance.SNEAKING
+                    jsIsActionDown(MovementAction.CRAWL.wire) -> PlayerStance.CRAWLING
+                    jsIsActionDown(MovementAction.SNEAK.wire) -> PlayerStance.SNEAKING
                     else -> PlayerStance.STANDING
                 }
             // dy carries the swim dive/rise intent when submerged (see MovementProcessor);
             // ignored for normal ground movement.
             val swimDy =
                 when {
-                    jsIsActionDown("ascend") -> 1f
-                    jsIsActionDown("descend") -> -1f
+                    jsIsActionDown(MovementAction.ASCEND.wire) -> 1f
+                    jsIsActionDown(MovementAction.DESCEND.wire) -> -1f
                     else -> 0f
                 }
             ClientMessage.MoveIntent(
@@ -2072,7 +2080,7 @@ class LocalPlayerController(
                 yaw = sentYaw,
                 pitch = jsGetCameraRotationX(camera).toFloat(),
                 stance = stance,
-                jump = !isMounted && jsIsActionDown("ascend"),
+                jump = !isMounted && jsIsActionDown(MovementAction.ASCEND.wire),
                 flyToggle = flyToggle,
                 speedUp = speedUp,
                 speedDown = speedDown,

@@ -193,6 +193,25 @@ tasks.register<JavaExec>("checkClientEventTypes") {
     args("--check")
 }
 
+tasks.register<JavaExec>("generateMovementActionTypes") {
+    group = "documentation"
+    description =
+        "Regenerates app/webApp/ts-src/generated/input/movementActions.ts from core's MovementAction."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.tools.GenerateMovementActionTypesKt")
+    workingDir = rootProject.projectDir
+}
+
+tasks.register<JavaExec>("checkMovementActionTypes") {
+    group = "verification"
+    description =
+        "Fails if app/webApp/ts-src/generated/input/movementActions.ts drifts from core's MovementAction."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.tools.GenerateMovementActionTypesKt")
+    workingDir = rootProject.projectDir
+    args("--check")
+}
+
 tasks.register<Test>("exportOpenApi") {
     description = "Regenerates server/openapi/openapi.yaml and the README.md API Routes section."
     group = "documentation"
