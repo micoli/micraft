@@ -8,6 +8,7 @@ import { damageTypeColor } from "../AttackPanel";
 import { AttackCooldownOverlay } from "../../shared/AttackCooldownOverlay";
 import { useBlockDefsReady, useBlockPreviews } from "../../shared/BlockPreview";
 import { ItemTooltip } from "../../shared/ItemTooltip";
+import { AttackTooltip, SpellTooltip, MacroTooltip } from "../../shared/AttackSpellTooltip";
 import { SlotBlockIcon } from "./SlotBlockIcon";
 
 interface Props {
@@ -37,7 +38,7 @@ export function ShortcutBar({
   nonEmptyPages = [],
   onSlotDrop,
   layoutStyle,
-  macros: _macros,
+  macros,
   macroIcons,
   playerStatus,
 }: Props) {
@@ -84,7 +85,8 @@ export function ShortcutBar({
         const isConsumableItem = slot?.kind === "item" && (inventory[slot.id] ?? 0) > 0;
         const attackDef = isAttack ? attackMeta[slot!.id] : null;
         const spellDef = isSpell ? spellMeta[slot!.id] : null;
-        const itemMeta_ = slot?.kind === "item" ? itemMeta[slot.id] : null;
+        const isItem = slot?.kind === "item";
+        const itemMeta_ = isItem ? (itemMeta[slot.id] ?? { label: slot.id, bg: "#888" }) : null;
         const count = slot?.kind === "item" ? (inventory[slot.id] ?? 0) : 0;
         const itemVisual = slot?.kind === "item" ? getItemVisual(slot.id) : null;
         const itemOrdinal = itemVisual?.ordinal ?? null;
@@ -111,7 +113,9 @@ export function ShortcutBar({
             className={cn(
               "w-[52px] h-[52px] shrink-0 flex flex-col items-center justify-center relative rounded border-2 transition-all touch-none",
               isDropTarget ? "bg-white/20" : "bg-black/72",
-              isSelected ? "border-yellow-400/90 shadow-[0_0_6px_rgba(255,215,0,0.5)]" : "border-white/35",
+              isSelected
+                ? "border-yellow-400/90 shadow-[0_0_6px_rgba(255,215,0,0.5)]"
+                : "border-white/35 hover:border-white/60",
               isHand
                 ? "cursor-default"
                 : isAttack || isMacro || isSpell || isConsumableItem
@@ -140,6 +144,9 @@ export function ShortcutBar({
                 >
                   {slot!.id}
                 </div>
+                {hoveredSlot === idx && (
+                  <MacroTooltip id={slot!.id} icon={macroIcons?.[slot!.id]} script={macros?.[slot!.id]} />
+                )}
               </>
             ) : isAttack ? (
               <>
@@ -154,6 +161,7 @@ export function ShortcutBar({
                   {slot!.id}
                 </div>
                 <AttackCooldownOverlay id={slot!.id} meta={attackDef} playerStatus={playerStatus} />
+                {hoveredSlot === idx && <AttackTooltip id={slot!.id} meta={attackDef} />}
               </>
             ) : isSpell ? (
               <>
@@ -162,6 +170,7 @@ export function ShortcutBar({
                   {slot!.id}
                 </div>
                 <AttackCooldownOverlay id={slot!.id} meta={spellDef} playerStatus={playerStatus} />
+                {hoveredSlot === idx && <SpellTooltip id={slot!.id} meta={spellDef} />}
               </>
             ) : itemMeta_ ? (
               <>
