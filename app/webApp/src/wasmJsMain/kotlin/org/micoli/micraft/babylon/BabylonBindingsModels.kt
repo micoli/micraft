@@ -125,6 +125,67 @@ fun jsSetNpcDead(scene: JsAny, model: JsAny): Unit =
 
 fun jsOpenNpcDialog(json: String): Unit = js("mc.openNpcDialog(json)")
 
+/** Stamps the NPC id onto the model root's metadata, so a scene-level pick can resolve it back. */
+fun jsTagNpcModel(model: JsAny, id: String): Unit =
+    js(
+        """
+    (() => {
+        var root = model.root || model;
+        root.metadata = root.metadata || {};
+        root.metadata.npcId = id;
+    })()
+""")
+
+/**
+ * THIRD_PERSON_ORBIT_CURSOR: mesh-pick (not the voxel raycast) whatever NPC model sits under the OS
+ * cursor, walking up parents to the tagged root — Babylon picking meshes returns child submeshes,
+ * and depth-sorting handles a block occluding the NPC for free. Returns "" when nothing NPC-tagged
+ * is under the cursor (see jsConsumeConsoleInput for the same empty-string-as-null convention,
+ * since a plain js() can't return String?).
+ */
+fun jsPickNpcIdAtCursor(scene: JsAny): String =
+    js(
+        """
+    (() => {
+        var pick = scene.pick(scene.pointerX, scene.pointerY, function(m) {
+            var n = m;
+            while (n) {
+                if (n.metadata && n.metadata.npcId) return true;
+                n = n.parent;
+            }
+            return false;
+        });
+        if (!pick || !pick.hit || !pick.pickedMesh) return '';
+        var n = pick.pickedMesh;
+        while (n) {
+            if (n.metadata && n.metadata.npcId) return n.metadata.npcId;
+            n = n.parent;
+        }
+        return '';
+    })()
+""")
+
+/**
+ * Light-orange outline for the NPC currently under the cursor — distinct from the purple
+ * Tab-selected combat target and the red aggro'd-on-player highlight.
+ */
+fun jsHoverHighlightNpcModel(scene: JsAny, model: JsAny, on: Boolean): Unit =
+    js(
+        """
+    (() => {
+        if (!window._hoverHL) {
+            window._hoverHL = new BABYLON.HighlightLayer('hoverHL', scene, {isStroke:true,blurHorizontalSize:0.3,blurVerticalSize:0.3});
+            window._hoverHL.innerGlow = false;
+            window._hoverHL.outerGlow = true;
+        }
+        var hl = window._hoverHL;
+        var root = model.root || model;
+        var meshes = root.getChildMeshes ? root.getChildMeshes() : [];
+        var col = new BABYLON.Color3(1, 0.75, 0.4);
+        meshes.forEach(function(m) { if (on) hl.addMesh(m, col); else hl.removeMesh(m); });
+    })()
+""")
+
 // ── Vehicle models ───────────────────────────────────────────────────────────
 // Mirrors the NPC model bindings above, minus walk-bone animation/highlighting (a rail vehicle
 // never walks, aggros, or dies) — see VehicleManager.kt (game/) for the Kotlin side.

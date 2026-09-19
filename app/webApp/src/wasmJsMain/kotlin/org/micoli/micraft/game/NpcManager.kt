@@ -22,6 +22,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
     private val npcNames = mutableMapOf<String, String>()
     private val npcScales = mutableMapOf<String, Float>()
     private var highlightedNpcId: String? = null
+    private var hoveredNpcId: String? = null
     private val aggroNpcIds = mutableSetOf<String>()
     private val deadNpcIds = mutableSetOf<String>()
 
@@ -195,6 +196,7 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         val isNew = npc.id !in npcModels
         val model = npcModels.getOrPut(npc.id) { jsCreateNpcModel(scene, npc.type) ?: return }
         if (isNew) {
+            jsTagNpcModel(model, npc.id)
             val scale = npcScales[npc.id] ?: 1.0f
             if (scale != 1.0f) jsSetNpcScale(model, scale)
         }
@@ -266,6 +268,17 @@ class NpcManager(private val scene: JsAny, private val localPlayerId: () -> Stri
         highlightedNpcId = id
         val nextModel = id?.let { npcModels[it] ?: externalModels()[it] }
         if (nextModel != null) jsHighlightNpcModel(scene, nextModel, true)
+    }
+
+    /** THIRD_PERSON_ORBIT_CURSOR: light-orange outline for the NPC under the mouse cursor. */
+    @OptIn(ExperimentalWasmJsInterop::class)
+    fun updateHoverTarget(id: String?) {
+        if (id == hoveredNpcId) return
+        val prevModel = hoveredNpcId?.let { npcModels[it] ?: externalModels()[it] }
+        if (prevModel != null) jsHoverHighlightNpcModel(scene, prevModel, false)
+        hoveredNpcId = id
+        val nextModel = id?.let { npcModels[it] ?: externalModels()[it] }
+        if (nextModel != null) jsHoverHighlightNpcModel(scene, nextModel, true)
     }
 
     fun cycleNearestNpc(

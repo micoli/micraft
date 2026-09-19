@@ -238,6 +238,7 @@ class LocalPlayerController(
     private var wasMouseDown = false
     private var breakTarget: BlockPos? = null
     private var hoverTarget: BlockPos? = null
+    private var hoveredNpcId: String? = null
     var selectedSlot: Int = 0
     var currentPage: Int = 0
     val shortcutBarPages: Array<Array<ShortcutSlot?>> = Array(10) { arrayOfNulls(10) }
@@ -1342,10 +1343,31 @@ class LocalPlayerController(
         }
     }
 
+    /** THIRD_PERSON_ORBIT_CURSOR: mesh-pick under the cursor, orange-highlight the NPC found. */
+    private fun updateHoveredNpc() {
+        val picked = if (isOrbitCursor) jsPickNpcIdAtCursor(scene).ifEmpty { null } else null
+        hoveredNpcId = picked
+        npcManager.updateHoverTarget(picked)
+    }
+
+    private fun setCombatTargetNpc(id: String) {
+        if (id == currentCombatTargetId) return
+        currentCombatTargetId = id
+        npcManager.setHighlightTarget(id)
+        outMessages.trySend(ClientMessage.SetCombatTarget(id, isNpc = true))
+    }
+
     private fun handleBlockPlacementAndBreaking(rayResult: RaycastResult?, target: BlockPos?) {
         val mouseDownNow = jsIsMouseDown()
         if (mouseDownNow && !wasMouseDown) breakArmed = true
+        // A fresh click landing on the hovered NPC targets it instead of breaking/placing whatever
+        // block sits behind it.
+        val clickedNpc = mouseDownNow && !wasMouseDown && hoveredNpcId != null
         wasMouseDown = mouseDownNow
+        if (clickedNpc) {
+            setCombatTargetNpc(hoveredNpcId!!)
+            return
+        }
         // Plain left-click does nothing in mouse-look orbit — only Ctrl+click (block_interact)
         // acts.
         // Cursor-orbit is exempt: there the click aims at the cursor, so it breaks/places normally.
@@ -1665,6 +1687,7 @@ class LocalPlayerController(
         val target = rayResult?.target
         e2eTarget = target
 
+        updateHoveredNpc()
         handleBlockInteractRequest(target)
         updateThirdPersonTargetAlpha(target)
         updateHoverOutline(target)
@@ -2079,6 +2102,10 @@ class LocalPlayerController(
         lastSentIntent = null
         breakTarget = null
         hoverTarget = null
+        if (hoveredNpcId != null) {
+            npcManager.updateHoverTarget(null)
+            hoveredNpcId = null
+        }
         jsHideBreakOverlay()
         jsHideTargetOutline()
         localPlayerModel?.let { jsDisposePlayerModel(it) }
