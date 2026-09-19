@@ -21,7 +21,10 @@ const meta: Meta<typeof NpcChatDialog> = {
   title: "Admin/NpcChatTest/NpcChatDialog",
   component: NpcChatDialog,
   parameters: { layout: "padded" },
-  args: { onSend: fn(), sending: false, error: null, t },
+  args: { onSend: (text)=>{
+      messages.push({ role: "user", text: text })
+      messages.push({ role: "npc", text: `${text}response` })
+    }, sending: false, error: null, t },
   decorators: [
     (Story) => (
       <div style={{ height: 480 }}>

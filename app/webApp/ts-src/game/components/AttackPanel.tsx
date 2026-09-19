@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { cn } from "../../primitives/cn";
 import { AttackMeta, SpellMeta } from "../types";
 import { UiState } from "../UIReducer";
 import { useAttackDrag } from "../hooks/useAttackDrag";
 import { AttackCooldownOverlay } from "../shared/AttackCooldownOverlay";
+import { AttackTooltip, SpellTooltip, MacroTooltip } from "../shared/AttackSpellTooltip";
 
 export function damageTypeColor(damageType: string): string {
   switch (damageType) {
@@ -50,6 +52,7 @@ export function AttackPanel({
 }: Props) {
   const attacks = Object.entries(attackMeta);
   const spells = Object.entries(spellMeta);
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const { startDrag, moveDrag, endDrag, guardClick } = useAttackDrag((id) =>
     damageTypeColor(attackMeta[id]?.damageType ?? ""),
   );
@@ -70,7 +73,7 @@ export function AttackPanel({
   return (
     <div
       className={cn(
-        "pointer-events-auto z-[999] bg-black/60 border border-white/20 rounded-md p-2 overflow-hidden",
+        "pointer-events-auto z-[999] bg-black/60 border border-white/20 rounded-md p-2",
         !layoutStyle && "fixed bottom-24 left-1/2 -translate-x-1/2",
       )}
       style={layoutStyle}
@@ -84,13 +87,15 @@ export function AttackPanel({
             onPointerMove={moveMacroDrag}
             onPointerUp={endMacroDrag}
             onPointerCancel={endMacroDrag}
-            title={name}
+            onPointerEnter={() => setHoveredKey(`macro-${name}`)}
+            onPointerLeave={() => setHoveredKey(null)}
             className="w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-amber-400/40 bg-black/72 cursor-grab hover:border-amber-400/80 transition-colors touch-none"
           >
             <div className="text-amber-400/80 font-mono text-base">⚡</div>
             <div className="text-amber-300/70 font-mono text-[8px] mt-0.5 tracking-[0.5px] max-w-[48px] truncate">
               {name}
             </div>
+            {hoveredKey === `macro-${name}` && <MacroTooltip id={name} />}
           </div>
         ))}
         {attacks.map(([id, meta]) => {
@@ -104,7 +109,8 @@ export function AttackPanel({
               onPointerMove={moveDrag}
               onPointerUp={endDrag}
               onPointerCancel={endDrag}
-              title={`${displayName} (rank ${meta.rank})\n${meta.damageType}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}${meta.power > 0 ? ` · power ${meta.power}` : ""}`}
+              onPointerEnter={() => setHoveredKey(`attack-${id}`)}
+              onPointerLeave={() => setHoveredKey(null)}
               className={cn(
                 "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-white/25 bg-black/72 cursor-grab hover:border-white/60 transition-colors touch-none",
                 hasCd && "opacity-50",
@@ -131,6 +137,7 @@ export function AttackPanel({
                 </div>
               )}
               <AttackCooldownOverlay id={id} meta={meta} playerStatus={playerStatus} />
+              {hoveredKey === `attack-${id}` && <AttackTooltip id={displayName} meta={meta} />}
             </div>
           );
         })}
@@ -145,7 +152,8 @@ export function AttackPanel({
               onPointerMove={moveSpellDrag}
               onPointerUp={endSpellDrag}
               onPointerCancel={endSpellDrag}
-              title={`${id}${isLocked ? " · requires a higher level" : ""}${meta.power > 0 ? ` · power ${meta.power}` : ""}${meta.tokenCost > 0 ? ` · ${meta.tokenCost} token` : ""}${meta.rageCost > 0 ? ` · ${meta.rageCost} rage` : ""}${meta.manaCost > 0 ? ` · ${meta.manaCost} mana` : ""}`}
+              onPointerEnter={() => setHoveredKey(`spell-${id}`)}
+              onPointerLeave={() => setHoveredKey(null)}
               className={cn(
                 "w-[52px] h-[52px] flex flex-col items-center justify-center relative rounded border-2 border-orange-400/60 bg-black/72 cursor-grab hover:border-orange-400 transition-colors touch-none",
                 (!hasRes || isLocked) && "opacity-50",
@@ -165,6 +173,7 @@ export function AttackPanel({
                 <div className="absolute top-0.5 left-1 text-white/70 font-mono font-bold text-[9px]">🔒</div>
               )}
               <AttackCooldownOverlay id={id} meta={meta} playerStatus={playerStatus} />
+              {hoveredKey === `spell-${id}` && <SpellTooltip id={id} meta={meta} isLocked={isLocked} />}
             </div>
           );
         })}
