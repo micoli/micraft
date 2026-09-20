@@ -190,3 +190,21 @@ export function clearAccountEmail() {
     /* empty */
   }
 }
+
+// Persists across tab close / server restart, unlike the session-scoped email above — used only
+// to prefill the login form's email field.
+export function getLastEmail(): string {
+  try {
+    return localStorage.getItem("micraft_last_email") || "";
+  } catch {
+    return "";
+  }
+}
+
+export function saveLastEmail(email: string) {
+  try {
+    localStorage.setItem("micraft_last_email", email);
+  } catch {
+    /* empty */
+  }
+}

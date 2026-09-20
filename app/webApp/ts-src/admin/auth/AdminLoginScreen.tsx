@@ -7,6 +7,7 @@ import { Panel } from "../../primitives/Panel";
 import { FormField } from "../../primitives/FormField";
 import { getApiAuthConfig, postAuthLogin } from "../../generated/api/requests";
 import { storeAdminToken } from "./adminTokenStorage";
+import { getLastEmail, saveLastEmail } from "../../lib/authStorage";
 
 type AuthMode = "loading" | "local" | "oauth";
 
@@ -31,7 +32,7 @@ export function AdminLoginScreen({ onAuthenticated }: { onAuthenticated: () => v
   }, [mode]);
 
   const form = useForm({
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: getLastEmail(), password: "" },
     onSubmit: async ({ value }) => {
       const email = value.email.trim();
       if (!email || (requirePassword && !value.password)) return;
@@ -47,6 +48,7 @@ export function AdminLoginScreen({ onAuthenticated }: { onAuthenticated: () => v
           return;
         }
         storeAdminToken(data.token);
+        saveLastEmail(data.email || email);
         onAuthenticated();
       } catch {
         setError("Connection error. Is the server running?");

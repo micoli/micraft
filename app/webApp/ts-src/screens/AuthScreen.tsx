@@ -15,6 +15,9 @@ import {
   clearStoredToken,
   getLastUser,
   saveLastUser,
+  getAccountEmail,
+  getLastEmail,
+  saveLastEmail,
   storeDisplayName,
   getStoredDisplayName,
   getLastPlayer,
@@ -44,7 +47,10 @@ async function tryRefresh(): Promise<boolean> {
     storeToken(data.token);
     storeRefreshToken(data.refreshToken);
     storeDisplayName(data.displayName || "");
-    if (data.email) saveAccountEmail(data.email);
+    if (data.email) {
+      saveAccountEmail(data.email);
+      saveLastEmail(data.email);
+    }
     saveLastUser(data.displayName || "");
     return true;
   } catch {
@@ -64,7 +70,7 @@ export function AuthScreen() {
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const localForm = useForm({
-    defaultValues: { username: "", password: "" },
+    defaultValues: { username: getAccountEmail() || getLastEmail(), password: "" },
     onSubmit: async ({ value }) => {
       const user = value.username.trim();
       if (!user || (requirePassword && !value.password)) return;
@@ -84,6 +90,7 @@ export function AuthScreen() {
         storeRefreshToken(data.refreshToken);
         storeDisplayName(data.displayName || user);
         saveAccountEmail(data.email || user);
+        saveLastEmail(data.email || user);
         saveLastUser(data.displayName || user);
         setAuthLoading(false);
         navigate("/chars");
@@ -120,7 +127,10 @@ export function AuthScreen() {
         storeToken(oauthToken);
         if (oauthRefreshToken) storeRefreshToken(oauthRefreshToken);
         storeDisplayName(oauthName || "player");
-        if (oauthEmail) saveAccountEmail(oauthEmail);
+        if (oauthEmail) {
+          saveAccountEmail(oauthEmail);
+          saveLastEmail(oauthEmail);
+        }
         window.history.replaceState(null, "", window.location.pathname + window.location.search);
         saveLastUser(oauthName || "player");
         navigate("/chars");
@@ -143,7 +153,10 @@ export function AuthScreen() {
             const name = data?.displayName || "";
             if (name) {
               storeDisplayName(name);
-              if (data?.email) saveAccountEmail(data.email);
+              if (data?.email) {
+                saveAccountEmail(data.email);
+                saveLastEmail(data.email);
+              }
               saveLastUser(name);
               if (getLastPlayer(name)) {
                 window.mcState.intentionalDisconnect = true;

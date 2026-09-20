@@ -7,7 +7,16 @@ import { Button } from "../../primitives/Button";
 import { Panel } from "../../primitives/Panel";
 import { FormField } from "../../primitives/FormField";
 import { getApiAuthConfig, postAuthLogin } from "../../generated/api/requests";
-import { AuthMode, storeToken, storeDisplayName, saveAccountEmail, saveLastUser } from "../../lib/authStorage";
+import {
+  AuthMode,
+  storeToken,
+  storeDisplayName,
+  saveAccountEmail,
+  saveLastUser,
+  getAccountEmail,
+  getLastEmail,
+  saveLastEmail,
+} from "../../lib/authStorage";
 import { useT } from "../i18n";
 
 /**
@@ -26,7 +35,7 @@ export function HubLoginRoute() {
   const emailInputRef = useRef<HTMLInputElement>(null);
 
   const localForm = useForm({
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: getAccountEmail() || getLastEmail(), password: "" },
     onSubmit: async ({ value }) => {
       const email = value.email.trim();
       if (!email || (requirePassword && !value.password)) return;
@@ -44,6 +53,7 @@ export function HubLoginRoute() {
         storeToken(data.token);
         storeDisplayName(data.displayName || email);
         saveAccountEmail(data.email || email);
+        saveLastEmail(data.email || email);
         saveLastUser(data.displayName || email);
         navigate("/hub/mail");
       } catch {
