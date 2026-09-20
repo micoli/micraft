@@ -47,6 +47,10 @@ class NpcSpawner {
                 if (attempts >= ctx.tuning.maxSpawnAttemptsPerTick) break
                 if (!canSpawn()) return
                 if (density.countByTypeInChunk(type, chunkPos) >= spawn.maxPerChunk) continue
+                // Counted here, not on success only: an unbounded run of misses (quota full,
+                // biome mismatch, blocked collider) must not scan every loaded chunk before
+                // giving up — the expensive checks below are what the budget is meant to cap.
+                attempts++
 
                 val wx =
                     chunkPos.cx * WorldConstants.CHUNK_SIZE +
@@ -99,7 +103,6 @@ class NpcSpawner {
                 val nowAlive = (counts[type] ?: 0) + 1
                 counts[type] = nowAlive
                 log.debug("Auto-spawned {} at ({},{},{})", type, wx, spawnY, wz)
-                attempts++
                 // re-checked inside the loop: several chunks are tried per type per pass, and the
                 // quota must hold across them, not only on entry
                 if (spawn.maxTotal > 0 && nowAlive >= spawn.maxTotal) break
