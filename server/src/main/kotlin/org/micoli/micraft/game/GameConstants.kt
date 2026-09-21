@@ -1,5 +1,8 @@
 package org.micoli.micraft.game
 
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+
 internal var TICK_MS = 50L
 internal val TICK_SECONDS
     get() = TICK_MS / 1000f
@@ -30,4 +33,17 @@ internal var RECONCILE_TOLERANCE_Y = 0.99
 internal fun nextTickDeadline(now: Long, previousDeadline: Long, tickMs: Long): Long {
     val next = previousDeadline + tickMs
     return if (next < now) now + tickMs else next
+}
+
+// A tick that sends to a socket closed mid-tick throws a CancellationException (Ktor closes the
+// outgoing channel with one). Rethrowing it on sight would silently end the whole tick loop, so
+// only propagate when the loop's own coroutine is really cancelled.
+@Suppress("TooGenericExceptionCaught")
+internal suspend fun runTickGuarded(tick: suspend () -> Unit, onError: (Throwable) -> Unit) {
+    try {
+        tick()
+    } catch (e: Throwable) {
+        currentCoroutineContext().ensureActive()
+        onError(e)
+    }
 }

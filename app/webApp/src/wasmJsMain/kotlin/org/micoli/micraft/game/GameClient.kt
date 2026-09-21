@@ -42,6 +42,7 @@ import org.micoli.micraft.game.world.rail.RailDefinition
 import org.micoli.micraft.placeable.PlaceableDefinition
 import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.protocol.CHUNK_HANDSHAKE_SEPARATOR
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.SUPERSEDED_CONNECTION_CLOSE_CODE
@@ -364,7 +365,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                             if (e2eSession.isNotEmpty())
                                 url.parameters.append("gameSession", e2eSession)
                         }) {
-                            send(Frame.Text(token.ifEmpty { pid }))
+                            send(Frame.Text("$token$CHUNK_HANDSHAKE_SEPARATOR$pid"))
                             for (frame in incoming) {
                                 if (frame !is Frame.Binary) continue
                                 val data = frame.readBytes()
