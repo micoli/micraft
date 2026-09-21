@@ -1,16 +1,22 @@
 package org.micoli.micraft.game
 
+import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
-import io.ktor.websocket.close
-import io.ktor.websocket.send
+import io.ktor.websocket.readReason
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.micoli.micraft.auth.AuthResult
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.di.SessionRegistry
+import org.micoli.micraft.protocol.CHUNK_HANDSHAKE_SEPARATOR
 import org.micoli.micraft.support.FakeWebSocketSession
 import org.micoli.micraft.support.testSession
 import org.micoli.micraft.support.testWorld
@@ -18,86 +24,116 @@ import org.micoli.micraft.support.testWorld
 class ChunkConnectAuthTest {
 
     private val scope = CoroutineScope(Dispatchers.Default)
+    private val sep = CHUNK_HANDSHAKE_SEPARATOR
 
-    @Test
-    fun `onChunkConnect_valid_token_attaches_then_detaches_socket`() = runBlocking {
-        val store = TokenStore(scope)
+    private fun registryWith(characterId: String, email: String): SessionRegistry {
         val registry = SessionRegistry()
-        val gameLoop = GameLoop(testWorld(), tokenStore = store, sessionRegistry = registry)
+        val session = testSession(id = characterId)
+        session.state = session.state.copy(email = email)
+        registry[characterId] = session
+        return registry
+    }
 
-        val token = store.issue(AuthResult(playerId = "p1", displayName = "Alice"))
-        registry["p1"] = testSession(id = "p1")
-
+    /** Runs onChunkConnect with the socket kept open and reports the attached socket, if any. */
+    private suspend fun attachedSocketAfter(
+        gameLoop: GameLoop,
+        registry: SessionRegistry,
+        characterId: String,
+        firstFrame: String,
+    ): Any? {
         val socket = FakeWebSocketSession()
-        socket.incomingChannel.send(Frame.Text(token))
+        socket.incomingChannel.send(Frame.Text(firstFrame))
+        val job = CoroutineScope(Dispatchers.Default).async { gameLoop.onChunkConnect(socket) }
+        delay(200)
+        val attached = registry[characterId]?.chunkSocket
         socket.incomingChannel.close()
-
-        gameLoop.onChunkConnect(socket)
-
-        assertNull(registry["p1"]?.chunkSocket)
+        withTimeout(2_000) { job.await() }
+        assertNull(registry[characterId]?.chunkSocket, "detached once the socket closes")
+        return attached
     }
 
     @Test
-    fun `onChunkConnect_invalid_token_rejects_without_attaching_session`() = runBlocking {
-        val store = TokenStore(scope)
-        val registry = SessionRegistry()
-        val gameLoop = GameLoop(testWorld(), tokenStore = store, sessionRegistry = registry)
-        registry["p1"] = testSession(id = "p1")
+    fun `token of the owning account attaches to the character session`() =
+        runBlocking<Unit> {
+            val store = TokenStore(scope)
+            val registry = registryWith("char-1", "alice@example.com")
+            val gameLoop = GameLoop(testWorld(), tokenStore = store, sessionRegistry = registry)
+            val token =
+                store.issue(AuthResult(playerId = "alice@example.com", displayName = "Alice"))
 
-        val socket = FakeWebSocketSession()
-        socket.incomingChannel.send(Frame.Text("not-a-valid-jwt"))
-        socket.incomingChannel.close()
+            val attached =
+                attachedSocketAfter(gameLoop, registry, "char-1", "$token$sep" + "char-1")
 
-        gameLoop.onChunkConnect(socket)
-
-        assertNull(registry["p1"]?.chunkSocket)
-    }
-
-    @Test
-    fun `onChunkConnect_expired_token_rejects_connection`() = runBlocking {
-        val store = TokenStore(scope, ttlSeconds = -1)
-        val registry = SessionRegistry()
-        val gameLoop = GameLoop(testWorld(), tokenStore = store, sessionRegistry = registry)
-
-        val token = store.issue(AuthResult(playerId = "p1", displayName = "Alice"))
-        registry["p1"] = testSession(id = "p1")
-
-        val socket = FakeWebSocketSession()
-        socket.incomingChannel.send(Frame.Text(token))
-        socket.incomingChannel.close()
-
-        gameLoop.onChunkConnect(socket)
-
-        assertNull(registry["p1"]?.chunkSocket)
-    }
+            assertNotNull(attached)
+        }
 
     @Test
-    fun `onChunkConnect_no_token_store_uses_player_id_directly`() = runBlocking {
-        val registry = SessionRegistry()
-        val gameLoop = GameLoop(testWorld(), sessionRegistry = registry)
-        registry["p1"] = testSession(id = "p1")
+    fun `token of another account is rejected with a policy violation`() =
+        runBlocking<Unit> {
+            val store = TokenStore(scope)
+            val registry = registryWith("char-1", "alice@example.com")
+            val gameLoop = GameLoop(testWorld(), tokenStore = store, sessionRegistry = registry)
+            val token = store.issue(AuthResult(playerId = "bob@example.com", displayName = "Bob"))
+            val socket = FakeWebSocketSession()
+            socket.incomingChannel.send(Frame.Text("$token$sep" + "char-1"))
 
-        val socket = FakeWebSocketSession()
-        socket.incomingChannel.send(Frame.Text("p1"))
-        socket.incomingChannel.close()
+            gameLoop.onChunkConnect(socket)
 
-        gameLoop.onChunkConnect(socket)
-
-        assertNull(registry["p1"]?.chunkSocket)
-    }
+            assertNull(registry["char-1"]?.chunkSocket)
+            val reason = socket.outgoingChannel.receive() as Frame.Close
+            assertEquals(CloseReason.Codes.VIOLATED_POLICY.code, reason.readReason()?.code)
+        }
 
     @Test
-    fun `onChunkConnect_token_wrong_player_not_in_registry_returns_gracefully`() = runBlocking {
-        val store = TokenStore(scope)
-        val registry = SessionRegistry()
-        val gameLoop = GameLoop(testWorld(), tokenStore = store, sessionRegistry = registry)
+    fun `invalid token is rejected`() =
+        runBlocking<Unit> {
+            val store = TokenStore(scope)
+            val registry = registryWith("char-1", "alice@example.com")
+            val gameLoop = GameLoop(testWorld(), tokenStore = store, sessionRegistry = registry)
 
-        val token = store.issue(AuthResult(playerId = "unknown-player", displayName = "Ghost"))
+            val attached =
+                attachedSocketAfter(gameLoop, registry, "char-1", "not-a-valid-jwt$sep" + "char-1")
 
-        val socket = FakeWebSocketSession()
-        socket.incomingChannel.send(Frame.Text(token))
-        socket.incomingChannel.close()
+            assertNull(attached)
+        }
 
-        gameLoop.onChunkConnect(socket)
-    }
+    @Test
+    fun `expired token is rejected`() =
+        runBlocking<Unit> {
+            val store = TokenStore(scope, ttlSeconds = -1)
+            val registry = registryWith("char-1", "alice@example.com")
+            val gameLoop = GameLoop(testWorld(), tokenStore = store, sessionRegistry = registry)
+            val token =
+                store.issue(AuthResult(playerId = "alice@example.com", displayName = "Alice"))
+
+            val attached =
+                attachedSocketAfter(gameLoop, registry, "char-1", "$token$sep" + "char-1")
+
+            assertNull(attached)
+        }
+
+    @Test
+    fun `without a token store the player id alone attaches`() =
+        runBlocking<Unit> {
+            val registry = registryWith("char-1", "alice@example.com")
+            val gameLoop = GameLoop(testWorld(), sessionRegistry = registry)
+
+            val attached = attachedSocketAfter(gameLoop, registry, "char-1", "${sep}char-1")
+
+            assertNotNull(attached)
+        }
+
+    @Test
+    fun `valid token for a character with no live session returns gracefully`() =
+        runBlocking<Unit> {
+            val store = TokenStore(scope)
+            val registry = SessionRegistry()
+            val gameLoop = GameLoop(testWorld(), tokenStore = store, sessionRegistry = registry)
+            val token =
+                store.issue(AuthResult(playerId = "ghost@example.com", displayName = "Ghost"))
+            val socket = FakeWebSocketSession()
+            socket.incomingChannel.send(Frame.Text("$token$sep" + "ghost-char"))
+
+            gameLoop.onChunkConnect(socket)
+        }
 }

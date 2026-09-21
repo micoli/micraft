@@ -17,6 +17,10 @@ import org.micoli.micraft.ui.GameLayout
 // auto-reconnect instead of racing the newer connection for the same player id.
 const val SUPERSEDED_CONNECTION_CLOSE_CODE: Short = 4001
 
+// The /chunks socket's first text frame is "<token><sep><playerId>": the token authenticates the
+// account, the playerId names the character session to attach to.
+const val CHUNK_HANDSHAKE_SEPARATOR: Char = '\t'
+
 @Serializable
 sealed class ClientMessage {
     @ProtoId(0)

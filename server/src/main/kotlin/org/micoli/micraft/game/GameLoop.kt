@@ -14,7 +14,6 @@ import io.ktor.websocket.send
 import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
@@ -164,6 +163,7 @@ import org.micoli.micraft.plugin.TickHandler
 import org.micoli.micraft.protocol.BlockChange
 import org.micoli.micraft.protocol.BlockEntityProto
 import org.micoli.micraft.protocol.BlockInfo
+import org.micoli.micraft.protocol.CHUNK_HANDSHAKE_SEPARATOR
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
 import org.micoli.micraft.protocol.CommandInfo
@@ -1506,11 +1506,9 @@ class GameLoop(
                 if (waitMs > 0) delay(waitMs)
                 nextTickAt = nextTickDeadline(System.currentTimeMillis(), nextTickAt, TICK_MS)
                 for (w in gameWorldRegistry.all()) {
-                    runCatching { w.tick() }
-                        .onFailure {
-                            if (it is CancellationException) throw it
-                            log.error("tick error in world {}: {}", w.id, it.message, it)
-                        }
+                    runTickGuarded(w::tick) {
+                        log.error("tick error in world {}: {}", w.id, it.message, it)
+                    }
                 }
                 gameWorldRegistry.reapEmpty(System.currentTimeMillis())
                 saveTickCounter++
@@ -2192,18 +2190,23 @@ class GameLoop(
                     if (frame is Frame.Text) frame.readText().trim() else null
                 }
                 .getOrNull() ?: return
-        val playerId =
-            if (tokenStore != null) {
-                val authResult = tokenStore.validate(firstFrame)
-                if (authResult == null) {
-                    socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "invalid token"))
-                    return
-                }
-                authResult.playerId
-            } else {
-                firstFrame
+        // First frame: "<token>\t<playerId>" with auth, bare "<playerId>" without. The token's own
+        // playerId is the account, not the character the session is keyed by.
+        val (credential, playerId) =
+            if (CHUNK_HANDSHAKE_SEPARATOR in firstFrame)
+                firstFrame.substringBefore(CHUNK_HANDSHAKE_SEPARATOR) to
+                    firstFrame.substringAfter(CHUNK_HANDSHAKE_SEPARATOR)
+            else firstFrame to firstFrame
+        val session = gw.sessions[playerId]
+        if (tokenStore != null) {
+            val authResult = tokenStore.validate(credential)
+            val owner = session?.state?.email
+            if (authResult == null || (owner != null && !owner.equals(authResult.email, true))) {
+                socket.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "invalid token"))
+                return
             }
-        val session = gw.sessions[playerId] ?: return
+        }
+        if (session == null) return
         session.chunkSocket = socket
         log.info("chunk socket attached for {}", playerId.take(8))
         try {
@@ -2211,7 +2214,7 @@ class GameLoop(
                 /* client sends nothing on chunk socket */
             }
         } finally {
-            session.chunkSocket = null
+            if (session.chunkSocket === socket) session.chunkSocket = null
             log.info("chunk socket detached for {}", playerId.take(8))
         }
     }
