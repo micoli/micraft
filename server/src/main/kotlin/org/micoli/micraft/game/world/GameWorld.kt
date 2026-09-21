@@ -331,7 +331,13 @@ class GameWorld(
                         lastZone.first != newZoneX ||
                         lastZone.second != newZoneZ) {
                         session.lastZonePos = Pair(newZoneX, newZoneZ)
-                        npcTickPipeline.onZoneCrossed(world, newZoneX, newZoneZ)
+                        val lastCrossTick = session.lastZoneCrossTick
+                        if (lastCrossTick == null ||
+                            gameTicks - lastCrossTick >=
+                                NpcSubsystemFactory.ZONE_CROSS_COOLDOWN_TICKS) {
+                            session.lastZoneCrossTick = gameTicks
+                            npcTickPipeline.onZoneCrossed(world, newZoneX, newZoneZ)
+                        }
                     }
                     if (session.hasPermission(CorePermissions.ADMIN)) {
                         val pos = session.state.pos

@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.world
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.micoli.micraft.protocol.BlockEntityProto
 
 @Serializable
@@ -11,6 +12,10 @@ data class Chunk(
     val extraStates: ByteArray = ByteArray(0),
     val entityMasters: List<BlockEntity> = emptyList(),
 ) {
+    // Not part of the constructor, so `copy()`/`withBlock()` always hand back a fresh, uncached
+    // instance — cheap correctness by construction instead of manual invalidation.
+    @Transient private var cachedTopY: Int = -1
+
     companion object {
         val SIZE_X = WorldConstants.CHUNK_SIZE
         val SIZE_Z = WorldConstants.CHUNK_SIZE
@@ -111,8 +116,9 @@ data class Chunk(
     fun getExtraState(x: Int, y: Int, z: Int): Byte =
         if (extraStates.isNotEmpty()) extraStates[index(x, y, z)] else 0
 
-    /** Highest Y level containing any non-AIR block. */
+    /** Highest Y level containing any non-AIR block. Memoized — scans the full column otherwise. */
     fun topY(): Int {
+        cachedTopY.let { if (it >= 0) return it }
         var top = 0
         for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) for (y in SIZE_Y - 1 downTo 0) {
             if (getBlock(x, y, z) != BlockType.AIR) {
@@ -120,6 +126,7 @@ data class Chunk(
                 break
             }
         }
+        cachedTopY = top
         return top
     }
 

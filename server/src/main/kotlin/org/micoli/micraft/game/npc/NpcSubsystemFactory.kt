@@ -173,5 +173,12 @@ class NpcSubsystemFactory(
          * spawned at different rates depending on who was driving it.
          */
         const val LIFECYCLE_INTERVAL_TICKS: Int = 100
+
+        /**
+         * Minimum ticks between two `onZoneCrossed` passes for the same session, so a player
+         * oscillating across a zone boundary can't retrigger the (uncached-per-call) spawn scan
+         * every tick — the slow lane picks up anything missed within this window.
+         */
+        const val ZONE_CROSS_COOLDOWN_TICKS: Int = 20
     }
 }
