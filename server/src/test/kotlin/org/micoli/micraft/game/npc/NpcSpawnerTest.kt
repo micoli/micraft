@@ -19,6 +19,7 @@ import org.micoli.micraft.game.world.biome.BiomeDefinition
 import org.micoli.micraft.game.world.biome.BiomeZone
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.protocol.BlockChange
+import org.micoli.micraft.support.MapChunkGenerator
 import org.micoli.micraft.support.testWorld
 
 private fun wanderDef(
@@ -169,6 +170,43 @@ class NpcSpawnerTest {
             m.countInZone(zoneKey) <= 2,
             "Expected ≤2 NPCs in zone, got ${m.countInZone(zoneKey)}",
         )
+    }
+
+    @Test
+    fun trySpawn_topSurfaceIsTreeCanopy_doesNotSpawnOnIt() = runBlocking {
+        val chunkSize = WorldConstants.CHUNK_SIZE
+        val positions = buildList {
+            for (x in 0 until chunkSize * 5) for (z in 0 until chunkSize * 5) add(Triple(x, 3, z))
+        }
+        val testBiome =
+            BiomeDefinition(
+                id = "forest",
+                zones = listOf(BiomeZone(moistureMin = 0.0, moistureMax = 1.0)),
+                surface = BlockType.GRASS,
+                subsurface = BlockType.DIRT,
+            )
+        // Every column's top block is a tree log, not the biome's natural ground.
+        val treeGenerator = MapChunkGenerator(positions.associateWith { BlockType.OAK_LOG })
+        val world =
+            WorldState(
+                object : ChunkGenerator {
+                    override fun generate(pos: ChunkPos): Chunk = treeGenerator.generate(pos)
+
+                    override fun biomeDefinitionAt(wx: Int, wz: Int) = testBiome
+                })
+        positions
+            .map { (x, _, z) ->
+                ChunkPos(
+                    Math.floorDiv(x, WorldConstants.CHUNK_SIZE),
+                    Math.floorDiv(z, WorldConstants.CHUNK_SIZE))
+            }
+            .toSet()
+            .forEach { world.getOrGenerate(it) }
+
+        val m = testManager(mapOf("GOAT" to wanderDef(maxPerChunk = 10)))
+        repeat(20) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
+
+        assertTrue(m.getAll().isEmpty(), "a walker must not spawn on a tree canopy/trunk")
     }
 
     @Test

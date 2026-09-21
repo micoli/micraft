@@ -3,6 +3,7 @@ package org.micoli.micraft.game.npc.behaviors
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.sin
 import kotlin.math.sqrt
 import org.micoli.micraft.combat.StatusEffect
@@ -443,6 +444,13 @@ class RandomMovableNpcBehavior : NpcBehavior {
                 !AabbCollider.isOverlapping(solid, sx, y, sz, def.width, def.height) ||
                     !AabbCollider.isOverlapping(solid, sx, y + 1f, sz, def.width, def.height)
             if (!free) return false
+            // A walker's straight-line path must stay off tree canopy/trunks and player roofs —
+            // both are `isSolid` like real terrain but not a biome's natural ground.
+            if (def.canWalk &&
+                !world.isNaturalGround(
+                    floor(sx).toInt(), floor(y).toInt() - 1, floor(sz).toInt())) {
+                return false
+            }
         }
         return true
     }

@@ -82,6 +82,14 @@ class WorldState(
 
     fun biomeDefinitionAt(wx: Int, wz: Int) = generator.biomeDefinitionAt(wx, wz)
 
+    /**
+     * True if the block at (wx, wy, wz) is the biome's natural terrain — never a tree or a build.
+     */
+    fun isNaturalGround(wx: Int, wy: Int, wz: Int): Boolean {
+        val biomeDef = biomeDefinitionAt(wx, wz) ?: return true
+        return getBlockIfLoaded(wx, wy, wz) in biomeDef.naturalGroundTypes
+    }
+
     fun zoneLevelAt(wx: Int, wz: Int): Int = generator.zoneLevelAt(wx, wz)
 
     fun distinctLowLevelSpawns(count: Int, ringRadius: Double, maxLevel: Int = 5) =

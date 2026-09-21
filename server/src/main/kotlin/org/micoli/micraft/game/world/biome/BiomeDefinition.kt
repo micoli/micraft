@@ -67,6 +67,10 @@ data class BiomeDefinition(
     val isAquatic: Boolean
         get() = liquid && waterLevel > 0
 
+    /** Terrain a walking NPC may stand on — excludes tree trunks/canopy and player builds. */
+    val naturalGroundTypes: Set<BlockType>
+        get() = setOf(surface, subsurface) + fillers.map { it.type }
+
     fun selectFiller(hash: Double): BlockType {
         val total = fillers.sumOf { it.density }
         var cumulative = 0.0

@@ -10,8 +10,17 @@ import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.WanderPhase
 import org.micoli.micraft.game.npc.pack.PackConfig
+import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.Chunk
+import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.WorldConstants
+import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.biome.BiomeDefinition
+import org.micoli.micraft.game.world.biome.BiomeZone
+import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.support.MapChunkGenerator
 import org.micoli.micraft.support.testWorld
 
 class RandomMovableNpcBehaviorTest {
@@ -60,6 +69,46 @@ class RandomMovableNpcBehaviorTest {
             val dist = sqrt((dx * dx + dz * dz).toDouble())
             assertTrue(dist <= 5.5, "npc wandered too far: $dist")
         }
+    }
+
+    @Test
+    fun tick_onTreeCanopyPlatform_refusesToWanderAcrossIt() {
+        val floorY = 4
+        val positions = (4..17).flatMap { x -> (4..17).map { z -> Triple(x, floorY, z) } }
+        val testBiome =
+            BiomeDefinition(
+                id = "forest",
+                zones = listOf(BiomeZone(moistureMin = 0.0, moistureMax = 1.0)),
+                surface = BlockType.GRASS,
+                subsurface = BlockType.DIRT,
+            )
+        // The whole platform is tree logs, not the biome's natural ground.
+        val treeGenerator = MapChunkGenerator(positions.associateWith { BlockType.OAK_LOG })
+        val world =
+            WorldState(
+                object : ChunkGenerator {
+                    override fun generate(pos: ChunkPos): Chunk = treeGenerator.generate(pos)
+
+                    override fun biomeDefinitionAt(wx: Int, wz: Int) = testBiome
+                })
+        positions
+            .map { (x, _, z) ->
+                ChunkPos(
+                    Math.floorDiv(x, WorldConstants.CHUNK_SIZE),
+                    Math.floorDiv(z, WorldConstants.CHUNK_SIZE))
+            }
+            .toSet()
+            .forEach { world.getOrGenerate(it) }
+
+        val spawn = Vec3(10.5f, (floorY + 1).toFloat(), 10.5f)
+        val instance = instanceAt(spawn, wanderRadius = 5f)
+        instance.vy = 0f
+        repeat(200) { RandomMovableNpcBehavior().tick(instance, world) }
+        val dx = instance.state.pos.x - spawn.x
+        val dz = instance.state.pos.z - spawn.z
+        assertTrue(
+            sqrt((dx * dx + dz * dz).toDouble()) < 0.5,
+            "a walker must not cross a tree canopy/trunk platform")
     }
 
     @Test

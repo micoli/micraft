@@ -68,7 +68,10 @@ class NpcSpawner {
                 val maxNpcs = biomeDef?.maxNpcs ?: 0
                 if (maxNpcs > 0 && density.countInZone(zk) >= maxNpcs) continue
 
-                val surfaceY = findSurfaceY(world, wx, wz) ?: continue
+                // A walker must land on the biome's actual terrain — never a tree canopy/trunk
+                // or a player-built roof, both of which are `isSolid` too.
+                val surfaceY =
+                    findSurfaceY(world, wx, wz, requireNaturalGround = !def.isAquatic) ?: continue
 
                 val spawnY =
                     if (def.isAquatic) {
@@ -111,7 +114,12 @@ class NpcSpawner {
         }
     }
 
-    private fun findSurfaceY(world: WorldState, wx: Int, wz: Int): Int? {
+    private fun findSurfaceY(
+        world: WorldState,
+        wx: Int,
+        wz: Int,
+        requireNaturalGround: Boolean,
+    ): Int? {
         val chunkX = Math.floorDiv(wx, WorldConstants.CHUNK_SIZE)
         val chunkZ = Math.floorDiv(wz, WorldConstants.CHUNK_SIZE)
         val localX = Math.floorMod(wx, WorldConstants.CHUNK_SIZE)
@@ -120,7 +128,9 @@ class NpcSpawner {
         val chunk = world.getChunkIfDiscovered(ChunkPos(chunkX, chunkZ)) ?: return null
         val topY = chunk.topY()
         for (y in topY downTo WorldConstants.WORLD_MIN_Y) {
-            if (chunk.getBlock(localX, y, localZ).isSolid) return y + 1
+            if (!chunk.getBlock(localX, y, localZ).isSolid) continue
+            if (requireNaturalGround && !world.isNaturalGround(wx, y, wz)) return null
+            return y + 1
         }
         return null
     }
