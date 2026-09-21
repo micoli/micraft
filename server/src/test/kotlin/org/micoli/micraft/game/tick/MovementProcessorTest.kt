@@ -267,6 +267,20 @@ class MovementProcessorTest {
     }
 
     @Test
+    fun swimming_horizontalSpeed_isScaledByLiquidSlowdown() {
+        val dry = MovementProcessor(testWorld(Triple(8, 3, 8)))
+        val dryDx =
+            dry.process(testSession(pos = Vec3(8.5f, 5f, 8.5f)), noInput(dx = 1f)).pos.x - 8.5f
+
+        val wet = MovementProcessor(submergedWorld())
+        val wetDx =
+            wet.process(testSession(pos = Vec3(8.5f, 5f, 8.5f)), noInput(dx = 1f)).pos.x - 8.5f
+
+        assertTrue(BlockType.WATER.liquidSlowdown < 1f)
+        assertEquals(dryDx * BlockType.WATER.liquidSlowdown, wetDx, 0.001f)
+    }
+
+    @Test
     fun breath_drains_whenHeadSubmerged() {
         val processor = MovementProcessor(submergedWorld())
         val session = testSession(pos = Vec3(8.5f, 5f, 8.5f))

@@ -18,6 +18,10 @@ value class BlockType(val id: String) {
     val viscosity: Int
         get() = BlockRegistry.get(this).viscosity
 
+    /** Horizontal speed factor for a body whose feet are in this block; 1 outside liquids. */
+    val liquidSlowdown: Float
+        get() = if (isLiquid) 1f / (1f + viscosity * 0.15f) else 1f
+
     val isReplaceable: Boolean
         get() = BlockRegistry.get(this).replaceable
 

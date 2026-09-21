@@ -171,11 +171,12 @@ class LocalPlayerController(
     var serverX = 0.0
     var serverY = 0.0
     var serverZ = 0.0
-    // Reconciliation target for the XZ correction in tick() — usually serverX/serverZ
-    // corrected by replaying still-unconfirmed sent intents (see updateFromServer), so it
-    // doesn't lag behind by a full RTT+tick like the raw server snapshot would.
-    private var reconcileTargetX = 0.0
-    private var reconcileTargetZ = 0.0
+    // Remaining XZ prediction error still to be bled off in tick(): server position minus what
+    // the client predicted at the instant the confirmed intent was sent (see updateFromServer).
+    // Kept as a vector rather than an absolute target so local movement between two server
+    // updates doesn't inflate it — an absolute target goes stale as the prediction advances.
+    private var reconcileErrX = 0.0
+    private var reconcileErrZ = 0.0
 
     // (seq, predX, predZ) at the moment each MoveIntent was sent — used to diff the
     // now-confirmed server position against what the client predicted at that same instant,
@@ -511,8 +512,8 @@ class LocalPlayerController(
             prevPredZ = serverZ
             prevEyeOffset = cameraEyeOffset()
             hasPrediction = true
-            reconcileTargetX = serverX
-            reconcileTargetZ = serverZ
+            reconcileErrX = 0.0
+            reconcileErrZ = 0.0
             sentIntentHistory.clear()
             jsSetCameraRotationY(camera, state.orientation.yaw.toDouble())
             jsSetCameraRotationX(camera, state.orientation.pitch.toDouble())
@@ -527,11 +528,11 @@ class LocalPlayerController(
             val snapshot = sentIntentHistory.lastOrNull { it.seq <= lastProcessedSeq }
             sentIntentHistory.removeAll { it.seq <= lastProcessedSeq }
             if (snapshot != null) {
-                reconcileTargetX = predX + (serverX - snapshot.predX)
-                reconcileTargetZ = predZ + (serverZ - snapshot.predZ)
+                reconcileErrX = serverX - snapshot.predX
+                reconcileErrZ = serverZ - snapshot.predZ
             } else {
-                reconcileTargetX = serverX
-                reconcileTargetZ = serverZ
+                reconcileErrX = serverX - predX
+                reconcileErrZ = serverZ - predZ
             }
             val diffY = serverY - predY
             val absY = kotlin.math.abs(diffY)
@@ -854,7 +855,15 @@ class LocalPlayerController(
                     else -> "walking_forward"
                 }
 
-            val speed = stance.speed * localSpeedMult * actualDt.toFloat()
+            // Must mirror MovementProcessor on the server, or a swimmer's prediction outruns the
+            // authoritative position and reads as a permanent reconcile gap.
+            val feetBlock =
+                chunkManager.getBlockAtWorld(
+                    kotlin.math.floor(predX).toInt(),
+                    kotlin.math.floor(predY).toInt(),
+                    kotlin.math.floor(predZ).toInt())
+            val speed =
+                stance.speed * localSpeedMult * actualDt.toFloat() * feetBlock.liquidSlowdown
             val solid = { bx: Int, by: Int, bz: Int ->
                 chunkManager.getBlockAtWorld(bx, by, bz).isSolid
             }
@@ -974,8 +983,8 @@ class LocalPlayerController(
                 }
             }
 
-            val diffX = reconcileTargetX - predX
-            val diffZ = reconcileTargetZ - predZ
+            val diffX = reconcileErrX
+            val diffZ = reconcileErrZ
             val distXZ = kotlin.math.sqrt(diffX * diffX + diffZ * diffZ)
             val speedMultClamped = localSpeedMult.coerceAtLeast(1f).toDouble()
             // Flying has no collision-driven divergence and covers ground fast, so the same
@@ -990,21 +999,29 @@ class LocalPlayerController(
             val hardSnapThresholdXz = HARD_SNAP_DISTANCE_XZ * speedMultClamped
             when {
                 distXZ > SNAP_THRESHOLD && !isMovingXZ -> {
-                    predX = reconcileTargetX
-                    predZ = reconcileTargetZ
+                    predX += diffX
+                    predZ += diffZ
+                    reconcileErrX = 0.0
+                    reconcileErrZ = 0.0
                 }
                 distXZ > hardSnapThresholdXz -> {
-                    predX = reconcileTargetX
-                    predZ = reconcileTargetZ
+                    predX += diffX
+                    predZ += diffZ
+                    reconcileErrX = 0.0
+                    reconcileErrZ = 0.0
                 }
                 !isMovingXZ && distXZ > reconcileToleranceXz -> {
                     predX += diffX * 0.3
                     predZ += diffZ * 0.3
+                    reconcileErrX -= diffX * 0.3
+                    reconcileErrZ -= diffZ * 0.3
                     xzDistances.addCapped(jsNow(), distXZ)
                 }
                 isMovingXZ && distXZ > movingToleranceXz -> {
                     predX += diffX * 0.15
                     predZ += diffZ * 0.15
+                    reconcileErrX -= diffX * 0.15
+                    reconcileErrZ -= diffZ * 0.15
                     xzDistances.addCapped(jsNow(), distXZ)
                 }
             }
@@ -2105,8 +2122,8 @@ class LocalPlayerController(
         serverX = 0.0
         serverY = 0.0
         serverZ = 0.0
-        reconcileTargetX = 0.0
-        reconcileTargetZ = 0.0
+        reconcileErrX = 0.0
+        reconcileErrZ = 0.0
         sentIntentHistory.clear()
         lastPlayerCx = Int.MIN_VALUE
         lastPlayerCz = Int.MIN_VALUE

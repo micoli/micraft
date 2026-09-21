@@ -97,9 +97,8 @@ class MovementProcessor(private val world: WorldState) {
             }
 
         val h = newStance.height
-        val liquidSlowdown = if (feetBlock.isLiquid) 1f / (1f + feetBlock.viscosity * 0.15f) else 1f
         val speedStance = if (submerged) input.stance else newStance
-        val speed = speedStance.speed * newSpeedMult * TICK_SECONDS * liquidSlowdown
+        val speed = speedStance.speed * newSpeedMult * TICK_SECONDS * feetBlock.liquidSlowdown
 
         val len = sqrt((input.dx * input.dx + input.dz * input.dz).toDouble()).toFloat()
         val nx = if (len > 0f) input.dx / len else 0f

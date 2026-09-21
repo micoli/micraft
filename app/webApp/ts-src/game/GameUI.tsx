@@ -969,9 +969,11 @@ export function GameUI() {
         "Jitter max (ms)": h.tickJitterMaxMs.toFixed(2),
         "Chunks DL": h.chunkDownloading,
         "Chunks mesh": h.chunkMeshing,
+        "Rec XZ": h.reconcileXzStats,
+        "Rec Y": h.reconcileYStats,
       });
       dispatch("notification", {
-        msg: `Tick:${h.tickDtMinMs.toFixed(1)}↔${h.tickDtMaxMs.toFixed(1)}ms Jitr:${h.tickJitterMinMs.toFixed(1)}↔${h.tickJitterMaxMs.toFixed(1)}ms DL:${h.chunkDownloading} Mesh:${h.chunkMeshing}`,
+        msg: `Tick:${h.tickDtMinMs.toFixed(1)}↔${h.tickDtMaxMs.toFixed(1)}ms Jitr:${h.tickJitterMinMs.toFixed(1)}↔${h.tickJitterMaxMs.toFixed(1)}ms DL:${h.chunkDownloading} Mesh:${h.chunkMeshing} RecXZ:${h.reconcileXzStats}`,
       });
     };
 
