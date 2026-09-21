@@ -57,6 +57,17 @@ let staircasesFetched = false;
 // whole footprint's border rather than one border per chunk)
 let allZones: Array<{ id: string; chunks: { cx: number; cz: number }[] }> = [];
 
+let minimapCanvas: HTMLCanvasElement | null = null;
+
+// The React host (#mc-minimap-host) can be unmounted and re-created (route change, GameScreen
+// remount) after the canvas was first attached — re-attach whenever the current host lost it.
+function ensureMinimapMounted(): HTMLCanvasElement | null {
+  if (!minimapCanvas) return null;
+  const host = document.getElementById("mc-minimap-host");
+  if (host && minimapCanvas.parentElement !== host) host.appendChild(minimapCanvas);
+  return minimapCanvas.isConnected ? minimapCanvas : null;
+}
+
 function maybeRefetchTerrain(playerX: number, playerZ: number): void {
   if (terrainFetching) return;
   if (!isNaN(terrainFetchCenter.x) && Math.hypot(playerX - terrainFetchCenter.x, playerZ - terrainFetchCenter.z) < 200)
@@ -265,18 +276,11 @@ export function registerMinimap(): Pick<
       document.getElementById("mc-minimap")?.remove();
       const c = document.createElement("canvas");
       c.id = "mc-minimap";
-      (c as HTMLCanvasElement).width = MINIMAP_SIZE;
-      (c as HTMLCanvasElement).height = MINIMAP_SIZE;
+      c.width = MINIMAP_SIZE;
+      c.height = MINIMAP_SIZE;
       c.style.cssText = "width:100%;height:100%;display:block;border-radius:6px;pointer-events:none";
-      const tryMount = (): void => {
-        const host = document.getElementById("mc-minimap-host");
-        if (host) {
-          host.appendChild(c);
-        } else {
-          requestAnimationFrame(tryMount);
-        }
-      };
-      tryMount();
+      minimapCanvas = c;
+      ensureMinimapMounted();
     },
 
     setMinimapChunk: (cx: number, cz: number, topYJson: string, topBlockJson: string): void => {
@@ -352,7 +356,7 @@ export function registerMinimap(): Pick<
       maybeRefetchBiomeBorders(playerX, playerZ);
       maybeRefetchStaircases();
 
-      const canvas = document.getElementById("mc-minimap") as HTMLCanvasElement | null;
+      const canvas = ensureMinimapMounted();
       if (!canvas) return;
       const ctx = canvas.getContext("2d")!;
 
