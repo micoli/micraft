@@ -59,6 +59,9 @@ private const val FLY_VERTICAL_SPEED = 8f
 private const val DEFAULT_RECONCILE_TOLERANCE_XZ = 0.5
 private const val DEFAULT_RECONCILE_TOLERANCE_Y = 0.99
 private const val STATS_WINDOW_MS = 20_000.0
+// Flip to true (and `make build-wasm`) to log every out-of-tolerance XZ reconcile sample to the
+// browser console as `[recXZ] ...` — see "Debugging: Rec XZ" in CLAUDE.md.
+private const val DEBUG_RECONCILE_LOG = false
 // Ring buffer of recent per-HUD-tick-block subsystem-timing snapshots, flushed to the browser
 // console when a block's frame time exceeds SPIKE_THRESHOLD_MS — lets the user grab a timeline
 // of what was happening (mesh/GPU/network ms, faces, bytes) right when FPS dropped, without
@@ -997,6 +1000,17 @@ class LocalPlayerController(
             // prediction jitter would repeatedly cross it and teleport the player, reading as
             // speed pulsing.
             val hardSnapThresholdXz = HARD_SNAP_DISTANCE_XZ * speedMultClamped
+            if (DEBUG_RECONCILE_LOG &&
+                distXZ > (if (isMovingXZ) movingToleranceXz else reconcileToleranceXz)) {
+                logReconcileSample(
+                    distXZ,
+                    isMovingXZ,
+                    swimming,
+                    feetBlock.toString(),
+                    actualDt,
+                    movingToleranceXz,
+                    hardSnapThresholdXz)
+            }
             when {
                 distXZ > SNAP_THRESHOLD && !isMovingXZ -> {
                     predX += diffX
@@ -1029,6 +1043,32 @@ class LocalPlayerController(
 
         blockPhysicsMsSum += jsNow() - physicsT0
         return animClip
+    }
+
+    private var lastReconcileLogMs = 0.0
+
+    private fun logReconcileSample(
+        distXZ: Double,
+        moving: Boolean,
+        swimming: Boolean,
+        feetBlock: String,
+        actualDt: Double,
+        movingTolerance: Double,
+        hardSnap: Double,
+    ) {
+        val now = jsNow()
+        if (now - lastReconcileLogMs < 250.0) return
+        lastReconcileLogMs = now
+        val sinceUpdateMs = serverUpdateTimestamps.lastOrNull()?.let { now - it } ?: -1.0
+        jsConsoleLog(
+            "[recXZ] dist=${distXZ.r3()} err=(${reconcileErrX.r3()},${reconcileErrZ.r3()}) " +
+                "moving=$moving fly=$localFlying swim=$swimming feet=$feetBlock " +
+                "srvStance=$localStance mult=$localSpeedMult mounted=$isMounted " +
+                "dt=${actualDt.r3()} " +
+                "sinceUpdate=${sinceUpdateMs.r3()}ms tol=${movingTolerance.r3()} " +
+                "hardSnap=${hardSnap.r3()} " +
+                "pred=(${predX.r3()},${predY.r3()},${predZ.r3()}) " +
+                "server=(${serverX.r3()},${serverY.r3()},${serverZ.r3()})")
     }
 
     // Per-concern handlers for payload-carrying ClientInputEvents — see ClientEventHandlers.kt.

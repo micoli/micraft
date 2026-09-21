@@ -109,6 +109,33 @@ change its level live, no restart needed. Useful to raise a noisy subsystem (e.g
 `org.micoli.micraft.game.quest.QuestManager`) to `DEBUG` while reproducing a bug, then reset it.
 Level changes are in-memory only — gone on `make dev-restart-server`.
 
+## Debugging: Rec XZ (client/server prediction gap)
+
+HUD `Rec XZ  n/total (pct%) avg=… ±…` (`Statistics.tsx`, computed by `reconcileStats()` in
+`LocalPlayerController.kt`) = share of **render frames** in the last 20 s where the predicted XZ
+position was further than the tolerance from the server's. Healthy is a few % at most; tens of %
+means the client predicts a different speed than `MovementProcessor` applies. Key `dump_stats`
+(default F9, `V` on some setups) prints Rec XZ / Rec Y to the console and a toast.
+
+- **`avg` is the tell**: a near-constant value with tiny `±` (e.g. `4.0 ±0.2`) is a *systematic
+  speed mismatch* (correction fights a steady drift). Large `±` points at jitter / late updates.
+- **Server tick health first**: `curl localhost:8080/status` (or `/metrics`,
+  `micraft_tick_phase_avg_ms`) — total tick ≪ 50 ms rules out server tick spikes.
+- **Per-sample log**: set `DEBUG_RECONCILE_LOG = true` in `LocalPlayerController.kt`, `make
+  build-wasm`, filter the browser console on `recXZ`. Each line (≤ 1 per 250 ms) carries `dist`,
+  `err`, `moving/fly/swim/feet`, `srvStance`, `mult`, `sinceUpdate`, tolerances, `pred` vs
+  `server`. Set it back to `false` when done.
+- **Reconcile model**: `reconcileErrX/Z` is the *remaining error vector* (server pos minus the
+  client's prediction at the instant the confirmed intent was sent), consumed by soft corrections.
+  Never turn it back into an absolute target — it goes stale as the prediction advances.
+
+**Invariant**: client prediction (`LocalPlayerController.updateMovementAndPhysics`) must mirror
+`server/.../tick/MovementProcessor.kt` term for term — speed = `stance.speed × speedMult × dt ×
+liquidSlowdown`, hitbox stance, submerged rule. Any new movement modifier goes in `core` (see
+`BlockType.liquidSlowdown`) and is applied on both sides, or Rec XZ climbs. Past causes, all
+"server applies X, client doesn't": swimming slowdown, and a stale CRAWLING stance kept while
+flying (server now forces STANDING when flying, as the client predicts).
+
 ## Slash command
 - Every in-game action (except movement) can have slash command; each bindable to key via keybinding
 - Commands with arguments get autocompletion method attached
