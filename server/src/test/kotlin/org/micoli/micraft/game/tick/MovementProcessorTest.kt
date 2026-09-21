@@ -267,6 +267,22 @@ class MovementProcessorTest {
     }
 
     @Test
+    fun flying_afterCrawling_movesAtStandingSpeed() {
+        val world = testWorld(Triple(8, 0, 8))
+        val standing = testSession(pos = Vec3(8.5f, 20f, 8.5f))
+        standing.state = standing.state.copy(flying = true)
+        val crawling = testSession(pos = Vec3(8.5f, 20f, 8.5f))
+        crawling.state = crawling.state.copy(flying = true, stance = PlayerStance.CRAWLING)
+
+        val processor = MovementProcessor(world)
+        val standingDx = processor.process(standing, noInput(dx = 1f)).pos.x - 8.5f
+        val result = processor.process(crawling, noInput(dx = 1f))
+
+        assertEquals(PlayerStance.STANDING, result.stance)
+        assertEquals(standingDx, result.pos.x - 8.5f, 0.001f)
+    }
+
+    @Test
     fun swimming_horizontalSpeed_isScaledByLiquidSlowdown() {
         val dry = MovementProcessor(testWorld(Triple(8, 3, 8)))
         val dryDx =

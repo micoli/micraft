@@ -93,6 +93,17 @@ class MovementProcessor(private val world: WorldState) {
                     AabbCollider.canAdoptStance(
                         solid, pos.x, pos.y, pos.z, w, input.stance.height, old.stance.height) ->
                     input.stance
+                // The client predicts flight as STANDING; keeping a stale CRAWLING/SNEAKING stance
+                // here slows the server to that stance's speed and desyncs the prediction.
+                newFlying &&
+                    AabbCollider.canAdoptStance(
+                        solid,
+                        pos.x,
+                        pos.y,
+                        pos.z,
+                        w,
+                        PlayerStance.STANDING.height,
+                        old.stance.height) -> PlayerStance.STANDING
                 else -> old.stance
             }
 
