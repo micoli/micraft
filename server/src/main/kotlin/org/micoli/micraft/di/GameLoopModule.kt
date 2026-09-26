@@ -49,6 +49,7 @@ import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSpawner
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.npc.NpcSubsystemHooks
+import org.micoli.micraft.game.npc.NpcTickContext
 import org.micoli.micraft.game.npc.OllamaClient
 import org.micoli.micraft.game.pet.PetCoordinator
 import org.micoli.micraft.game.pet.PetManager
@@ -90,6 +91,9 @@ import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.npc.NpcDeathCause
 import org.micoli.micraft.player.hasChannel
 import org.micoli.micraft.protocol.ServerMessage
+
+/** Seed for NPC spawning (`MICRAFT_NPC_SEED`); unset in normal play, fixed by the perf server. */
+fun npcSeed(): Long? = System.getenv("MICRAFT_NPC_SEED")?.toLongOrNull()
 
 @Module
 class GameLoopModule {
@@ -255,6 +259,7 @@ class GameLoopModule {
             broadcast = sessionRegistry::broadcast,
             broadcastWorldUpdate = sessionRegistry::broadcast,
             getSessions = sessionRegistry::all,
+            ctxOf = NpcTickContext.liveOf(npcSeed()),
             // A generated NPC name must never collide with a player's — connected or not.
             isPlayerName = { name ->
                 sessionRegistry.all().any { it.state.name.equals(name, ignoreCase = true) } ||

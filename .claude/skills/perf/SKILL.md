@@ -15,11 +15,16 @@ Plan, decisions and budgets: `.scratch/perf-baseline/spec.md`. Results land in `
 3. **Idle machine**: the run opens a headed Chrome on the real GPU; tell the user to leave the machine alone.
 4. `make perf` (~4 min): starts a fresh perf server once (seed 42, port 8092), runs scenario A (idle at spawn,
    5 s warm-up + 3×15 s) then B (traverse: 8 s walk jumping, 1.5 s climb, 20 s flight per window, a new heading
-   each window, detours when stuck). Run it detached and wait for it rather than blocking a foreground call:
+   each window, detours when stuck, teleports 24 blocks ahead when every detour fails). NPC spawning is
+   seeded (`MICRAFT_NPC_SEED=42`); spawns still depend on the path, so NPC counts vary slightly.
+   Run it detached and wait for it rather than blocking a foreground call:
    `nohup bash -c 'make perf 2>&1 | grep -E "\[perf\]| passed| failed|Error:"; echo done' > perf/.run.log 2>&1 &`
    then wait on `perf/.run.log` containing `done`.
 5. **Stability check** (before trusting a first baseline or a small delta): run `make perf` twice on the same commit.
-6. **Before/after an optimisation**: run on the base commit, then on the change; compare with `--base <sha>`.
+6. **Before/after an optimisation**: run on the base commit, then on the change, back to back in the same session;
+   compare with `--base <sha>`. Server tick times are only comparable within a session: on Apple silicon the
+   scheduler may move the perf server between performance and efficiency cores, which alone moved tick p50
+   ×2.5 between two sessions on identical server code.
 
 Longer windows only when asked: `PERF_WINDOW_MS`, `PERF_WARMUP_MS`, `PERF_WALK_MS`, `PERF_FLY_MS` (and
 `PERF_START_X/Z`) are read by the scenarios; `make perf-idle` / `make perf-traverse` run one scenario.
@@ -40,7 +45,8 @@ Interpret **every section, per scenario**, and write the conclusions under each 
   is not a baseline: rerun it.
 - **Frame time**: always state each figure in **ms and FPS** (FPS = 1000 / ms), e.g. "p95 18.3 ms (55 FPS)".
   - The render loop is capped at ~14 ms and paced by the display: p50 ≈ 16.7 ms (60 FPS) is the ceiling, not a problem.
-  - p95/p99/max are the stutter: compare with the budget (p95 ≤ 16.7 ms / 60 FPS, p99 < 33.3 ms / 30 FPS).
+  - p95/p99/max and the **long-frame share** (frames > 1.5 × p50: a missed refresh) are the stutter. Budgets:
+    long frames ≤ 1 %, p95 ≤ 20 ms (50 FPS), p99 < 33.3 ms (30 FPS).
   - CPU vs GPU bound: frame time − GPU time ≈ CPU time (tick, meshing, GC). GPU p95 near frame p95 → GPU-bound.
 - **Render load**: draw calls, meshes, triangles, textures — relate to frame/GPU time and to traverse vs idle.
 - **Memory**: client JS heap trend across windows (growth ⇒ possible leak; WasmGC objects live in the JS heap),

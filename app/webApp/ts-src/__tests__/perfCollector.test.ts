@@ -45,6 +45,16 @@ describe("perfCollector", () => {
     expect(snap.durationMs).toBe(5050);
   });
 
+  it("counts frames longer than 1.5 times the median as long frames", () => {
+    const source = new FakeSource();
+    const collector = createPerfCollector(source);
+    collector.reset();
+
+    for (const ms of [16, 16, 17, 16, 24, 25, 33, 16]) source.frameAfter(ms);
+
+    expect(collector.snapshot().longFrames).toBe(2);
+  });
+
   it("discards frames recorded before reset", () => {
     const source = new FakeSource();
     const collector = createPerfCollector(source);

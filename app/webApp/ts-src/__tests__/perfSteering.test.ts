@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { initialSteering, steer } from "../perf/helpers/steering";
+import { initialSteering, steer, TELEPORT_AFTER } from "../perf/helpers/steering";
 
 describe("perf steering", () => {
   it("keeps going while the character makes progress", () => {
@@ -37,6 +37,18 @@ describe("perf steering", () => {
     }
     expect(actions).toEqual(["ascend", "ascend", "ascend", "turn"]);
     expect(state.offsetDeg).toBe(45);
+  });
+
+  it("teleports ahead on the target heading when detours keep failing", () => {
+    let state = initialSteering(0);
+    const actions = [];
+    for (let i = 0; i < TELEPORT_AFTER; i++) {
+      const r = steer(state, { nowMs: 1_000 * (i + 1), progressBlocks: 0, mode: "fly" });
+      state = r.state;
+      actions.push(r.action);
+    }
+    expect(actions.at(-1)).toBe("teleport");
+    expect(state).toMatchObject({ offsetDeg: 0, attempts: 0, teleports: 1 });
   });
 
   it("drifts back toward the target heading after moving freely for a while", () => {

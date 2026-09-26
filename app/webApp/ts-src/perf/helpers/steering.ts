@@ -4,8 +4,10 @@ const TURN_DEG = 45;
 const BACKOFF_EVERY = 4;
 const TURN_WHILE_FLYING_EVERY = 4;
 const RETURN_AFTER_MS = 1_500;
+/** Consecutive stuck readings after which detouring is given up and the Character jumps ahead. */
+export const TELEPORT_AFTER = 6;
 
-export type SteerAction = "none" | "turn" | "backoff" | "ascend" | "return";
+export type SteerAction = "none" | "turn" | "backoff" | "ascend" | "return" | "teleport";
 
 export interface SteeringState {
   /** The heading this window is meant to follow, in radians. */
@@ -19,6 +21,7 @@ export interface SteeringState {
   /** When movement last resumed after a detour; null while stuck. */
   freeSinceMs: number | null;
   stuckEvents: number;
+  teleports: number;
 }
 
 export interface SteerInput {
@@ -33,17 +36,21 @@ const withOffset = (state: SteeringState, offsetDeg: number): SteeringState => {
 };
 
 export function initialSteering(targetYaw: number): SteeringState {
-  return { targetYaw, offsetDeg: 0, yaw: targetYaw, attempts: 0, freeSinceMs: null, stuckEvents: 0 };
+  return { targetYaw, offsetDeg: 0, yaw: targetYaw, attempts: 0, freeSinceMs: null, stuckEvents: 0, teleports: 0 };
 }
 
 /**
  * Obstacle avoidance for the perf traversal: when progress stalls, detour (turn like a wall
  * follower, back off now and then, or climb while flying); once moving freely again, drift back
- * toward the target heading one step at a time.
+ * toward the target heading one step at a time. A dead end the detours cannot escape ends in a
+ * teleport ahead along the target heading, so the window still streams new terrain.
  */
 export function steer(state: SteeringState, input: SteerInput): { state: SteeringState; action: SteerAction } {
   if (input.progressBlocks < STUCK_BLOCKS) {
     const stuck = { ...state, attempts: state.attempts + 1, freeSinceMs: null, stuckEvents: state.stuckEvents + 1 };
+    if (stuck.attempts >= TELEPORT_AFTER) {
+      return { state: withOffset({ ...stuck, attempts: 0, teleports: stuck.teleports + 1 }, 0), action: "teleport" };
+    }
     if (input.mode === "fly") {
       if (stuck.attempts % TURN_WHILE_FLYING_EVERY !== 0) return { state: stuck, action: "ascend" };
       return { state: withOffset(stuck, stuck.offsetDeg + TURN_DEG), action: "turn" };

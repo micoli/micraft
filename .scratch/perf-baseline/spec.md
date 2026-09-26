@@ -17,11 +17,15 @@ Decided 2026-09-26. Goal: reproducible measurements before any optimisation, rep
   script. No Prometheus/Grafana for now.
 - **Tooling lives in the repo**: `perf/` plus `make perf-<scenario>`.
 
-## Initial budgets (adjust after the first baseline)
+## Budgets (recalibrated after the first baseline, `app/webApp/ts-src/perf/budgets.json`)
+
+The display paces the render loop, so a frame time p95 ≤ 16.7 ms cannot pass: any frame that slips past
+one refresh lands at 18–25 ms. The primary frame budget is therefore the share of *long frames*
+(> 1.5 × the median frame, i.e. a missed refresh).
 
 | Area | Budget |
 |------|--------|
-| Client frame rate | ≥ 60 FPS p95; frame time p99 < 33 ms during traversal |
+| Client frames | long frames ≤ 1 %; p95 ≤ 20 ms (50 FPS); p99 < 33.3 ms (30 FPS) during traversal |
 | Server tick | avg < 25 ms and p99 < 50 ms with 25 Characters |
 | Server memory | heap stable over 10 min (no growth trend) |
 | Client GPU memory | bounded by the view radius (no growth while moving) |

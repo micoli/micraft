@@ -36,6 +36,8 @@ export interface ClientPerfSnapshot {
   durationMs: number;
   frames: number;
   frameMs: Percentiles;
+  /** Frames longer than 1.5 × the median frame: each one missed at least one display refresh. */
+  longFrames: number;
   gpuFrameMs: Percentiles | null;
   drawCalls: AvgMax;
   activeMeshes: AvgMax;
@@ -55,6 +57,12 @@ function percentiles(values: number[]): Percentiles {
   const sorted = [...values].sort((a, b) => a - b);
   const rank = (p: number) => sorted[Math.min(sorted.length - 1, Math.max(0, Math.ceil(p * sorted.length) - 1))];
   return { p50: rank(0.5), p95: rank(0.95), p99: rank(0.99), max: sorted[sorted.length - 1] };
+}
+
+const LONG_FRAME_FACTOR = 1.5;
+
+function countLongFrames(intervals: number[], medianMs: number): number {
+  return intervals.filter((ms) => ms > medianMs * LONG_FRAME_FACTOR).length;
 }
 
 class AvgMaxAccumulator {
@@ -106,10 +114,12 @@ export function createPerfCollector(source: PerfSource): PerfCollector {
       activeIndices = new AvgMaxAccumulator();
     },
     snapshot() {
+      const frameMs = percentiles(frameIntervals);
       return {
         durationMs: source.now() - startMs,
         frames: frameIntervals.length,
-        frameMs: percentiles(frameIntervals),
+        frameMs,
+        longFrames: countLongFrames(frameIntervals, frameMs.p50),
         gpuFrameMs: gpuFrameTimes.length === 0 ? null : percentiles(gpuFrameTimes),
         drawCalls: drawCalls.result(),
         activeMeshes: activeMeshes.result(),

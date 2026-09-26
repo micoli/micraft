@@ -94,7 +94,8 @@ tasks.register<JavaExec>("runE2eServer") {
 }
 
 // Perf server: a real procedural world (fixed `worldSeed` from the bundled defaults) in a
-// throwaway data root, so every run generates the same terrain. `-PperfKeepWorld` reuses the
+// throwaway data root, so every run generates the same terrain; NPC spawning is seeded too.
+// `-PperfKeepWorld` reuses the
 // previous run's world to measure loading instead of generation.
 val perfDataDir = rootDir.resolve("perf/.data")
 
@@ -129,6 +130,8 @@ tasks.register<JavaExec>("runPerfServer") {
     environment("MICRAFT_PORT", providers.gradleProperty("perfPort").getOrElse("8092"))
     environment("MICRAFT_DATA_DIR", perfDataDir.path)
     environment("MICRAFT_WORLD_NAME", "perf_world")
+    // `-PperfNpcSeed=` (empty) turns seeding off
+    environment("MICRAFT_NPC_SEED", providers.gradleProperty("perfNpcSeed").getOrElse("42"))
     environment("MICRAFT_WEB_DIST", rootDir.resolve("app/webApp/build/web").path)
 }
 

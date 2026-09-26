@@ -101,6 +101,9 @@ const seconds = (w) => w.client.durationMs / 1000;
 const avgFps = (w) => (w.client.frames * 1000) / w.client.durationMs;
 
 /** Median across windows, with the min–max range, of `f(window)`. */
+/** Share of frames that missed a display refresh; NaN for results recorded before the collector counted them. */
+const longFramePct = (w) => (w.client.longFrames === undefined ? NaN : (w.client.longFrames / w.client.frames) * 100);
+
 function across(windows, f) {
   const v = windows.map(f).filter((x) => Number.isFinite(x));
   return { median: median(v), min: min(v), max: max(v) };
@@ -168,6 +171,14 @@ function frameSection(windows) {
     `${avg.median.toFixed(1)} FPS`,
     "",
     `${avg.min.toFixed(1)} – ${avg.max.toFixed(1)} FPS`,
+  ]);
+  const long = across(windows, longFramePct);
+  rows.push([
+    "long frames (> 1.5 × p50)",
+    Number.isNaN(long.median) ? "—" : `${long.median.toFixed(2)} %`,
+    "",
+    "",
+    Number.isNaN(long.median) ? "not recorded" : `${long.min.toFixed(2)} – ${long.max.toFixed(2)} %`,
   ]);
   const gpuWindows = windows.filter((w) => w.client.gpuFrameMs);
   const gpu = gpuWindows.length
@@ -296,6 +307,7 @@ function headline(windows) {
     "Frame p50 (ms)": across(windows, (w) => w.client.frameMs.p50).median,
     "Frame p95 (ms)": across(windows, (w) => w.client.frameMs.p95).median,
     "Frame p99 (ms)": across(windows, (w) => w.client.frameMs.p99).median,
+    "Long frames (%)": across(windows, longFramePct).median,
     "Average FPS": across(windows, avgFps).median,
     "GPU p95 (ms)": across(windows, (w) => w.client.gpuFrameMs?.p95 ?? NaN).median,
     "Draw calls (avg)": across(windows, (w) => w.client.drawCalls.avg).median,
@@ -311,6 +323,12 @@ function budgetSection(windows) {
   const h = headline(windows);
   const growth = heapGrowthPct(windows);
   const rows = [
+    [
+      "Long frames (missed refresh)",
+      Number.isNaN(h["Long frames (%)"]) ? "not recorded" : `${h["Long frames (%)"].toFixed(2)} %`,
+      `≤ ${BUDGETS.clientLongFramePct} %`,
+      Number.isNaN(h["Long frames (%)"]) ? "—" : ok(h["Long frames (%)"] <= BUDGETS.clientLongFramePct),
+    ],
     [
       "Frame p95",
       `${ms(h["Frame p95 (ms)"])} (${fps(h["Frame p95 (ms)"])})`,
@@ -349,11 +367,14 @@ function stabilitySection(windows) {
   const invocations = [...new Set(windows.map((w) => w.invocation))];
   if (invocations.length < 2) return "Single invocation — run `make perf` twice on the same commit to check stability.";
   const perInvocation = invocations.map((inv) => headline(windows.filter((w) => w.invocation === inv)));
-  const rows = Object.keys(perInvocation[0]).map((k) => {
-    const v = perInvocation.map((h) => h[k]);
-    const s = spreadPct(v);
-    return [k, v.map((x) => x.toFixed(2)).join(" / "), `${s.toFixed(1)} %`, ok(s < BUDGETS.stabilitySpreadPct)];
-  });
+  const recorded = (k) => perInvocation.every((h) => !Number.isNaN(h[k]));
+  const rows = Object.keys(perInvocation[0])
+    .filter(recorded)
+    .map((k) => {
+      const v = perInvocation.map((h) => h[k]);
+      const s = spreadPct(v);
+      return [k, v.map((x) => x.toFixed(2)).join(" / "), `${s.toFixed(1)} %`, ok(s < BUDGETS.stabilitySpreadPct)];
+    });
   return table(["Metric", "Per invocation", "Spread", `< ${BUDGETS.stabilitySpreadPct} %`], rows);
 }
 
@@ -362,12 +383,15 @@ function comparisonSection(headWindows, baseWindows, baseSha) {
   const head = headline(headWindows);
   const base = headline(baseWindows);
   const lowerIsBetter = (k) => k !== "Average FPS";
-  const rows = Object.keys(head).map((k) => {
-    const d = deltaPct(head[k], base[k]);
-    const better = lowerIsBetter(k) ? d < 0 : d > 0;
-    const verdict = Math.abs(d) < BUDGETS.stabilitySpreadPct ? "≈ noise" : better ? "better" : "worse";
-    return [k, base[k].toFixed(2), head[k].toFixed(2), pct(d), verdict];
-  });
+  const recorded = (k) => !Number.isNaN(head[k]) && !Number.isNaN(base[k]);
+  const rows = Object.keys(head)
+    .filter(recorded)
+    .map((k) => {
+      const d = deltaPct(head[k], base[k]);
+      const better = lowerIsBetter(k) ? d < 0 : d > 0;
+      const verdict = Math.abs(d) < BUDGETS.stabilitySpreadPct ? "≈ noise" : better ? "better" : "worse";
+      return [k, base[k].toFixed(2), head[k].toFixed(2), pct(d), verdict];
+    });
   return [
     `Against \`${baseSha}\` (differences under ${BUDGETS.stabilitySpreadPct} % are within run-to-run noise):`,
     table(["Metric", "Base", "Head", "Δ", "Verdict"], rows),

@@ -38,6 +38,7 @@ function summarize(runs: WindowResult[]) {
     clientFrameP50Ms: pick((r) => r.client.frameMs.p50),
     clientFrameP95Ms: pick((r) => r.client.frameMs.p95),
     clientFrameP99Ms: pick((r) => r.client.frameMs.p99),
+    clientLongFramePct: pick((r) => (r.client.longFrames / r.client.frames) * 100),
     clientGpuP95Ms: pick((r) => r.client.gpuFrameMs?.p95 ?? 0),
     clientDrawCallsAvg: pick((r) => r.client.drawCalls.avg),
     clientJsHeapBytes: pick((r) => r.client.memory.jsHeapUsedBytes ?? 0),

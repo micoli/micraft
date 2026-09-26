@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.npc
 
 import kotlin.random.Random
+import kotlin.random.asKotlinRandom
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.game.quest.QuestManager
 
@@ -29,5 +30,16 @@ data class NpcTickContext(
         /** Context backed by the live server tunables. */
         val live: NpcTickContext
             get() = NpcTickContext(NpcConstants.live, Random)
+
+        /**
+         * Live contexts drawing from one random source seeded with [seed], so spawns replay across
+         * runs (the perf server sets it); unseeded when null. Tunables are still re-read on each
+         * call. `java.util.Random` because HTTP handlers draw from it too, off the tick thread.
+         */
+        fun liveOf(seed: Long?): () -> NpcTickContext {
+            if (seed == null) return { live }
+            val random = java.util.Random(seed).asKotlinRandom()
+            return { NpcTickContext(NpcConstants.live, random) }
+        }
     }
 }

@@ -1,5 +1,6 @@
 {
-  "clientFrameP95Ms": 16.7,
+  "clientLongFramePct": 1,
+  "clientFrameP95Ms": 20,
   "clientFrameP99Ms": 33.3,
   "serverTickP50Ms": 25,
   "serverTickP99Ms": 50,

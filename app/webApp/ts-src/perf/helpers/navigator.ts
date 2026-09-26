@@ -1,11 +1,14 @@
 /// <reference path="../../global.d.ts" />
 import type { Page } from "@playwright/test";
+import { runCommand } from "./perfSession";
 import { initialSteering, steer, type SteeringState } from "./steering";
 
 const SAMPLE_EVERY_MS = 500;
 const PROGRESS_WINDOW_MS = 1_500;
 const BACKOFF_MS = 800;
 const ASCEND_MS = 1_000;
+const TELEPORT_AHEAD_BLOCKS = 24;
+const TELEPORT_RISE_BLOCKS = 12;
 
 interface Sample {
   t: number;
@@ -16,11 +19,24 @@ interface Sample {
 const TURN_TOLERANCE_RAD = 0.05;
 const TURN_TIMEOUT_MS = 4_000;
 
-export const cameraXz = (page: Page) =>
+const cameraPosition = (page: Page) =>
   page.evaluate(() => {
     const p = (window.mcState.engine as import("@babylonjs/core").Engine).scenes[0].activeCamera!.position;
-    return { x: p.x, z: p.z };
+    return { x: p.x, y: p.y, z: p.z };
   });
+
+export const cameraXz = async (page: Page) => {
+  const { x, z } = await cameraPosition(page);
+  return { x, z };
+};
+
+/** Jump ahead along `yaw` (Babylon: forward = (sin yaw, cos yaw)), high enough to clear the obstacle. */
+async function teleportAhead(page: Page, yaw: number): Promise<void> {
+  const p = await cameraPosition(page);
+  const x = Math.round(p.x + Math.sin(yaw) * TELEPORT_AHEAD_BLOCKS);
+  const z = Math.round(p.z + Math.cos(yaw) * TELEPORT_AHEAD_BLOCKS);
+  await runCommand(page, `/teleport ${x} ${Math.round(p.y + TELEPORT_RISE_BLOCKS)} ${z}`);
+}
 
 const cameraYaw = (page: Page) =>
   page.evaluate(
@@ -57,7 +73,7 @@ export async function look(page: Page, yaw: number): Promise<void> {
 /**
  * Hold W toward `targetYaw` for `durationMs`, detouring around whatever stops the Character (a
  * trunk, a canopy over its head, a cliff) — see `steer`. The movement keys must already be down.
- * Returns how many times it got stuck.
+ * Returns how many times it got stuck (teleports included).
  */
 export async function drive(page: Page, targetYaw: number, mode: "walk" | "fly", durationMs: number): Promise<number> {
   let state: SteeringState = initialSteering(targetYaw);
@@ -84,6 +100,10 @@ export async function drive(page: Page, targetYaw: number, mode: "walk" | "fly",
       await page.waitForTimeout(BACKOFF_MS);
       await page.keyboard.up("KeyS");
       await page.keyboard.down("KeyW");
+    }
+    if (r.action === "teleport") {
+      console.log(`[perf] stuck after every detour — teleporting ${TELEPORT_AHEAD_BLOCKS} blocks ahead`);
+      await teleportAhead(page, state.targetYaw);
     }
     if (r.action === "ascend") {
       await page.keyboard.down("Space");
