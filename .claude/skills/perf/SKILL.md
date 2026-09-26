@@ -49,7 +49,8 @@ Interpret **every section, per scenario**, and write the conclusions under each 
     long frames ≤ 1 %, p95 ≤ 20 ms (50 FPS), p99 < 33.3 ms (30 FPS).
   - CPU vs GPU bound: frame time − GPU time ≈ CPU time (tick, meshing, GC). GPU p95 near frame p95 → GPU-bound.
 - **Render load**: draw calls, meshes, triangles, textures — relate to frame/GPU time and to traverse vs idle.
-- **Memory**: client JS heap trend across windows (growth ⇒ possible leak; WasmGC objects live in the JS heap),
+- **Memory**: client JS heap trend across windows on the *live* heap (read after a forced GC at the end of each
+  window; the in-use heap swings with GC timing), growth ⇒ possible leak; WasmGC objects live in the JS heap;
   GPU buffers vs view radius, server heap min/avg/max.
 - **Server tick**: total p50/p95/p99/max in ms and as % of the 50 ms budget, TPS vs 20; name the costliest
   phases (p95/p99) and the sparse ones (fewer samples = runs every N ticks).
@@ -71,9 +72,10 @@ figures appear in both ms and FPS, and the report file is saved.
 forced GC at each step (the gap is garbage; what survives is live) and a sampling heap profile of what was
 allocated during the run and is still alive, bottom-up by allocating function and by origin (Kotlin/Wasm,
 BabylonJS, JS app, native). Report: `.scratch/perf-baseline/heap/<stamp>-<sha>.md`; the raw `.heapprofile` in
-`perf/heap/` opens in Chrome DevTools → Memory. `PERF_HEAP_SNAPSHOT=1` also writes a full heap snapshot (large;
-DevTools only). WasmGC objects allocated inside Wasm are attributed to the nearest JS frame of the Kotlin glue
-(no URL, a line number): break those down with a full snapshot.
+`perf/heap/` opens in Chrome DevTools → Memory. `PERF_HEAP_SNAPSHOT=1` also writes a full heap snapshot;
+`make perf-heap-snapshot FILE=perf/heap/<file>.heapsnapshot` summarises it by node type and constructor (WasmGC
+structs/arrays included). WasmGC objects allocated inside Wasm are attributed to the nearest JS frame of the Kotlin glue
+(no URL, a line number): break those down with the full snapshot.
 
 ## Moving parts
 

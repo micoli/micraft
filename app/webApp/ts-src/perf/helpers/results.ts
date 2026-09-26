@@ -42,6 +42,7 @@ function summarize(runs: WindowResult[]) {
     clientGpuP95Ms: pick((r) => r.client.gpuFrameMs?.p95 ?? 0),
     clientDrawCallsAvg: pick((r) => r.client.drawCalls.avg),
     clientJsHeapBytes: pick((r) => r.client.memory.jsHeapUsedBytes ?? 0),
+    clientLiveHeapBytes: pick((r) => r.clientLiveHeapBytes),
     clientGpuBufferBytes: pick((r) => r.client.memory.gpuBufferBytes ?? 0),
     serverTickP50Ms: pick((r) => total(r)?.p50Ms ?? 0),
     serverTickP95Ms: pick((r) => total(r)?.p95Ms ?? 0),

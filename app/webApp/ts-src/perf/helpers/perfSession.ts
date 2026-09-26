@@ -1,5 +1,5 @@
 /// <reference path="../../global.d.ts" />
-import type { Page } from "@playwright/test";
+import type { CDPSession, Page } from "@playwright/test";
 import type { ClientPerfSnapshot } from "../../game/lib/perf/perfCollector";
 import { PERF_PORT } from "../playwright.config";
 import { cameraXz } from "./navigator";
@@ -114,6 +114,18 @@ export interface WindowResult {
   travelledBlocks: number;
   /** Times the traversal got stuck and had to detour (0 for scenarios that stand still). */
   stuckEvents: number;
+  /** JS heap still in use after a forced full GC at the end of the window: live data, not garbage. */
+  clientLiveHeapBytes: number;
+}
+
+const cdpSessions = new WeakMap<Page, Promise<CDPSession>>();
+
+/** Forced after the window's snapshot, so the collection never lands in the measured frames. */
+async function liveHeapBytes(page: Page): Promise<number> {
+  if (!cdpSessions.has(page)) cdpSessions.set(page, page.context().newCDPSession(page));
+  const cdp = await cdpSessions.get(page)!;
+  await cdp.send("HeapProfiler.collectGarbage");
+  return (await cdp.send("Runtime.getHeapUsage")).usedSize;
 }
 
 /** Measure one window: reset server + client, let `during` run, snapshot both. */
@@ -126,5 +138,11 @@ export async function measure(page: Page, during: () => Promise<number | void>):
   const to = await cameraXz(page);
   const client = await page.evaluate(() => window.mcPerf!.snapshot());
   const server = await (await adminFetch("/api/admin/perf/snapshot")).json();
-  return { client, server, travelledBlocks: Math.hypot(to.x - from.x, to.z - from.z), stuckEvents };
+  return {
+    client,
+    server,
+    travelledBlocks: Math.hypot(to.x - from.x, to.z - from.z),
+    stuckEvents,
+    clientLiveHeapBytes: await liveHeapBytes(page),
+  };
 }
