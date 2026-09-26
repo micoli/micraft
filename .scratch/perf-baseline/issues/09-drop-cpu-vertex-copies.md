@@ -1,6 +1,6 @@
 # Drop CPU copies of terrain vertex data
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: —
 
@@ -32,3 +32,11 @@ After `applyToMesh` in `chunkEndFromWorker` / `chunkEnd` / impostors, release th
 
 - Live client heap after `make perf-heap` drops by ≥ 100 MB; creative mode block targeting still works (E2E);
   a forced context loss (`WEBGL_lose_context`) restores the terrain.
+
+## Answer
+
+Done in `df032ffa`. Terrain and impostor meshes call `geometry.clearCachedData()` in game (admin editors keep the
+default); creative mode targets with `VoxelRaycast` (`core`) exported as `mcRaycastVoxel`, covered by
+`e2e/creative-targeting.spec.ts`; `ChunkManager.remeshAll()` runs after a context restore (checked by hand with
+`WEBGL_lose_context`: identical frame before/after). Full heap snapshot: 533 → 348 MB self size, `JSArrayBufferData`
+155 MB → gone from the top; live ArrayBuffers 35 MB (`heap/2026-09-26T171833-df032ffa.md`).
