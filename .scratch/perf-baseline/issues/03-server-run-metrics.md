@@ -1,6 +1,6 @@
 # Server run metrics: percentiles, GC, snapshot
 
-Status: needs-triage
+Status: resolved
 Type: task
 
 ## Goal
@@ -24,3 +24,15 @@ The server can report what happened during one run, not just a moving average.
 ## Acceptance
 
 - A snapshot after a 60 s run returns the percentiles and the GC totals for that window only.
+
+## Answer
+
+Implemented 2026-09-26:
+
+- `TickProfiler.resetRun()` / `runSnapshot()`: exact nearest-rank p50/p95/p99/max per phase over a bounded window
+  (72 000 samples, 1 h at 20 tps). The EMA is unchanged.
+- `game/perf/RunMetrics` behind a `RunProbe` seam (`JvmRunProbe` in production): heap min/max/avg, CPU load average,
+  and GC/network deltas since the reset, sampled every second.
+- `game/perf/PerfRun` + `POST /api/admin/perf/reset` and `GET /api/admin/perf/snapshot`: admin-only and world-scoped
+  (`X-Micraft-Game-Session`).
+- Smoke test on the dev server: 100 ticks in 5 s, total tick p50 0.16 ms, p95 0.46 ms, p99 1.36 ms.

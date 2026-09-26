@@ -1533,6 +1533,42 @@ paths:
           description: Missing admin permission
           headers: {}
       deprecated: false
+  /api/admin/perf/reset:
+    post:
+      tags: []
+      description: "Start a perf measurement window: clears the world's tick samples\
+        \ and the process-level run metrics"
+      parameters: []
+      responses:
+        "204":
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
+  /api/admin/perf/snapshot:
+    get:
+      tags: []
+      description: "Tick percentiles per phase, heap/GC/CPU/network since the last\
+        \ perf reset"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.game.perf.PerfSnapshot"
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/admin/restart:
     post:
       tags: []
@@ -5939,6 +5975,124 @@ components:
       - vegetationEstBytes
       - worldItems
       title: StatusSnapshot
+    org.micoli.micraft.game.perf.RunMetricsSnapshot:
+      type: object
+      properties:
+        cpuLoadAvg:
+          type: number
+          format: double
+          title: Double
+        durationMs:
+          type: integer
+          format: int64
+          title: Long
+        gcCollections:
+          type: integer
+          format: int64
+          title: Long
+        gcTimeMs:
+          type: integer
+          format: int64
+          title: Long
+        heapAvgBytes:
+          type: integer
+          format: int64
+          title: Long
+        heapMaxBytes:
+          type: integer
+          format: int64
+          title: Long
+        heapMinBytes:
+          type: integer
+          format: int64
+          title: Long
+        networkBytesIn:
+          type: integer
+          format: int64
+          title: Long
+        networkBytesOut:
+          type: integer
+          format: int64
+          title: Long
+        samples:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - cpuLoadAvg
+      - durationMs
+      - gcCollections
+      - gcTimeMs
+      - heapAvgBytes
+      - heapMaxBytes
+      - heapMinBytes
+      - networkBytesIn
+      - networkBytesOut
+      - samples
+      title: RunMetricsSnapshot
+    org.micoli.micraft.game.tick.TickPhaseRunStat:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int32
+          title: Int
+        maxMs:
+          type: number
+          format: double
+          title: Double
+        name:
+          type: string
+          title: String
+        p50Ms:
+          type: number
+          format: double
+          title: Double
+        p95Ms:
+          type: number
+          format: double
+          title: Double
+        p99Ms:
+          type: number
+          format: double
+          title: Double
+      required:
+      - count
+      - maxMs
+      - name
+      - p50Ms
+      - p95Ms
+      - p99Ms
+      title: TickPhaseRunStat
+    org.micoli.micraft.game.perf.PerfSnapshot:
+      type: object
+      properties:
+        characters:
+          type: integer
+          format: int32
+          title: Int
+        loadedChunks:
+          type: integer
+          format: int32
+          title: Int
+        npcs:
+          type: integer
+          format: int32
+          title: Int
+        process:
+          $ref: "#/components/schemas/org.micoli.micraft.game.perf.RunMetricsSnapshot"
+        tick:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.game.tick.TickPhaseRunStat"
+          title: List<TickPhaseRunStat>
+      required:
+      - characters
+      - loadedChunks
+      - npcs
+      - process
+      - tick
+      title: PerfSnapshot
     org.micoli.micraft.http.ReloadResultDto:
       type: object
       properties:

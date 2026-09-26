@@ -73,6 +73,9 @@ import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.npc.NpcSubsystemFactory
+import org.micoli.micraft.game.perf.JvmRunProbe
+import org.micoli.micraft.game.perf.PerfRun
+import org.micoli.micraft.game.perf.RunMetrics
 import org.micoli.micraft.game.pet.PetCoordinator
 import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.placeable.PlaceableManager
@@ -407,7 +410,11 @@ fun Application.module() {
                 tokenStore,
                 authProvider = authProvider,
                 groupsFilePath = groupsFilePath,
-                reloadRbac = reloadRbacLambda)
+                reloadRbac = reloadRbacLambda,
+                perfRun =
+                    PerfRun(RunMetrics(JvmRunProbe(gameLoop.networkStats))).apply {
+                        startSampling()
+                    })
         adminController.register(this)
         adminController.registerAdminWs(this)
         adminController.registerEditWs(this)

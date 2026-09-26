@@ -71,6 +71,10 @@ import org.micoli.micraft.game.equipment.ToolRegistryLoader
 import org.micoli.micraft.game.equipment.WeaponRegistryLoader
 import org.micoli.micraft.game.npc.ChatTurn
 import org.micoli.micraft.game.npc.NpcConstants
+import org.micoli.micraft.game.perf.JvmRunProbe
+import org.micoli.micraft.game.perf.PerfRun
+import org.micoli.micraft.game.perf.PerfSnapshot
+import org.micoli.micraft.game.perf.RunMetrics
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.character.RpgCharacterBuilder
 import org.micoli.micraft.game.rpg.character.RpgCharacterResult
@@ -467,6 +471,7 @@ class AdminController(
     private val authProvider: AuthProvider? = localAuth,
     private val groupsFilePath: java.nio.file.Path? = null,
     private val reloadRbac: (() -> Unit)? = null,
+    private val perfRun: PerfRun = PerfRun(RunMetrics(JvmRunProbe(gameLoop.networkStats))),
 ) {
     private fun currentGroupsConfig(): GroupsConfig? =
         when (val p = authProvider) {
@@ -983,6 +988,36 @@ class AdminController(
                     val snapshot = buildStatusSnapshot(gameLoop, adminWorld())
                     call.respondText(
                         adminJson.encodeToString(StatusSnapshot.serializer(), snapshot),
+                        ContentType.Application.Json)
+                }
+
+            // ── Perf runs ────────────────────────────────────────────────────
+            post(
+                "/api/admin/perf/reset",
+                {
+                    description =
+                        "Start a perf measurement window: clears the world's tick samples and " +
+                            "the process-level run metrics"
+                    response { code(HttpStatusCode.NoContent) {} }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@post
+                    perfRun.reset(adminWorld())
+                    call.respond(HttpStatusCode.NoContent)
+                }
+
+            get(
+                "/api/admin/perf/snapshot",
+                {
+                    description =
+                        "Tick percentiles per phase, heap/GC/CPU/network since the last perf reset"
+                    response { code(HttpStatusCode.OK) { body<PerfSnapshot>() } }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    call.respondText(
+                        adminJson.encodeToString(
+                            PerfSnapshot.serializer(), perfRun.snapshot(adminWorld())),
                         ContentType.Application.Json)
                 }
 

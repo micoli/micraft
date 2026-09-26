@@ -1478,6 +1478,105 @@ export type OrgMicoliMicraftHttpStatusSnapshot = {
 };
 
 /**
+ * RunMetricsSnapshot
+ */
+export type OrgMicoliMicraftGamePerfRunMetricsSnapshot = {
+    /**
+     * Double
+     */
+    cpuLoadAvg: number;
+    /**
+     * Long
+     */
+    durationMs: number;
+    /**
+     * Long
+     */
+    gcCollections: number;
+    /**
+     * Long
+     */
+    gcTimeMs: number;
+    /**
+     * Long
+     */
+    heapAvgBytes: number;
+    /**
+     * Long
+     */
+    heapMaxBytes: number;
+    /**
+     * Long
+     */
+    heapMinBytes: number;
+    /**
+     * Long
+     */
+    networkBytesIn: number;
+    /**
+     * Long
+     */
+    networkBytesOut: number;
+    /**
+     * Int
+     */
+    samples: number;
+};
+
+/**
+ * TickPhaseRunStat
+ */
+export type OrgMicoliMicraftGameTickTickPhaseRunStat = {
+    /**
+     * Int
+     */
+    count: number;
+    /**
+     * Double
+     */
+    maxMs: number;
+    /**
+     * String
+     */
+    name: string;
+    /**
+     * Double
+     */
+    p50Ms: number;
+    /**
+     * Double
+     */
+    p95Ms: number;
+    /**
+     * Double
+     */
+    p99Ms: number;
+};
+
+/**
+ * PerfSnapshot
+ */
+export type OrgMicoliMicraftGamePerfPerfSnapshot = {
+    /**
+     * Int
+     */
+    characters: number;
+    /**
+     * Int
+     */
+    loadedChunks: number;
+    /**
+     * Int
+     */
+    npcs: number;
+    process: OrgMicoliMicraftGamePerfRunMetricsSnapshot;
+    /**
+     * List<TickPhaseRunStat>
+     */
+    tick: Array<OrgMicoliMicraftGameTickTickPhaseRunStat>;
+};
+
+/**
  * ReloadResultDto
  */
 export type OrgMicoliMicraftHttpReloadResultDto = {
@@ -5274,6 +5373,54 @@ export type GetApiAdminStatusResponses = {
 };
 
 export type GetApiAdminStatusResponse = GetApiAdminStatusResponses[keyof GetApiAdminStatusResponses];
+
+export type PostApiAdminPerfResetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/perf/reset';
+};
+
+export type PostApiAdminPerfResetErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type PostApiAdminPerfResetResponses = {
+    204: void;
+};
+
+export type PostApiAdminPerfResetResponse = PostApiAdminPerfResetResponses[keyof PostApiAdminPerfResetResponses];
+
+export type GetApiAdminPerfSnapshotData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/perf/snapshot';
+};
+
+export type GetApiAdminPerfSnapshotErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminPerfSnapshotResponses = {
+    200: OrgMicoliMicraftGamePerfPerfSnapshot;
+};
+
+export type GetApiAdminPerfSnapshotResponse = GetApiAdminPerfSnapshotResponses[keyof GetApiAdminPerfSnapshotResponses];
 
 export type PostApiAdminRestartData = {
     body?: never;

@@ -2258,6 +2258,158 @@ export const org_micoli_micraft_http_StatusSnapshotSchema = {
     title: 'StatusSnapshot'
 } as const;
 
+export const org_micoli_micraft_game_perf_RunMetricsSnapshotSchema = {
+    type: 'object',
+    properties: {
+        cpuLoadAvg: {
+            type: 'number',
+            format: 'double',
+            title: 'Double'
+        },
+        durationMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        gcCollections: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        gcTimeMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        heapAvgBytes: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        heapMaxBytes: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        heapMinBytes: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        networkBytesIn: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        networkBytesOut: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        samples: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        }
+    },
+    required: [
+        'cpuLoadAvg',
+        'durationMs',
+        'gcCollections',
+        'gcTimeMs',
+        'heapAvgBytes',
+        'heapMaxBytes',
+        'heapMinBytes',
+        'networkBytesIn',
+        'networkBytesOut',
+        'samples'
+    ],
+    title: 'RunMetricsSnapshot'
+} as const;
+
+export const org_micoli_micraft_game_tick_TickPhaseRunStatSchema = {
+    type: 'object',
+    properties: {
+        count: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        maxMs: {
+            type: 'number',
+            format: 'double',
+            title: 'Double'
+        },
+        name: {
+            type: 'string',
+            title: 'String'
+        },
+        p50Ms: {
+            type: 'number',
+            format: 'double',
+            title: 'Double'
+        },
+        p95Ms: {
+            type: 'number',
+            format: 'double',
+            title: 'Double'
+        },
+        p99Ms: {
+            type: 'number',
+            format: 'double',
+            title: 'Double'
+        }
+    },
+    required: [
+        'count',
+        'maxMs',
+        'name',
+        'p50Ms',
+        'p95Ms',
+        'p99Ms'
+    ],
+    title: 'TickPhaseRunStat'
+} as const;
+
+export const org_micoli_micraft_game_perf_PerfSnapshotSchema = {
+    type: 'object',
+    properties: {
+        characters: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        loadedChunks: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        npcs: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        process: {
+            $ref: '#/components/schemas/org.micoli.micraft.game.perf.RunMetricsSnapshot'
+        },
+        tick: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.game.tick.TickPhaseRunStat'
+            },
+            title: 'List<TickPhaseRunStat>'
+        }
+    },
+    required: [
+        'characters',
+        'loadedChunks',
+        'npcs',
+        'process',
+        'tick'
+    ],
+    title: 'PerfSnapshot'
+} as const;
+
 export const org_micoli_micraft_http_ReloadResultDtoSchema = {
     type: 'object',
     properties: {
