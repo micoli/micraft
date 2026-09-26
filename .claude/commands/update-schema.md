@@ -1,11 +1,10 @@
 # update-schema
 
-Keep JSON Schemas in `data/config/schemas/` in sync when Kotlin data classes change.
+JSON Schemas in `server/src/main/resources/schemas/*.schema.json` are generated from the annotated Kotlin data
+classes (`org.micoli.micraft.tools.GenerateJsonSchemasKt`).
 
-## Modified file → schema to update
+After changing a config/data class:
 
-| Modified file                                                                              | Schema                    |
-|--------------------------------------------------------------------------------------------|---------------------------|
-| `core/.../world/xxxx.kt`, `xxx.kt`                                                         | `xxx.schema.json`         |
-
-Update schema in same commit as the data class change.
+1. `make gen-schemas`
+2. Review the schema diff.
+3. Commit it in the same commit as the data class change. `make check-schemas` (part of `code-standard` / CI) fails on drift.

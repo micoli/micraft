@@ -1,312 +1,91 @@
 # MiCraft
 
-— **Kotlin Multiplatform**, multiplayer voxel, procedural gen, persistent server world.
+Multiplayer RPG voxel game — Kotlin Multiplatform, procedural generation, persistent server World.
+
+## Read first
+
+- **`CONTEXT.md`** — domain glossary. Name things with its terms (Character not "player id", Danger tier not "zone
+  tier", Rank not "skill level") in code, docs, commits and replies.
+- **`docs/adr/`** — accepted decisions. Read the ADRs touching an area before changing it; a change that contradicts
+  one needs a new ADR, not a workaround.
+- **`.scratch/<effort>/`** — backlog and specs (`docs/agents/issue-tracker.md`, statuses in `docs/agents/triage-labels.md`).
 
 ## Modules
 
 | Module | Path | Role |
 |--------|------|------|
-| `core` | `core/src/commonMain` | Domain model, protocol, physics, chunk gen — shared all targets |
+| `core` | `core/src/commonMain` | Domain model, protocol, physics, chunk gen — shared by server and client (ADR-0002) |
 | `server` | `server/src/main/kotlin` | Ktor WebSocket, game loop, persistence |
-| `app/webApp` | `app/webApp/src/wasmJsMain` | Web client (Kotlin/Wasm + BabylonJS) |
-| `app/desktopApp` | `app/desktopApp/src/main` | Desktop client (JVM) |
-| `app/shared` | `app/shared/src/commonMain` | Shared Compose code desktop/web |
+| `app/webApp` | `app/webApp/src/wasmJsMain` + `app/webApp/ts-src` | Web client: Kotlin/Wasm + BabylonJS, React UI (ADR-0008) |
+| `app/minigames/<name>` | own npm projects | Mini-game bundles (ADR-0005, `app/minigames/README.md`) |
+| `codec-processor` | KSP | Generates the protocol codec registries (ADR-0003) |
 
-## Recherche de code
+Kotlin navigation: the `LSP` tool (`kotlin-lsp`) for go-to-def, find-refs and cross-module rename; Grep/Read for raw text.
 
-Plugin `kotlin-lsp` dispo — utilise l'outil `LSP` (go-to-def, find-refs, rename cross-module) pour la recherche/nav Kotlin précise, en complément de Grep/Read pour le texte brut.
+## Running commands
 
-## Domain types
+Every build, test, lint and codegen goes through `make`. `RUN_MODE` in `.env` (`HOST` | `DOCKER`) decides where it
+runs; `make dc CMD="..."` runs an ad-hoc command in that mode (prefer `./gradlew`, never bare `gradle`). `make help`
+lists every target — check it before assuming a command doesn't exist.
 
-**Block types**: `AIR BEDROCK STONE DIRT GRASS SAND SANDSTONE GRAVEL SNOW OAK_LOG OAK_LEAVES PINE_LOG PINE_LEAVES PINE_LEAVES_SNOW FLOWER WEED`
-Properties (hardness, solid, minimapColor, modelElement) in `resources/blocks/<name>/<name>.yaml`, overridable per-block in `data/resources/blocks/<name>/<name>.yaml`. `hardness: -1` = unbreakable. Optional `drops:` list (`item`, `dropRate`, `minCount`, `maxCount`) — omitted if the block drops nothing.
-
-**Biome types**: `snow_peaks desert dry_plains plains forest pine_forest`
-Defined in `data/config/biomes.yaml` (optional — falls back to `BiomeRegistry.default()` if missing). Properties (surface/subsurface/filler blocks, elevationMin/Max, grassColor, vegetation entries) in `core/.../world/BiomeDefinition.kt`. Distributed via Voronoi zones by moisture value (0→1).
-
-**Item types**: `COBBLESTONE DIRT SAND GRAVEL SANDSTONE SNOWBALL FLINT`
-Properties (buildable, placesBlock) in `data/config/items.yaml`.
-
-**WorldConstants**: `CHUNK_SIZE=16`, `VIEW_RADIUS=2` (5×5 chunks), `Y ∈ [0, 1024]`
-
-**PlayerConstants**: standing h=1.8/eye=1.62/speed=4.5 · sneaking h=1.5/eye=1.27/speed=1.3 · crawling h=0.6/eye=0.4/speed=1.0 · width=0.6
-
-## Architecture
-
-- **Server authoritative**: client sends `MoveIntent`, server validates, replies `PlayerUpdate`.
-- **Client-side prediction**: `GameClient` predicts XZ locally ~60 fps, soft-corrects toward server. Y (gravity) always server-authoritative.
-- All simulation logic (AABB physics, chunk gen) in `core` — keeps client prediction and server consistent.
-- **Chunk rendering**: `VertexData` buffers per chunk (~200 draw calls). `WorldUpdate` triggers re-mesh of affected chunk.
-
-## Key source files
-
-`/key-source-files`
-
-
-## Protocol messages
-
-`/protocol-messages`
-
-Wire id = the `@ProtoId(n)` on each `ServerMessage` / `ClientMessage` subclass. The
-`ServerMessageCodec` / `ClientMessageCodec` registries are **generated** by `:codec-processor`
-(KSP, runs on `kspCommonMainKotlinMetadata`) — never hand-edit them. New message = add the
-subclass with the next free `@ProtoId`; the build fails on a missing / duplicate / non-contiguous id.
-
-## Data directory
-
-`/data-directory`
-
-## UI (TypeScript / React)
-
-`/ui-react`
-
-## Auth system
-
-Provider selected via `data/config/server.yaml` → `auth.provider` (`local` | `oauth`). Default `local` with `auth.local.requirePassword: false` — accounts still live in `users.yaml` with real RBAC groups, just without a password check; an unknown email is auto-provisioned into `defaultGroups` on first login. Set `requirePassword: true` to require a real bcrypt-checked password instead.
-
-**Flow**: client fetches `GET /api/auth/config` → login overlay shows matching UI → `POST /auth/login` or OAuth redirect → `TokenStore` issues UUID token (10-min TTL) → token sent in `ClientMessage.Connect` → `GameLoop.onConnect()` validates before creating session.
-
-**HTTP routes** (all proxied through webpack dev server via `/auth` context):
-| Route | Purpose |
-|-------|---------|
-| `GET /api/auth/config` | Returns `{"provider":"local\|oauth","requirePassword":bool}` |
-| `POST /auth/login` | `{email, password}` → `{token, displayName, playerId}` |
-| `GET /auth/oauth/start?returnUrl=` | Redirect to Google |
-| `GET /auth/callback?code=&state=` | Exchange code → redirect to `returnUrl#auth_token=&auth_name=` |
-| `GET /auth/me` | `Authorization: Bearer <token>` → `{playerId, displayName}` |
-
-**Adding local user**:
-```bash
-./gradlew :server:addUser -Pargs="email@example.com password [DisplayName]"
-# or in-game: /adduser email@example.com password [DisplayName]
-```
-
-**Extending auth**: implement `AuthProvider` interface (`login`, `oauthStartUrl`, `oauthCallback`, `oauthReturnUrl`), add branch in `Application.module()`. Commands needing auth access `context.authProvider`.
-
-**Login overlay** (`LoginOverlay.tsx`): fetches `/api/auth/config` on mount. Token stored in `sessionStorage`. OAuth token arrives in URL fragment `#auth_token=`. Result written to `loginResultRef.current` as `user\tplayerName\tlang\ttoken\trefreshToken` — tab-separated, parsed in `main.kt`.
-
-**Refresh token**: `POST /auth/login`, `GET /auth/callback` and `POST /auth/refresh` all issue a refresh token alongside the access token (`TokenStore.issueRefreshToken` / `TokenStore.refresh`). Rotated on every use (old one is invalidated) and long-lived (30 days) versus the 10-min access token, stored client-side in `localStorage` (`authStorage.ts`) so it survives a tab close, unlike the access token in `sessionStorage`. `GameClient.kt` refreshes proactively every 5 min and reactively on a `1008 VIOLATED_POLICY` close before falling back to a full re-login.
-
-**Admin API + E2E worlds**: world-scoped admin routes (`status`, `players/*`, `gametime`, `instances/*`, `claims/*`, `scenes/*`, `social/*`, `npcs`) honor an `X-Micraft-Game-Session` header (WS edit/npcs sockets: `?gameSession=`). Absent / `default` / outside `MICRAFT_E2E` => the default world; under `MICRAFT_E2E` a fresh id spawns a dedicated `GameWorld` (like the `/game` WS). Process-level routes (`restart`, `reload`, `users`, `configs`, `schemas`, `loggers`) ignore it. `AdminController.adminWorld()` resolves it via `GameWorldRegistry`.
-
-`POST /api/admin/players` `{name, email?, characterClass?, str?…cha?}` reserves the player id (and, with `characterClass`, a fresh RPG character built by `RpgCharacterBuilder`) that `onConnect` consumes — `GameWorld.reservedPlayers`. So an E2E test's RPG player is ready before the browser connects and the client gets `CharacterSync`, never `CharacterCreationRequired` (no `/char-rpg-create`). Not persisted. E2E specs: `app/webApp/ts-src/e2e/helpers/admin.ts` (`admin()`, `createUser()`, `createPlayer()`); `connectClient()` calls `createPlayer` (default WARRIOR). RPG character construction (point-buy + class bonus + derived HP/mana) lives once in `RpgCharacterBuilder` — used by `/api/character/rpgcreate`, `/createcharacter`, `POST /api/admin/players`.
-
-## Debugging: runtime log levels
-
-Logging is SLF4J + Logback (`server/build.gradle.kts`, no `logback.xml` — zero-config default,
-console + INFO). Every logger any singleton creates (`LoggerFactory.getLogger(...)`) registers
-itself in Logback's own `LoggerContext` — there is no separate app-level registry to maintain, and
-none is needed for this to stay exhaustive.
-
-**HTTP routes** (process-level, admin-only — see `AdminController.kt` "Loggers" group):
-| Route | Purpose |
-|-------|---------|
-| `GET /api/admin/loggers` | All known loggers: `{name, level, effectiveLevel}` — `level` is `null` when inherited from a parent logger |
-| `PUT /api/admin/loggers/{name}` | `{level: "TRACE"\|"DEBUG"\|"INFO"\|"WARN"\|"ERROR"\|"OFF"\|null}` — `null` resets to inherited. Also works for a logger name that hasn't logged anything yet (creates it in Logback's registry). |
-
-**Admin UI**: `/admin/loggers` (`LoggersPage.tsx`) — filterable list, one dropdown per logger to
-change its level live, no restart needed. Useful to raise a noisy subsystem (e.g.
-`org.micoli.micraft.game.quest.QuestManager`) to `DEBUG` while reproducing a bug, then reset it.
-Level changes are in-memory only — gone on `make dev-restart-server`.
-
-## Debugging: Rec XZ (client/server prediction gap)
-
-HUD `Rec XZ  n/total (pct%) avg=… ±…` (`Statistics.tsx`, computed by `reconcileStats()` in
-`LocalPlayerController.kt`) = share of **render frames** in the last 20 s where the predicted XZ
-position was further than the tolerance from the server's. Healthy is a few % at most; tens of %
-means the client predicts a different speed than `MovementProcessor` applies. Key `dump_stats`
-(default F9, `V` on some setups) prints Rec XZ / Rec Y to the console and a toast.
-
-- **`avg` is the tell**: a near-constant value with tiny `±` (e.g. `4.0 ±0.2`) is a *systematic
-  speed mismatch* (correction fights a steady drift). Large `±` points at jitter / late updates.
-- **Server tick health first**: `curl localhost:8080/status` (or `/metrics`,
-  `micraft_tick_phase_avg_ms`) — total tick ≪ 50 ms rules out server tick spikes.
-- **Per-sample log**: set `DEBUG_RECONCILE_LOG = true` in `LocalPlayerController.kt`, `make
-  build-wasm`, filter the browser console on `recXZ`. Each line (≤ 1 per 250 ms) carries `dist`,
-  `err`, `moving/fly/swim/feet`, `srvStance`, `mult`, `sinceUpdate`, tolerances, `pred` vs
-  `server`. Set it back to `false` when done.
-- **Reconcile model**: `reconcileErrX/Z` is the *remaining error vector* (server pos minus the
-  client's prediction at the instant the confirmed intent was sent), consumed by soft corrections.
-  Never turn it back into an absolute target — it goes stale as the prediction advances.
-
-**Invariant**: client prediction (`LocalPlayerController.updateMovementAndPhysics`) must mirror
-`server/.../tick/MovementProcessor.kt` term for term — speed = `stance.speed × speedMult × dt ×
-liquidSlowdown`, hitbox stance, submerged rule. Any new movement modifier goes in `core` (see
-`BlockType.liquidSlowdown`) and is applied on both sides, or Rec XZ climbs. Past causes, all
-"server applies X, client doesn't": swimming slowdown, and a stale CRAWLING stance kept while
-flying (server now forces STANDING when flying, as the client predicts).
-
-## Slash command
-- Every in-game action (except movement) can have slash command; each bindable to key via keybinding
-- Commands with arguments get autocompletion method attached
-
-
-## Entities / animations
-Models use **bbmodel** (Blockbench) format. Example: `resources/models/articulated/articulated.bbmodel`
-
-```
-node scripts/export_skin_presets.mjs ./resources/blockbench-export/.
-```
-
-**Skin config**: optional `resources/models/<name>/<name>.yaml` (overridable in `data/resources/models/<name>/<name>.yaml`), served by `GET /api/skins/{name}/config`.
-`eyes: {x,y,z}` = first-person camera anchor in bbmodel pixels (16 px = 1 block, feet at y=0);
-`firstPersonHiddenBones` = bones hidden (subtree included) while in first person.
-First person shows the real player model minus those bones — there is no separate FP arm rig.
-Skins without a yaml fall back to `PlayerConstants` stance eye offsets.
-
-
-## Code conventions
-
-- Prefer immutable types (`data class`, `value class`) for positions, orientations, network messages.
-- Centralise constants in `core` (`WorldConstants`, `PlayerConstants`). Never duplicate between client and server.
-- All packages under `org.micoli.micraft.*`
-
-## Makefile
-
-`make help` lists every target, grouped, self-documented (each rule has an inline `## description`) — check it before assuming a command doesn't exist. Key targets by task:
-
-- **After any server-side code change**: `make dev-restart-server` (never ask the user to restart manually)
-- **After any WASM/Kotlin client change**: `make build` (detect changes, rebuild JS→WASM→server, restart, browser auto-reloads); `make build-all` forces a full rebuild; `make build-wasm` is WASM-only
-- **Lint before commit**: `make quick-code-standard` (modified files only) or `make code-standard` (full) — never call `make dc CMD="./gradlew :spotlessApply"` / `npm run format` standalone
-- **Stale cache / proto errors**: `make dev-reset-wasm` → `make dev-reset` (~2 min) → `make dev-nuke` (nuclear), in escalating order
-- **Anything else in-container**: `make dc CMD="..."`, or `make shell` for a bash shell
-
-Rebuild outputs write directly into `app/webApp/build/web/` (the only dir Ktor serves) — a browser hard-refresh is always enough, no manual copy step.
-
-## Docker execution
-
-**All build/test/lint/run commands execute inside the dev container — never directly on host.** Dev container must be running (`make dev-up`). `rtk` runs on host as a hook proxy wrapping `docker compose exec` automatically — never add `rtk` inside a `make dc CMD="..."` string.
+- **After a server-side change**: `make dev-restart-server` (you run it; never ask the user to restart).
+- **After a Wasm/Kotlin client change**: `make build` (detects changes, rebuilds JS→Wasm→server, restarts, the
+  browser auto-reloads); `make build-all` forces everything; `make build-wasm` is Wasm-only. A compile-only Gradle
+  task leaves the served bundle stale — always go through these targets.
+- **Lint**: `make quick-code-standard` (modified files) or `make code-standard` (full).
+- **Stale cache / proto errors**, escalating: `make dev-reset-wasm` → `make dev-reset` (~2 min) → `make dev-nuke`.
+- Outputs land in `app/webApp/build/web/` (the only directory Ktor serves); a hard refresh is enough.
+- The user starts the server and web client; you only restart/rebuild through the targets above.
+- `rtk` wraps host commands through a hook; keep it out of `make dc CMD="..."` strings.
 
 ## Rules
 
-- **Never run `./gradlew`, `npm`, `node`, or `gradle` directly on host.** Use `make dc CMD="..."` (prefer `./gradlew`, never bare `gradle`).
-- Always view files in docker instance, not on host filesystem
-- Use `rtk` before verbose host-level commands (git diff, git status, find). For in-container commands via `make dc`, rtk applied automatically by hook.
-- Never run unfiltered `find`, `grep`, `ls -R`, `git diff`, or `gradlew test` without `rtk`.
-- Read only necessary files.
-- Never start server or web client — user runs these.
-- Never read `data/world/default_world/chunks/` — binary compressed, useless.
-- Commits must respect Conventional Commits + Semantic Commit Messages standard; body ≤10 lines.
-- Every server-side change (`server/src/main/`) needs new or updated test in `server/src/test/`. Run `make dc CMD="./gradlew :server:test"` before committing.
-- **E2E tests (`app/webApp/ts-src/e2e/`) must drive the game the way a player does**: slash commands (`actions(page).runCommand("/…")`), real key presses (`page.keyboard.press`), clicks on in-game UI. Do not push raw `window.mcState.events` / WebSocket messages or mutate game state in memory. Assertions may *read* `window.mcE2E` (the observation bridge); to expose new state for an assertion, add a field to `E2eSnapshot` fed from the same server message the UI consumes. New per-test account/world via `accountFor(testInfo)`.
-- Before any commit use `make dc CMD="./gradlew :spotlessApply"` and `make dc CMD="npm run format"` (ts-src working dir handled by Makefile target).
-- never update mc_bindings.js, it's a generated JS-side BabylonJS binding glue, you should rather update source files.
-- never edit `app/webApp/ts-src/generated/api/**` by hand — TanStack Query hooks/types generated from `server/openapi/openapi.yaml` via `make gen-api` (or `npm run gen:api`). Committed like mc_bindings.js, regenerate after changing a server route.
-
-## Schema maintenance
-
-JSON Schemas in `data/config/schemas/`. See `/update-schema` for the full mapping table. Update schema in same commit as data class changes.
-
-**Not to be confused with** `server/openapi/openapi.yaml` — the REST API spec (auth/game/admin/map HTTP routes), auto-generated from `io.github.smiley4.ktoropenapi`-annotated Ktor routes, unrelated to the `data/config/schemas/` game-data JSON Schemas above. Never hand-edit it; regenerate with `make dc CMD="./gradlew :server:exportOpenApi"` after adding/changing a route (also regenerates the README.md "API Routes" table). `make check-openapi` (part of `code-standard`) fails CI if either drifts from the annotated routes. Browsable at `/api/docs` (Redoc) when the server is running.
-
-## Documentation site
-
-MkDocs + Material in `docs/**` (`mkdocs.yml`, nav `docs/SUMMARY.md`), published to
-`micoli.github.io/micraft` via `.github/workflows/docs.yml`. Reference tables under
-`docs/reference/_generated/` are generated from bundled config + `core` constants by
-`:server:generateReferenceDocs` and verified by `:server:checkReferenceDocs` (part of
-`make check-docs` / `code-standard` / CI). `scripts/docs/gen_docs.py` builds the
-slash-commands / api-routes / releases pages at `mkdocs build` time. After any
-`data/config/*.yaml` default or `*Constants` change: `make docs`. Preview:
-`make docs-site-serve`. Full workflow: **`/update-docs`**. Positioning: "multiplayer
-RPG voxel game" — never "Minecraft".
-
-## i18n (translations)
-
-Translation YAML files in `data/config/i18n/{locale}.yaml`. Key format: `feature:scope:key` (scope = `server` or `client`).
-
-- Server: `context.i18n.t(session.state.language, "feature:server:key", ...args)` via `ServerMessage.Notification`
-- Client (TypeScript): `window.mcT("feature:client:key")` — served via `GET /api/i18n/{locale}`
-- `I18nConfig` instantiated in `GameLoop`, reloaded with `/reload`. Language in `PlayerState.language`, changed via `/lang <locale>`.
-
-**Adding new strings**: `/add-i18n`
+- **Commits**: Conventional Commits, body ≤ 10 lines. Before committing: `make quick-code-standard`, and for any
+  `server/src/main/` change `make dc CMD="./gradlew :server:test"`.
+- **Server changes** come with a new or updated test in `server/src/test/`.
+- **E2E tests** (`app/webApp/ts-src/e2e/`) drive the game the way a player does: slash commands
+  (`actions(page).runCommand("/…")`), real key presses (`page.keyboard.press`), clicks on in-game UI. Assertions only
+  *read* `window.mcE2E`; to expose new state, add a field to `E2eSnapshot` fed from the same server message the UI
+  consumes. Per-test Account/World via `accountFor(testInfo)`. Never push raw events/WebSocket messages or mutate
+  game state in memory.
+- **Generated files — regenerate, never hand-edit**:
+  - `mc_bindings.js` (BabylonJS glue): edit its sources.
+  - Protocol codec registries: add the message subclass with the next free `@ProtoId`.
+  - `server/openapi/openapi.yaml` + README "API Routes": `make dc CMD="./gradlew :server:exportOpenApi"` after a route
+    change, then `make gen-api` for `app/webApp/ts-src/generated/api/**`. Checked by `make check-openapi`.
+  - JSON Schemas (`server/src/main/resources/schemas/`): `make gen-schemas` in the same commit as the data class
+    change. Checked by `make check-schemas`.
+  - Reference docs (`docs/reference/_generated/`): `make docs` after a config default or `*Constants` change.
+- **Every in-game action** (except movement) has a slash command bindable to a key; commands with arguments ship an
+  autocompletion method.
+- **Code**: immutable types (`data class`, `value class`) for positions, orientations and messages; constants live in
+  `core` (`WorldConstants`, `PlayerConstants`); packages under `org.micoli.micraft.*`; no new process-global
+  mutable state (ADR-0004).
+- Skip `data/world/*/chunks/` (binary, compressed).
 
 ## Dépendances (supply-chain)
 
 Voir `SECURITY.md`. Règles :
 
-- **Gradle** : versions uniquement dans `gradle/libs.versions.toml`. Toute add/bump →
-  dans le même commit : `make security-locks` (régénère `gradle.lockfile`) +
-  `make security-verify` (régénère `gradle/verification-metadata.xml`), review des 2 diffs.
-- **npm** (`app/webApp/ts-src`) : jamais `npm install` en script/CI — toujours `npm ci`.
-  Ajout via `npm install --save-exact <pkg>@<ver>`, review complète du diff `package-lock.json`.
-- Ne jamais ajouter un repo Maven ou registre npm non déclaré dans `settings.gradle.kts` / `.npmrc`.
+- **Gradle** : versions uniquement dans `gradle/libs.versions.toml`. Toute add/bump → dans le même commit :
+  `make security-locks` (régénère `gradle.lockfile`) + `make security-verify` (régénère
+  `gradle/verification-metadata.xml`), review des 2 diffs.
+- **npm** (`app/webApp/ts-src`) : `npm ci` en script/CI. Ajout via `npm install --save-exact <pkg>@<ver>`, review
+  complète du diff `package-lock.json`.
+- Seuls les repos Maven / registres npm déclarés dans `settings.gradle.kts` / `.npmrc`.
 - `make security` lance toute la chaîne (locks + verify + audit + osv + sbom).
 - GitHub Actions épinglées au SHA de commit ; Dependabot (`.github/dependabot.yml`) gère les bumps.
 
-## Zone/npc tier per skill level
-Skill level → zone tier mapping, implemented as `core/.../game/world/ZoneTier.kt`
-(`ZoneTier.fromZoneLevel`), a pure mapping over `WorldState.zoneLevelAt` (distance-to-spawn based).
-Consumed by `NpcSpawnConfig.minZoneTier`/`maxZoneTier`-equivalent filtering (existing
-`NpcDefinition.minLevel`/`maxLevel` against `zoneLevelAt`) and by `QuestGiverSpawner` to pick the
-right quest-giver NPC per zone cell:
+## Where to look
 
-| skill level | npc/zone level |
-|-------------|----------------|
-| 1 | 1–5            |
-| 2 | 6–10           |
-| 3 | 11–15          |
-| 4 | 16–20          |
-| 5 | 21–25+         |
-
-## Armor system
-
-Armor configs in `resources/armors/<name>/<name>.yaml`. Each defines `wearable` slot flags (`head`, `body`, `rightArm`, `leftArm`, `rightLeg`, `leftLeg`). Loaded by `ArmorRegistryLoader`.
-
-**HTTP routes**:
-| Route | Purpose |
-|-------|---------|
-| `GET /api/armors` | `Map<name, WearableSlots>` — all available armors |
-| `GET /api/player/:name/armors` | currently equipped armor names |
-| `GET /api/player/:name/skin` | `{skin: string}` |
-
-**In-game**: `/equip <name>` / `/unequip <name>`. Client resolves slot conflicts before sending commands.
-**UI**: `Character.tsx` (key `Y`, or Pause → Character). Shared preview: `PlayerModelPreview.tsx`.
-
-## Mini-games
-
-Framework for 1..N-player mini-games (e.g. tic-tac-toe) played inside the game. **The server only
-routes** — it knows a mini-game's identity and player bounds (`data/config/minigames.yaml` →
-`MiniGameRegistry`), never its rules. All game logic (turns, win conditions, board state) lives in
-the mini-game's own client-side React bundle.
-
-- **Room lifecycle** (`MiniGameManager`, `server/.../game/minigame/`): ephemeral, in-RAM, never
-  persisted — same shape as `GroupManager` but without a chat channel. Host-only invites (TTL
-  `MiniGameConstants.INVITE_TTL_MS`). Unlike `GroupManager`, **any member leaving or disconnecting
-  mid-game dissolves the room for everyone** (no host promotion, no partial continuation) — every
-  remaining member gets `MiniGameRoomSync(null)` and its client resets by unmounting the game.
-- **Protocol**: `ClientMessage.MiniGameCreate/Invite/RespondInvite/Leave/Action` (ProtoId 72-76),
-  `ServerMessage.MiniGameRoomSync/InviteReceived/Action` (ProtoId 91-93). `MiniGameAction.payload`
-  is an opaque JSON string the server never deserializes — it only rebroadcasts it to every other
-  room member.
-- **Registry**: `data/config/minigames.yaml` (schema `minigames.schema.json`, generated —
-  never hand-edit), one entry per `gameType` with `displayName`, `entryUrl`, `minPlayers`,
-  `maxPlayers`. Exposed via `GET /api/minigames`. Reloaded by `/reload`.
-- **Mini-games are independent client modules**, not part of `app/webApp`'s own build:
-  `app/minigames/<name>/` is its own npm project (see `app/minigames/README.md` for the contract:
-  props received, payload format, how to build/publish). `make build-minigames` builds every
-  mini-game and copies its `dist/` into `app/webApp/build/web/minigames/<name>/` (chained into
-  `make build`). The host loads the right bundle at runtime via a dynamic `import(entryUrl)`
-  resolved from `GET /api/minigames` (`game/minigames/MiniGameContainer.tsx`) — adding a mini-game
-  never requires touching `server/` or `app/webApp/`.
-- **Slash command**: `/minigame create <type>|invite <player>|accept|decline|leave|who`.
-  `/minigame` with no argument opens `game/overlays/MiniGameDialog.tsx` instead (same actions,
-  driven by clicks — see `game/minigames/minigameActions.ts` for the shared network helpers).
-- **Admin test page**: `/admin/minigame-test` (`admin/pages/miniGameTest/`) simulates the whole
-  room protocol client-side with fake players (`miniGameSimulator.ts` mirrors `MiniGameManager`'s
-  rules) — lets you exercise create/invite/accept/leave/broadcast without two real logged-in
-  clients or a live websocket.
-
-## Agent skills
-
-### Issue tracker
-
-Issues et specs en markdown local sous `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Vocabulaire par défaut (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), écrit dans la ligne `Status:` de chaque issue. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context : un `CONTEXT.md` + `docs/adr/` à la racine. See `docs/agents/domain.md`.
+| Task | Reference |
+|------|-----------|
+| Auth, login flow, tokens, admin API, Test worlds, E2E player setup | `docs/agents/auth.md` |
+| Log levels at runtime, Rec XZ / Prediction gap | `docs/agents/debugging.md` |
+| Docs site, generated pages, screenshots | `/update-docs` (positioning: "multiplayer RPG voxel game") |
+| Translations (`server/src/main/resources/i18n/{locale}.yaml`, keys `feature:server\|client:key`) | `/add-i18n` |
+| Key bindings, widgets, UI state, React conventions | `/add-keybinding`, `/add-widget`, `/add-ui-state`, `/ui-react` |
+| Data directory layout, key source files | `/data-directory`, `/key-source-files` |
+| New armor / NPC model / player preference | `/add-armor`, `/add-npc-model`, `/add-player-preferences` |
+| Skin models: Blockbench `.bbmodel`, skin yaml (`eyes`, `firstPersonHiddenBones`) | `docs/gameplay/movement.md`; export with `node scripts/export_skin_presets.mjs ./resources/blockbench-export/.` |
+| Gameplay systems (mini-games, equipment, claims, quests…) | `docs/` (nav in `docs/SUMMARY.md`) |

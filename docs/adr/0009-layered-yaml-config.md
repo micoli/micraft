@@ -12,5 +12,6 @@ local tuning.
 
 ## Consequences
 
-- A data class change must update its schema in the same commit.
+- Schemas are generated from the annotated data classes (`make gen-schemas`, checked by `make check-schemas`);
+  regenerate them in the same commit as the data class change.
 - Generated reference docs describe the bundled defaults, not a given installation.
