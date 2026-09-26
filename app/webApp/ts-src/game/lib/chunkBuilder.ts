@@ -9,6 +9,7 @@ import type {
 } from "@babylonjs/core";
 import { BLOCK_VERT, BLOCK_GHOST_FRAG, IMPOSTOR_FRAG } from "./block";
 import { plainMatKey } from "./blockDefs";
+import { setBoundsFromPositions } from "./meshBounds";
 import { WHITE_PIXEL_URL } from "./materials/whitePixel";
 import { getChunkSurface, getTopColorRGB, getSideColorRGB } from "./minimap";
 import {
@@ -608,7 +609,7 @@ export function buildChunkImpostorMesh(scene: Scene, cx: number, cz: number): vo
   mesh.material = getImpostorMaterial(scene);
   mesh.isPickable = false;
   mesh.doNotSyncBoundingInfo = true;
-  mesh.refreshBoundingInfo();
+  setBoundsFromPositions(mesh, positions);
   mesh.freezeWorldMatrix();
   window.mcState.chunks[key] = [mesh];
 }
@@ -842,7 +843,7 @@ export function registerChunks(): Pick<
         mesh.material = materials[matKey] ?? null;
         mesh.isPickable = true;
         mesh.doNotSyncBoundingInfo = true;
-        mesh.refreshBoundingInfo();
+        setBoundsFromPositions(mesh, g.p);
         mesh.freezeWorldMatrix();
         const shadowRTT = window.mcState.sunShadowRTT;
         const shadowDepthMat = window.mcState.sunShadowDepthMat;
@@ -905,7 +906,8 @@ export function registerChunks(): Pick<
         const matKey = groupKey.slice(0, groupKey.lastIndexOf("|"));
         const mesh = new BABYLON.Mesh(`ck${buf.key}${groupKey}`, scene);
         const vd = new BABYLON.VertexData();
-        vd.positions = g.p.subarray(0, g.v * 3);
+        const positions = g.p.subarray(0, g.v * 3);
+        vd.positions = positions;
         vd.normals = g.n.subarray(0, g.v * 3);
         vd.uvs = g.u.subarray(0, g.v * 2);
         vd.colors = g.c.subarray(0, g.v * 4);
@@ -917,7 +919,7 @@ export function registerChunks(): Pick<
         // scene.pick() actually runs, which happens only in creative mode.
         mesh.isPickable = true;
         mesh.doNotSyncBoundingInfo = true;
-        mesh.refreshBoundingInfo();
+        setBoundsFromPositions(mesh, positions);
         mesh.freezeWorldMatrix();
         const shadowRTT = window.mcState.sunShadowRTT;
         const shadowDepthMat = window.mcState.sunShadowDepthMat;
