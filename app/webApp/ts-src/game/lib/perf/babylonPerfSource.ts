@@ -1,9 +1,6 @@
 import type { AbstractEngine, EngineInstrumentation, Scene, SceneInstrumentation } from "@babylonjs/core";
 import type { FrameCounters, MemoryReading, PerfSource } from "./perfCollector";
 
-const BYTES_PER_FLOAT = 4;
-const BYTES_PER_INDEX = 4;
-
 interface ChromePerformanceMemory {
   usedJSHeapSize: number;
 }
@@ -42,17 +39,25 @@ export function captureWasmMemory(): void {
   }
 }
 
+/** Bytes allocated on the GPU for mesh vertex and index buffers (terrain keeps no CPU copy to measure). */
 function gpuBufferBytes(scene: Scene): number {
   const seen = new Set<unknown>();
   let bytes = 0;
+  const add = (buffer: { capacity: number } | null | undefined) => {
+    if (!buffer || seen.has(buffer)) return;
+    seen.add(buffer);
+    bytes += buffer.capacity;
+  };
   for (const mesh of scene.meshes) {
     const geometry = (mesh as { geometry?: import("@babylonjs/core").Geometry | null }).geometry;
-    if (!geometry || seen.has(geometry)) continue;
-    seen.add(geometry);
-    for (const kind of geometry.getVerticesDataKinds()) {
-      bytes += (geometry.getVerticesData(kind, false, false)?.length ?? 0) * BYTES_PER_FLOAT;
+    if (!geometry) continue;
+    for (const kind of geometry.getVerticesDataKinds()) add(geometry.getVertexBuffer(kind)?.getBuffer());
+    // Index buffers carry no capacity; their size follows from the index count and width.
+    const indexBuffer = geometry.getIndexBuffer();
+    if (indexBuffer && !seen.has(indexBuffer)) {
+      seen.add(indexBuffer);
+      bytes += geometry.getTotalIndices() * (indexBuffer.is32Bits ? 4 : 2);
     }
-    bytes += geometry.getTotalIndices() * BYTES_PER_INDEX;
   }
   return bytes;
 }

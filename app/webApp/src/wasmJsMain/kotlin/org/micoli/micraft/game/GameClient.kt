@@ -39,6 +39,7 @@ import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.rail.RailConnectionPoint
 import org.micoli.micraft.game.world.rail.RailDefinition
+import org.micoli.micraft.gameChunkManager
 import org.micoli.micraft.placeable.PlaceableDefinition
 import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.player.Vec3
@@ -119,6 +120,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     }
 
     init {
+        gameChunkManager = chunkManager
         jsInitPanelSurface(scene, camera)
         npcManager.registerExternalTargets(
             { vehicleManager.positionsMap() + placeableManager.positionsMap() },

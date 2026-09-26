@@ -135,6 +135,11 @@ fun jsDiscardChunkMeshResult(cx: Int, cz: Int): Unit = js("mc.discardChunkMeshRe
 
 fun jsDisposeChunk(key: String): Unit = js("mc.disposeChunk(key)")
 
+/** True once after the WebGL context was restored (set by engine.ts), then cleared. */
+fun jsConsumeTerrainRemeshRequest(): Boolean =
+    js(
+        "(function(){ var r = window.mcState.terrainRemeshRequested === true; window.mcState.terrainRemeshRequested = false; return r; })()")
+
 // Cheap flat-colored stand-in mesh for a chunk far from the viewer — see
 // ChunkManager.IMPOSTOR_RADIUS_CHUNKS and chunkBuilder.ts's buildChunkImpostorMesh.
 fun jsBuildChunkImpostor(scene: JsAny, cx: Int, cz: Int): Unit =

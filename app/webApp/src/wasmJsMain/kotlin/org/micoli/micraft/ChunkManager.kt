@@ -275,6 +275,16 @@ class ChunkManager(private val scene: JsAny) {
         pendingChunksDirty = true
     }
 
+    /**
+     * Mesh every loaded chunk again. Terrain meshes keep no CPU copy of their geometry, so after a
+     * WebGL context loss Babylon has nothing to restore them from.
+     */
+    fun remeshAll() {
+        loadedChunks.forEach { pos ->
+            chunkData[pos]?.let { (chunk, topY) -> enqueueChunk(chunk, topY) }
+        }
+    }
+
     fun drainPendingChunks(
         playerCx: Int = 0,
         playerCz: Int = 0,
@@ -282,6 +292,7 @@ class ChunkManager(private val scene: JsAny) {
         budgetMs: Double = 4.0,
     ) {
         val mats = getBlockMaterials() ?: return
+        if (jsConsumeTerrainRemeshRequest()) remeshAll()
         buildOrdFlags()
         if (pendingChunks.isEmpty() && activeRender == null) {
             // Idle steady-state (nothing to mesh) — zero the per-call timing stats instead of

@@ -4,6 +4,7 @@ import { setupOrbitPointerController } from "../../admin/pages/shared/voxelEdito
 import { getAccountEmail } from "../../lib/authStorage";
 import { ClientEventPrefix } from "../../generated/input/clientEvents";
 import { showScenePreview, hideScenePreview, SceneGhostCell } from "./targeting/sceneGhost";
+import { loadVoxelPick, voxelPickAt } from "./targeting/voxelPick";
 
 export interface CreativeSceneSummary {
   id: string;
@@ -100,12 +101,12 @@ function rebuildGhostAtCursor(): void {
   if (!selectedScene || scenePlacePending) return;
   const scene = window.mcState.engine?.scenes?.[0];
   if (!scene) return;
-  const pick = scene.pick(scene.pointerX, scene.pointerY);
-  if (!pick?.hit || !pick.pickedPoint) return;
-  const n = pick.getNormal(true) ?? new BABYLON.Vector3(0, 0, 0);
-  const bx = Math.floor(pick.pickedPoint.x + n.x * 0.5);
-  const by = Math.floor(pick.pickedPoint.y + n.y * 0.5);
-  const bz = Math.floor(pick.pickedPoint.z + n.z * 0.5);
+  const hit = voxelPickAt(scene, scene.pointerX, scene.pointerY);
+  if (!hit) return;
+  const { point, normal: n } = hit;
+  const bx = Math.floor(point.x + n.x * 0.5);
+  const by = Math.floor(point.y + n.y * 0.5);
+  const bz = Math.floor(point.z + n.z * 0.5);
   updateGhostAt(bx, by, bz);
 }
 
@@ -153,6 +154,7 @@ export function enterCreativeMode(): void {
   const scene = window.mcState.engine?.scenes?.[0];
   const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement | null;
   if (!scene || !canvas) return;
+  void loadVoxelPick();
 
   // The server re-sends EditModeUpdate("creative") on every /mode command and on reconnect, even
   // when already in creative — without this guard each redundant call would leak another
@@ -201,19 +203,19 @@ export function enterCreativeMode(): void {
     getMode: () => (selectedScene ? "select" : selectedItem ? "place" : "break"),
     onHoverMove: () => {
       if (scenePlacePending) return; // ghost frozen while the confirm popup is open
-      const pick = scene.pick(scene.pointerX, scene.pointerY);
-      if (!pick?.hit || !pick.pickedPoint) {
+      const hit = voxelPickAt(scene, scene.pointerX, scene.pointerY);
+      if (!hit) {
         window.mc.hideTargetOutline();
         hideScenePreview();
         lastGhostBase = null;
         return;
       }
-      const n = pick.getNormal(true) ?? new BABYLON.Vector3(0, 0, 0);
+      const { point, normal: n } = hit;
       if (selectedScene) {
         window.mc.hideTargetOutline();
-        const bx = Math.floor(pick.pickedPoint.x + n.x * 0.5);
-        const by = Math.floor(pick.pickedPoint.y + n.y * 0.5);
-        const bz = Math.floor(pick.pickedPoint.z + n.z * 0.5);
+        const bx = Math.floor(point.x + n.x * 0.5);
+        const by = Math.floor(point.y + n.y * 0.5);
+        const bz = Math.floor(point.z + n.z * 0.5);
         updateGhostAt(bx, by, bz);
         return;
       }
@@ -221,12 +223,13 @@ export function enterCreativeMode(): void {
       // same wireframe outline the FPS raycast uses (mirrors showTargetOutline's hover shape) —
       // orbit-camera creative mode has no crosshair-driven raycast, so this is the only feedback.
       const sign = selectedItem ? 0.5 : -0.5;
-      const bx = Math.floor(pick.pickedPoint.x + n.x * sign);
-      const by = Math.floor(pick.pickedPoint.y + n.y * sign);
-      const bz = Math.floor(pick.pickedPoint.z + n.z * sign);
+      const bx = Math.floor(point.x + n.x * sign);
+      const by = Math.floor(point.y + n.y * sign);
+      const bz = Math.floor(point.z + n.z * sign);
       window.mc.showTargetOutline(scene, bx, by, bz, !selectedItem);
     },
     continuousBreak: window.mcState.continuousBreak,
+    pickAt: (x, y) => voxelPickAt(scene, x, y),
     onClick: ({ pick, normal, mode }) => {
       const hit = pick.pickedPoint;
       if (!hit) return;

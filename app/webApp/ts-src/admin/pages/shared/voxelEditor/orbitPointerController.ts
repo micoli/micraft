@@ -32,10 +32,27 @@ export interface OrbitPointerControllerOptions {
   // is under the cursor, like the survival mining hold. Off by default — the admin Instance/Scene
   // editors keep one-click-one-block for placement precision.
   continuousBreak?: boolean;
+  // What sits under a screen point. Defaults to `scene.pick()` on the scene's meshes; in-game
+  // creative mode raycasts the block data instead, since terrain meshes keep no CPU geometry.
+  pickAt?: (x: number, y: number) => OrbitPick | null;
+}
+
+type ScenePick = NonNullable<ReturnType<InstanceType<typeof BABYLON.Scene>["pick"]>>;
+
+export interface OrbitPick {
+  pick: ScenePick;
+  normal: InstanceType<typeof BABYLON.Vector3> | null;
 }
 
 export function setupOrbitPointerController(opts: OrbitPointerControllerOptions): () => void {
   const { B, scene, camera, canvas, getMode, onHoverMove, onClick, onCtrlClick, continuousBreak } = opts;
+  const pickAt =
+    opts.pickAt ??
+    ((x: number, y: number): OrbitPick | null => {
+      const pick = scene.pick(x, y);
+      if (!pick?.hit || !pick.pickedMesh || !pick.pickedPoint) return null;
+      return { pick, normal: pick.getNormal(true) };
+    });
 
   const preventContextMenu = (e: Event) => e.preventDefault();
   canvas.addEventListener("contextmenu", preventContextMenu);
@@ -61,10 +78,9 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
     }
   }
   function tryContinuousBreak() {
-    const pick = scene.pick(scene.pointerX, scene.pointerY);
-    if (!pick?.hit || !pick.pickedMesh || !pick.pickedPoint) return;
-    const normal = pick.getNormal(true);
-    onClick({ pick, normal, mode: "break", shiftKey: downShift });
+    const hit = pickAt(scene.pointerX, scene.pointerY);
+    if (!hit) return;
+    onClick({ ...hit, mode: "break", shiftKey: downShift });
   }
 
   function panCamera(dx: number, dy: number) {
@@ -96,9 +112,9 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
         const engine = scene.getEngine();
         const cx = engine.getRenderWidth() / 2;
         const cy = engine.getRenderHeight() / 2;
-        const pick = scene.pick(cx, cy);
-        if (pick?.hit && pick.pickedPoint) {
-          const direction = pick.pickedPoint.subtract(camera.position).normalize();
+        const pickedPoint = pickAt(cx, cy)?.pick.pickedPoint;
+        if (pickedPoint) {
+          const direction = pickedPoint.subtract(camera.position).normalize();
           camera.setTarget(camera.position.add(direction.scale(camera.radius)));
         }
       } else if (dragMode === "place" && continuousBreak) {
@@ -143,23 +159,22 @@ export function setupOrbitPointerController(opts: OrbitPointerControllerOptions)
       const dx = scene.pointerX - downX;
       const dy = scene.pointerY - downY;
       if (dx * dx + dy * dy > CLICK_MOVE_THRESHOLD * CLICK_MOVE_THRESHOLD) return;
-      const pick = scene.pick(scene.pointerX, scene.pointerY);
-      if (!pick?.hit || !pick.pickedMesh || !pick.pickedPoint) return;
-      onCtrlClick?.(pick);
+      const hit = pickAt(scene.pointerX, scene.pointerY);
+      if (!hit) return;
+      onCtrlClick?.(hit.pick);
       return;
     }
     if (!wasPlaceDrag) return;
     const dx = scene.pointerX - downX;
     const dy = scene.pointerY - downY;
     if (dx * dx + dy * dy > CLICK_MOVE_THRESHOLD * CLICK_MOVE_THRESHOLD) return;
-    const pick = scene.pick(scene.pointerX, scene.pointerY);
-    if (!pick?.hit || !pick.pickedMesh || !pick.pickedPoint) return;
-    const normal = pick.getNormal(true);
+    const hit = pickAt(scene.pointerX, scene.pointerY);
+    if (!hit) return;
     const baseMode = getMode();
     // Shift-to-break only makes sense as a place/break override; in select mode shift instead
     // extends the selection to the clicked block, handled by the caller via shiftKey.
     const mode = baseMode !== "select" && downShift ? "break" : baseMode;
-    onClick({ pick, normal, mode, shiftKey: downShift });
+    onClick({ ...hit, mode, shiftKey: downShift });
   });
 
   return () => {

@@ -1,4 +1,5 @@
 import type { Camera, Engine, Scene, HemisphericLight, Mesh } from "@babylonjs/core";
+import { dropTerrainCpuGeometry } from "./chunkBuilder";
 import { babylonPerfSource } from "./perf/babylonPerfSource";
 import { createPerfCollector } from "./perf/perfCollector";
 
@@ -52,6 +53,10 @@ export function registerEngine(): Pick<
       }
 
       window.mcState.engine = engine;
+      dropTerrainCpuGeometry();
+      engine.onContextRestoredObservable.add(() => {
+        window.mcState.terrainRemeshRequested = true;
+      });
       if (window.__mcPerf) window.mcPerf = createPerfCollector(babylonPerfSource(engine));
       window.addEventListener("beforeunload", () => engine.dispose(), { once: true });
       console.log("[MiCraft] Engine created: " + (engine.webGLVersion === 2 ? "WebGL2" : "WebGL1"));

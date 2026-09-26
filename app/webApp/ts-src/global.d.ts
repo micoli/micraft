@@ -291,6 +291,8 @@ declare global {
     renderPipeline: unknown;
     camState: { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; t: number } | null;
     editMode?: "game" | "creative";
+    /** Set when the WebGL context comes back: terrain keeps no CPU geometry, so ChunkManager remeshes it. */
+    terrainRemeshRequested?: boolean;
     dynamicFogEnabled?: boolean;
     envTint?: { r: number; g: number; b: number; strength: number; target: number };
     continuousBreak: boolean;
@@ -783,10 +785,19 @@ declare global {
     __mcPerf?: boolean;
     mcPerf?: Pick<PerfCollector, "reset" | "snapshot">;
     BABYLON?: typeof import("@babylonjs/core");
-    // Kotlin/Wasm module (webApp.js) — a Promise resolving to its @JsExport surface. Only
-    // loaded on admin.html (see AdminChunkPreview.kt); the real game page never calls this,
-    // it uses GameClient/ChunkManager directly instead.
+    // Kotlin/Wasm module (webApp.js) — a Promise resolving to its @JsExport surface. The admin
+    // editors use the mcAdmin*/mcScene* previews; the game page only calls mcRaycastVoxel.
     webApp?: Promise<{
+      // Creative-mode terrain targeting (GameVoxelPick.kt): "px,py,pz,nx,ny,nz" or "" on a miss.
+      mcRaycastVoxel(
+        ox: number,
+        oy: number,
+        oz: number,
+        dx: number,
+        dy: number,
+        dz: number,
+        maxDistance: number,
+      ): string;
       mcAdminLoadChunk(scene: unknown, data: Uint8Array, yMin: number, yMax: number): void;
       mcAdminDisposeChunk(cx: number, cz: number): void;
       mcAdminGetBlockOrdinalAt(scene: unknown, wx: number, wy: number, wz: number): number;

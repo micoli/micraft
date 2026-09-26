@@ -21,6 +21,22 @@ import {
   WorkerGltfEntry,
 } from "./chunkWorkerPool";
 
+// In-game terrain keeps no CPU copy of its geometry once on the GPU (~155 MB): creative targeting
+// raycasts the block data instead of picking meshes, and a lost WebGL context is recovered by
+// remeshing (ChunkManager.remeshAll). The admin editors keep the default: they pick terrain meshes.
+let dropTerrainGeometry = false;
+
+export function dropTerrainCpuGeometry(): void {
+  dropTerrainGeometry = true;
+}
+
+function finishTerrainMesh(mesh: Mesh): void {
+  mesh.isPickable = !dropTerrainGeometry;
+  mesh.doNotSyncBoundingInfo = true;
+  mesh.freezeWorldMatrix();
+  if (dropTerrainGeometry) mesh.geometry?.clearCachedData();
+}
+
 export const MC_NORMS = [
   [0, 0, 1], // 0 south
   [0, 0, -1], // 1 north
@@ -607,10 +623,9 @@ export function buildChunkImpostorMesh(scene: Scene, cx: number, cz: number): vo
   vd.indices = indices;
   vd.applyToMesh(mesh, false);
   mesh.material = getImpostorMaterial(scene);
-  mesh.isPickable = false;
-  mesh.doNotSyncBoundingInfo = true;
   setBoundsFromPositions(mesh, positions);
-  mesh.freezeWorldMatrix();
+  finishTerrainMesh(mesh);
+  mesh.isPickable = false;
   window.mcState.chunks[key] = [mesh];
 }
 
@@ -841,10 +856,8 @@ export function registerChunks(): Pick<
         vd.indices = g.i;
         vd.applyToMesh(mesh, false);
         mesh.material = materials[matKey] ?? null;
-        mesh.isPickable = true;
-        mesh.doNotSyncBoundingInfo = true;
         setBoundsFromPositions(mesh, g.p);
-        mesh.freezeWorldMatrix();
+        finishTerrainMesh(mesh);
         const shadowRTT = window.mcState.sunShadowRTT;
         const shadowDepthMat = window.mcState.sunShadowDepthMat;
         if (shadowRTT?.renderList && shadowDepthMat) {
@@ -914,13 +927,8 @@ export function registerChunks(): Pick<
         vd.indices = g.i.subarray(0, g.ic);
         vd.applyToMesh(mesh, false);
         mesh.material = materials[matKey] ?? null;
-        // Pickable so creative mode's orbit-camera mouse targeting (scene.pick(), unlike the FPS
-        // mode's own voxel-grid raycast) can hit real terrain — cost only materializes when
-        // scene.pick() actually runs, which happens only in creative mode.
-        mesh.isPickable = true;
-        mesh.doNotSyncBoundingInfo = true;
         setBoundsFromPositions(mesh, positions);
-        mesh.freezeWorldMatrix();
+        finishTerrainMesh(mesh);
         const shadowRTT = window.mcState.sunShadowRTT;
         const shadowDepthMat = window.mcState.sunShadowDepthMat;
         if (shadowRTT?.renderList && shadowDepthMat) {
