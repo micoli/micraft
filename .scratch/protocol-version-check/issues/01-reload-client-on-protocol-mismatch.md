@@ -1,6 +1,6 @@
 # Reload the client when its protocol does not match the server's
 
-Status: needs-triage
+Status: resolved
 Type: task
 
 ## Context
@@ -35,3 +35,7 @@ server, and messages decode wrongly or fail silently. Only Wasm load failures tr
 - A client with a stale fingerprint reloads once and does not loop (TS unit test); the server rejects a mismatched
   `Connect` (server test).
 - ADR-0003 consequence updated.
+
+## Answer
+
+Done in `0a811488`. The fingerprint covers 177 messages and 97 carried project types (fields, enum entries, sealed subclasses, param annotations). Checked in a browser: a forged `/api/server/info` fingerprint triggers one reload, then the character screen shows the "new version" message. `Connect.protocolFingerprint` defaults to the compiled constant, so JVM callers (tests, future load bots) match automatically.
