@@ -3063,10 +3063,6 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
             ],
             title: 'String'
         },
-        rpgOptOut: {
-            type: 'boolean',
-            title: 'Boolean'
-        },
         shadersEnabled: {
             type: 'boolean',
             title: 'Boolean'
@@ -3181,7 +3177,6 @@ export const org_micoli_micraft_player_PlayerStateSchema = {
         'pets',
         'pos',
         'quests',
-        'rpgOptOut',
         'shadersEnabled',
         'shadowAngleDeg',
         'shortcutBar',

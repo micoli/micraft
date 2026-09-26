@@ -105,7 +105,6 @@ make test                     # all test suites
 | `/shaders` | `/shaders [on\|off]` | Toggles visual shaders (ambient occlusion, directional shading, fog). | on, off |
 | `/siege_weapon` | `/siege_weapon <rotation\|pitch\|power> <value>` | Set the targeted siege weapon's rotation, pitch, or power. | dynamic |
 | `/skin` | `/skin <skinName>` | Changes your player skin. | dynamic |
-| `/skiprpg` | `/skiprpg` | Opt out of RPG system | — |
 | `/spawn` | `/spawn <npc_model> [x y z]` | Spawn an NPC of the given model on the solid block you are looking at. (admin) | dynamic |
 | `/summon` | `/summon <playerName>` | Teleports another player to your location. | dynamic |
 | `/talk` | `/talk <playerName>` | Open a private chat with a player. | dynamic |

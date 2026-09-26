@@ -279,7 +279,6 @@ rpg:
     budget_exceeded: "Budget de points dépassé : {0} / {1} points utilisés."
     character_created: "Personnage '{0}' créé avec succès !"
     no_character: "Vous n'avez pas encore de personnage RPG. Utilisez le menu pause pour en créer un."
-    skipped_rpg: "Système RPG désactivé pour ce personnage."
 
 macros:
   server:

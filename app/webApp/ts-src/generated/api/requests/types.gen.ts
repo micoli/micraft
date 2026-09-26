@@ -1987,10 +1987,6 @@ export type OrgMicoliMicraftPlayerPlayerState = {
     /**
      * Boolean
      */
-    rpgOptOut: boolean;
-    /**
-     * Boolean
-     */
     shadersEnabled: boolean;
     /**
      * Int

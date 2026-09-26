@@ -86,7 +86,6 @@ class ExperienceProcessorTest {
     @Test
     fun `grantXp adds xp and sends XpGained`() = runBlocking {
         val session = testSession(id = "s1")
-        session.state = session.state.copy(rpgOptOut = false)
         session.characterData = charData(xp = 0)
 
         processor(listOf(session)).grantXp(session, 100)
@@ -102,7 +101,6 @@ class ExperienceProcessorTest {
     @Test
     fun `grantXp triggers level up and sends CharacterSync + Notification`() = runBlocking {
         val session = testSession(id = "s2")
-        session.state = session.state.copy(rpgOptOut = false)
         session.characterData = charData(xp = 250)
 
         processor(listOf(session)).grantXp(session, 100)
@@ -121,7 +119,6 @@ class ExperienceProcessorTest {
     @Test
     fun `onNpcKilled solo kill gives full base xp`() = runBlocking {
         val session = testSession(id = "solo")
-        session.state = session.state.copy(rpgOptOut = false)
         session.characterData = charData()
 
         val npc = makeNpc(level = 2, tier = NpcTier.COMMON)
@@ -136,12 +133,7 @@ class ExperienceProcessorTest {
     @Test
     fun `onNpcKilled 4 players each get share with group bonus`() = runBlocking {
         val sessions =
-            (1..4).map { i ->
-                testSession(id = "p$i").also {
-                    it.state = it.state.copy(rpgOptOut = false)
-                    it.characterData = charData()
-                }
-            }
+            (1..4).map { i -> testSession(id = "p$i").also { it.characterData = charData() } }
         val npc = makeNpc(level = 5, tier = NpcTier.ELITE)
         sessions.forEach { npc.damageContributors[it.id] = 25 }
 
@@ -153,23 +145,8 @@ class ExperienceProcessorTest {
     }
 
     @Test
-    fun `onNpcKilled rpgOptOut players get no xp`() = runBlocking {
-        val session = testSession(id = "opted")
-        session.state = session.state.copy(rpgOptOut = true)
-        session.characterData = charData()
-
-        val npc = makeNpc()
-        npc.damageContributors["opted"] = 100
-
-        processor(listOf(session)).onNpcKilled(npc)
-
-        assertTrue(session.sent.filterIsInstance<ServerMessage.XpGained>().isEmpty())
-    }
-
-    @Test
     fun `onNpcKilled uses instanceLevel not definition minLevel for base xp`() = runBlocking {
         val session = testSession(id = "solo")
-        session.state = session.state.copy(rpgOptOut = false)
         session.characterData = charData()
 
         // A passive-fauna definition typically leaves minLevel at its default (0, no zone-tier
@@ -190,7 +167,6 @@ class ExperienceProcessorTest {
     @Test
     fun `sendXpState sends XpGained with xpGained=0`() = runBlocking {
         val session = testSession(id = "sx1")
-        session.state = session.state.copy(rpgOptOut = false)
         session.characterData = charData(xp = 500, level = 2)
 
         processor(listOf(session)).sendXpState(session)
@@ -204,20 +180,8 @@ class ExperienceProcessorTest {
     }
 
     @Test
-    fun `sendXpState skips rpgOptOut session`() = runBlocking {
-        val session = testSession(id = "sx2")
-        session.state = session.state.copy(rpgOptOut = true)
-        session.characterData = charData(xp = 500)
-
-        processor(listOf(session)).sendXpState(session)
-
-        assertTrue(session.sent.filterIsInstance<ServerMessage.XpGained>().isEmpty())
-    }
-
-    @Test
     fun `sendXpState skips session with no character`() = runBlocking {
         val session = testSession(id = "sx3")
-        session.state = session.state.copy(rpgOptOut = false)
         session.characterData = null
 
         processor(listOf(session)).sendXpState(session)

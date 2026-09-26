@@ -90,7 +90,6 @@ data class PlayerState(
     @JsonSchemaConstraint(minimum = 1.0, maximum = 180.0) val fieldOfView: Int = 70,
     val knownRecipes: Set<String> = emptySet(),
     val characterData: CharacterData? = null,
-    val rpgOptOut: Boolean = true,
     val godMode: Boolean = false,
     val editMode: EditMode = EditMode.GAME,
     val lightBoostEnabled: Boolean = false,

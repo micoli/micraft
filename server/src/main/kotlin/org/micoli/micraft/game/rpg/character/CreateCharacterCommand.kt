@@ -71,7 +71,7 @@ class CreateCharacterCommand : CommandHandler {
                 }
             }
         session.characterData = character
-        session.state = session.state.copy(characterData = character, rpgOptOut = false)
+        session.state = session.state.copy(characterData = character)
         context.savePlayer(session)
         session.send(ServerMessage.CharacterSync(character, derived, character.baseStats))
         session.send(

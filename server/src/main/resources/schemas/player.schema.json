@@ -395,9 +395,6 @@
             }
           ]
         },
-        "rpgOptOut": {
-          "type": "boolean"
-        },
         "godMode": {
           "type": "boolean"
         },

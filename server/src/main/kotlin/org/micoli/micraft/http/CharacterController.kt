@@ -111,7 +111,6 @@ class CharacterController(
                                 pos = Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z),
                                 orientation = Orientation(0f, 0f),
                                 skin = safeSkin,
-                                rpgOptOut = true,
                             )
                     val state =
                         if (email.isNotEmpty() && base.email.isEmpty()) base.copy(email = email)
@@ -202,7 +201,6 @@ class CharacterController(
                                 pos = Vec3(SPAWN_X, SPAWN_Y, SPAWN_Z),
                                 orientation = Orientation(0f, 0f),
                                 skin = safeSkin,
-                                rpgOptOut = false,
                                 characterData = character,
                             )
                     val state =

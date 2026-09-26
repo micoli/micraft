@@ -4,9 +4,9 @@ title: RPG overview
 
 # RPG overview
 
-The RPG layer is **opt-in**. On first login you either create an RPG character
-(`CharacterRPGCreationScreen`, point-buy stats + class) or `/skiprpg` to play
-without it.
+Every Character is an RPG character: it always has a Class, a Level and stats. A Character
+without one is sent to creation on login (`CharacterRPGCreationScreen`, point-buy stats +
+class).
 
 - **`/createcharacter <name> <class> <str> <dex> <intel> <wis> <con> <cha>`** — create.
 - **Character selection** — choose or create on login (`CharacterSelectionScreen`).

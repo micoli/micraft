@@ -92,7 +92,6 @@ class ExperienceProcessor(
 
     suspend fun sendXpState(session: PlayerSession) {
         val charData = session.characterData ?: return
-        if (session.state.rpgOptOut) return
         val thresholds = config.progression.thresholds
         val level = computeLevel(charData.xp, thresholds)
         val nextXp = nextLevelXp(level, thresholds)
@@ -211,10 +210,6 @@ class ExperienceProcessor(
             }
             if (session.characterData == null) {
                 log.debug("Contributor {} has no character, skipping XP", contributorId)
-                continue
-            }
-            if (session.state.rpgOptOut) {
-                log.debug("Contributor {} opted out of RPG, skipping XP", contributorId)
                 continue
             }
             grantXp(session, shareXp)

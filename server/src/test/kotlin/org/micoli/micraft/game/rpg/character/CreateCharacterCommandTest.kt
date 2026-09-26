@@ -1,7 +1,6 @@
 package org.micoli.micraft.game.rpg.character
 
 import kotlin.test.Test
-import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -95,15 +94,13 @@ class CreateCharacterCommandTest {
         }
 
     @Test
-    fun validArgs_clearsRpgOptOut() =
+    fun validArgs_storesTheCharacterOnTheSessionAndItsState() =
         runBlocking<Unit> {
             val session = testSession()
-            // PlayerState defaults rpgOptOut = true
-            assertTrue(session.state.rpgOptOut)
             val context = testContext(sessions = listOf(session), savePlayer = {})
             cmd.execute(session, "Hero warrior 8 8 8 8 8 8", context)
             assertNotNull(session.characterData)
-            assertFalse(session.state.rpgOptOut)
+            assertNotNull(session.state.characterData)
         }
 
     @Test

@@ -6562,9 +6562,6 @@ components:
           - "null"
           - string
           title: String
-        rpgOptOut:
-          type: boolean
-          title: Boolean
         shadersEnabled:
           type: boolean
           title: Boolean
@@ -6660,7 +6657,6 @@ components:
       - pets
       - pos
       - quests
-      - rpgOptOut
       - shadersEnabled
       - shadowAngleDeg
       - shortcutBar

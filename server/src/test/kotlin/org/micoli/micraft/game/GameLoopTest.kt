@@ -224,6 +224,27 @@ class GameLoopTest {
     }
 
     @Test
+    fun onConnect_characterWithoutClass_isAlwaysSentToCharacterCreation() = runTest {
+        val gameLoop = GameLoop(testWorld())
+
+        val socket = FakeWebSocketSession()
+        val connect =
+            ClientMessage.Connect(playerName = "NoClass", userName = "noclass@example.com")
+        socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        socket.incomingChannel.close()
+        gameLoop.onConnect(socket)
+
+        val received =
+            generateSequence { socket.outgoingChannel.tryReceive().getOrNull() }
+                .map { ServerMessageCodec.decode((it as Frame.Binary).readBytes()) }
+                .toList()
+
+        assertTrue(
+            received.any { it is ServerMessage.CharacterCreationRequired },
+            "prompted to create one")
+    }
+
+    @Test
     fun onConnect_reservedRpgPlayer_sendsCharacterSyncNotCreationPrompt() = runTest {
         val gameLoop = GameLoop(testWorld())
         val character =

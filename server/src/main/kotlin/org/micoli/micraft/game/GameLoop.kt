@@ -1965,9 +1965,6 @@ class GameLoop(
                 fieldOfView = saved?.fieldOfView ?: 70,
                 dynamicFogEnabled = saved?.dynamicFogEnabled ?: true,
                 knownRecipes = saved?.knownRecipes ?: emptySet(),
-                rpgOptOut =
-                    if (saved?.characterData != null || reservedCharacter != null) false
-                    else (saved?.rpgOptOut ?: false),
                 godMode = saved?.godMode ?: false,
                 lightBoostEnabled = saved?.lightBoostEnabled ?: false,
                 zoneLevel = saved?.zoneLevel ?: 0,
@@ -2128,7 +2125,8 @@ class GameLoop(
                     session.combatState.attackCooldownsUntilMs,
                     session.state.godMode))
             gw.experienceProcessor.sendXpState(session)
-        } else if (!session.state.rpgOptOut) {
+        } else {
+            // Every Character has a Class: one without character data is sent to creation.
             session.send(ServerMessage.CharacterCreationRequired)
         }
 
