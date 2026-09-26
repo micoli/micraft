@@ -27,7 +27,7 @@ endif
         code-standard check-detekt check-docs check-openapi check-schemas ts-code-standard \
         check-configuration spotless-apply ts-typecheck ts-lint ts-lint-fix \
         ts-test-setup ts-test ts-test-storybook test kt-test kt-test-info kt-web-test \
-        e2e e2e-server perf-server perf-server-stop perf perf-report perf-heap perf-heap-snapshot perf-idle perf-traverse \
+        e2e e2e-server perf-server perf-server-stop perf perf-report perf-heap perf-cpu perf-heap-snapshot perf-idle perf-traverse \
         docs gen-schemas docs-screenshots check-docs-screenshots \
         docs-site-build docs-site-serve docs-site-stop help \
         security security-locks security-relock security-verify security-audit \
@@ -284,7 +284,10 @@ perf-traverse: ## Perf scenario B (walk then fly through ungenerated terrain) �
 	$(EXEC) "cd app/webApp/ts-src && npx playwright test --config perf/playwright.config.ts traverse"
 
 perf-heap: ## Client heap: live vs garbage around 2 traversals + sampled live allocations → .scratch/perf-baseline/heap/ (PERF_HEAP_SNAPSHOT=1 adds a full snapshot)
-	$(EXEC) "cd app/webApp/ts-src && PERF_HEAP=1 npx playwright test --config perf/playwright.config.ts"
+	$(EXEC) "cd app/webApp/ts-src && PERF_PROFILE=heap npx playwright test --config perf/playwright.config.ts"
+
+perf-cpu: ## Client main-thread CPU: sampling profile of one traversal, self time by function and origin → .scratch/perf-baseline/cpu/
+	$(EXEC) "cd app/webApp/ts-src && PERF_PROFILE=cpu npx playwright test --config perf/playwright.config.ts"
 
 perf-heap-snapshot: ## Summarise a full heap snapshot by node type and constructor (FILE=perf/heap/<file>.heapsnapshot)
 	$(EXEC) "cd app/webApp/ts-src && node perf/heapSnapshot.mjs ../../../$(FILE) $(TOP)"

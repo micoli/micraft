@@ -51,3 +51,4 @@ test-results
 perf/.data/
 perf/*.log
 perf/heap/
+perf/cpu/

@@ -77,6 +77,13 @@ BabylonJS, JS app, native). Report: `.scratch/perf-baseline/heap/<stamp>-<sha>.m
 structs/arrays included). WasmGC objects allocated inside Wasm are attributed to the nearest JS frame of the Kotlin glue
 (no URL, a line number): break those down with the full snapshot.
 
+## 4. Client CPU (where the main thread spends its time)
+
+`make perf-cpu` (~1.5 min, headed): one traversal under the V8 sampling profiler (200 µs). Report in
+`.scratch/perf-baseline/cpu/<stamp>-<sha>.md`: self time by origin (BabylonJS, JS app, Kotlin/Wasm, GC, browser
+work, idle) and by function, as shares of wall and busy time; raw `.cpuprofile` in `perf/cpu/` (DevTools →
+Performance). The chunk-mesh worker is a separate thread and not included.
+
 ## Moving parts
 
 | Piece | Where |
@@ -87,3 +94,4 @@ structs/arrays included). WasmGC objects allocated inside Wasm are attributed to
 | Scenarios, steering, result writer | `app/webApp/ts-src/perf/` |
 | Report + budgets | `app/webApp/ts-src/perf/analyze.mjs`, `perf/budgets.json` |
 | Client heap profile | `app/webApp/ts-src/perf/client.heap.ts`, `perf/helpers/heapProfile.ts` |
+| Client CPU profile | `app/webApp/ts-src/perf/client.cpu.ts`, `perf/helpers/cpuProfile.ts` |
