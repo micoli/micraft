@@ -84,6 +84,13 @@ structs/arrays included). WasmGC objects allocated inside Wasm are attributed to
 work, idle) and by function, as shares of wall and busy time; raw `.cpuprofile` in `perf/cpu/` (DevTools →
 Performance). The chunk-mesh worker is a separate thread and not included.
 
+## 5. Server CPU (where a tick phase spends its time)
+
+Start the perf server by hand with `./gradlew :server:runPerfServer -PperfJfr`, run a scenario against it with
+`PERF_NO_SERVER=1 make perf-traverse`, then `jcmd <pid> JFR.dump filename=$PWD/perf/server.jfr` before stopping it
+(a killed JVM never writes the recording). `jfr print --json --events jdk.ExecutionSample` gives the samples;
+filter the stacks through the phase's entry point (e.g. `NpcTickPipeline`) and rank self time and callers.
+
 ## Moving parts
 
 | Piece | Where |
