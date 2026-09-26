@@ -3,8 +3,6 @@ package org.micoli.micraft.game.rpg.character
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
-import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -15,20 +13,12 @@ class CharacterCommand : CommandHandler {
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
-        val char = session.characterData
-        if (char == null) {
+        if (session.characterData == null) {
             session.send(
                 ServerMessage.Notification(context.i18n.t(lang, "rpg:server:no_character")))
             return
         }
-        val bonuses =
-            session.state.equipmentBonuses(
-                context.armorRegistry(), context.weaponRegistry(), context.toolRegistry())
-        session.send(
-            ServerMessage.CharacterSync(
-                char,
-                DerivedStatsCalculator.compute(char, bonuses),
-                DerivedStatsCalculator.effectiveBaseStats(char, bonuses)))
+        context.characterStats.resync(session)
         session.send(ServerMessage.OpenCharacter)
     }
 }

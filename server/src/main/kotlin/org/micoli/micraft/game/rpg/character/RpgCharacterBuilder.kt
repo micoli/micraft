@@ -72,7 +72,7 @@ object RpgCharacterBuilder {
                 currentHp = 0,
                 currentMana = 0,
             )
-        val derived = DerivedStatsCalculator.compute(prelim)
+        val derived = DerivedStatsCalculator.compute(prelim.baseStats, prelim.level)
         return RpgCharacterResult.Success(
             prelim.copy(currentHp = derived.maxHp, currentMana = derived.maxMana), derived)
     }

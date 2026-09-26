@@ -44,7 +44,6 @@ class SpellProcessorAoeTest {
         CombatProcessor(
             config = CombatConfigData(maxCombatRange = 20f),
             attackRegistry = emptyMap(),
-            armorRegistry = emptyMap(),
             classRegistry = emptyMap(),
             npcManager = NpcManager(broadcast = {}),
             getSessions = sessions,
@@ -62,7 +61,6 @@ class SpellProcessorAoeTest {
         SpellProcessor(
             spellRegistry = mapOf("miasme" to miasmeSpell),
             classRegistry = classRegistry,
-            armorRegistry = emptyMap(),
             combatConfig = CombatConfigData(),
             combatProcessor = buildCombatProcessor { sessions },
             getSessions = { sessions },
@@ -268,7 +266,6 @@ class SpellProcessorAoeTest {
             SpellProcessor(
                 spellRegistry = mapOf("frost_breath" to frostSpell),
                 classRegistry = emptyMap(),
-                armorRegistry = emptyMap(),
                 combatConfig = CombatConfigData(),
                 combatProcessor = buildCombatProcessor { listOf(target) },
                 getSessions = { listOf(target) },
@@ -303,7 +300,6 @@ class SpellProcessorAoeTest {
             SpellProcessor(
                 spellRegistry = mapOf("slam" to spell),
                 classRegistry = emptyMap(),
-                armorRegistry = emptyMap(),
                 combatConfig = CombatConfigData(),
                 combatProcessor = buildCombatProcessor { listOf(target) },
                 getSessions = { listOf(target) },
@@ -327,7 +323,6 @@ class SpellProcessorAoeTest {
             SpellProcessor(
                 spellRegistry = mapOf("far_spell" to spell),
                 classRegistry = emptyMap(),
-                armorRegistry = emptyMap(),
                 combatConfig = CombatConfigData(),
                 combatProcessor = buildCombatProcessor { listOf(target) },
                 getSessions = { listOf(target) },

@@ -83,7 +83,6 @@ private fun fakeCombatProcessor(npcManager: NpcManager) =
     CombatProcessor(
         config = CombatConfigData(),
         attackRegistry = emptyMap(),
-        armorRegistry = emptyMap(),
         classRegistry = emptyMap(),
         npcManager = npcManager,
         getSessions = { emptyList() },

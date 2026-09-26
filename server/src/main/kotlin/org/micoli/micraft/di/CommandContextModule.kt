@@ -23,6 +23,7 @@ import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
 import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.rpg.CharacterStats
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.social.FactionManager
 import org.micoli.micraft.game.social.GroupManager
@@ -105,6 +106,7 @@ class CommandContextModule {
         sceneRegistry: SceneRegistry,
         placeableManager: PlaceableManager,
         siegeWeaponManager: SiegeWeaponManager,
+        characterStats: CharacterStats,
     ): CommandContext {
         val generator = worldState.generator as? ProceduralChunkGenerator
         val cavernPoints = generator?.namedCavernPoints() ?: emptyMap()
@@ -152,6 +154,7 @@ class CommandContextModule {
             armorRegistry = closures.armorRegistry,
             weaponRegistry = closures.weaponRegistry,
             toolRegistry = closures.toolRegistry,
+            characterStats = characterStats,
             weaponCategories = closures.weaponCategories,
             toolCategories = closures.toolCategories,
             tradeManager = tradeManager,

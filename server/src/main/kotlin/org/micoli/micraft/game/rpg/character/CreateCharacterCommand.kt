@@ -49,9 +49,9 @@ class CreateCharacterCommand : CommandHandler {
         val s = rawInts.map { it!! }
         val result =
             RpgCharacterBuilder.build(name, characterClass, s[0], s[1], s[2], s[3], s[4], s[5])
-        val (character, derived) =
+        val character =
             when (result) {
-                is RpgCharacterResult.Success -> result.character to result.derived
+                is RpgCharacterResult.Success -> result.character
                 is RpgCharacterResult.Failure -> {
                     val msg =
                         when (result.kind) {
@@ -73,7 +73,7 @@ class CreateCharacterCommand : CommandHandler {
         session.characterData = character
         session.state = session.state.copy(characterData = character)
         context.savePlayer(session)
-        session.send(ServerMessage.CharacterSync(character, derived, character.baseStats))
+        context.characterStats.resync(session)
         session.send(
             ServerMessage.Notification(
                 context.i18n.t(lang, "rpg:server:character_created", character.name)))

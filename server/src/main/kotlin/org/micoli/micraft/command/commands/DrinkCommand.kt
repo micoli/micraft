@@ -4,7 +4,6 @@ import java.util.UUID
 import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.protocol.ServerMessage
@@ -59,7 +58,7 @@ class DrinkCommand : CommandHandler {
             return
         }
         if (qty == 1) session.inventory.remove(itemType) else session.inventory[itemType] = qty - 1
-        val derived = DerivedStatsCalculator.compute(charData, emptyList())
+        val derived = context.characterStats.derived(session, charData)
         val newCharData =
             charData.copy(
                 currentHp = (charData.currentHp + def.healthRestore).coerceAtMost(derived.maxHp),
@@ -69,7 +68,7 @@ class DrinkCommand : CommandHandler {
         session.characterData = newCharData
         context.savePlayer(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
-        context.sendStatusUpdate?.invoke(session)
+        context.characterStats.sendStatus(session)
         session.send(
             ServerMessage.Notification(context.i18n.t(lang, "drink:server:consumed", typeName)))
     }

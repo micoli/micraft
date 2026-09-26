@@ -10,7 +10,7 @@ import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.classes.ClassesConfigData
 import org.micoli.micraft.game.classes.RegenSettings
 import org.micoli.micraft.game.npc.NpcManager
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.CharacterStats
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.player.rpg.CharacterData
@@ -42,7 +42,6 @@ class RegenProcessorTest {
         CombatProcessor(
             config = CombatConfigData(),
             attackRegistry = emptyMap(),
-            armorRegistry = emptyMap(),
             classRegistry = emptyMap(),
             npcManager = NpcManager(broadcast = {}),
             getSessions = { emptyList() },
@@ -71,7 +70,6 @@ class RegenProcessorTest {
         return RegenProcessor(
             config = config,
             maxRage = 100,
-            armorRegistry = emptyMap(),
             combatProcessor = buildCombatProcessor(),
             nowMs = { clock },
         )
@@ -105,7 +103,7 @@ class RegenProcessorTest {
         val processor = buildProcessor(hpFormula = "999.0")
         clock += 150
         processor.tick(listOf(session))
-        val derived = DerivedStatsCalculator.compute(session.characterData!!)
+        val derived = CharacterStats().derived(session, session.characterData!!)
         assertTrue(session.characterData!!.currentHp <= derived.maxHp)
     }
 
@@ -176,7 +174,6 @@ class RegenProcessorTest {
             RegenProcessor(
                 config = config,
                 maxRage = 100,
-                armorRegistry = emptyMap(),
                 combatProcessor = buildCombatProcessor(),
                 nowMs = { clock },
             )

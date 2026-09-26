@@ -3,10 +3,7 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
-import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
-import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessage.Notification
 import org.micoli.micraft.protocol.ServerMessage.PlayerUpdate
 
@@ -47,16 +44,7 @@ class UnequipCommand : CommandHandler {
         session.state = session.state.copy(armors = session.state.armors - name)
         context.broadcast(PlayerUpdate(session.state))
         context.savePlayer(session)
-        session.characterData?.let { char ->
-            val bonuses =
-                session.state.equipmentBonuses(
-                    context.armorRegistry(), context.weaponRegistry(), context.toolRegistry())
-            session.send(
-                ServerMessage.CharacterSync(
-                    char,
-                    DerivedStatsCalculator.compute(char, bonuses),
-                    DerivedStatsCalculator.effectiveBaseStats(char, bonuses)))
-        }
+        context.characterStats.resync(session)
         session.send(Notification(i18n.t(lang, "unequip:server:unequipped", name)))
     }
 }

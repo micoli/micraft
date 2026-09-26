@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.CharacterStats
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
@@ -94,7 +94,7 @@ class SetCommandTest {
     fun setHp_capsAtMaxHp() = runBlocking {
         val caller = testSession(id = "a", name = "Alice")
         val bob = sessionWithChar(hp = 5)
-        val maxHp = DerivedStatsCalculator.compute(bob.characterData!!).maxHp
+        val maxHp = CharacterStats().derived(bob, bob.characterData!!).maxHp
         cmd.execute(caller, "hp Bob 99999", testContext(sessions = listOf(caller, bob)))
         assertEquals(maxHp, bob.characterData!!.currentHp)
     }
@@ -164,7 +164,7 @@ class SetCommandTest {
     fun setMana_capsAtMaxMana() = runBlocking {
         val caller = testSession(id = "a", name = "Alice")
         val bob = sessionWithChar(mana = 5)
-        val maxMana = DerivedStatsCalculator.compute(bob.characterData!!).maxMana
+        val maxMana = CharacterStats().derived(bob, bob.characterData!!).maxMana
         cmd.execute(caller, "mana Bob 99999", testContext(sessions = listOf(caller, bob)))
         assertEquals(maxMana, bob.characterData!!.currentMana)
     }

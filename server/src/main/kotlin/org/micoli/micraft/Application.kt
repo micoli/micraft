@@ -83,6 +83,7 @@ import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
+import org.micoli.micraft.game.rpg.CharacterStats
 import org.micoli.micraft.game.rpg.ExperienceConfig
 import org.micoli.micraft.game.rpg.ExperienceConfigData
 import org.micoli.micraft.game.rpg.ExperienceProcessor
@@ -298,6 +299,7 @@ fun Application.module() {
             skillsConfigLoader = get<SkillsConfig>(),
             classesConfigLoader = get<ClassesConfig>(),
             experienceConfigLoader = get<ExperienceConfig>(),
+            characterStats = get<CharacterStats>(),
             combatProcessor = get<CombatProcessor>(),
             statusEffectProcessor = get<StatusEffectProcessor>(),
             regenProcessor = get<RegenProcessor>(),

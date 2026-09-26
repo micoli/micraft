@@ -9,6 +9,7 @@ import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.StaticNpcBehavior
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testSession
 import org.micoli.micraft.support.testWorld
@@ -33,6 +34,35 @@ class NpcInstanceBehaviorsTest {
             definition = def,
             spawnPos = pos,
         )
+    }
+
+    @Test
+    fun npcInstance_maxMana_comesFromWisdom() {
+        val def =
+            NpcDefinition(
+                type = "test",
+                behavior = StaticNpcBehavior(),
+                bbmodelFile = "test",
+                width = 0.6f,
+                height = 1.8f,
+                wanderSpeed = 0f,
+                wanderRadius = 0f,
+                baseStats = BaseStats(wis = 12),
+            )
+        val npc =
+            NpcInstance(
+                state =
+                    NpcState(
+                        id = "npc-1",
+                        name = "Test",
+                        type = "test",
+                        pos = Vec3(0f, 0f, 0f),
+                        yaw = 0f),
+                definition = def,
+                spawnPos = Vec3(0f, 0f, 0f),
+            )
+
+        assertEquals(60, npc.maxMana) // wis 12 * 5
     }
 
     @Test

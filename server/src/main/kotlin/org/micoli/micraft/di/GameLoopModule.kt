@@ -59,7 +59,7 @@ import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.CharacterStats
 import org.micoli.micraft.game.rpg.ExperienceConfig
 import org.micoli.micraft.game.rpg.ExperienceConfigData
 import org.micoli.micraft.game.rpg.ExperienceProcessor
@@ -337,6 +337,7 @@ class GameLoopModule {
         sessionRegistry: SessionRegistry,
         playerPersister: PlayerPersister,
         chatService: ChatService,
+        characterStats: CharacterStats,
     ): ExperienceProcessor =
         ExperienceProcessor(
             config = experienceConfigData,
@@ -351,6 +352,7 @@ class GameLoopModule {
                     .filter { it.state.subscribedChannels.hasChannel("combat") }
                     .forEach { it.send(chatMsg) }
             },
+            characterStats = characterStats,
         )
 
     @Single
@@ -390,12 +392,26 @@ class GameLoopModule {
     @Named("spells")
     fun spells(skillsConfig: SkillsConfig): Map<String, SpellDefinition> = skillsConfig.data.spells
 
+    /** Built from the loaders: bare `Map` beans are ambiguous to Koin once generics are erased. */
+    @Single
+    fun characterStats(
+        armorRegistryLoader: ArmorRegistryLoader,
+        weaponRegistryLoader: WeaponRegistryLoader,
+        toolRegistryLoader: ToolRegistryLoader,
+        combatConfigData: CombatConfigData,
+        playerPersister: PlayerPersister,
+    ): CharacterStats =
+        CharacterStats(
+            armorRegistryLoader.load(),
+            weaponRegistryLoader.load(),
+            toolRegistryLoader.load(),
+            combatConfigData.maxRage,
+            playerPersister::save)
+
     @Single
     fun combatProcessor(
         combatConfigData: CombatConfigData,
-        armorRegistry: Map<String, ArmorDefinition>,
-        weaponRegistry: Map<String, WeaponDefinition>,
-        toolRegistry: Map<String, ToolDefinition>,
+        characterStats: CharacterStats,
         @Named("attacks") attacks: Map<String, AttackDefinition>,
         classesConfigData: ClassesConfigData,
         npcManager: NpcManager,
@@ -411,9 +427,6 @@ class GameLoopModule {
         CombatProcessor(
             config = combatConfigData,
             attackRegistry = attacks,
-            armorRegistry = armorRegistry,
-            weaponRegistry = weaponRegistry,
-            toolRegistry = toolRegistry,
             classRegistry = classesConfigData.classes,
             npcManager = npcManager,
             vehicleManager = vehicleManager,
@@ -436,22 +449,18 @@ class GameLoopModule {
                 val xpAmount = experienceConfigData.sources.commonPerLevel * charData.level
                 experienceProcessor.grantXpToNpc(predator, xpAmount)
             },
+            characterStats = characterStats,
         )
 
     @Single
     fun statusEffectProcessor(
-        armorRegistry: Map<String, ArmorDefinition>,
-        weaponRegistry: Map<String, WeaponDefinition>,
-        toolRegistry: Map<String, ToolDefinition>,
+        characterStats: CharacterStats,
         worldState: WorldState,
         sessionRegistry: SessionRegistry,
         combatProcessor: CombatProcessor,
         chatService: ChatService,
     ): StatusEffectProcessor =
         StatusEffectProcessor(
-            armorRegistry = armorRegistry,
-            weaponRegistry = weaponRegistry,
-            toolRegistry = toolRegistry,
             world = worldState,
             broadcastHealthUpdate = { id, isNpc, hp, maxHp ->
                 sessionRegistry.all().forEach {
@@ -461,19 +470,7 @@ class GameLoopModule {
                     sessionRegistry
                         .all()
                         .find { it.id == id }
-                        ?.let { s ->
-                            val charData = s.characterData
-                            if (charData != null) {
-                                val derived = DerivedStatsCalculator.compute(charData, emptyList())
-                                s.send(
-                                    combatProcessor.makeStatusUpdate(
-                                        charData,
-                                        derived,
-                                        s.state.stance,
-                                        s.combatState.attackCooldownUntilMs,
-                                        godMode = s.state.godMode))
-                            }
-                        }
+                        ?.let { characterStats.sendStatus(it) }
                 }
             },
             broadcastCombatLog = { msg ->
@@ -486,6 +483,7 @@ class GameLoopModule {
             },
             subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
             onPlayerDowned = { session -> combatProcessor.handlePlayerDowned(session) },
+            characterStats = characterStats,
         )
 
     @Single fun classesConfig(): ClassesConfig = ClassesConfig()
@@ -495,9 +493,6 @@ class GameLoopModule {
 
     @Single
     fun regenProcessor(
-        armorRegistry: Map<String, ArmorDefinition>,
-        weaponRegistry: Map<String, WeaponDefinition>,
-        toolRegistry: Map<String, ToolDefinition>,
         classesConfigData: ClassesConfigData,
         combatConfigData: CombatConfigData,
         combatProcessor: CombatProcessor,
@@ -505,17 +500,11 @@ class GameLoopModule {
         RegenProcessor(
             config = classesConfigData,
             maxRage = combatConfigData.maxRage,
-            armorRegistry = armorRegistry,
-            weaponRegistry = weaponRegistry,
-            toolRegistry = toolRegistry,
             combatProcessor = combatProcessor,
         )
 
     @Single
     fun spellProcessor(
-        armorRegistry: Map<String, ArmorDefinition>,
-        weaponRegistry: Map<String, WeaponDefinition>,
-        toolRegistry: Map<String, ToolDefinition>,
         @Named("spells") spells: Map<String, SpellDefinition>,
         classesConfigData: ClassesConfigData,
         combatConfigData: CombatConfigData,
@@ -526,9 +515,6 @@ class GameLoopModule {
         SpellProcessor(
             spellRegistry = spells,
             classRegistry = classesConfigData.classes,
-            armorRegistry = armorRegistry,
-            weaponRegistry = weaponRegistry,
-            toolRegistry = toolRegistry,
             combatConfig = combatConfigData,
             combatProcessor = combatProcessor,
             getSessions = sessionRegistry::all,

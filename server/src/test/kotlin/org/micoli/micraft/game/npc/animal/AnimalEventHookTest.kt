@@ -76,7 +76,6 @@ private fun processor(
             CombatProcessor(
                 config = CombatConfigData(),
                 attackRegistry = emptyMap(),
-                armorRegistry = emptyMap(),
                 classRegistry = emptyMap(),
                 npcManager = manager,
                 getSessions = { emptyList() },

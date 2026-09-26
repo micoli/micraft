@@ -6,8 +6,6 @@ import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.command.Completion
 import org.micoli.micraft.command.resolvePlayerSession
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
-import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -60,21 +58,19 @@ class ResurectCommand : CommandHandler {
                     return
                 }
 
-        val armors =
-            target.state.equipmentBonuses(
-                context.armorRegistry(), context.weaponRegistry(), context.toolRegistry())
-        val derived = DerivedStatsCalculator.compute(charData, armors)
+        target.combatState = CombatState(downingSuccesses = 0, downingFailures = 0)
+        val derived = context.characterStats.derived(target, charData)
         val newHp = derived.maxHp
         val newMana = derived.maxMana
         val respawnPos = charData.restPoint.firstOrNull() ?: target.state.pos
 
         target.characterData = charData.copy(currentHp = newHp, currentMana = newMana)
-        target.combatState = CombatState(downingSuccesses = 0, downingFailures = 0)
 
         context.sessions().forEach {
             it.send(ServerMessage.PlayerRespawned(target.id, respawnPos, newHp, newMana))
         }
         context.savePlayer(target)
+        context.characterStats.resync(target)
 
         if (target.id != session.id) {
             session.send(

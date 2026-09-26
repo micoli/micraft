@@ -63,7 +63,6 @@ private class Fixture(def: NpcDefinition = bearDef()) {
         CombatProcessor(
             config = CombatConfigData(),
             attackRegistry = emptyMap(),
-            armorRegistry = emptyMap(),
             classRegistry = emptyMap(),
             npcManager = manager,
             getSessions = { sessions },

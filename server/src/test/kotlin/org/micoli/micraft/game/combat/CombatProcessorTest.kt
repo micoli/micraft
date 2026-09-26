@@ -71,7 +71,6 @@ class CombatProcessorTest {
         CombatProcessor(
             config = config,
             attackRegistry = attackRegistry,
-            armorRegistry = emptyMap(),
             classRegistry = classRegistry,
             npcManager = NpcManager(broadcast = {}),
             getSessions = sessions,

@@ -108,8 +108,12 @@ The archetype of a Character (e.g. warrior) that sets resource type, stat bonuse
 **Base stats**:
 STR, DEX, INT, WIS, CON, CHA, chosen by point-buy at creation.
 
+**Effective stats**:
+Base stats plus the stat bonuses of the equipped Loadout.
+_Avoid_: effective base stats
+
 **Derived stats**:
-Values computed from base stats, equipment and active effects: max HP, max mana, etc.
+Values computed from Effective stats, Level and active effects: max HP, max mana, etc.
 
 **Ability**:
 Anything a Character or NPC can use in combat — an Attack or a Spell.

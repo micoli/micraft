@@ -7,14 +7,8 @@ import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.command.Completion
 import org.micoli.micraft.command.playerCompletions
 import org.micoli.micraft.command.resolvePlayerSession
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
-import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
-import org.micoli.micraft.player.rpg.ClassResource
-import org.micoli.micraft.player.rpg.DerivedStats
 import org.micoli.micraft.protocol.ServerMessage
-
-private const val MAX_RAGE_DEFAULT = 100
 
 class SetCommand : CommandHandler {
     override val id: UUID = UUID.fromString("c4e7a2d1-83f5-4b9e-a0c6-d1e2f3a4b5c6")
@@ -78,11 +72,7 @@ class SetCommand : CommandHandler {
                     return
                 }
 
-        val armors =
-            target.state.equipmentBonuses(
-                context.armorRegistry(), context.weaponRegistry(), context.toolRegistry())
-        val derived = DerivedStatsCalculator.compute(charData, armors)
-        val isRage = charData.characterClass.classResource == ClassResource.RAGE
+        val derived = context.characterStats.derived(target, charData)
 
         when (subcommand.lowercase()) {
             "hp" -> {
@@ -90,7 +80,7 @@ class SetCommand : CommandHandler {
                 target.characterData = charData.copy(currentHp = newHp)
                 context.broadcast(
                     ServerMessage.HealthUpdate(target.id, false, newHp, derived.maxHp))
-                target.send(statusUpdate(target, derived, isRage))
+                context.characterStats.resync(target)
                 session.send(
                     ServerMessage.Notification(
                         context.i18n.t(lang, "set:server:done_hp", target.state.name, newHp)))
@@ -98,7 +88,7 @@ class SetCommand : CommandHandler {
             "mana" -> {
                 val newMana = value.coerceIn(0, derived.maxMana)
                 target.characterData = charData.copy(currentMana = newMana)
-                target.send(statusUpdate(target, derived, isRage))
+                context.characterStats.resync(target)
                 session.send(
                     ServerMessage.Notification(
                         context.i18n.t(lang, "set:server:done_mana", target.state.name, newMana)))
@@ -109,26 +99,5 @@ class SetCommand : CommandHandler {
                         context.i18n.t(lang, "set:server:unknown_stat", subcommand)))
         }
         context.savePlayer(target)
-    }
-
-    private fun statusUpdate(
-        target: PlayerSession,
-        derived: DerivedStats,
-        isRage: Boolean,
-    ): ServerMessage.PlayerStatusUpdate {
-        val c = target.characterData!!
-        return ServerMessage.PlayerStatusUpdate(
-            currentHp = c.currentHp,
-            maxHp = derived.maxHp,
-            currentMana = if (isRage) 0 else c.currentMana,
-            maxMana = if (isRage) 0 else derived.maxMana,
-            currentRage = if (isRage) c.currentRage else 0,
-            maxRage = if (isRage) MAX_RAGE_DEFAULT else 0,
-            stance = target.state.stance,
-            globalCooldownRemainingMs =
-                (target.combatState.attackCooldownUntilMs - System.currentTimeMillis())
-                    .coerceAtLeast(0),
-            godMode = target.state.godMode,
-        )
     }
 }

@@ -44,7 +44,6 @@ class SiegeProjectileManagerTest {
         CombatProcessor(
             config = CombatConfigData(maxCombatRange = 100f),
             attackRegistry = emptyMap(),
-            armorRegistry = emptyMap(),
             classRegistry = emptyMap(),
             npcManager = npcManager,
             getSessions = { sessions },

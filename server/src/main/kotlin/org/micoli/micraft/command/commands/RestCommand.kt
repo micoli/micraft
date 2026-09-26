@@ -3,8 +3,6 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
-import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -21,10 +19,7 @@ class RestCommand : CommandHandler {
                     return
                 }
 
-        val armors =
-            session.state.equipmentBonuses(
-                context.armorRegistry(), context.weaponRegistry(), context.toolRegistry())
-        val derived = DerivedStatsCalculator.compute(charData, armors)
+        val derived = context.characterStats.derived(session, charData)
 
         val restored =
             charData.copy(
@@ -34,7 +29,7 @@ class RestCommand : CommandHandler {
         session.characterData = restored
         context.clearAccumulators?.invoke(session.id)
         context.savePlayer(session)
-        context.sendStatusUpdate?.invoke(session)
+        context.characterStats.sendStatus(session)
         session.send(
             ServerMessage.Notification(context.i18n.t(session.state.language, "rest:server:done")))
     }

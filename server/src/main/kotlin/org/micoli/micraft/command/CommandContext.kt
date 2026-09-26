@@ -20,6 +20,7 @@ import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
 import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.rpg.CharacterStats
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.social.FactionManager
 import org.micoli.micraft.game.social.GroupManager
@@ -73,12 +74,14 @@ data class CommandContext(
     val armorRegistry: () -> Map<String, ArmorDefinition> = { emptyMap() },
     val weaponRegistry: () -> Map<String, WeaponDefinition> = { emptyMap() },
     val toolRegistry: () -> Map<String, ToolDefinition> = { emptyMap() },
+    val characterStats: CharacterStats =
+        CharacterStats(
+            armorRegistry(), weaponRegistry(), toolRegistry(), savePlayer = { savePlayer(it) }),
     val weaponCategories: () -> Map<EquipmentCategory, WeaponCategoryDefinition> = { emptyMap() },
     val toolCategories: () -> Map<EquipmentCategory, ToolCategoryDefinition> = { emptyMap() },
     val tradeManager: TradeManager? = null,
     val auctionManager: AuctionManager? = null,
     val clearAccumulators: ((String) -> Unit)? = null,
-    val sendStatusUpdate: (suspend (PlayerSession) -> Unit)? = null,
     val namedPoints: () -> Map<String, Vec3> = { emptyMap() },
     val questManager: QuestManager? = null,
     val applyBuff: (suspend (PlayerSession, StatusEffect, Float) -> Unit)? = null, // null in tests

@@ -114,7 +114,6 @@ private class Arena(roamRadius: Float, preyFleeRadius: Float = 0f, preySpeed: Fl
         CombatProcessor(
             config = CombatConfigData(),
             attackRegistry = emptyMap(),
-            armorRegistry = emptyMap(),
             classRegistry = emptyMap(),
             npcManager = npcManager,
             getSessions = { emptyList() },

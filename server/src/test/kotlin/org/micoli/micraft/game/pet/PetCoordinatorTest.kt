@@ -33,7 +33,6 @@ private fun combat(m: NpcManager) =
     CombatProcessor(
         config = CombatConfigData(),
         attackRegistry = emptyMap(),
-        armorRegistry = emptyMap(),
         classRegistry = emptyMap(),
         npcManager = m,
         getSessions = { emptyList() },

@@ -92,10 +92,9 @@ import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistry
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.CharacterStats
 import org.micoli.micraft.game.rpg.ExperienceConfig
 import org.micoli.micraft.game.rpg.ExperienceProcessor
-import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.NetworkStats
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.session.hasPermission
@@ -367,13 +366,17 @@ class GameLoop(
     private val skillsConfigLoader: SkillsConfig? = null,
     private val classesConfigLoader: ClassesConfig? = null,
     private val experienceConfigLoader: ExperienceConfig? = null,
+    private val characterStats: CharacterStats =
+        CharacterStats(
+            armorRegistryLoader.load(),
+            weaponRegistry,
+            toolRegistry,
+            combatConfig.maxRage,
+            playerPersister::save),
     private val combatProcessor: CombatProcessor =
         CombatProcessor(
             config = combatConfig,
             attackRegistry = attackRegistry,
-            armorRegistry = armorRegistryLoader.load(),
-            weaponRegistry = weaponRegistry,
-            toolRegistry = toolRegistry,
             classRegistry = classesData.classes,
             npcManager = npcManager,
             vehicleManager = vehicleManager,
@@ -391,12 +394,10 @@ class GameLoop(
             i18n = i18n,
             savePlayer = playerPersister::save,
             factionManager = factionManager,
+            characterStats = characterStats,
         ),
     private val statusEffectProcessor: StatusEffectProcessor =
         StatusEffectProcessor(
-            armorRegistry = armorRegistryLoader.load(),
-            weaponRegistry = weaponRegistry,
-            toolRegistry = toolRegistry,
             world = world,
             broadcastHealthUpdate = { id, isNpc, hp, maxHp ->
                 sessionRegistry.all().forEach {
@@ -406,20 +407,7 @@ class GameLoop(
                     sessionRegistry
                         .all()
                         .find { it.id == id }
-                        ?.let { s ->
-                            val charData = s.characterData
-                            if (charData != null) {
-                                val derived = DerivedStatsCalculator.compute(charData, emptyList())
-                                s.send(
-                                    combatProcessor.makeStatusUpdate(
-                                        charData,
-                                        derived,
-                                        s.state.stance,
-                                        s.combatState.attackCooldownUntilMs,
-                                        s.combatState.attackCooldownsUntilMs,
-                                        s.state.godMode))
-                            }
-                        }
+                        ?.let { characterStats.sendStatus(it) }
                 }
             },
             broadcastCombatLog = { msg ->
@@ -432,23 +420,18 @@ class GameLoop(
             },
             subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
             onPlayerDowned = { session -> combatProcessor.handlePlayerDowned(session) },
+            characterStats = characterStats,
         ),
     private val regenProcessor: RegenProcessor =
         RegenProcessor(
             config = ClassesConfig().data,
             maxRage = combatConfig.maxRage,
-            armorRegistry = armorRegistryLoader.load(),
-            weaponRegistry = weaponRegistry,
-            toolRegistry = toolRegistry,
             combatProcessor = combatProcessor,
         ),
     private val spellProcessor: SpellProcessor =
         SpellProcessor(
             spellRegistry = spellRegistry,
             classRegistry = classesData.classes,
-            armorRegistry = armorRegistryLoader.load(),
-            weaponRegistry = weaponRegistry,
-            toolRegistry = toolRegistry,
             combatConfig = combatConfig,
             combatProcessor = combatProcessor,
             getSessions = sessionRegistry::all,
@@ -516,7 +499,11 @@ class GameLoop(
     val networkStats: NetworkStats = NetworkStats(),
     private val commandContextFactory: ((CommandContextClosures) -> CommandContext)? = null,
     private val experienceProcessor: ExperienceProcessor =
-        ExperienceProcessor(ExperienceConfig().data, sessionRegistry::all, playerPersister::save),
+        ExperienceProcessor(
+            ExperienceConfig().data,
+            sessionRegistry::all,
+            playerPersister::save,
+            characterStats = characterStats),
     private val petManager: PetManager =
         PetManager(
             npcManager = npcManager,
@@ -543,24 +530,9 @@ class GameLoop(
         val newSkills = skillsConfigLoader?.reload()
         val newClasses = classesConfigLoader?.reload() ?: classesData
         val newExperience = experienceConfigLoader?.reload()
-        val freshArmor = armorRegistry
-        combatProcessor.reload(
-            newCombat,
-            newSkills?.attacks ?: attackRegistry,
-            freshArmor,
-            newClasses.classes,
-            weaponRegistry,
-            toolRegistry)
-        regenProcessor.reload(
-            newClasses, newCombat.maxRage, freshArmor, weaponRegistry, toolRegistry)
-        spellProcessor.reload(
-            newSkills?.spells ?: spellRegistry,
-            newClasses.classes,
-            freshArmor,
-            newCombat,
-            weaponRegistry,
-            toolRegistry)
-        statusEffectProcessor.reload(freshArmor, weaponRegistry, toolRegistry)
+        combatProcessor.reload(newCombat, newSkills?.attacks ?: attackRegistry, newClasses.classes)
+        regenProcessor.reload(newClasses, newCombat.maxRage)
+        spellProcessor.reload(newSkills?.spells ?: spellRegistry, newClasses.classes, newCombat)
         if (newExperience != null) experienceProcessor.reload(newExperience)
         if (newSkills != null) blockPlacer.reload(newSkills.attacks)
     }
@@ -857,28 +829,8 @@ class GameLoop(
             questManager = questManager,
             clearAccumulators = regenProcessor::clearAccumulators,
             applyBuff = closures.applyBuff,
-            sendStatusUpdate = statusUpdateSender(combatProcessor),
+            characterStats = characterStats,
         )
-
-    /** Recompute + push a StatusUpdate for session through the given world's combat processor. */
-    private fun statusUpdateSender(
-        combatProcessor: CombatProcessor
-    ): suspend (PlayerSession) -> Unit = sender@{ session ->
-        val charData = session.characterData ?: return@sender
-        val armors = session.state.equipmentBonuses(armorRegistry, weaponRegistry, toolRegistry)
-        val effectNames =
-            session.combatState.activeEffects.map { it.effect::class.simpleName ?: "" }.toSet()
-        val derived = DerivedStatsCalculator.compute(charData, armors, effectNames)
-        session.send(
-            combatProcessor.makeStatusUpdate(
-                charData,
-                derived,
-                session.state.stance,
-                session.combatState.attackCooldownUntilMs,
-                session.combatState.attackCooldownsUntilMs,
-                session.state.godMode,
-            ))
-    }
 
     private val commandContext =
         (commandContextFactory ?: ::buildDefaultCommandContext).invoke(commandContextClosures)
@@ -942,7 +894,7 @@ class GameLoop(
                     gw.combatProcessor.applyStatusEffectTo(
                         session, effect, durationSec, System.currentTimeMillis())
                 },
-                sendStatusUpdate = statusUpdateSender(gw.combatProcessor),
+                characterStats = gw.combatProcessor.characterStats,
                 flushWorld = { gw.world.flushDirty() },
                 sessions = gw.sessions::all,
                 broadcast = { msg -> gw.sessions.broadcast(msg) },
@@ -1440,24 +1392,7 @@ class GameLoop(
                 armorRegistry = armorRegistryLoader.load()
                 weaponRegistry = weaponRegistryLoader.load()
                 toolRegistry = toolRegistryLoader.load()
-                val freshArmor = armorRegistry
-                combatProcessor.reload(
-                    combatConfig,
-                    attackRegistry,
-                    freshArmor,
-                    classesData.classes,
-                    weaponRegistry,
-                    toolRegistry)
-                regenProcessor.reload(
-                    classesData, combatConfig.maxRage, freshArmor, weaponRegistry, toolRegistry)
-                spellProcessor.reload(
-                    spellRegistry,
-                    classesData.classes,
-                    freshArmor,
-                    combatConfig,
-                    weaponRegistry,
-                    toolRegistry)
-                statusEffectProcessor.reload(freshArmor, weaponRegistry, toolRegistry)
+                characterStats.reload(armorRegistry, weaponRegistry, toolRegistry)
             },
             reloadEquipmentCategories = {
                 weaponCategories = weaponCategoryRegistryLoader.load()
@@ -1582,7 +1517,7 @@ class GameLoop(
             return
         }
         if (qty == 1) session.inventory.remove(itemType) else session.inventory[itemType] = qty - 1
-        val derived = DerivedStatsCalculator.compute(charData, emptyList())
+        val derived = combatProcessor.characterStats.derived(session, charData)
         val newCharData =
             charData.copy(
                 currentHp = (charData.currentHp + def.healthRestore).coerceAtMost(derived.maxHp),
@@ -1592,14 +1527,7 @@ class GameLoop(
         session.characterData = newCharData
         savePlayer(session)
         session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
-        session.send(
-            combatProcessor.makeStatusUpdate(
-                newCharData,
-                derived,
-                session.state.stance,
-                session.combatState.attackCooldownUntilMs,
-                session.combatState.attackCooldownsUntilMs,
-                session.state.godMode))
+        combatProcessor.characterStats.sendStatus(session)
         session.send(
             ServerMessage.Notification(
                 i18n.t(session.state.language, "drink:server:consumed", itemType.id.lowercase())))
@@ -2112,24 +2040,8 @@ class GameLoop(
         gw.guildManager.sendSync(session)
         gw.factionManager.sendSync(session)
         sendPostConnectSyncs(session, gw, playerName)
-        val charData = session.characterData
-        if (charData != null) {
-            val bonuses =
-                session.state.equipmentBonuses(armorRegistry, weaponRegistry, toolRegistry)
-            val derived = DerivedStatsCalculator.compute(charData, bonuses)
-            session.send(
-                ServerMessage.CharacterSync(
-                    charData,
-                    derived,
-                    DerivedStatsCalculator.effectiveBaseStats(charData, bonuses)))
-            session.send(
-                gw.combatProcessor.makeStatusUpdate(
-                    charData,
-                    derived,
-                    session.state.stance,
-                    session.combatState.attackCooldownUntilMs,
-                    session.combatState.attackCooldownsUntilMs,
-                    session.state.godMode))
+        if (session.characterData != null) {
+            gw.combatProcessor.characterStats.resync(session)
             gw.experienceProcessor.sendXpState(session)
         } else {
             // Every Character has a Class: one without character data is sent to creation.

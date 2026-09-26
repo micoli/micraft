@@ -1,24 +1,20 @@
 package org.micoli.micraft.game.combat
 
 import org.micoli.micraft.combat.StatusEffect
-import org.micoli.micraft.game.armor.ArmorDefinition
-import org.micoli.micraft.game.equipment.ToolDefinition
-import org.micoli.micraft.game.equipment.WeaponDefinition
+import org.micoli.micraft.game.rpg.CharacterStats
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.protocol.ServerMessage
 
 class StatusEffectProcessor(
-    @Volatile private var armorRegistry: Map<String, ArmorDefinition>,
-    @Volatile private var weaponRegistry: Map<String, WeaponDefinition> = emptyMap(),
-    @Volatile private var toolRegistry: Map<String, ToolDefinition> = emptyMap(),
     private val world: WorldState,
     private val broadcastHealthUpdate: suspend (String, Boolean, Int, Int) -> Unit,
     private val broadcastCombatLog: suspend (String) -> Unit,
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit,
     private val onPlayerDowned: suspend (PlayerSession) -> Unit = {},
     private val nowMs: () -> Long = System::currentTimeMillis,
+    private val characterStats: CharacterStats = CharacterStats(),
 ) {
     private var lastTickMs = nowMs()
     private val pendingDotDamage = mutableMapOf<String, Float>()
@@ -29,7 +25,7 @@ class StatusEffectProcessor(
         lastTickMs = now
 
         for (session in sessions) {
-            val charData = session.characterData ?: continue
+            if (session.characterData == null) continue
             val effects = session.combatState.activeEffects
             if (effects.isEmpty()) continue
 
@@ -61,19 +57,20 @@ class StatusEffectProcessor(
             if (changed) {
                 session.send(ServerMessage.StatusEffectUpdate(session.id, effects.toList()))
             }
+            if (expired.any { characterStats.affectsStats(it.effect) }) {
+                characterStats.resync(session)
+            }
 
             if (!isDamageApplicable(hpDelta, session)) {
                 continue
             }
-            val activeEffectNames = effects.map { it.effect::class.simpleName ?: "" }.toSet()
-            val derived =
-                session.computeDerived(
-                    armorRegistry, charData, activeEffectNames, weaponRegistry, toolRegistry)
+            val current = session.characterData ?: continue
+            val derived = characterStats.derived(session, current)
             val pending = (pendingDotDamage[session.id] ?: 0f) - hpDelta
             val intDamage = pending.toInt()
             pendingDotDamage[session.id] = pending - intDamage
-            val newHp = (charData.currentHp - intDamage).coerceIn(0, derived.maxHp)
-            session.characterData = charData.copy(currentHp = newHp)
+            val newHp = (current.currentHp - intDamage).coerceIn(0, derived.maxHp)
+            session.characterData = current.copy(currentHp = newHp)
             broadcastHealthUpdate(session.id, false, newHp, derived.maxHp)
             if (newHp <= 0 && !session.isDowned) onPlayerDowned(session)
             if (intDamage <= 0) {
@@ -82,20 +79,10 @@ class StatusEffectProcessor(
             val effectNames =
                 effects.mapNotNull { it.effect.damageEffectName }.distinct().joinToString("+")
             subscribeToChannel(session, "combat")
-            broadcastCombatLog("${charData.name} takes $intDamage damage from $effectNames")
+            broadcastCombatLog("${current.name} takes $intDamage damage from $effectNames")
         }
     }
 
     private fun isDamageApplicable(hpDelta: Float, session: PlayerSession): Boolean =
         hpDelta != 0f && !(hpDelta < 0 && session.state.godMode)
-
-    fun reload(
-        armorRegistry: Map<String, ArmorDefinition>,
-        weaponRegistry: Map<String, WeaponDefinition> = this.weaponRegistry,
-        toolRegistry: Map<String, ToolDefinition> = this.toolRegistry,
-    ) {
-        this.armorRegistry = armorRegistry
-        this.weaponRegistry = weaponRegistry
-        this.toolRegistry = toolRegistry
-    }
 }

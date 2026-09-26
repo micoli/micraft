@@ -15,6 +15,7 @@ class ExperienceProcessor(
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit = { _, _ -> },
     private val broadcastCombatLog: suspend (String) -> Unit = {},
     onNpcLevelUp: suspend (NpcInstance, Int) -> Unit = { _, _ -> },
+    private val characterStats: CharacterStats = CharacterStats(savePlayer = savePlayer),
 ) {
     /** Wired post-construction (pet subsystem) to avoid a DI cycle. */
     @Volatile var onNpcLevelUp: suspend (NpcInstance, Int) -> Unit = onNpcLevelUp
@@ -70,8 +71,7 @@ class ExperienceProcessor(
             ))
 
         if (leveledUp) {
-            val derived = DerivedStatsCalculator.compute(updated)
-            session.send(ServerMessage.CharacterSync(updated, derived, updated.baseStats))
+            characterStats.resync(session)
             session.send(ServerMessage.Notification("Level up! You are now level $newLevel"))
             session.send(
                 ServerMessage.ChatMessage(

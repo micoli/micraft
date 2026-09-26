@@ -24,7 +24,7 @@ import org.micoli.micraft.game.placeable.siege.SiegeProjectileManager
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileTickPipeline
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
 import org.micoli.micraft.game.quest.QuestManager
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
+import org.micoli.micraft.game.rpg.CharacterStats
 import org.micoli.micraft.game.rpg.ExperienceConfigData
 import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.session.PlayerSession
@@ -125,6 +125,14 @@ fun buildGameWorld(
             chatService.subscribe(s, c)
         }
 
+    // Loaders, not shared.*Registry: same mis-resolved Map bean issue as ArmorLootGranter below.
+    val characterStats =
+        CharacterStats(
+            shared.armorRegistryLoader.load(),
+            shared.weaponRegistryLoader.load(),
+            shared.toolRegistryLoader.load(),
+            shared.combatConfigData.maxRage,
+            playerPersister::save)
     val experienceProcessor =
         ExperienceProcessor(
             opts.experienceConfigData ?: shared.experienceConfigData,
@@ -132,6 +140,7 @@ fun buildGameWorld(
             playerPersister::save,
             subscribeToChannel = subscribeToChannel,
             broadcastCombatLog = combatLog,
+            characterStats = characterStats,
         )
     val questManager =
         QuestManager(
@@ -239,9 +248,6 @@ fun buildGameWorld(
         CombatProcessor(
             config = shared.combatConfigData,
             attackRegistry = shared.attackRegistry,
-            armorRegistry = shared.armorRegistry,
-            weaponRegistry = shared.weaponRegistry,
-            toolRegistry = shared.toolRegistry,
             classRegistry = shared.classesConfigData.classes,
             npcManager = npcManager,
             vehicleManager = vehicleManager,
@@ -251,6 +257,7 @@ fun buildGameWorld(
             subscribeToChannel = subscribeToChannel,
             i18n = shared.i18n,
             savePlayer = playerPersister::save,
+            characterStats = characterStats,
         )
     val petCoordinator = PetCoordinator(npcManager, shared.combatConfigData)
     val petManager =
@@ -259,54 +266,30 @@ fun buildGameWorld(
 
     val statusEffectProcessor =
         StatusEffectProcessor(
-            armorRegistry = shared.armorRegistry,
-            weaponRegistry = shared.weaponRegistry,
-            toolRegistry = shared.toolRegistry,
             world = world,
             broadcastHealthUpdate = { targetId, isNpc, hp, maxHp ->
                 sessions.all().forEach {
                     it.send(ServerMessage.HealthUpdate(targetId, isNpc, hp, maxHp))
                 }
                 if (!isNpc) {
-                    sessions
-                        .all()
-                        .find { it.id == targetId }
-                        ?.let { s ->
-                            val charData = s.characterData
-                            if (charData != null) {
-                                val derived = DerivedStatsCalculator.compute(charData, emptyList())
-                                s.send(
-                                    combatProcessor.makeStatusUpdate(
-                                        charData,
-                                        derived,
-                                        s.state.stance,
-                                        s.combatState.attackCooldownUntilMs,
-                                        s.combatState.attackCooldownsUntilMs,
-                                        s.state.godMode))
-                            }
-                        }
+                    sessions.all().find { it.id == targetId }?.let { characterStats.sendStatus(it) }
                 }
             },
             broadcastCombatLog = combatLog,
             subscribeToChannel = subscribeToChannel,
             onPlayerDowned = { session -> combatProcessor.handlePlayerDowned(session) },
+            characterStats = characterStats,
         )
     val regenProcessor =
         RegenProcessor(
             config = shared.classesConfigData,
             maxRage = shared.combatConfigData.maxRage,
-            armorRegistry = shared.armorRegistry,
-            weaponRegistry = shared.weaponRegistry,
-            toolRegistry = shared.toolRegistry,
             combatProcessor = combatProcessor,
         )
     val spellProcessor =
         SpellProcessor(
             spellRegistry = shared.spellRegistry,
             classRegistry = shared.classesConfigData.classes,
-            armorRegistry = shared.armorRegistry,
-            weaponRegistry = shared.weaponRegistry,
-            toolRegistry = shared.toolRegistry,
             combatConfig = shared.combatConfigData,
             combatProcessor = combatProcessor,
             getSessions = sessions::all,

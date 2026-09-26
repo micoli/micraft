@@ -47,7 +47,6 @@ class SpellProcessorLiveConfigTest {
             CombatProcessor(
                 config = CombatConfigData(),
                 attackRegistry = emptyMap(),
-                armorRegistry = emptyMap(),
                 classRegistry = classes.data.classes,
                 npcManager = npcManager,
                 getSessions = { emptyList() },
@@ -60,7 +59,6 @@ class SpellProcessorLiveConfigTest {
             SpellProcessor(
                 spellRegistry = skills.data.spells,
                 classRegistry = classes.data.classes,
-                armorRegistry = emptyMap(),
                 combatConfig = CombatConfigData(),
                 combatProcessor = combatProcessor,
                 getSessions = { emptyList() },

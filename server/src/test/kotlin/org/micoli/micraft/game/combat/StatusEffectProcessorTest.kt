@@ -35,7 +35,6 @@ class StatusEffectProcessorTest {
         healthUpdates: MutableList<Triple<String, Int, Int>> = mutableListOf(),
     ) =
         StatusEffectProcessor(
-            armorRegistry = emptyMap(),
             world = testWorld(),
             broadcastHealthUpdate = { id, _, hp, maxHp ->
                 healthUpdates.add(Triple(id, hp, maxHp))
@@ -57,6 +56,22 @@ class StatusEffectProcessorTest {
         val p = buildProcessor(combatLog, subscribed, healthUpdates)
         clock += 600
         return p
+    }
+
+    @Test
+    fun `hp boost expiry resyncs the character and clamps hp`() = runBlocking {
+        val session = testSession(id = "a", name = "Alice")
+        session.characterData = testChar("Alice", hp = 29) // boosted max: 9 + 20
+        session.combatState.activeEffects.add(activeEffect(StatusEffect.HpBoost, durationMs = 100))
+        val processor = buildProcessor()
+
+        clock += 200
+        processor.tick(listOf(session))
+
+        assertEquals(9, session.characterData!!.currentHp) // floor((8-10)/2) * 1 + 10
+        assertEquals(
+            session.characterData!!.currentHp,
+            session.sent.filterIsInstance<ServerMessage.CharacterSync>().single().derived.maxHp)
     }
 
     @Test

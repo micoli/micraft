@@ -86,7 +86,6 @@ private fun processor(manager: NpcManager, onEvent: (AnimalEvent) -> Unit = {}) 
                 CombatProcessor(
                     config = CombatConfigData(),
                     attackRegistry = emptyMap(),
-                    armorRegistry = emptyMap(),
                     classRegistry = emptyMap(),
                     npcManager = manager,
                     getSessions = { emptyList() },

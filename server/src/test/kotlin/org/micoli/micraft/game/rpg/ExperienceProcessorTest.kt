@@ -5,6 +5,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.game.armor.ArmorDefinition
+import org.micoli.micraft.game.armor.WearableSlots
 import org.micoli.micraft.game.npc.AggroMode
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
@@ -33,12 +35,14 @@ class ExperienceProcessorTest {
     private fun processor(
         sessions: List<PlayerSession> = emptyList(),
         combatLog: MutableList<String> = mutableListOf(),
+        characterStats: CharacterStats = CharacterStats(),
     ) =
         ExperienceProcessor(
             config = config,
             getSessions = { sessions },
             savePlayer = {},
             broadcastCombatLog = { combatLog.add(it) },
+            characterStats = characterStats,
         )
 
     private fun charData(xp: Int = 0, level: Int = 1) =
@@ -112,6 +116,22 @@ class ExperienceProcessorTest {
 
         assertTrue(session.sent.any { it is ServerMessage.CharacterSync })
         assertTrue(session.sent.any { it is ServerMessage.Notification })
+    }
+
+    @Test
+    fun `level up while wearing CON armor syncs stats that include the armor`() = runBlocking {
+        val armor =
+            ArmorDefinition(wearable = WearableSlots(body = true), statBonus = StatBonus(con = 4))
+        val stats = CharacterStats(armorRegistry = mapOf("con_chest" to armor))
+        val session = testSession(id = "s3")
+        session.state = session.state.copy(armors = listOf("con_chest"))
+        session.characterData = charData(xp = 250).copy(baseStats = BaseStats(con = 10))
+
+        processor(listOf(session), characterStats = stats).grantXp(session, 100)
+
+        val sync = session.sent.filterIsInstance<ServerMessage.CharacterSync>().single()
+        assertEquals(14, sync.effectiveBaseStats.con)
+        assertEquals(14, sync.derived.maxHp) // floor((14-10)/2) * level 2 + 10
     }
 
     // ── onNpcKilled — group XP ────────────────────────────────────────────────

@@ -75,10 +75,8 @@ import org.micoli.micraft.game.perf.JvmRunProbe
 import org.micoli.micraft.game.perf.PerfRun
 import org.micoli.micraft.game.perf.PerfSnapshot
 import org.micoli.micraft.game.perf.RunMetrics
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.rpg.character.RpgCharacterBuilder
 import org.micoli.micraft.game.rpg.character.RpgCharacterResult
-import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockState
@@ -1771,16 +1769,7 @@ class AdminController(
                         live.state = applyEquipment(live.state)
                         adminWorld().broadcastPlayerUpdate(live)
                         adminWorld().savePlayerSession(live)
-                        live.characterData?.let { char ->
-                            val bonuses =
-                                live.state.equipmentBonuses(
-                                    armorRegistry(), weaponRegistry(), toolRegistry())
-                            live.send(
-                                ServerMessage.CharacterSync(
-                                    char,
-                                    DerivedStatsCalculator.compute(char, bonuses),
-                                    DerivedStatsCalculator.effectiveBaseStats(char, bonuses)))
-                        }
+                        adminWorld().combatProcessor.characterStats.resync(live)
                         return@put call.respond(HttpStatusCode.NoContent)
                     }
 

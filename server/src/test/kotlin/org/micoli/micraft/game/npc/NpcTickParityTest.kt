@@ -135,7 +135,6 @@ class NpcTickParityTest {
             CombatProcessor(
                 config = CombatConfigData(),
                 attackRegistry = emptyMap(),
-                armorRegistry = emptyMap(),
                 classRegistry = emptyMap(),
                 npcManager = npcManager,
                 getSessions = { emptyList() },

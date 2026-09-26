@@ -36,7 +36,6 @@ class SpellProcessorDirectDamageTest {
         CombatProcessor(
             config = CombatConfigData(globalCooldownMs = 1500),
             attackRegistry = emptyMap(),
-            armorRegistry = emptyMap(),
             classRegistry = emptyMap(),
             npcManager = npcManager,
             getSessions = sessions,
@@ -54,7 +53,6 @@ class SpellProcessorDirectDamageTest {
         SpellProcessor(
             spellRegistry = mapOf("quickStrike" to boltSpell),
             classRegistry = emptyMap(),
-            armorRegistry = emptyMap(),
             combatConfig = CombatConfigData(globalCooldownMs = 1500),
             combatProcessor = buildCombatProcessor({ sessions }, npcManager),
             getSessions = { sessions },
@@ -207,7 +205,6 @@ class SpellProcessorDirectDamageTest {
                                         1 to
                                             AttackRankDefinition(
                                                 power = 0, weaponDice = "1d4", cooldownMs = 0)))),
-                armorRegistry = emptyMap(),
                 classRegistry = emptyMap(),
                 npcManager = NpcManager(broadcast = {}),
                 getSessions = { listOf(caster, target) },
@@ -220,7 +217,6 @@ class SpellProcessorDirectDamageTest {
             SpellProcessor(
                 spellRegistry = mapOf("quickStrike" to boltSpell),
                 classRegistry = emptyMap(),
-                armorRegistry = emptyMap(),
                 combatConfig = CombatConfigData(globalCooldownMs = 1500),
                 combatProcessor = combatProcessor,
                 getSessions = { listOf(caster, target) },

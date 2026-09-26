@@ -2,13 +2,8 @@ package org.micoli.micraft.game.combat
 
 import kotlin.math.sqrt
 import org.micoli.micraft.combat.ActiveStatusEffect
-import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
-import org.micoli.micraft.game.equipment.ToolDefinition
-import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.npc.NpcInstance
-import org.micoli.micraft.game.rpg.DerivedStatsCalculator
-import org.micoli.micraft.game.rpg.equipmentBonuses
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.player.rpg.ClassResource
@@ -21,9 +16,6 @@ private val log = LoggerFactory.getLogger(SpellProcessor::class.java)
 class SpellProcessor(
     @Volatile private var spellRegistry: Map<String, SpellDefinition>,
     @Volatile private var classRegistry: Map<String, ClassDefinitionEntry>,
-    @Volatile private var armorRegistry: Map<String, ArmorDefinition>,
-    @Volatile private var weaponRegistry: Map<String, WeaponDefinition> = emptyMap(),
-    @Volatile private var toolRegistry: Map<String, ToolDefinition> = emptyMap(),
     @Volatile private var combatConfig: CombatConfigData,
     private val combatProcessor: CombatProcessor,
     private val getSessions: () -> Collection<PlayerSession> = { emptyList() },
@@ -127,17 +119,7 @@ class SpellProcessor(
             session.combatState.copy(attackCooldownUntilMs = now + combatConfig.globalCooldownMs)
         if (rankDef.cooldownMs > 0) cooldowns[cdKey] = now + rankDef.cooldownMs
 
-        val armors = session.state.equipmentBonuses(armorRegistry, weaponRegistry, toolRegistry)
-        val derived = DerivedStatsCalculator.compute(updated, armors)
-        session.send(
-            combatProcessor.makeStatusUpdate(
-                updated,
-                derived,
-                session.state.stance,
-                session.combatState.attackCooldownUntilMs,
-                session.combatState.attackCooldownsUntilMs,
-                session.state.godMode,
-            ))
+        combatProcessor.characterStats.sendStatus(session)
     }
 
     /**
@@ -328,17 +310,7 @@ class SpellProcessor(
             session.combatState.copy(attackCooldownUntilMs = now + combatConfig.globalCooldownMs)
         if (rankDef.cooldownMs > 0) cooldowns[cdKey] = now + rankDef.cooldownMs
 
-        val armors = session.state.equipmentBonuses(armorRegistry, weaponRegistry, toolRegistry)
-        val derived = DerivedStatsCalculator.compute(updated, armors)
-        session.send(
-            combatProcessor.makeStatusUpdate(
-                updated,
-                derived,
-                session.state.stance,
-                session.combatState.attackCooldownUntilMs,
-                session.combatState.attackCooldownsUntilMs,
-                session.state.godMode,
-            ))
+        combatProcessor.characterStats.sendStatus(session)
     }
 
     /**
@@ -413,16 +385,10 @@ class SpellProcessor(
     fun reload(
         spellRegistry: Map<String, SpellDefinition>,
         classRegistry: Map<String, ClassDefinitionEntry>,
-        armorRegistry: Map<String, ArmorDefinition>,
         combatConfig: CombatConfigData,
-        weaponRegistry: Map<String, WeaponDefinition> = this.weaponRegistry,
-        toolRegistry: Map<String, ToolDefinition> = this.toolRegistry,
     ) {
         this.spellRegistry = spellRegistry
         this.classRegistry = classRegistry
-        this.armorRegistry = armorRegistry
         this.combatConfig = combatConfig
-        this.weaponRegistry = weaponRegistry
-        this.toolRegistry = toolRegistry
     }
 }

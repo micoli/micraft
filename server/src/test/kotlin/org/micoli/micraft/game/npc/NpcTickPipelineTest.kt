@@ -44,7 +44,6 @@ private class Harness(tuning: NpcTuning = NpcConstants.live, seed: Long = 7L) {
         CombatProcessor(
             config = CombatConfigData(),
             attackRegistry = emptyMap(),
-            armorRegistry = emptyMap(),
             classRegistry = emptyMap(),
             npcManager = npcManager,
             getSessions = { emptyList() },

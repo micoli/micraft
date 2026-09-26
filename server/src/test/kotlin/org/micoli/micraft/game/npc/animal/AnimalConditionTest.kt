@@ -90,7 +90,6 @@ private fun processor(manager: NpcManager, gameDaySeconds: Double = 1.0) =
                 CombatProcessor(
                     config = CombatConfigData(),
                     attackRegistry = emptyMap(),
-                    armorRegistry = emptyMap(),
                     classRegistry = emptyMap(),
                     npcManager = manager,
                     getSessions = { emptyList() },
