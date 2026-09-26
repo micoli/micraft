@@ -1,8 +1,10 @@
 # Compact client chunk storage
 
-Status: needs-triage
+Status: ready-for-agent
 Type: task
 Blocked by: —
+
+Decided 2026-09-26: option 1, sections in `core`, after issue 09.
 
 ## Goal
 

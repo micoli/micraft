@@ -1,8 +1,10 @@
 # Drop CPU copies of terrain vertex data
 
-Status: needs-triage
+Status: ready-for-agent
 Type: task
 Blocked by: —
+
+Decided 2026-09-26: voxel raycast for creative targeting (exposed from Kotlin) + remesh on context restore; before issue 08. No E2E covers creative targeting: the user validates it by hand.
 
 ## Goal
 
