@@ -11,6 +11,7 @@ import type {
   Vector4,
 } from "@babylonjs/core";
 import type { McE2E } from "./game/lib/e2eBridge";
+import type { PerfCollector } from "./game/lib/perf/perfCollector";
 
 declare global {
   // BabylonJS is loaded from CDN — never import it, reference via this global
@@ -778,6 +779,9 @@ declare global {
     __mcE2E?: boolean;
     __mcE2ESession?: string;
     mcE2E?: McE2E;
+    // perf measurement mode — set by the perf runner before the app boots
+    __mcPerf?: boolean;
+    mcPerf?: Pick<PerfCollector, "reset" | "snapshot">;
     BABYLON?: typeof import("@babylonjs/core");
     // Kotlin/Wasm module (webApp.js) — a Promise resolving to its @JsExport surface. Only
     // loaded on admin.html (see AdminChunkPreview.kt); the real game page never calls this,

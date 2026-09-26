@@ -1,4 +1,6 @@
 import type { Camera, Engine, Scene, HemisphericLight, Mesh } from "@babylonjs/core";
+import { babylonPerfSource } from "./perf/babylonPerfSource";
+import { createPerfCollector } from "./perf/perfCollector";
 
 export function registerEngine(): Pick<
   McBindings,
@@ -50,6 +52,7 @@ export function registerEngine(): Pick<
       }
 
       window.mcState.engine = engine;
+      if (window.__mcPerf) window.mcPerf = createPerfCollector(babylonPerfSource(engine));
       window.addEventListener("beforeunload", () => engine.dispose(), { once: true });
       console.log("[MiCraft] Engine created: " + (engine.webGLVersion === 2 ? "WebGL2" : "WebGL1"));
       return engine;

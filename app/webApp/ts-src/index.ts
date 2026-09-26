@@ -23,6 +23,9 @@ import { registerArmorOverlay } from "./game/lib/player/armorOverlay";
 import { registerWeaponOverlay } from "./game/lib/player/weaponOverlay";
 import { registerNpcModel } from "./game/components/npc/npcModel";
 import { registerVehicleModel } from "./game/lib/vehicleModel";
+import { captureWasmMemory } from "./game/lib/perf/babylonPerfSource";
+
+if (window.__mcPerf) captureWasmMemory();
 import { registerPlaceableModel } from "./game/lib/placeable/placeableModel";
 import { registerPanelSurface } from "./game/lib/placeable/panelSurface";
 import { registerSiegeProjectileModel } from "./game/lib/placeable/siegeProjectileModel";
