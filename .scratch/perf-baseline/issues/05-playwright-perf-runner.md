@@ -1,6 +1,6 @@
 # Headed Playwright runner: scenarios A and B
 
-Status: needs-triage
+Status: resolved
 Type: task
 Blocked by: 02, 03, 04
 
@@ -24,7 +24,7 @@ Blocked by: 02, 03, 04
 
 - Two runs on an unchanged tree differ by < 10 % on p95 frame time and avg tick.
 
-## Answer (implementation — acceptance still pending)
+## Answer
 
 Implemented 2026-09-26 in `app/webApp/ts-src/perf/` (reuses the installed Playwright; no new npm project):
 
@@ -43,4 +43,4 @@ Implemented 2026-09-26 in `app/webApp/ts-src/perf/` (reuses the installed Playwr
 - `make perf-idle` / `make perf-traverse`; env overrides `PERF_WINDOW_MS`, `PERF_WALK_MS`, `PERF_FLY_MS`,
   `PERF_START_X/Z`, `PERF_NO_SERVER`.
 - Smoke runs (short windows) pass. B travels ~45 blocks per 18 s window, and loaded chunks grow 228 → 360.
-- Still to do: two full-length runs on an unchanged tree to check the < 10 % variance acceptance.
+- Acceptance met (2026-09-26, `make perf` ×2 on `33659457`, now ~3.7 min each): frame p95 spread 0.5 % idle / 2.7 % traverse, tick p50 spread 0.3 % / 0.8 %. Report: `reports/2026-09-26-33659457.md`.

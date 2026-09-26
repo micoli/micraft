@@ -1,6 +1,6 @@
 # Compare script and budget check
 
-Status: needs-triage
+Status: resolved
 Type: task
 Blocked by: 05
 
@@ -18,3 +18,11 @@ Blocked by: 05
 ## Acceptance
 
 - Comparing a run with itself shows 0 % deltas; an injected 20 ms sleep in the tick shows up as a tick budget breach.
+
+## Answer
+
+Implemented 2026-09-26 as `app/webApp/ts-src/perf/analyze.mjs` + `perf/budgets.json` (`make perf-report`,
+`ARGS="--base <sha>"`), driven by the project skill `/perf`. It produces validity (and excludes invalid windows),
+frame and GPU time in ms and FPS, render load, memory, the server tick per phase, the server process, budgets,
+stability across invocations, and a comparison against a base commit. The first baseline is in
+`reports/2026-09-26-33659457.md`.
