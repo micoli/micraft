@@ -123,6 +123,9 @@ export function registerMaterials(): Pick<
         mat.setVector4("clipPlaneZ", inertClip);
         mat.backFaceCulling = false;
         mat.forceDepthWrite = true;
+        // Frozen: once compiled, isReady() returns early instead of rebuilding the defines and
+        // attribute lists for every terrain submesh every frame. Uniforms still rebind normally.
+        mat.freeze();
         return mat;
       };
 

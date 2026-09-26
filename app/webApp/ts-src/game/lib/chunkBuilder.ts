@@ -488,6 +488,7 @@ function getImpostorMaterial(scene: Scene): ShaderMaterial {
   );
   impostorMat.backFaceCulling = true;
   impostorMat.setFloat("ambient", 1.0);
+  impostorMat.freeze();
   // Registered alongside the textured block materials so sky.ts's per-tick setAmbient sweep
   // (day/night cycle) keeps this in sync too — otherwise the impostor's mean texture color
   // renders unlit at full brightness, reading lighter than the shaded, ambient-multiplied real
