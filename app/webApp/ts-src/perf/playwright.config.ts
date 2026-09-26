@@ -12,7 +12,8 @@ const REPO_ROOT = resolve(process.cwd(), "../../..");
  */
 export default defineConfig({
   testDir: ".",
-  testMatch: "**/*.perf.ts",
+  // `make perf-heap` profiles the heap on its own: the profiler would skew the timed scenarios.
+  testMatch: process.env.PERF_HEAP ? "**/*.heap.ts" : "**/*.perf.ts",
   fullyParallel: false,
   workers: 1,
   retries: 0,

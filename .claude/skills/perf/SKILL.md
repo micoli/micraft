@@ -65,6 +65,16 @@ each as a candidate issue under `.scratch/perf-baseline/issues/` if the user agr
 Done when: every section of every scenario has a written interpretation, every budget ✗ has a cause, all frame
 figures appear in both ms and FPS, and the report file is saved.
 
+## 3. Client heap (when memory is the question)
+
+`make perf-heap` (~2 min, headed): two traversals from the perf start, with the JS heap read before and after a
+forced GC at each step (the gap is garbage; what survives is live) and a sampling heap profile of what was
+allocated during the run and is still alive, bottom-up by allocating function and by origin (Kotlin/Wasm,
+BabylonJS, JS app, native). Report: `.scratch/perf-baseline/heap/<stamp>-<sha>.md`; the raw `.heapprofile` in
+`perf/heap/` opens in Chrome DevTools → Memory. `PERF_HEAP_SNAPSHOT=1` also writes a full heap snapshot (large;
+DevTools only). WasmGC objects allocated inside Wasm are attributed to the nearest JS frame of the Kotlin glue
+(no URL, a line number): break those down with a full snapshot.
+
 ## Moving parts
 
 | Piece | Where |
@@ -74,3 +84,4 @@ figures appear in both ms and FPS, and the report file is saved.
 | Client collector (`window.mcPerf`, on when `window.__mcPerf`) | `app/webApp/ts-src/game/lib/perf/` |
 | Scenarios, steering, result writer | `app/webApp/ts-src/perf/` |
 | Report + budgets | `app/webApp/ts-src/perf/analyze.mjs`, `perf/budgets.json` |
+| Client heap profile | `app/webApp/ts-src/perf/client.heap.ts`, `perf/helpers/heapProfile.ts` |
