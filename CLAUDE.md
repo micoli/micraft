@@ -296,3 +296,17 @@ the mini-game's own client-side React bundle.
   room protocol client-side with fake players (`miniGameSimulator.ts` mirrors `MiniGameManager`'s
   rules) — lets you exercise create/invite/accept/leave/broadcast without two real logged-in
   clients or a live websocket.
+
+## Agent skills
+
+### Issue tracker
+
+Issues et specs en markdown local sous `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Vocabulaire par défaut (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), écrit dans la ligne `Status:` de chaque issue. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context : un `CONTEXT.md` + `docs/adr/` à la racine. See `docs/agents/domain.md`.
