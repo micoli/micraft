@@ -1,6 +1,6 @@
 # Make RPG mandatory: remove /skiprpg and rpgOptOut
 
-Status: needs-triage
+Status: resolved
 Type: task
 
 ## Context
@@ -39,3 +39,7 @@ non-RPG Character any more. The code still models RPG as opt-in.
 - `/skiprpg` is unknown; no `rpgOptOut` remains in code, schema or docs.
 - Logging in with a Character that has no `characterData` always routes to RPG creation.
 - `make dc CMD="./gradlew :server:test"` passes.
+
+## Answer
+
+Done in `56c25a3e`. Old saves with `rpgOptOut: true` and no character data go through creation on next login (no migration); `characterData` stays nullable.
