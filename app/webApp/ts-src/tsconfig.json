@@ -13,5 +13,5 @@
     "baseUrl": "."
   },
   "include": ["./**/*.ts", "./**/*.tsx"],
-  "exclude": ["./__tests__/**", "./vitest.config.ts", "./e2e/**"]
+  "exclude": ["./__tests__/**", "./vitest.config.ts", "./e2e/**", "./perf/**"]
 }
