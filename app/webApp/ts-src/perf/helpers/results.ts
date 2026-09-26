@@ -62,7 +62,7 @@ async function environment(page: Page) {
   const authConfig = (await (await adminFetch("/api/auth/config")).json()) as { messageEncoder?: string };
   return {
     gitSha: execSync("git rev-parse --short HEAD", { cwd: REPO_ROOT }).toString().trim(),
-    gitDirty: execSync("git status --porcelain", { cwd: REPO_ROOT }).toString().trim().length > 0,
+    gitDirty: execSync("git status --porcelain -- . ':!.scratch'", { cwd: REPO_ROOT }).toString().trim().length > 0,
     date: new Date().toISOString(),
     machine: {
       cpu: cpus()[0]?.model,
@@ -79,7 +79,8 @@ export async function writeResult(page: Page, scenario: string, warmup: WindowRe
   const env = await environment(page);
   const result = { scenario, ...env, summary: summarize(runs), runs, warmup };
   mkdirSync(RESULTS_DIR, { recursive: true });
-  const file = resolve(RESULTS_DIR, `${env.date.slice(0, 10)}-${env.gitSha}-${scenario}.json`);
+  const stamp = env.date.slice(0, 19).replace(/:/g, "");
+  const file = resolve(RESULTS_DIR, `${stamp}-${env.gitSha}-${scenario}.json`);
   writeFileSync(file, JSON.stringify(result, null, 2));
   console.log(`[perf] ${scenario} → ${file}\n${JSON.stringify(result.summary, null, 2)}`);
 }
