@@ -857,6 +857,7 @@ export function registerChunks(): Pick<
         vd.colors = g.c;
         vd.indices = g.i;
         vd.applyToMesh(mesh, false);
+        if (g.t) mesh.setVerticesData("tintLayer", g.t, false, 4);
         mesh.material = materials[matKey] ?? null;
         setBoundsFromPositions(mesh, g.p);
         finishTerrainMesh(mesh);

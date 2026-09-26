@@ -1,3 +1,6 @@
+import { getPlainColors } from "./blockDefs";
+import { terrainLayerTable } from "./materials/terrainTextureArray";
+
 // Dispatches chunk-mesh geometry jobs to a small pool of chunkMeshWorker.ts instances and
 // collects their results for polling consumption from Kotlin (see ChunkManager.kt's
 // drainPendingChunks / jsRequestChunkMesh / jsIsChunkMeshReady / jsConsumeChunkMeshResult in
@@ -11,6 +14,8 @@ export interface WorkerFaceGroup {
   n: Float32Array;
   u: Float32Array;
   c: Float32Array;
+  /** Per-vertex [r, g, b, layer] for texture-array groups (key "terrain:array|…"). */
+  t?: Float32Array;
   i: Int32Array;
   v: number;
   ic: number;
@@ -59,7 +64,12 @@ function sendBlockDefs(worker: Worker): void {
     const def = window.mc.getBlockDef(typeOrd);
     if (def) defs.push({ typeOrd, def });
   }
-  worker.postMessage({ type: "blockDefs", defs });
+  worker.postMessage({
+    type: "blockDefs",
+    defs,
+    plainColors: getPlainColors(),
+    layers: terrainLayerTable(window.mc.getBlockTextures(), getPlainColors()),
+  });
 }
 
 function ensurePool(): Worker[] {

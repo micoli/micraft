@@ -11,7 +11,8 @@
 //
 // tsconfig's lib list is ["ES2020","DOM"] (no "webworker") to avoid retyping `self` project-wide,
 // so the worker global is accessed through this narrow local cast instead.
-import { plainMatKey } from "./blockDefs";
+import { plainMatKey, setPlainColors } from "./blockDefs";
+import { TERRAIN_ARRAY_MAT_KEY, type TerrainLayerTable } from "./materials/terrainTextureArray";
 import { MC_BUILD_TIMESTAMP } from "../../buildConfig";
 
 interface WorkerScope {
@@ -186,10 +187,16 @@ interface FaceGroup {
   n: Float32Array;
   u: Float32Array;
   c: Float32Array;
+  /** Per-vertex tint + texture layer, filled only for texture-array groups. */
+  t: Float32Array;
   i: Int32Array;
   v: number;
   ic: number;
+  layered: boolean;
 }
+
+/** Material key → [r, g, b, layer], sent by the pool when the terrain texture array is active. */
+let layerTable: TerrainLayerTable | null = null;
 
 const groupPool: FaceGroup[] = [];
 
@@ -197,6 +204,7 @@ function acquireGroup(): FaceGroup {
   if (groupPool.length > 0) {
     const g = groupPool.pop()!;
     g.v = g.ic = 0;
+    g.layered = false;
     return g;
   }
   return {
@@ -204,9 +212,11 @@ function acquireGroup(): FaceGroup {
     n: new Float32Array(GROUP_MAX_VERTS * 3),
     u: new Float32Array(GROUP_MAX_VERTS * 2),
     c: new Float32Array(GROUP_MAX_VERTS * 4),
+    t: new Float32Array(GROUP_MAX_VERTS * 4),
     i: new Int32Array(GROUP_MAX_IDX),
     v: 0,
     ic: 0,
+    layered: false,
   };
 }
 
@@ -227,9 +237,19 @@ function emitQuad(
   shade: number,
   ao: number,
   isPlastic = false,
+  layer: readonly number[] | undefined = undefined,
 ): void {
   if (g.v + 4 > GROUP_MAX_VERTS) return;
   const baseV = g.v;
+  if (layer) {
+    g.layered = true;
+    for (let k = 0, ti = baseV * 4; k < 4; k++) {
+      g.t[ti++] = layer[0];
+      g.t[ti++] = layer[1];
+      g.t[ti++] = layer[2];
+      g.t[ti++] = layer[3];
+    }
+  }
   let pi = baseV * 3;
   let ni = baseV * 3;
   let ui = baseV * 2;
@@ -268,8 +288,16 @@ const CROSS_QUADS: Float32Array[] = [
   new Float32Array([1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0]),
 ];
 
-function emitCrossSprite(wx: number, wy: number, wz: number, g: FaceGroup, uv: Float32Array, ao: number): void {
-  for (const q of CROSS_QUADS) emitQuad(g, wx, wy, wz, q, 0, 1, 0, uv, 0.8, ao);
+function emitCrossSprite(
+  wx: number,
+  wy: number,
+  wz: number,
+  g: FaceGroup,
+  uv: Float32Array,
+  ao: number,
+  layer: readonly number[] | undefined,
+): void {
+  for (const q of CROSS_QUADS) emitQuad(g, wx, wy, wz, q, 0, 1, 0, uv, 0.8, ao, false, layer);
 }
 
 function stretchVertsAxis(verts: Float32Array, runLen: number, axis: number): Float32Array {
@@ -316,6 +344,8 @@ interface MeshRequest {
 interface BlockDefsMessage {
   type: "blockDefs";
   defs: { typeOrd: number; def: McBlockDef }[];
+  plainColors: McPlainColor[];
+  layers: TerrainLayerTable | null;
 }
 
 type IncomingMessage = MeshRequest | BlockDefsMessage;
@@ -361,7 +391,9 @@ function processFaces(faceBuf: Int32Array, faceCount: number) {
     }
     const yBand = Math.floor(wy / SLAB_HEIGHT);
     for (const info of infos) {
-      const groupKey = `${plainKey ?? info.matKey}|${yBand}`;
+      const matKey = plainKey ?? info.matKey;
+      const layer = layerTable?.[matKey];
+      const groupKey = `${layer ? TERRAIN_ARRAY_MAT_KEY : matKey}|${yBand}`;
       let g: FaceGroup | undefined = groups[groupKey];
       if (g && g.v + MAX_FACE_VERTS > GROUP_MAX_VERTS) {
         // "mat|band#n": chunkBuilder reads the material key before the last "|", so it still applies.
@@ -373,7 +405,7 @@ function processFaces(faceBuf: Int32Array, faceCount: number) {
         groups[groupKey] = g;
       }
       if (info.isCrossSprite) {
-        emitCrossSprite(wx, wy, wz, g, info.uv, ao);
+        emitCrossSprite(wx, wy, wz, g, info.uv, ao, layer);
       } else if (runLenX > 1 || runLenZ > 1) {
         let verts = info.verts;
         let uv = info.uv;
@@ -385,7 +417,7 @@ function processFaces(faceBuf: Int32Array, faceCount: number) {
           verts = stretchVertsAxis(verts, runLenZ, 2);
           uv = stretchUVAxis(uv, info.verts, runLenZ, 2);
         }
-        emitQuad(g, wx, wy, wz, verts, info.normX, info.normY, info.normZ, uv, info.shade, ao, info.isPlastic);
+        emitQuad(g, wx, wy, wz, verts, info.normX, info.normY, info.normZ, uv, info.shade, ao, info.isPlastic, layer);
       } else {
         emitQuad(
           g,
@@ -400,6 +432,7 @@ function processFaces(faceBuf: Int32Array, faceCount: number) {
           info.shade,
           ao,
           info.isPlastic,
+          layer,
         );
       }
     }
@@ -411,6 +444,9 @@ ctx.onmessage = (ev: MessageEvent<IncomingMessage>) => {
   const msg = ev.data;
   if (msg.type === "blockDefs") {
     buildFaceTable(msg.defs);
+    // The worker has its own module state: without the palette, plainMatKey() never resolved here.
+    setPlainColors(msg.plainColors);
+    layerTable = msg.layers;
     return;
   }
   if (msg.type === "mesh") {
@@ -421,6 +457,7 @@ ctx.onmessage = (ev: MessageEvent<IncomingMessage>) => {
       n: Float32Array;
       u: Float32Array;
       c: Float32Array;
+      t?: Float32Array;
       i: Int32Array;
       v: number;
       ic: number;
@@ -439,8 +476,10 @@ ctx.onmessage = (ev: MessageEvent<IncomingMessage>) => {
       const u = g.u.slice(0, g.v * 2);
       const c = g.c.slice(0, g.v * 4);
       const idx = g.i.slice(0, g.ic);
-      outGroups.push({ key: groupKey, p, n, u, c, i: idx, v: g.v, ic: g.ic });
+      const t = g.layered ? g.t.slice(0, g.v * 4) : undefined;
+      outGroups.push({ key: groupKey, p, n, u, c, t, i: idx, v: g.v, ic: g.ic });
       transfer.push(p.buffer, n.buffer, u.buffer, c.buffer, idx.buffer);
+      if (t) transfer.push(t.buffer);
       releaseGroup(g);
     }
     const outGltf = Object.keys(gltfPositions).map((typeOrdStr) => ({

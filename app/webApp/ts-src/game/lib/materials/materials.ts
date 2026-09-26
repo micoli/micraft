@@ -1,5 +1,6 @@
 import type { Scene, ShaderMaterial, StandardMaterial } from "@babylonjs/core";
-import { BLOCK_VERT, BLOCK_FRAG } from "../block";
+import { BLOCK_ARRAY_FRAG, BLOCK_ARRAY_VERT, BLOCK_VERT, BLOCK_FRAG } from "../block";
+import { createTerrainTextureArray, TERRAIN_ARRAY_MAT_KEY } from "./terrainTextureArray";
 import { WHITE_PIXEL_URL } from "./whitePixel";
 
 export function registerMaterials(): Pick<
@@ -65,46 +66,36 @@ export function registerMaterials(): Pick<
       const fogStart: number = scene.fogStart ?? 24;
       const fogEnd: number = scene.fogEnd ?? 40;
 
-      const makeMat = (name: string, url: string, tintR: number, tintG: number, tintB: number): ShaderMaterial => {
-        const mat = new BABYLON.ShaderMaterial(
-          name,
-          scene,
-          { vertexSource: BLOCK_VERT, fragmentSource: BLOCK_FRAG },
-          {
-            attributes: ["position", "normal", "uv", "color"],
-            uniforms: [
-              "worldViewProjection",
-              "view",
-              "world",
-              "fogColor",
-              "fogStart",
-              "fogEnd",
-              "fogZoneCx",
-              "fogZoneCz",
-              "fogZoneRadius",
-              "fogZoneStart",
-              "fogZoneEnd",
-              "tint",
-              "shadersEnabled",
-              "ambient",
-              "playerLightIntensity",
-              "playerPos",
-              "lightWVP",
-              "shadowDarkness",
-              "sunDir",
-              "clipPlaneX",
-              "clipPlaneY",
-              "clipPlaneZ",
-            ],
-            samplers: ["textureSampler", "shadowSampler"],
-          },
-        );
-        const tex = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
-        mat.setTexture("textureSampler", tex);
+      // Uniforms every terrain shader shares; the per-texture variant adds "tint", the texture-array
+      // variant "biomeTint" (its tint travels per vertex).
+      const sharedUniforms = [
+        "worldViewProjection",
+        "view",
+        "world",
+        "fogColor",
+        "fogStart",
+        "fogEnd",
+        "fogZoneCx",
+        "fogZoneCz",
+        "fogZoneRadius",
+        "fogZoneStart",
+        "fogZoneEnd",
+        "shadersEnabled",
+        "ambient",
+        "playerLightIntensity",
+        "playerPos",
+        "lightWVP",
+        "shadowDarkness",
+        "sunDir",
+        "clipPlaneX",
+        "clipPlaneY",
+        "clipPlaneZ",
+      ];
+
+      const configure = (mat: ShaderMaterial): ShaderMaterial => {
         mat.setVector3("fogColor", new BABYLON.Vector3(fogColor.r, fogColor.g, fogColor.b));
         mat.setFloat("fogStart", fogStart);
         mat.setFloat("fogEnd", fogEnd);
-        mat.setVector3("tint", new BABYLON.Vector3(tintR, tintG, tintB));
         mat.setFloat("shadersEnabled", 1.0);
         mat.setFloat("ambient", 1.0);
         mat.setFloat("playerLightIntensity", 0.0);
@@ -129,6 +120,23 @@ export function registerMaterials(): Pick<
         return mat;
       };
 
+      const makeMat = (name: string, url: string, tintR: number, tintG: number, tintB: number): ShaderMaterial => {
+        const mat = new BABYLON.ShaderMaterial(
+          name,
+          scene,
+          { vertexSource: BLOCK_VERT, fragmentSource: BLOCK_FRAG },
+          {
+            attributes: ["position", "normal", "uv", "color"],
+            uniforms: [...sharedUniforms, "tint"],
+            samplers: ["textureSampler", "shadowSampler"],
+          },
+        );
+        const tex = new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE);
+        mat.setTexture("textureSampler", tex);
+        mat.setVector3("tint", new BABYLON.Vector3(tintR, tintG, tintB));
+        return configure(mat);
+      };
+
       // Plain colors reuse the block shader with a 1×1 white texture: the `tint` uniform
       // (already multiplied into texColor) paints every face a flat color, so studs still get
       // AO, face shading and the plastic highlight from the vertex colors.
@@ -148,6 +156,25 @@ export function registerMaterials(): Pick<
         }
       }
 
+      // One material for every terrain texture when the texture array is active (in game, WebGL2):
+      // the per-texture materials above stay for the main-thread meshing path and the admin editors.
+      const textureArray = createTerrainTextureArray(scene);
+      if (textureArray) {
+        const arrayMat = new BABYLON.ShaderMaterial(
+          TERRAIN_ARRAY_MAT_KEY,
+          scene,
+          { vertexSource: BLOCK_ARRAY_VERT, fragmentSource: BLOCK_ARRAY_FRAG },
+          {
+            attributes: ["position", "normal", "uv", "color", "tintLayer"],
+            uniforms: [...sharedUniforms, "biomeTint"],
+            samplers: ["textureArray", "shadowSampler"],
+          },
+        );
+        arrayMat.setTexture("textureArray", textureArray);
+        arrayMat.setVector3("biomeTint", new BABYLON.Vector3(0.47, 0.75, 0.35));
+        mats[TERRAIN_ARRAY_MAT_KEY] = configure(arrayMat);
+      }
+
       // Wire setGrassTint now that mats are available
       setGrassTintImpl = (r: number, g: number, b: number) => {
         for (const key of Object.keys(mats)) {
@@ -155,6 +182,10 @@ export function registerMaterials(): Pick<
             (mats[key] as ShaderMaterial).setVector3("tint", new BABYLON.Vector3(r, g, b));
           }
         }
+        (mats[TERRAIN_ARRAY_MAT_KEY] as ShaderMaterial | undefined)?.setVector3(
+          "biomeTint",
+          new BABYLON.Vector3(r, g, b),
+        );
       };
 
       const waterMat = new BABYLON.StandardMaterial("water", scene);

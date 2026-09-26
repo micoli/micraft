@@ -1,5 +1,6 @@
 import type { Camera, Engine, Scene, HemisphericLight, Mesh } from "@babylonjs/core";
 import { dropTerrainCpuGeometry } from "./chunkBuilder";
+import { enableTerrainTextureArray } from "./materials/terrainTextureArray";
 import { babylonPerfSource } from "./perf/babylonPerfSource";
 import { createPerfCollector } from "./perf/perfCollector";
 
@@ -54,6 +55,7 @@ export function registerEngine(): Pick<
 
       window.mcState.engine = engine;
       dropTerrainCpuGeometry();
+      if (engine.webGLVersion === 2) enableTerrainTextureArray();
       engine.onContextRestoredObservable.add(() => {
         window.mcState.terrainRemeshRequested = true;
       });

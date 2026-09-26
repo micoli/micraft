@@ -1,3 +1,5 @@
+import { prepareTerrainTextureArray } from "./materials/terrainTextureArray";
+
 // faceDir → bbmodel face key (faceDir: 0=+Z/south, 1=-Z/north, 2=+X/east, 3=-X/west, 4=+Y/up, 5=-Y/down)
 const FACEKEY_BY_DIR = ["south", "north", "east", "west", "up", "down"] as const;
 type FaceKey = (typeof FACEKEY_BY_DIR)[number];
@@ -180,10 +182,17 @@ export function registerBlockDefs(): Pick<
           .catch(() => {});
       });
 
-      Promise.all(fetches).then(() => {
-        _blockDefs = defs;
-        _blockTextures = Array.from(allTextures.values());
-      });
+      Promise.all(fetches)
+        .then(() => {
+          const textures = Array.from(allTextures.values());
+          // Ready only once the terrain texture array (if any) is decoded: the chunk workers and
+          // createBlockMaterials read it synchronously.
+          return prepareTerrainTextureArray(textures).then(() => textures);
+        })
+        .then((textures) => {
+          _blockDefs = defs;
+          _blockTextures = textures;
+        });
     },
 
     isBlockDefsReady: () => _blockDefs !== null && _blockTextures !== null,

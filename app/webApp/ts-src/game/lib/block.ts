@@ -163,3 +163,25 @@ void main() {
   gl_FragColor = vec4(color, 1.0);
 }
 `;
+
+// Texture-array variant of the block shader (WebGL2): every terrain material in one draw. The
+// texture layer and tint travel per vertex in `tintLayer` (rgb tint, a = layer); a negative tint
+// means "use the live biome tint". Babylon compiles these as GLSL 300 on WebGL2, where
+// sampler2DArray and texture() exist.
+export const BLOCK_ARRAY_VERT = BLOCK_VERT.replace(
+  "attribute vec4 color;",
+  "attribute vec4 color;\nattribute vec4 tintLayer;",
+)
+  .replace("varying vec4 vColor;", "varying vec4 vColor;\nvarying vec4 vTintLayer;")
+  .replace("  vColor = color;", "  vColor = color;\n  vTintLayer = tintLayer;");
+
+export const BLOCK_ARRAY_FRAG = BLOCK_FRAG.replace(
+  "uniform sampler2D textureSampler;",
+  "uniform highp sampler2DArray textureArray;\nuniform vec3 biomeTint;",
+)
+  .replace("uniform vec3 tint;\n", "")
+  .replace("varying vec4 vColor;", "varying vec4 vColor;\nvarying vec4 vTintLayer;")
+  .replace(
+    "vec4 texColor = texture2D(textureSampler, vUv);",
+    "vec3 tint = vTintLayer.r < 0.0 ? biomeTint : vTintLayer.rgb;\n  vec4 texColor = texture(textureArray, vec3(vUv, vTintLayer.a));",
+  );
