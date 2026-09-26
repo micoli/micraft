@@ -41,3 +41,5 @@ one refresh lands at 18–25 ms. The primary frame budget is therefore the share
 | 05 | [Headed Playwright runner: scenarios A and B](issues/05-playwright-perf-runner.md) | 02, 03, 04 |
 | 06 | [JVM load bots: scenario D](issues/06-jvm-load-bots.md) | 02, 03 |
 | 07 | [Compare script and budget check](issues/07-compare-and-budgets.md) | 05 |
+| 08 | [Compact client chunk storage](issues/08-compact-client-chunk-storage.md) | — |
+| 09 | [Drop CPU copies of terrain vertex data](issues/09-drop-cpu-vertex-copies.md) | — |
