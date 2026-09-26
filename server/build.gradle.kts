@@ -93,6 +93,45 @@ tasks.register<JavaExec>("runE2eServer") {
     }
 }
 
+// Perf server: a real procedural world (fixed `worldSeed` from the bundled defaults) in a
+// throwaway data root, so every run generates the same terrain. `-PperfKeepWorld` reuses the
+// previous run's world to measure loading instead of generation.
+val perfDataDir = rootDir.resolve("perf/.data")
+
+tasks.register<Delete>("cleanPerfData") {
+    group = "perf"
+    description = "Wipe the perf server's data root (skipped with -PperfKeepWorld)"
+    onlyIf { !providers.gradleProperty("perfKeepWorld").isPresent }
+    delete(perfDataDir)
+}
+
+tasks.register<JavaExec>("seedPerfAdmin") {
+    group = "perf"
+    description = "Idempotently create the perf-admin@test.local account the perf runners log in as"
+    dependsOn("cleanPerfData")
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.auth.AddUserCliKt")
+    workingDir = rootProject.projectDir
+    environment("MICRAFT_DATA_DIR", perfDataDir.path)
+    args("perf-admin@test.local", "perf-admin-password", "Perf Admin", "admin")
+    isIgnoreExitValue = true
+}
+
+tasks.register<JavaExec>("runPerfServer") {
+    group = "perf"
+    description = "Run the Ktor server on a fixed-seed procedural world in a throwaway data root"
+    dependsOn("seedPerfAdmin")
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("org.micoli.micraft.ApplicationKt")
+    workingDir = rootProject.projectDir
+    providers.gradleProperty("perfXmx").orNull?.let { jvmArgs("-Xmx$it") }
+    systemProperty("projectDir", rootDirPath)
+    environment("MICRAFT_PORT", providers.gradleProperty("perfPort").getOrElse("8092"))
+    environment("MICRAFT_DATA_DIR", perfDataDir.path)
+    environment("MICRAFT_WORLD_NAME", "perf_world")
+    environment("MICRAFT_WEB_DIST", rootDir.resolve("app/webApp/build/web").path)
+}
+
 tasks.register<JavaExec>("validateConfig") {
     group = "verification"
     description =

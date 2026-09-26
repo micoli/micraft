@@ -1,6 +1,6 @@
 # Fixed-seed perf world
 
-Status: needs-triage
+Status: resolved
 Type: task
 
 ## Goal
@@ -21,3 +21,17 @@ generates the same terrain, NPCs and vegetation.
 
 - Two consecutive runs produce identical chunks around spawn (the hash of the generated chunk files matches).
 - `make perf-server` / `make perf-server-stop` are documented in `make help`.
+
+## Answer
+
+Implemented 2026-09-26:
+
+- Gradle `cleanPerfData` → `seedPerfAdmin` → `runPerfServer` (group `perf`), with data root `perf/.data/` (gitignored),
+  World `perf_world`, port 8092, and `worldSeed` 42 from the bundled defaults. Options: `-PperfKeepWorld`, `-PperfXmx`, `-PperfPort`.
+- Pitchfork daemon `perf-server` + `make perf-server` / `make perf-server-stop`.
+- Runner account: `perf-admin@test.local` / `perf-admin-password`, `admin` group.
+- Fix: `auth.local.usersFile` / `groupsFile` ignored `MICRAFT_DATA_DIR` (paths hardcoded under `data/`). They now go
+  through `ConfigPaths.dataPath`, so a path under `data/` follows the data root.
+- Determinism: terrain generation is already covered by the `sameSeed_*` tests in `ProceduralChunkGeneratorTest`. The
+  two-run chunk-hash check was not run end to end. NPC spawning and vegetation growth still use unseeded randomness,
+  so expect some run-to-run variance in scenarios that depend on them.

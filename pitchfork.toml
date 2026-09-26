@@ -73,3 +73,10 @@ dir = "."
 ready-port = 8091
 boot_start = false
 retry = false
+
+[daemons.perf-server]
+run = "bash -c './gradlew :app:webApp:copyResourcesToWebDist :app:webApp:copyStaticToWebDist --console=plain && (cd app/webApp/ts-src && npm run build) && ./gradlew :server:runPerfServer --console=plain'"
+dir = "."
+ready-port = 8092
+boot_start = false
+retry = false
