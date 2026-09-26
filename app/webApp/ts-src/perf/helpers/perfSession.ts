@@ -2,6 +2,7 @@
 import type { Page } from "@playwright/test";
 import type { ClientPerfSnapshot } from "../../game/lib/perf/perfCollector";
 import { PERF_PORT } from "../playwright.config";
+import { cameraXz } from "./navigator";
 
 const BASE = `http://localhost:${PERF_PORT}`;
 
@@ -111,23 +112,19 @@ export interface WindowResult {
   server: unknown;
   /** Horizontal camera travel over the window, in blocks — proves a traversal actually moved. */
   travelledBlocks: number;
+  /** Times the traversal got stuck and had to detour (0 for scenarios that stand still). */
+  stuckEvents: number;
 }
 
-const cameraXz = (page: Page) =>
-  page.evaluate(() => {
-    const c = window.mcState.camState;
-    return c ? { x: c.x1, z: c.z1 } : { x: 0, z: 0 };
-  });
-
 /** Measure one window: reset server + client, let `during` run, snapshot both. */
-export async function measure(page: Page, during: () => Promise<void>): Promise<WindowResult> {
+export async function measure(page: Page, during: () => Promise<number | void>): Promise<WindowResult> {
   const reset = await adminFetch("/api/admin/perf/reset", { method: "POST" });
   if (reset.status !== 204) throw new Error(`perf reset failed: ${reset.status}`);
   await page.evaluate(() => window.mcPerf!.reset());
   const from = await cameraXz(page);
-  await during();
+  const stuckEvents = (await during()) ?? 0;
   const to = await cameraXz(page);
   const client = await page.evaluate(() => window.mcPerf!.snapshot());
   const server = await (await adminFetch("/api/admin/perf/snapshot")).json();
-  return { client, server, travelledBlocks: Math.hypot(to.x - from.x, to.z - from.z) };
+  return { client, server, travelledBlocks: Math.hypot(to.x - from.x, to.z - from.z), stuckEvents };
 }

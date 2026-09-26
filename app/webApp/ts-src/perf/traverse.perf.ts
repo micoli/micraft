@@ -1,5 +1,6 @@
 /// <reference path="../global.d.ts" />
 import { test, type Page } from "@playwright/test";
+import { drive } from "./helpers/navigator";
 import { enterGame, measure, runCommand, waitForChunksSettled } from "./helpers/perfSession";
 import { writeResult } from "./helpers/results";
 
@@ -20,21 +21,21 @@ async function toggleFly(page: Page): Promise<void> {
   await page.waitForTimeout(300);
 }
 
-async function traverse(page: Page, yaw: number): Promise<void> {
-  await page.evaluate((y) => window.mcE2E!.actions!.setLook(y, 0), yaw);
+async function traverse(page: Page, yaw: number): Promise<number> {
   await page.keyboard.down("KeyW");
   // Walking has no auto-step: holding Space keeps jumping over one-block rises.
   await page.keyboard.down("Space");
-  await page.waitForTimeout(WALK_MS);
+  const stuckWalking = await drive(page, yaw, "walk", WALK_MS);
   await page.keyboard.up("Space");
 
   await toggleFly(page);
   await page.keyboard.down("Space");
   await page.waitForTimeout(ASCEND_MS);
   await page.keyboard.up("Space");
-  await page.waitForTimeout(FLY_MS);
+  const stuckFlying = await drive(page, yaw, "fly", FLY_MS);
   await page.keyboard.up("KeyW");
   await toggleFly(page);
+  return stuckWalking + stuckFlying;
 }
 
 async function backToStart(page: Page): Promise<void> {

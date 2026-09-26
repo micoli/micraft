@@ -49,6 +49,8 @@ function summarize(runs: WindowResult[]) {
     serverCpuLoadAvg: pick((r) => proc(r).cpuLoadAvg),
     serverGcTimeMs: pick((r) => proc(r).gcTimeMs),
     networkBytesOut: pick((r) => proc(r).networkBytesOut),
+    travelledBlocks: pick((r) => r.travelledBlocks),
+    stuckEvents: pick((r) => r.stuckEvents),
   };
 }
 
