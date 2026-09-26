@@ -8,6 +8,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.LegacyChunkLayout
 import org.micoli.micraft.http.TerrainCache
 import org.micoli.micraft.http.topBlockColor
 import org.micoli.micraft.http.topBlockY
@@ -86,7 +87,9 @@ class TerrainCacheTest {
         val cacheDir = Files.createTempDirectory("terrain-cache")
 
         val chunkFile = chunksDir.resolve("0_0.mcc.gz").toFile()
-        GZIPOutputStream(chunkFile.outputStream()).use { it.write(chunk.blocks) }
+        GZIPOutputStream(chunkFile.outputStream()).use {
+            it.write(LegacyChunkLayout.fromStorage(chunk.blocks))
+        }
 
         val corruptedPng = cacheDir.resolve("0_0.png").toFile()
         corruptedPng.writeBytes(byteArrayOf(1, 2, 3)) // not a valid PNG

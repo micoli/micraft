@@ -1,45 +1,73 @@
 package org.micoli.micraft.game.world
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import org.micoli.micraft.protocol.BlockEntityProto
 
-@Serializable
+/**
+ * One chunk column. Blocks, states and extra states are [SectionedBytes] in y-major order (the wire
+ * order too): only the sections holding something are allocated, and a chunk is never mutated once
+ * built — [withBlock] returns a copy sharing the untouched sections.
+ */
 data class Chunk(
     val pos: ChunkPos,
-    val blocks: ByteArray,
-    val states: ByteArray = ByteArray(0),
-    val extraStates: ByteArray = ByteArray(0),
+    val blocks: SectionedBytes,
+    val states: SectionedBytes = SectionedBytes(),
+    val extraStates: SectionedBytes = SectionedBytes(),
     val entityMasters: List<BlockEntity> = emptyList(),
 ) {
     // Not part of the constructor, so `copy()`/`withBlock()` always hand back a fresh, uncached
     // instance — cheap correctness by construction instead of manual invalidation.
-    @Transient private var cachedTopY: Int = -1
+    private var cachedTopY: Int = -1
 
     companion object {
         val SIZE_X = WorldConstants.CHUNK_SIZE
         val SIZE_Z = WorldConstants.CHUNK_SIZE
         val SIZE_Y = WorldConstants.WORLD_MAX_Y + 1
         val TOTAL = SIZE_X * SIZE_Y * SIZE_Z
+        private val LAYER = SIZE_X * SIZE_Z
 
-        fun index(x: Int, y: Int, z: Int) = (x * SIZE_Y * SIZE_Z) + (y * SIZE_Z) + z
+        /** 16 whole Y layers: 4 096 cells for 16×16 chunks. */
+        val SECTION_SIZE = LAYER * 16
+
+        /** Y-major: one Y layer is a contiguous run, as on the wire. */
+        fun index(x: Int, y: Int, z: Int) = (y * LAYER) + (x * SIZE_Z) + z
+
+        /** [index] offset of the x+1 neighbour (z+1 is +1). */
+        val STRIDE_X = SIZE_Z
+
+        /** [index] offset of the y+1 neighbour. */
+        val STRIDE_Y = LAYER
 
         fun indexToXYZ(idx: Int): Triple<Int, Int, Int> {
-            val yz = SIZE_Y * SIZE_Z
-            val x = idx / yz
-            val rem = idx % yz
-            val y = rem / SIZE_Z
+            val y = idx / LAYER
+            val rem = idx % LAYER
+            val x = rem / SIZE_Z
             val z = rem % SIZE_Z
             return Triple(x, y, z)
         }
 
-        fun empty(pos: ChunkPos) = Chunk(pos, ByteArray(TOTAL), ByteArray(TOTAL), ByteArray(TOTAL))
+        fun empty(pos: ChunkPos) = Chunk(pos, SectionedBytes())
+
+        /** A chunk from flat y-major arrays ([index] order), as the generators fill them. */
+        fun of(
+            pos: ChunkPos,
+            blocks: ByteArray,
+            states: ByteArray? = null,
+            extraStates: ByteArray? = null,
+            entityMasters: List<BlockEntity> = emptyList(),
+        ) =
+            Chunk(
+                pos,
+                SectionedBytes.of(blocks),
+                states?.let { SectionedBytes.of(it) } ?: SectionedBytes(),
+                extraStates?.let { SectionedBytes.of(it) } ?: SectionedBytes(),
+                entityMasters,
+            )
 
         fun build(pos: ChunkPos, filler: (x: Int, y: Int, z: Int) -> BlockType): Chunk {
             val blocks = ByteArray(TOTAL)
             for (x in 0 until SIZE_X) for (y in 0 until SIZE_Y) for (z in 0 until SIZE_Z) blocks[
                 index(x, y, z)] = BlockRegistry.wireIndex(filler(x, y, z)).toByte()
-            return Chunk(pos, blocks, ByteArray(TOTAL), ByteArray(TOTAL))
+            return of(pos, blocks)
         }
 
         /**
@@ -64,7 +92,10 @@ data class Chunk(
             return map
         }
 
-        /** Decode a y-major wire buffer (produced by encodeWire) back into a full Chunk. */
+        /**
+         * Decode a wire buffer (produced by encodeWire) back into a Chunk. The wire is the y-major
+         * prefix up to [topY], i.e. the storage order itself; AIR (0) fills the rest.
+         */
         fun decodeWire(
             pos: ChunkPos,
             topY: Int,
@@ -73,17 +104,10 @@ data class Chunk(
             wireExtraStates: ByteArray? = null,
             entityProtos: List<BlockEntityProto> = emptyList(),
         ): Chunk {
-            val blocks = ByteArray(TOTAL) // AIR = 0 by default
-            val states = ByteArray(TOTAL)
-            val extraStates = ByteArray(TOTAL)
-            for (y in 0..topY) for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) {
-                val wi = y * SIZE_X * SIZE_Z + x * SIZE_Z + z
-                blocks[index(x, y, z)] = wire[wi]
-                if (wireStates != null && wi < wireStates.size)
-                    states[index(x, y, z)] = wireStates[wi]
-                if (wireExtraStates != null && wi < wireExtraStates.size)
-                    extraStates[index(x, y, z)] = wireExtraStates[wi]
-            }
+            val length = minOf(wire.size, (topY + 1) * LAYER)
+            val blocks = SectionedBytes.of(if (wire.size > length) wire.copyOf(length) else wire)
+            val states = wireStates?.let { SectionedBytes.of(it) } ?: SectionedBytes()
+            val extraStates = wireExtraStates?.let { SectionedBytes.of(it) } ?: SectionedBytes()
             val masters =
                 entityProtos.map { proto ->
                     val chunkX = pos.cx * SIZE_X
@@ -110,54 +134,30 @@ data class Chunk(
     fun getBlock(x: Int, y: Int, z: Int): BlockType =
         BlockRegistry.byWireIndex(blocks[index(x, y, z)].toInt() and 0xFF)
 
-    fun getState(x: Int, y: Int, z: Int): Byte =
-        if (states.isNotEmpty()) states[index(x, y, z)] else 0
+    fun getState(x: Int, y: Int, z: Int): Byte = states[index(x, y, z)]
 
-    fun getExtraState(x: Int, y: Int, z: Int): Byte =
-        if (extraStates.isNotEmpty()) extraStates[index(x, y, z)] else 0
+    fun getExtraState(x: Int, y: Int, z: Int): Byte = extraStates[index(x, y, z)]
 
-    /** Highest Y level containing any non-AIR block. Memoized — scans the full column otherwise. */
+    /** Highest Y level containing any non-AIR block (AIR is wire index 0), 0 for an empty chunk. */
     fun topY(): Int {
         cachedTopY.let { if (it >= 0) return it }
-        var top = 0
-        for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) for (y in SIZE_Y - 1 downTo 0) {
-            if (getBlock(x, y, z) != BlockType.AIR) {
-                if (y > top) top = y
-                break
-            }
-        }
+        val top = maxOf(0, blocks.highestNonZeroIndex() / LAYER)
         cachedTopY = top
         return top
     }
 
+    private fun wirePrefix() = (topY() + 1) * LAYER
+
     /** Encode blocks in y-major order, only y=0..topY (88% smaller than full chunk). */
-    fun encodeWire(): ByteArray {
-        val top = topY()
-        val wire = ByteArray((top + 1) * SIZE_X * SIZE_Z)
-        for (y in 0..top) for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) wire[
-            y * SIZE_X * SIZE_Z + x * SIZE_Z + z] = blocks[index(x, y, z)]
-        return wire
-    }
+    fun encodeWire(): ByteArray = blocks.toByteArray(wirePrefix())
 
     /** Encode states in y-major order, only y=0..topY. Returns null if all states are zero. */
-    fun encodeWireStates(): ByteArray? {
-        if (states.isEmpty() || states.all { it == 0.toByte() }) return null
-        val top = topY()
-        val wire = ByteArray((top + 1) * SIZE_X * SIZE_Z)
-        for (y in 0..top) for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) wire[
-            y * SIZE_X * SIZE_Z + x * SIZE_Z + z] = states[index(x, y, z)]
-        return wire
-    }
+    fun encodeWireStates(): ByteArray? =
+        if (states.isAllZero()) null else states.toByteArray(wirePrefix())
 
     /** Encode extra states in y-major order, only y=0..topY. Returns null if all zero. */
-    fun encodeWireExtraStates(): ByteArray? {
-        if (extraStates.isEmpty() || extraStates.all { it == 0.toByte() }) return null
-        val top = topY()
-        val wire = ByteArray((top + 1) * SIZE_X * SIZE_Z)
-        for (y in 0..top) for (x in 0 until SIZE_X) for (z in 0 until SIZE_Z) wire[
-            y * SIZE_X * SIZE_Z + x * SIZE_Z + z] = extraStates[index(x, y, z)]
-        return wire
-    }
+    fun encodeWireExtraStates(): ByteArray? =
+        if (extraStates.isAllZero()) null else extraStates.toByteArray(wirePrefix())
 
     fun withBlock(
         x: Int,
@@ -167,14 +167,12 @@ data class Chunk(
         state: Byte = 0,
         extraState: Byte = 0
     ): Chunk {
-        val newBlocks = blocks.copyOf()
-        val newStates = if (states.isNotEmpty()) states.copyOf() else ByteArray(TOTAL)
-        val newExtraStates =
-            if (extraStates.isNotEmpty()) extraStates.copyOf() else ByteArray(TOTAL)
-        newBlocks[index(x, y, z)] = BlockRegistry.wireIndex(type).toByte()
-        newStates[index(x, y, z)] = state
-        newExtraStates[index(x, y, z)] = extraState
-        return copy(blocks = newBlocks, states = newStates, extraStates = newExtraStates)
+        val i = index(x, y, z)
+        return copy(
+            blocks = blocks.withByte(i, BlockRegistry.wireIndex(type).toByte()),
+            states = states.withByte(i, state),
+            extraStates = extraStates.withByte(i, extraState),
+        )
     }
 
     fun addEntity(entity: BlockEntity): Chunk = copy(entityMasters = entityMasters + entity)

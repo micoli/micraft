@@ -16,6 +16,7 @@ import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.LegacyChunkLayout
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(TerrainCache::class.java)
@@ -81,7 +82,7 @@ class TerrainCache {
             try {
                 val bytes = GZIPInputStream(file.inputStream()).use { it.readBytes() }
                 if (bytes.size == Chunk.TOTAL) {
-                    update(Chunk(pos, bytes))
+                    update(Chunk(pos, LegacyChunkLayout.toStorage(bytes)))
                     recomputed++
                 }
             } catch (e: Exception) {

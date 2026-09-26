@@ -201,9 +201,9 @@ class HouseGeneratorTest {
         )
 
     private fun renderedChunk(house: PlacedHouse): Chunk {
-        val chunk = Chunk.empty(ChunkPos(0, 0))
-        house.renderIntoChunk(chunk.blocks, 0, 0)
-        return chunk
+        val blocks = ByteArray(Chunk.TOTAL)
+        house.renderIntoChunk(blocks, 0, 0)
+        return Chunk.of(ChunkPos(0, 0), blocks)
     }
 
     @Test

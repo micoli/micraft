@@ -8,6 +8,7 @@ import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.SectionedBytes
 import org.micoli.micraft.game.world.WorldConstants
 
 // AO neighbor offsets: [face][vertex][neighbor(s1,s2,corner)][axis(dx,dy,dz)]
@@ -144,7 +145,8 @@ class ChunkManager(private val scene: JsAny) {
     // FLOWER/WEED) are excluded too since their real geometry isn't a full-cube face.
     private val mergeableByOrd = ByteArray(256)
     private var ordFlagsBuilt = false
-    private val strideX = (WorldConstants.WORLD_MAX_Y + 1) * WorldConstants.CHUNK_SIZE
+    private val strideX = Chunk.STRIDE_X
+    private val strideY = Chunk.STRIDE_Y
 
     private fun buildOrdFlags() {
         if (ordFlagsBuilt) return
@@ -720,7 +722,7 @@ class ChunkManager(private val scene: JsAny) {
     private fun renderRow(chunk: Chunk, topY: Int, y: Int): Int {
         val blocks = chunk.blocks
         val states = chunk.states
-        val hasStates = states.isNotEmpty()
+        val hasStates = !states.isUnallocated()
         val s = WorldConstants.CHUNK_SIZE
         val ox = chunk.pos.cx * s
         val oz = chunk.pos.cz * s
@@ -759,7 +761,7 @@ class ChunkManager(private val scene: JsAny) {
             val wx = ox + x
             for (z in 0 until s) {
                 // Direct ByteArray access — no getBlock(), no registry lookup
-                val idx = x * strideX + y * s + z
+                val idx = Chunk.index(x, y, z)
                 val ord = blocks[idx].toInt() and 0xFF
                 if (ord == 0) continue // AIR = wire index 0
 
@@ -794,7 +796,8 @@ class ChunkManager(private val scene: JsAny) {
 
                 // top (+Y): use solidByOrd + liquidByOrd to skip redundant BlockType creation
                 val aboveOrd =
-                    if (y >= WorldConstants.WORLD_MAX_Y) 0 else blocks[idx + s].toInt() and 0xFF
+                    if (y >= WorldConstants.WORLD_MAX_Y) 0
+                    else blocks[idx + strideY].toInt() and 0xFF
                 val liquid = liquidByOrd[ord].toInt() != 0
                 val liquidAbove = liquidByOrd[aboveOrd].toInt() != 0
                 val emitTop =
@@ -814,7 +817,7 @@ class ChunkManager(private val scene: JsAny) {
                     faceCount++
                 }
                 // bottom (-Y)
-                val belowOrd = if (y <= 0) 0 else blocks[idx - s].toInt() and 0xFF
+                val belowOrd = if (y <= 0) 0 else blocks[idx - strideY].toInt() and 0xFF
                 val emitBottom =
                     bypassCulling ||
                         y <= 0 ||
@@ -1182,7 +1185,7 @@ class ChunkManager(private val scene: JsAny) {
     }
 
     // Takes raw blocks ByteArray — avoids getBlock() + registry HashMap lookups per neighbor
-    private fun computeFaceAO(blocks: ByteArray, lx: Int, ly: Int, lz: Int, fd: Int): Int {
+    private fun computeFaceAO(blocks: SectionedBytes, lx: Int, ly: Int, lz: Int, fd: Int): Int {
         val nbrs = AO_NEIGHBORS[fd]
         val s = WorldConstants.CHUNK_SIZE
         var packed = 0
@@ -1195,7 +1198,7 @@ class ChunkManager(private val scene: JsAny) {
                 val nz = lz + off[2]
                 if (nx < 0 || nx >= s || nz < 0 || nz >= s) continue
                 if (ny < 0 || ny > WorldConstants.WORLD_MAX_Y) continue
-                val nIdx = nx * strideX + ny * s + nz
+                val nIdx = Chunk.index(nx, ny, nz)
                 if (solidByOrd[blocks[nIdx].toInt() and 0xFF].toInt() != 0) solid++
             }
             packed = packed or ((solid * 5).coerceAtMost(15) shl (v * 4))

@@ -96,12 +96,12 @@ class WorldPersistence(val worldDir: Path) {
                                 pos,
                                 Chunk.TOTAL,
                                 bytes.size)
-                            ByteArray(Chunk.TOTAL)
+                            null
                         } else bytes
                     } catch (_: IOException) {
-                        ByteArray(Chunk.TOTAL)
+                        null
                     }
-                else ByteArray(Chunk.TOTAL)
+                else null
             val extraStatesFile = chunksDir.resolve("${pos.cx}_${pos.cz}.mcx.gz")
             val extraStates =
                 if (extraStatesFile.exists())
@@ -114,24 +114,35 @@ class WorldPersistence(val worldDir: Path) {
                                 pos,
                                 Chunk.TOTAL,
                                 bytes.size)
-                            ByteArray(Chunk.TOTAL)
+                            null
                         } else bytes
                     } catch (_: IOException) {
-                        ByteArray(Chunk.TOTAL)
+                        null
                     }
-                else ByteArray(Chunk.TOTAL)
+                else null
             val entityFile = chunksDir.resolve("${pos.cx}_${pos.cz}.mce.gz")
             val entityMasters =
                 if (entityFile.exists())
                     try {
                         val text = GZIPInputStream(entityFile.inputStream()).use { it.readBytes() }
-                        entityJson.decodeFromString(
-                            ListSerializer(BlockEntity.serializer()), text.toString(Charsets.UTF_8))
+                        entityJson
+                            .decodeFromString(
+                                ListSerializer(BlockEntity.serializer()),
+                                text.toString(Charsets.UTF_8))
+                            .map {
+                                it.copy(masterIdx = LegacyChunkLayout.toStorageIndex(it.masterIdx))
+                            }
                     } catch (_: Exception) {
                         emptyList()
                     }
                 else emptyList()
-            Chunk(pos, bytes, states, extraStates, entityMasters)
+            Chunk(
+                pos,
+                LegacyChunkLayout.toStorage(bytes),
+                states?.let(LegacyChunkLayout::toStorage) ?: SectionedBytes(),
+                extraStates?.let(LegacyChunkLayout::toStorage) ?: SectionedBytes(),
+                entityMasters,
+            )
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to load chunk {}: {}", pos, e.message)
             null
@@ -152,22 +163,28 @@ class WorldPersistence(val worldDir: Path) {
     fun saveChunk(pos: ChunkPos, chunk: Chunk) {
         val file = chunksDir.resolve("${pos.cx}_${pos.cz}.mcc.gz")
         try {
-            GZIPOutputStream(file.outputStream()).use { it.write(chunk.blocks) }
+            GZIPOutputStream(file.outputStream()).use {
+                it.write(LegacyChunkLayout.fromStorage(chunk.blocks))
+            }
         } catch (e: IOException) {
             worldPersistenceLog.warn("Failed to save chunk {}: {}", pos, e.message)
         }
-        if (chunk.states.isNotEmpty() && chunk.states.any { it != 0.toByte() }) {
+        if (!chunk.states.isAllZero()) {
             val statesFile = chunksDir.resolve("${pos.cx}_${pos.cz}.mcs.gz")
             try {
-                GZIPOutputStream(statesFile.outputStream()).use { it.write(chunk.states) }
+                GZIPOutputStream(statesFile.outputStream()).use {
+                    it.write(LegacyChunkLayout.fromStorage(chunk.states))
+                }
             } catch (e: IOException) {
                 worldPersistenceLog.warn("Failed to save chunk states {}: {}", pos, e.message)
             }
         }
-        if (chunk.extraStates.isNotEmpty() && chunk.extraStates.any { it != 0.toByte() }) {
+        if (!chunk.extraStates.isAllZero()) {
             val extraStatesFile = chunksDir.resolve("${pos.cx}_${pos.cz}.mcx.gz")
             try {
-                GZIPOutputStream(extraStatesFile.outputStream()).use { it.write(chunk.extraStates) }
+                GZIPOutputStream(extraStatesFile.outputStream()).use {
+                    it.write(LegacyChunkLayout.fromStorage(chunk.extraStates))
+                }
             } catch (e: IOException) {
                 worldPersistenceLog.warn("Failed to save chunk extra states {}: {}", pos, e.message)
             }
@@ -177,7 +194,10 @@ class WorldPersistence(val worldDir: Path) {
             try {
                 val json =
                     entityJson.encodeToString(
-                        ListSerializer(BlockEntity.serializer()), chunk.entityMasters)
+                        ListSerializer(BlockEntity.serializer()),
+                        chunk.entityMasters.map {
+                            it.copy(masterIdx = LegacyChunkLayout.fromStorageIndex(it.masterIdx))
+                        })
                 GZIPOutputStream(entityFile.outputStream()).use {
                     it.write(json.toByteArray(Charsets.UTF_8))
                 }

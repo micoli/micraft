@@ -224,7 +224,7 @@ class ProceduralChunkGenerator(
         placeVegetation(this, blocks, ox, oz)
         placeHouses(blocks, ox, oz)
 
-        return Chunk(pos, blocks)
+        return Chunk.of(pos, blocks)
     }
 
     override fun biomeAt(wx: Int, wz: Int): String = voronoi.sample(wx, wz).primary.id
