@@ -397,4 +397,17 @@ sealed class ClientMessage {
     @ProtoId(76)
     @Serializable
     data class MiniGameAction(val roomId: String, val payload: String) : ClientMessage()
+
+    @ProtoId(77)
+    @Serializable
+    data class PanelEditRequest(val placeableId: String) : ClientMessage()
+
+    /** Replaces a panel's content: [externalUrl] blank = local [pages], else the external URL. */
+    @ProtoId(78)
+    @Serializable
+    data class PanelSave(
+        val placeableId: String,
+        val externalUrl: String = "",
+        val pages: Map<String, String> = emptyMap(),
+    ) : ClientMessage()
 }

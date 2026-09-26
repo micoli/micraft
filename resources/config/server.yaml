@@ -73,3 +73,8 @@ llm:
     baseUrl: "http://127.0.0.1:11434"
     model: "gemma3:1b"
     requestTimeoutMs: 8000
+panels:
+  # Hostnames (and their subdomains) an interactive panel may embed over https. Empty = disabled.
+  # Sites sending X-Frame-Options / frame-ancestors will refuse to render inside a panel.
+  externalAllowlist:
+    - google.com

@@ -84,6 +84,7 @@ import org.micoli.micraft.game.npc.NpcSubsystemHooks
 import org.micoli.micraft.game.pet.PetCoordinator
 import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.placeable.PlaceableManager
+import org.micoli.micraft.game.placeable.panel.PanelEditing
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileManager
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileTickPipeline
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
@@ -666,6 +667,7 @@ class GameLoop(
         @Suppress("UNUSED_EXPRESSION") ActionPermissions
         @Suppress("UNUSED_EXPRESSION")
         org.micoli.micraft.game.world.actionblock.ActionBlockPermissions
+        @Suppress("UNUSED_EXPRESSION") org.micoli.micraft.game.placeable.panel.PanelPermissions
     }
 
     /** Every distinct `permission` a registered slash command gates on — for the admin RBAC UI. */
@@ -1017,6 +1019,12 @@ class GameLoop(
     fun getWeatherZones() = weatherManager.getZones()
 
     fun getNpcManager() = npcManager
+
+    /** Body HTML of a panel page, searched across every live world (panel ids are UUIDs). */
+    fun panelPageHtml(placeableId: String, page: String): String? =
+        gameWorldRegistry.all().firstNotNullOfOrNull {
+            it.placeableManager.panels.pageHtml(placeableId, page)
+        }
 
     fun getMailManager() = mailManager
 
@@ -1655,6 +1663,12 @@ class GameLoop(
                 siegeWeaponManager.despawnFor(msg.id)
             }
             is ClientMessage.PlaceableRotate -> placeableManager.handleRotate(msg.id)
+            is ClientMessage.PanelEditRequest ->
+                PanelEditing(placeableManager, gw.claimRegistry, i18n)
+                    .requestEditor(session, msg.placeableId)
+            is ClientMessage.PanelSave ->
+                PanelEditing(placeableManager, gw.claimRegistry, i18n)
+                    .save(session, msg.placeableId, msg.externalUrl, msg.pages)
             is ClientMessage.SiegeWeaponSetPitch ->
                 siegeWeaponManager.getByPlaceableId(msg.id)?.let {
                     siegeWeaponManager.handleSetPitch(it.id, msg.value)

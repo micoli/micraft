@@ -16,6 +16,8 @@ import org.micoli.micraft.game.world.actionblock.ActionBlockInfo
 import org.micoli.micraft.minigame.MiniGameRoomInfo
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.placeable.PlaceableState
+import org.micoli.micraft.placeable.panel.PanelEditData
+import org.micoli.micraft.placeable.panel.PanelInfo
 import org.micoli.micraft.placeable.siege.SiegeProjectileState
 import org.micoli.micraft.placeable.siege.SiegeWeaponState
 import org.micoli.micraft.player.ChannelSubscription
@@ -642,6 +644,16 @@ sealed class ServerMessage {
     @Serializable
     data class MiniGameAction(val roomId: String, val fromPlayerId: String, val payload: String) :
         ServerMessage()
+
+    /** Sent on connect: every panel's resolved home URL. */
+    @ProtoId(94) @Serializable data class PanelSync(val panels: List<PanelInfo>) : ServerMessage()
+
+    @ProtoId(95) @Serializable data class PanelChanged(val info: PanelInfo) : ServerMessage()
+
+    @ProtoId(96) @Serializable data class PanelRemoved(val placeableId: String) : ServerMessage()
+
+    /** Answer to [ClientMessage.PanelEditRequest]; opens the panel editor. */
+    @ProtoId(97) @Serializable data class PanelEditOpen(val data: PanelEditData) : ServerMessage()
 }
 
 @Serializable

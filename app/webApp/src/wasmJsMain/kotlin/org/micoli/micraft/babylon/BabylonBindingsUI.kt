@@ -59,6 +59,10 @@ fun jsConsumeSaveActionBlock(): String = js("mc.consumeSaveActionBlock()")
 
 fun jsConsumeDeleteActionBlock(): String = js("mc.consumeDeleteActionBlock()")
 
+fun jsOpenPanelEditor(json: String): Unit = js("mc.openPanelEditor(json)")
+
+fun jsConsumeSavePanel(): String = js("mc.consumeSavePanel()")
+
 fun jsHudActionBlock(json: String): Unit = js("mc.hudActionBlock(json)")
 
 fun jsShowNotification(message: String): Unit = js("mc.showNotification(message)")

@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.OverridablePaths
 import org.micoli.micraft.config.loadOverridableConfig
+import org.micoli.micraft.game.placeable.panel.PanelPolicy
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.protocol.MessageEncoding
@@ -117,6 +118,13 @@ data class LlmSection(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
+data class PanelsSection(
+    /** Hostnames an interactive panel may embed over https. Empty = external URLs disabled. */
+    @EncodeDefault(ALWAYS) val externalAllowlist: List<String> = emptyList(),
+)
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
 @JsonSchemaRoot(file = "server.schema.json")
 data class ServerConfig(
     @EncodeDefault(ALWAYS) val world: WorldSection = WorldSection(),
@@ -127,6 +135,7 @@ data class ServerConfig(
     @EncodeDefault(ALWAYS) val game: GameConfig = GameConfig(),
     @EncodeDefault(ALWAYS) val factions: FactionsSection = FactionsSection(),
     @EncodeDefault(ALWAYS) val llm: LlmSection = LlmSection(),
+    @EncodeDefault(ALWAYS) val panels: PanelsSection = PanelsSection(),
 )
 
 fun loadServerConfig(
@@ -160,6 +169,7 @@ fun applyServerConfig(config: ServerConfig) {
     }
     MessageEncoding.current = MessageEncoding.fromConfigValue(config.network.messageEncoder)
     applyGameConfig(config.game)
+    PanelPolicy.externalAllowlist = config.panels.externalAllowlist
     serverConfigLog.info(
         "Server config applied: world={}, player={}, messageEncoder={}",
         config.world,

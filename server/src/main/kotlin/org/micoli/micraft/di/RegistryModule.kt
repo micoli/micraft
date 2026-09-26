@@ -5,6 +5,7 @@ import org.koin.core.annotation.Single
 import org.micoli.micraft.game.item.ItemRegistryLoader
 import org.micoli.micraft.game.item.expandPlainColorItems
 import org.micoli.micraft.game.placeable.furniture.FurnitureRegistryLoader
+import org.micoli.micraft.game.placeable.panel.PanelRegistryLoader
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileRegistryLoader
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponRegistryLoader
 import org.micoli.micraft.game.plaincolor.PlainColorRegistryLoader
@@ -16,33 +17,45 @@ import org.micoli.micraft.game.world.block.BlockRegistryLoader
 import org.micoli.micraft.placeable.PlaceableDefinition
 import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.placeable.furniture.FurnitureRegistry
+import org.micoli.micraft.placeable.panel.PanelRegistry
 import org.micoli.micraft.placeable.siege.SiegeProjectileRegistry
 import org.micoli.micraft.placeable.siege.SiegeWeaponRegistry
 import org.micoli.micraft.vehicle.VehicleRegistry
+
+/**
+ * Bundles every registry loader — a single Koin-resolvable param keeps [loadRegistries] and
+ * [RegistryModule.registryBootstrap] under detekt's parameter-count threshold as more registry
+ * kinds are added.
+ */
+data class RegistryLoaders(
+    val blockRegistryLoader: BlockRegistryLoader,
+    val itemRegistryLoader: ItemRegistryLoader,
+    val plainColorRegistryLoader: PlainColorRegistryLoader,
+    val vehicleRegistryLoader: VehicleRegistryLoader,
+    val siegeWeaponRegistryLoader: SiegeWeaponRegistryLoader,
+    val siegeProjectileRegistryLoader: SiegeProjectileRegistryLoader,
+    val furnitureRegistryLoader: FurnitureRegistryLoader,
+    val panelRegistryLoader: PanelRegistryLoader,
+)
 
 /**
  * Single load sequence shared by bootstrap and `/reload`: palette first (blocks reference it
  * through their generated items), then blocks, then items expanded with one variant per colorable
  * block × color.
  */
-fun loadRegistries(
-    blockRegistryLoader: BlockRegistryLoader,
-    itemRegistryLoader: ItemRegistryLoader,
-    plainColorRegistryLoader: PlainColorRegistryLoader,
-    vehicleRegistryLoader: VehicleRegistryLoader,
-    siegeWeaponRegistryLoader: SiegeWeaponRegistryLoader,
-    siegeProjectileRegistryLoader: SiegeProjectileRegistryLoader,
-    furnitureRegistryLoader: FurnitureRegistryLoader,
-) {
-    PlainColorRegistry.load(plainColorRegistryLoader.load())
-    val blocks = blockRegistryLoader.load()
-    BlockRegistry.load(blocks, blockRegistryLoader.wireOrder())
-    ItemRegistry.load(
-        expandPlainColorItems(itemRegistryLoader.load(), blocks, PlainColorRegistry.all()))
-    VehicleRegistry.load(vehicleRegistryLoader.load())
-    SiegeWeaponRegistry.load(siegeWeaponRegistryLoader.load())
-    SiegeProjectileRegistry.load(siegeProjectileRegistryLoader.load())
-    FurnitureRegistry.load(furnitureRegistryLoader.load())
+fun loadRegistries(loaders: RegistryLoaders) {
+    with(loaders) {
+        PlainColorRegistry.load(plainColorRegistryLoader.load())
+        val blocks = blockRegistryLoader.load()
+        BlockRegistry.load(blocks, blockRegistryLoader.wireOrder())
+        ItemRegistry.load(
+            expandPlainColorItems(itemRegistryLoader.load(), blocks, PlainColorRegistry.all()))
+        VehicleRegistry.load(vehicleRegistryLoader.load())
+        SiegeWeaponRegistry.load(siegeWeaponRegistryLoader.load())
+        SiegeProjectileRegistry.load(siegeProjectileRegistryLoader.load())
+        FurnitureRegistry.load(furnitureRegistryLoader.load())
+        PanelRegistry.load(panelRegistryLoader.load())
+    }
     // Merge each kind-specific placeable registry into the generic one — the bbmodelPath is the
     // model location relative to `resources/`, prefixed per kind; more kinds append here.
     PlaceableRegistry.load(
@@ -52,6 +65,10 @@ fun loadRegistries(
             FurnitureRegistry.keys().associateWith { type ->
                 val def = FurnitureRegistry.get(type)!!
                 PlaceableDefinition("furnitures/${def.bbmodelFile}", def.rotatable)
+            } +
+            PanelRegistry.keys().associateWith { type ->
+                val def = PanelRegistry.get(type)!!
+                PlaceableDefinition("panels/${def.bbmodelFile}", def.rotatable)
             })
 }
 
@@ -73,8 +90,13 @@ class RegistryModule {
 
     @Single fun furnitureRegistryLoader(): FurnitureRegistryLoader = FurnitureRegistryLoader()
 
-    @Single(createdAtStart = true)
-    fun registryBootstrap(
+    @Single fun panelRegistryLoader(): PanelRegistryLoader = PanelRegistryLoader()
+
+    // Koin resolves each param from its own @Single above; there's no lower-arity way to wire a
+    // bundle of already-registered singletons into one object.
+    @Suppress("LongParameterList")
+    @Single
+    fun registryLoaders(
         blockRegistryLoader: BlockRegistryLoader,
         itemRegistryLoader: ItemRegistryLoader,
         plainColorRegistryLoader: PlainColorRegistryLoader,
@@ -82,15 +104,21 @@ class RegistryModule {
         siegeWeaponRegistryLoader: SiegeWeaponRegistryLoader,
         siegeProjectileRegistryLoader: SiegeProjectileRegistryLoader,
         furnitureRegistryLoader: FurnitureRegistryLoader,
-    ): RegistryBootstrapResult {
-        loadRegistries(
+        panelRegistryLoader: PanelRegistryLoader,
+    ): RegistryLoaders =
+        RegistryLoaders(
             blockRegistryLoader,
             itemRegistryLoader,
             plainColorRegistryLoader,
             vehicleRegistryLoader,
             siegeWeaponRegistryLoader,
             siegeProjectileRegistryLoader,
-            furnitureRegistryLoader)
+            furnitureRegistryLoader,
+            panelRegistryLoader)
+
+    @Single(createdAtStart = true)
+    fun registryBootstrap(loaders: RegistryLoaders): RegistryBootstrapResult {
+        loadRegistries(loaders)
         return RegistryBootstrapResult()
     }
 }

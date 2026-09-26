@@ -142,6 +142,12 @@ export interface ActionBlockFormData {
   error?: string | null;
 }
 
+export interface PanelEditFormData {
+  placeableId: string;
+  externalUrl: string;
+  pages: Record<string, string>;
+}
+
 export interface MailData {
   id: string;
   from: string;

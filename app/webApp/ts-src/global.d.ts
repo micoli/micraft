@@ -1,6 +1,7 @@
 import type {
   Scene,
   Camera,
+  UniversalCamera,
   Engine,
   Mesh,
   HemisphericLight,
@@ -257,6 +258,7 @@ declare global {
     placeableModelsReady: boolean;
     placeablePreviewModel: McPlayerModel | null;
     placeablePreviewType: string | null;
+    panelFocusedId: string | null;
     siegeProjectileBbmodels: Record<string, BbModel>;
     siegeProjectileModelsReady: boolean;
     skinConfigs: Record<string, McSkinConfig | null>;
@@ -549,6 +551,14 @@ declare global {
     disposePlaceableModel(model: McPlayerModel): void;
     showPlaceablePreview(scene: Scene, placeableType: string, x: number, y: number, z: number): void;
     hidePlaceablePreview(): void;
+    // Panel — interactive HTML sign, DOM layer projected in 3D (panelSurface.ts)
+    initPanelSurface(scene: Scene, camera: UniversalCamera): void;
+    panelSync(json: string): void;
+    panelUpsert(json: string): void;
+    panelRemove(placeableId: string): void;
+    setPanelTransform(placeableId: string, x: number, y: number, z: number, rotationStep: number): void;
+    focusPanel(placeableId: string): boolean;
+    unfocusPanel(): void;
     // Siege projectile
     initSiegeProjectileModels(projectileTypesJson: string): void;
     isSiegeProjectileModelsReady(): boolean;
@@ -676,6 +686,9 @@ declare global {
     deleteActionBlock(json: string): void;
     consumeDeleteActionBlock(): string;
     hudActionBlock(json: string): void;
+    openPanelEditor(json: string): void;
+    savePanel(json: string): void;
+    consumeSavePanel(): string;
     showPreferences(tab?: string): void;
     openCodex(): void;
     openCraft(): void;

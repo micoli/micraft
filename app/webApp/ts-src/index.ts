@@ -24,6 +24,7 @@ import { registerWeaponOverlay } from "./game/lib/player/weaponOverlay";
 import { registerNpcModel } from "./game/components/npc/npcModel";
 import { registerVehicleModel } from "./game/lib/vehicleModel";
 import { registerPlaceableModel } from "./game/lib/placeable/placeableModel";
+import { registerPanelSurface } from "./game/lib/placeable/panelSurface";
 import { registerSiegeProjectileModel } from "./game/lib/placeable/siegeProjectileModel";
 import { registerMinimap, setMinimapColors } from "./game/lib/minimap";
 import { registerSky } from "./game/lib/sky";
@@ -101,6 +102,7 @@ window.mcState = {
   placeableModelsReady: false,
   placeablePreviewModel: null,
   placeablePreviewType: null,
+  panelFocusedId: null,
   siegeProjectileBbmodels: {},
   siegeProjectileModelsReady: false,
   skinConfigs: {},
@@ -205,6 +207,7 @@ window.mc = {
   ...registerNpcModel(),
   ...registerVehicleModel(),
   ...registerPlaceableModel(),
+  ...registerPanelSurface(),
   ...registerSiegeProjectileModel(),
   ...registerMinimap(),
   ...registerSky(),
@@ -376,6 +379,9 @@ window.mc = {
   deleteActionBlock: () => {},
   consumeDeleteActionBlock: () => "",
   hudActionBlock: () => {},
+  openPanelEditor: () => {},
+  savePanel: () => {},
+  consumeSavePanel: () => "",
   showPreferences: () => {},
   openCodex: () => {},
   openCraft: () => {},

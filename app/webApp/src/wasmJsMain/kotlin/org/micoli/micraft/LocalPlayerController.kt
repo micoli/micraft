@@ -160,6 +160,7 @@ class LocalPlayerController(
     private val isVehicleTarget: (String) -> Boolean = { false },
     private val vehiclePositionOf: (String) -> Vec3? = { null },
     private val isPlaceableTarget: (String) -> Boolean = { false },
+    private val isPanelTarget: (String) -> Boolean = { false },
     // Reproduces server SiegeWeaponManager.computeMuzzleAndVelocity for the not-yet-fired
     // trajectory preview (Phase D) — returns null when the placeableId isn't a linked siege
     // weapon or its definition isn't known yet.
@@ -755,6 +756,13 @@ class LocalPlayerController(
                 }
                 .onFailure { jsConsoleLog("bad DeleteActionBlock: ${it.message}") }
         }
+        val savePanel = jsConsumeSavePanel()
+        if (savePanel.isNotEmpty()) {
+            runCatching {
+                    outMessages.trySend(Json.decodeFromString<ClientMessage.PanelSave>(savePanel))
+                }
+                .onFailure { jsConsoleLog("bad PanelSave: ${it.message}") }
+        }
         return jsIsConsoleInputFocused()
     }
 
@@ -1147,6 +1155,12 @@ class LocalPlayerController(
             }
             ClientInputAction.NPC_INTERACT -> {
                 val targetId = currentCombatTargetId ?: return
+                // A panel is a placeable too, but X on one enters focus mode (client-only, no
+                // message) instead of despawning it — see panelSurface.ts's jsFocusPanel.
+                if (isPanelTarget(targetId)) {
+                    jsFocusPanel(targetId)
+                    return
+                }
                 outMessages.trySend(
                     if (isVehicleTarget(targetId)) ClientMessage.VehicleInteract(targetId)
                     else if (isPlaceableTarget(targetId)) ClientMessage.PlaceableInteract(targetId)

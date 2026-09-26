@@ -85,11 +85,21 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private val actionBlockManager = ActionBlockManager(scene)
     private val vehicleManager = VehicleManager(scene)
     private val placeableManager = PlaceableManager(scene)
+    private val panelManager = PanelManager()
     private val siegeWeaponManager = SiegeWeaponManager()
     private val siegeProjectileManager = SiegeProjectileManager(scene)
     // Populated from ServerMessage.RegistrySync.siegeWeaponDefinitions — launch-math stats keyed
     // by placeableType id (a siege weapon always composes with a placeable of the same type).
     private var siegeWeaponDefs: Map<String, SiegeWeaponCodexInfo> = emptyMap()
+
+    /** No-op for a non-panel placeable — the DOM layer only tracks transforms it was told about. */
+    private fun pushPanelTransform(placeableId: String) {
+        if (!panelManager.isPanel(placeableId)) return
+        val pos = placeableManager.getPosition(placeableId) ?: return
+        val rotationStep = placeableManager.getRotationStep(placeableId) ?: 0
+        jsSetPanelTransform(
+            placeableId, pos.x.toDouble(), pos.y.toDouble(), pos.z.toDouble(), rotationStep)
+    }
 
     private fun siegeWeaponMuzzleAndVelocity(placeableId: String): Pair<Vec3, Vec3>? {
         val type = placeableManager.getType(placeableId) ?: return null
@@ -109,6 +119,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     }
 
     init {
+        jsInitPanelSurface(scene, camera)
         npcManager.registerExternalTargets(
             { vehicleManager.positionsMap() + placeableManager.positionsMap() },
             { vehicleManager.modelsMap() + placeableManager.modelsMap() })
@@ -133,6 +144,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             isVehicleTarget = { id -> id in vehicleManager.modelsMap() },
             vehiclePositionOf = { id -> vehicleManager.positionsMap()[id] },
             isPlaceableTarget = { id -> id in placeableManager.modelsMap() },
+            isPanelTarget = panelManager::isPanel,
             siegeWeaponMuzzleAndVelocityOf = ::siegeWeaponMuzzleAndVelocity,
         )
 
@@ -196,7 +208,8 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 """"actionBlockTarget":${
                     actionBlockManager.currentTarget()?.let { """{"x":${it.x},"y":${it.y},"z":${it.z}}""" } ?: "null"
                 },""" +
-                """"lastWorldUpdate":$lastWorldUpdateJson}"""
+                """"lastWorldUpdate":$lastWorldUpdateJson,""" +
+                """"panelFocusedId":${jsPanelFocusedId()?.let { "\"$it\"" } ?: "null"}}"""
         jsUpdateE2E(json)
     }
 
@@ -871,10 +884,38 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             put(ServerMessage.VehicleUpdate::class, vehicleManager)
             put(ServerMessage.VehicleDespawned::class, vehicleManager)
 
-            // Placeable — single handler object registered for all placeable message types
-            put(ServerMessage.PlaceableSpawned::class, placeableManager)
-            put(ServerMessage.PlaceableUpdate::class, placeableManager)
+            // Placeable — single handler object registered for all placeable message types.
+            // Spawned/Update also push a panel transform when the placeable is a panel (a panel's
+            // DOM layer needs its own position/rotation, tracked separately from the mesh).
+            put(
+                ServerMessage.PlaceableSpawned::class,
+                typedHandler { msg: ServerMessage.PlaceableSpawned ->
+                    placeableManager.handleSpawned(msg.state)
+                    pushPanelTransform(msg.state.id)
+                })
+            put(
+                ServerMessage.PlaceableUpdate::class,
+                typedHandler { msg: ServerMessage.PlaceableUpdate ->
+                    placeableManager.handleUpdate(msg.state)
+                    pushPanelTransform(msg.state.id)
+                })
             put(ServerMessage.PlaceableDespawned::class, placeableManager)
+            // Panel — content (this map) always arrives after the placeable's own spawn/update, so
+            // each handler also (re)pushes that placeable's transform once panelManager knows it.
+            put(
+                ServerMessage.PanelSync::class,
+                typedHandler { msg: ServerMessage.PanelSync ->
+                    panelManager.handle(msg)
+                    msg.panels.forEach { pushPanelTransform(it.placeableId) }
+                })
+            put(
+                ServerMessage.PanelChanged::class,
+                typedHandler { msg: ServerMessage.PanelChanged ->
+                    panelManager.handle(msg)
+                    pushPanelTransform(msg.info.placeableId)
+                })
+            put(ServerMessage.PanelRemoved::class, panelManager)
+            put(ServerMessage.PanelEditOpen::class, panelManager)
             put(ServerMessage.SiegeWeaponUpdate::class, siegeWeaponManager)
             put(ServerMessage.SiegeProjectileSpawned::class, siegeProjectileManager)
             put(ServerMessage.SiegeProjectileUpdate::class, siegeProjectileManager)

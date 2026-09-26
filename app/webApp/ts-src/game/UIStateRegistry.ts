@@ -17,6 +17,7 @@ import {
   NpcChatDialogData,
   NpcChatReplyData,
   NpcDialogData,
+  PanelEditFormData,
   BreathData,
   NpcProximityEntry,
   PlayerStatusData,
@@ -76,6 +77,7 @@ export interface UiState {
   macroEditorOpen: boolean;
   actionBlockForm: ActionBlockFormData | null;
   hudActionBlock: ActionBlockHudData | null;
+  panelEditForm: PanelEditFormData | null;
   characterOpen: boolean;
   characterSyncData: CharacterSyncData | null;
   ingameMapVisible: boolean;
@@ -322,6 +324,11 @@ const componentVisibilityRegistry = {
     actionBlockForm: payload.data,
   }),
   actionblock_form_close: (state: UiState) => ({ ...state, actionBlockForm: null }),
+  panel_edit_open: (state: UiState, payload: { data: PanelEditFormData }) => ({
+    ...state,
+    panelEditForm: payload.data,
+  }),
+  panel_edit_close: (state: UiState) => ({ ...state, panelEditForm: null }),
   hud_actionblock: (state: UiState, payload: { data: ActionBlockHudData | null }) => ({
     ...state,
     hudActionBlock: payload.data,

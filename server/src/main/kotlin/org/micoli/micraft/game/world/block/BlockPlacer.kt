@@ -25,6 +25,7 @@ import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.placeable.PlaceableRegistry
+import org.micoli.micraft.placeable.panel.PanelRegistry
 import org.micoli.micraft.player.EditMode
 import org.micoli.micraft.player.eyeOffset
 import org.micoli.micraft.protocol.BlockChange
@@ -95,6 +96,9 @@ class BlockPlacer(
         }
 
         siegeWeaponManager?.spawnFor(spawned)
+        if (PanelRegistry.get(spawned.type) != null) {
+            manager.panels.createFor(spawned.id, session.state.name)
+        }
 
         if (!creative) {
             val remaining = count - 1

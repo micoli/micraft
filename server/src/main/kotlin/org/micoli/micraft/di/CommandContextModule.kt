@@ -20,6 +20,8 @@ import org.micoli.micraft.game.minigame.MiniGameManager
 import org.micoli.micraft.game.minigame.MiniGameRegistry
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.pet.PetManager
+import org.micoli.micraft.game.placeable.PlaceableManager
+import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.social.FactionManager
@@ -73,6 +75,9 @@ data class CommandContextClosures(
 
 @Module
 class CommandContextModule {
+    // Every param is a distinct already-registered singleton this context exposes to commands;
+    // there's no lower-arity way to wire them (pre-existing shape, baseline-suppressed before).
+    @Suppress("LongParameterList")
     @Single
     fun commandContext(
         @InjectedParam closures: CommandContextClosures,
@@ -98,6 +103,8 @@ class CommandContextModule {
         actionBlockRegistry: ActionBlockRegistry,
         vehicleManager: VehicleManager,
         sceneRegistry: SceneRegistry,
+        placeableManager: PlaceableManager,
+        siegeWeaponManager: SiegeWeaponManager,
     ): CommandContext {
         val generator = worldState.generator as? ProceduralChunkGenerator
         val cavernPoints = generator?.namedCavernPoints() ?: emptyMap()
@@ -154,6 +161,8 @@ class CommandContextModule {
             applyBuff = closures.applyBuff,
             vehicleManager = vehicleManager,
             scenes = sceneRegistry,
+            placeableManager = placeableManager,
+            siegeWeaponManager = siegeWeaponManager,
             claimRegistry = claimRegistry,
             claimManager = claimManager,
             actionBlockRegistry = actionBlockRegistry,

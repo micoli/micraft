@@ -297,6 +297,18 @@ actionblock:
     name_taken: "The name '{0}' is already used by another action block."
     error: "Action block '{0}' error: {1}"
 
+panel:
+  server:
+    usage: "Usage: /panel <edit|set <https-url>|clear>"
+    no_target: "Target an interactive panel first (Tab)."
+    not_a_panel: "This is not an interactive panel."
+    no_permission: "You cannot edit this panel."
+    saved: "Panel saved."
+    invalid_url: "URL refused: it must be https and its host must be allowlisted by the server."
+    too_many_pages: "Too many pages for this panel."
+    invalid_page_name: "Invalid page name (letters, digits, - and _ only)."
+    page_too_large: "A page is too large."
+
 set:
   server:
     usage: "Usage: /set <hp|mana> <playerName> <value>"

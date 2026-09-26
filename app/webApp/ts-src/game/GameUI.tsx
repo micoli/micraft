@@ -100,6 +100,7 @@ const initial: UiState = {
   macroEditorOpen: false,
   actionBlockForm: null,
   hudActionBlock: null,
+  panelEditForm: null,
   characterOpen: false,
   characterSyncData: null,
   ingameMapVisible: false,
@@ -196,6 +197,7 @@ export function GameUI() {
   const mailboxOpenRef = useRef(false);
   const macroEditorOpenRef = useRef(false);
   const actionBlockFormOpenRef = useRef(false);
+  const panelEditFormOpenRef = useRef(false);
   const ingameMapOpenRef = useRef(false);
   const layoutEditorOpenRef = useRef(false);
   const auctionHouseOpenRef = useRef(false);
@@ -360,6 +362,9 @@ export function GameUI() {
   useEffect(() => {
     actionBlockFormOpenRef.current = state.actionBlockForm !== null;
   }, [state.actionBlockForm]);
+  useEffect(() => {
+    panelEditFormOpenRef.current = state.panelEditForm !== null;
+  }, [state.panelEditForm]);
   useLayoutEffect(() => {
     ingameMapOpenRef.current = state.ingameMapVisible;
   }, [state.ingameMapVisible]);
@@ -406,6 +411,7 @@ export function GameUI() {
       state.factionPanelOpen ||
       state.trade !== null ||
       state.actionBlockForm !== null ||
+      state.panelEditForm !== null ||
       state.npcDialog !== null ||
       state.questGiverDialog !== null;
 
@@ -438,6 +444,7 @@ export function GameUI() {
     state.factionPanelOpen,
     state.trade,
     state.actionBlockForm,
+    state.panelEditForm,
     state.npcDialog,
     state.questGiverDialog,
     dispatch,
@@ -463,6 +470,7 @@ export function GameUI() {
         state.macroEditorOpen ||
         state.pauseMenuOpen ||
         state.actionBlockForm !== null ||
+        state.panelEditForm !== null ||
         state.scenePlaceConfirmOpen;
   }, [
     state.chunkLoading,
@@ -473,6 +481,7 @@ export function GameUI() {
     state.macroEditorOpen,
     state.pauseMenuOpen,
     state.actionBlockForm,
+    state.panelEditForm,
     state.scenePlaceConfirmOpen,
   ]);
 
@@ -886,6 +895,19 @@ export function GameUI() {
 
     window.mc.hudActionBlock = (json: string) => {
       dispatch("hud_actionblock", { data: json === "null" ? null : JSON.parse(json) });
+    };
+
+    const pendingSavePanelRef = { current: "" };
+    window.mc.openPanelEditor = (json: string) => {
+      dispatch("panel_edit_open", { data: JSON.parse(json) });
+    };
+    window.mc.savePanel = (json: string) => {
+      pendingSavePanelRef.current = json;
+    };
+    window.mc.consumeSavePanel = () => {
+      const v = pendingSavePanelRef.current;
+      pendingSavePanelRef.current = "";
+      return v;
     };
 
     const pendingDeleteActionBlockRef = { current: "" };
@@ -1334,6 +1356,11 @@ export function GameUI() {
         }
         if (actionBlockFormOpenRef.current) {
           dispatch("actionblock_form_close");
+          resumeGame();
+          return;
+        }
+        if (panelEditFormOpenRef.current) {
+          dispatch("panel_edit_close");
           resumeGame();
           return;
         }

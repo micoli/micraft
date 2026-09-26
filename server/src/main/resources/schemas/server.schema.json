@@ -276,6 +276,18 @@
           }
         }
       }
+    },
+    "panels": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "externalAllowlist": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }

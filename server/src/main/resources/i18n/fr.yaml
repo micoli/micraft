@@ -297,6 +297,18 @@ actionblock:
     name_taken: "Le nom « {0} » est déjà utilisé par un autre bloc d'action."
     error: "Erreur du bloc d'action « {0} » : {1}"
 
+panel:
+  server:
+    usage: "Usage : /panel <edit|set <url-https>|clear>"
+    no_target: "Ciblez d'abord un panneau interactif (Tab)."
+    not_a_panel: "Ce n'est pas un panneau interactif."
+    no_permission: "Vous ne pouvez pas éditer ce panneau."
+    saved: "Panneau enregistré."
+    invalid_url: "URL refusée : elle doit être en https et son hôte autorisé par le serveur."
+    too_many_pages: "Trop de pages pour ce panneau."
+    invalid_page_name: "Nom de page invalide (lettres, chiffres, - et _ uniquement)."
+    page_too_large: "Une page est trop volumineuse."
+
 set:
   server:
     usage: "Utilisation : /set <hp|mana> <nomJoueur> <valeur>"

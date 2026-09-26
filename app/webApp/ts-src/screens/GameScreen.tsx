@@ -28,6 +28,7 @@ import { Notifications } from "../game/components/Notifications";
 import { PauseMenu } from "../game/overlays/PauseMenu";
 import { MacroEditor } from "../game/overlays/MacroEditor";
 import { ActionBlockEditor } from "../game/overlays/ActionBlockEditor";
+import { PanelEditor } from "../game/overlays/PanelEditor";
 import { LayoutEditor } from "../game/layout/LayoutEditor";
 import { getWidget, resolveActiveLayout, widgetStyle, WIDGET_REGISTRY } from "../game/layout/LayoutEngine";
 import { CodexModal } from "../game/components/codex/CodexModal";
@@ -738,6 +739,15 @@ export function GameScreen() {
               data={state.actionBlockForm}
               onClose={() => {
                 dispatch("actionblock_form_close");
+                resumePointerLock();
+              }}
+            />
+          )}
+          {state.panelEditForm && (
+            <PanelEditor
+              data={state.panelEditForm}
+              onClose={() => {
+                dispatch("panel_edit_close");
                 resumePointerLock();
               }}
             />

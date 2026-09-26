@@ -9,6 +9,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.builtins.ListSerializer
+import org.micoli.micraft.game.placeable.panel.PanelManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
@@ -36,6 +37,9 @@ private val log = LoggerFactory.getLogger(PlaceableManager::class.java)
  */
 class PlaceableManager(private val broadcast: suspend (ServerMessage) -> Unit) {
     private val placeables = ConcurrentHashMap<String, PlaceableInstance>()
+
+    /** Per-instance content of panel-type placeables; cleaned up on [despawn]. */
+    val panels = PanelManager(broadcast)
 
     fun getAll(): Collection<PlaceableInstance> = placeables.values
 
@@ -79,6 +83,7 @@ class PlaceableManager(private val broadcast: suspend (ServerMessage) -> Unit) {
     /** Despawns [id] and returns its item to [session]'s inventory, if it maps to one. */
     suspend fun despawn(id: String, session: PlayerSession) {
         val instance = placeables.remove(id) ?: return
+        panels.removeFor(id)
         broadcast(ServerMessage.PlaceableDespawned(id))
         val itemType = itemTypeFor(instance.type)
         if (itemType != null) {
@@ -113,6 +118,7 @@ class PlaceableManager(private val broadcast: suspend (ServerMessage) -> Unit) {
     suspend fun sendAllTo(session: PlayerSession) {
         for (instance in placeables.values) session.send(
             ServerMessage.PlaceableSpawned(instance.toState()))
+        panels.sendAllTo(session)
     }
 
     /**
@@ -141,11 +147,14 @@ class PlaceableManager(private val broadcast: suspend (ServerMessage) -> Unit) {
                     loaded++
                 }
                 log.info("Loaded {} placeables from {}", loaded, savePath)
+                panels.load(panelsPathFor(savePath)) { placeables.containsKey(it) }
             }
             .onFailure { e ->
                 log.warn("Failed to load placeables from {}: {}", savePath, e.message)
             }
     }
+
+    private fun panelsPathFor(savePath: Path): Path = savePath.resolveSibling("panels.yaml")
 
     fun save(savePath: Path) {
         runCatching {
@@ -154,6 +163,7 @@ class PlaceableManager(private val broadcast: suspend (ServerMessage) -> Unit) {
                 savePath.writeText(
                     Yaml.default.encodeToString(
                         ListSerializer(PlaceableState.serializer()), states))
+                panels.save(panelsPathFor(savePath))
             }
             .onFailure { e -> log.warn("Failed to save placeables: {}", e.message) }
     }

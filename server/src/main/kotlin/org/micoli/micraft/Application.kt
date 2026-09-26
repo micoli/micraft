@@ -46,6 +46,7 @@ import org.micoli.micraft.di.OptionalAuthProvider
 import org.micoli.micraft.di.OptionalTokenStore
 import org.micoli.micraft.di.OptionalWorldPersistence
 import org.micoli.micraft.di.PlayerPersister
+import org.micoli.micraft.di.RegistryLoaders
 import org.micoli.micraft.di.SessionRegistry
 import org.micoli.micraft.di.loadRegistries
 import org.micoli.micraft.game.GameConfig
@@ -66,7 +67,6 @@ import org.micoli.micraft.game.combat.SkillsConfig
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
-import org.micoli.micraft.game.item.ItemRegistryLoader
 import org.micoli.micraft.game.loadServerConfig
 import org.micoli.micraft.game.minigame.MiniGameRegistry
 import org.micoli.micraft.game.npc.NpcConfigLoader
@@ -76,12 +76,8 @@ import org.micoli.micraft.game.npc.NpcSubsystemFactory
 import org.micoli.micraft.game.pet.PetCoordinator
 import org.micoli.micraft.game.pet.PetManager
 import org.micoli.micraft.game.placeable.PlaceableManager
-import org.micoli.micraft.game.placeable.furniture.FurnitureRegistryLoader
 import org.micoli.micraft.game.placeable.siege.SiegeProjectileManager
-import org.micoli.micraft.game.placeable.siege.SiegeProjectileRegistryLoader
 import org.micoli.micraft.game.placeable.siege.SiegeWeaponManager
-import org.micoli.micraft.game.placeable.siege.SiegeWeaponRegistryLoader
-import org.micoli.micraft.game.plaincolor.PlainColorRegistryLoader
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.quest.QuestRegistryLoader
 import org.micoli.micraft.game.recipe.RecipeRegistryLoader
@@ -94,7 +90,6 @@ import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.trade.TradeConfigLoader
 import org.micoli.micraft.game.trade.TradeManager
 import org.micoli.micraft.game.vehicle.VehicleManager
-import org.micoli.micraft.game.vehicle.VehicleRegistryLoader
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
@@ -103,7 +98,6 @@ import org.micoli.micraft.game.world.biome.BiomeRegistry
 import org.micoli.micraft.game.world.biome.loadBiomeRegistry
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockPlacer
-import org.micoli.micraft.game.world.block.BlockRegistryLoader
 import org.micoli.micraft.game.world.claim.ClaimManager
 import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.house.loadHouseConfig
@@ -139,6 +133,7 @@ import org.micoli.micraft.http.MacrosController
 import org.micoli.micraft.http.MapController
 import org.micoli.micraft.http.MetricsController
 import org.micoli.micraft.http.MiniGamesController
+import org.micoli.micraft.http.PanelPagesController
 import org.micoli.micraft.http.PlayerArmorsController
 import org.micoli.micraft.http.PlayerHandsController
 import org.micoli.micraft.http.PlayerOwnedController
@@ -214,13 +209,7 @@ fun Application.module() {
     val gameConfig = get<GameConfig>()
 
     val persistence = get<OptionalWorldPersistence>().value
-    val blockRegistryLoader = get<BlockRegistryLoader>()
-    val itemRegistryLoader = get<ItemRegistryLoader>()
-    val plainColorRegistryLoader = get<PlainColorRegistryLoader>()
-    val vehicleRegistryLoader = get<VehicleRegistryLoader>()
-    val siegeWeaponRegistryLoader = get<SiegeWeaponRegistryLoader>()
-    val siegeProjectileRegistryLoader = get<SiegeProjectileRegistryLoader>()
-    val furnitureRegistryLoader = get<FurnitureRegistryLoader>()
+    val registryLoaders = get<RegistryLoaders>()
 
     val reloadBiomes: () -> ChunkGenerator = {
         ProceduralChunkGenerator(
@@ -231,16 +220,7 @@ fun Application.module() {
         )
     }
 
-    val reloadRegistries: () -> Unit = {
-        loadRegistries(
-            blockRegistryLoader,
-            itemRegistryLoader,
-            plainColorRegistryLoader,
-            vehicleRegistryLoader,
-            siegeWeaponRegistryLoader,
-            siegeProjectileRegistryLoader,
-            furnitureRegistryLoader)
-    }
+    val reloadRegistries: () -> Unit = { loadRegistries(registryLoaders) }
 
     val reloadGameConfigLambda: () -> Unit = { applyServerConfig(loadServerConfig()) }
 
@@ -409,6 +389,7 @@ fun Application.module() {
         ToolsController().register(this)
         SiegeWeaponsController().register(this)
         FurnitureController().register(this)
+        PanelPagesController(gameLoop::panelPageHtml).register(this)
         AuctionsController(gameLoop, tokenStore).register(this)
         GameAssetsController().register(this)
         QuestsController(questManager).register(this)

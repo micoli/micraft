@@ -241,6 +241,7 @@ dependencies {
     implementation(libs.bcrypt)
     implementation(libs.classgraph)
     implementation(libs.logback)
+    implementation(libs.jsoup)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.serverCore)
     implementation(libs.ktor.serverNetty)

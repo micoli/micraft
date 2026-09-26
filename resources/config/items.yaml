@@ -221,6 +221,11 @@ FURNITURE_CHAIR:
   spawnsEntity: CHAIR
   label: CHR
   bg: "#8B5A2B"
+PANEL_WOOD:
+  buildable: true
+  spawnsEntity: PANEL_WOOD
+  label: PNL
+  bg: "#6B4A2B"
 BOULDER:
   buildable: false
   label: BLD

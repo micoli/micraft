@@ -38,6 +38,8 @@ export interface E2eSnapshot {
   /** The action block currently Tab-targeted, or null. */
   actionBlockTarget: { x: number; y: number; z: number } | null;
   lastWorldUpdate: { x: number; y: number; z: number; block: string }[] | null;
+  /** The interactive panel currently in focus mode (see panelSurface.ts), or null. */
+  panelFocusedId: string | null;
   /** Player vitals, mirrored from PlayerStatusUpdate. `null` before the first update. */
   playerStatus: {
     currentHp: number;
