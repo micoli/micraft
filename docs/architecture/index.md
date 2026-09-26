@@ -28,3 +28,4 @@ Read on:
 - [Chunk transport modes](chunk-transport.md)
 - [Automatic manager state machine](managers-state-machine.md)
 - [Protocol messages](protocol.md)
+- [Architecture decisions (ADR)](../adr/index.md)
