@@ -100,7 +100,7 @@ export const getApiLayoutRegistry = <ThrowOnError extends boolean = false>(optio
 export const getApiItemsMeta = <ThrowOnError extends boolean = false>(options?: Options<GetApiItemsMetaData, ThrowOnError>): RequestResult<GetApiItemsMetaResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetApiItemsMetaResponses, unknown, ThrowOnError>({ url: '/api/items/meta', ...options });
 
 /**
- * Server build timestamp
+ * Server build timestamp and protocol fingerprint
  */
 export const getApiServerInfo = <ThrowOnError extends boolean = false>(options?: Options<GetApiServerInfoData, ThrowOnError>): RequestResult<GetApiServerInfoResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetApiServerInfoResponses, unknown, ThrowOnError>({ url: '/api/server/info', ...options });
 

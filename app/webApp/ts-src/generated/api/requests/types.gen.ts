@@ -186,6 +186,10 @@ export type OrgMicoliMicraftHttpServerInfo = {
      * String
      */
     buildTimestamp: string;
+    /**
+     * String
+     */
+    protocolFingerprint: string;
 };
 
 /**

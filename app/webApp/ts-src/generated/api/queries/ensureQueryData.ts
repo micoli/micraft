@@ -47,7 +47,7 @@ export const ensureUseGetApiLayoutRegistryData = (queryClient: QueryClient, clie
  */
 export const ensureUseGetApiItemsMetaData = (queryClient: QueryClient, clientOptions: Options<GetApiItemsMetaData, true> = {}, options?: Omit<EnsureQueryDataOptions<Common.GetApiItemsMetaDefaultResponse>, "queryKey" | "queryFn">) => queryClient.ensureQueryData({ queryKey: Common.UseGetApiItemsMetaKeyFn(clientOptions), queryFn: ({ signal }) => getApiItemsMeta({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**
- * Server build timestamp
+ * Server build timestamp and protocol fingerprint
  */
 export const ensureUseGetApiServerInfoData = (queryClient: QueryClient, clientOptions: Options<GetApiServerInfoData, true> = {}, options?: Omit<EnsureQueryDataOptions<Common.GetApiServerInfoDefaultResponse>, "queryKey" | "queryFn">) => queryClient.ensureQueryData({ queryKey: Common.UseGetApiServerInfoKeyFn(clientOptions), queryFn: ({ signal }) => getApiServerInfo({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**

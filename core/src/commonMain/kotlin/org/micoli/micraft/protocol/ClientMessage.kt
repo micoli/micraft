@@ -17,6 +17,10 @@ import org.micoli.micraft.ui.GameLayout
 // auto-reconnect instead of racing the newer connection for the same player id.
 const val SUPERSEDED_CONNECTION_CLOSE_CODE: Short = 4001
 
+// Close code for a Connect whose PROTOCOL_FINGERPRINT differs from the server's: the client was
+// built from another protocol version (ADR-0003: no cross-version compatibility) and reloads.
+const val PROTOCOL_MISMATCH_CLOSE_CODE: Short = 4002
+
 // The /chunks socket's first text frame is "<token><sep><playerId>": the token authenticates the
 // account, the playerId names the character session to attach to.
 const val CHUNK_HANDSHAKE_SEPARATOR: Char = '\t'
@@ -34,6 +38,9 @@ sealed class ClientMessage {
         // Random id generated once per client instance (tab/window) — lets the server tell
         // apart a genuine reconnect from a second tab racing for the same player id.
         val connectionId: String = "",
+        // The client's compiled protocol; the server closes with PROTOCOL_MISMATCH_CLOSE_CODE if
+        // it differs from its own.
+        val protocolFingerprint: String = PROTOCOL_FINGERPRINT,
     ) : ClientMessage()
 
     @ProtoId(1)

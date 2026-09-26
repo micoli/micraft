@@ -334,7 +334,7 @@ paths:
   /api/server/info:
     get:
       tags: []
-      description: Server build timestamp
+      description: Server build timestamp and protocol fingerprint
       parameters: []
       responses:
         "200":
@@ -4495,8 +4495,12 @@ components:
         buildTimestamp:
           type: string
           title: String
+        protocolFingerprint:
+          type: string
+          title: String
       required:
       - buildTimestamp
+      - protocolFingerprint
       title: ServerInfo
     org.micoli.micraft.game.classes.ClassLevelEntry:
       type: object

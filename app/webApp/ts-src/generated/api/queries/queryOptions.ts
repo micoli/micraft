@@ -47,7 +47,7 @@ export const getApiLayoutRegistryOptions = (clientOptions: Options<GetApiLayoutR
  */
 export const getApiItemsMetaOptions = (clientOptions: Options<GetApiItemsMetaData, true> = {}, queryKey?: Array<unknown>) => queryOptions({ queryKey: Common.UseGetApiItemsMetaKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiItemsMeta({ ...clientOptions, signal, throwOnError: true }).then(response => response.data) });
 /**
- * Server build timestamp
+ * Server build timestamp and protocol fingerprint
  */
 export const getApiServerInfoOptions = (clientOptions: Options<GetApiServerInfoData, true> = {}, queryKey?: Array<unknown>) => queryOptions({ queryKey: Common.UseGetApiServerInfoKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiServerInfo({ ...clientOptions, signal, throwOnError: true }).then(response => response.data) });
 /**

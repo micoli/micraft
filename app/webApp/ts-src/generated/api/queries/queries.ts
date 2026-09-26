@@ -47,7 +47,7 @@ export const useGetApiLayoutRegistry = <TData = Common.GetApiLayoutRegistryDefau
  */
 export const useGetApiItemsMeta = <TData = Common.GetApiItemsMetaDefaultResponse, TError = unknown, TQueryKey extends Array<unknown> = unknown[]>(clientOptions: Options<GetApiItemsMetaData, true> = {}, queryKey?: TQueryKey, options?: Omit<UseQueryOptions<TData, TError>, "queryKey" | "queryFn">) => useQuery<TData, TError>({ queryKey: Common.UseGetApiItemsMetaKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiItemsMeta({ ...clientOptions, signal, throwOnError: true }).then(response => response.data as TData) as TData, ...options });
 /**
- * Server build timestamp
+ * Server build timestamp and protocol fingerprint
  */
 export const useGetApiServerInfo = <TData = Common.GetApiServerInfoDefaultResponse, TError = unknown, TQueryKey extends Array<unknown> = unknown[]>(clientOptions: Options<GetApiServerInfoData, true> = {}, queryKey?: TQueryKey, options?: Omit<UseQueryOptions<TData, TError>, "queryKey" | "queryFn">) => useQuery<TData, TError>({ queryKey: Common.UseGetApiServerInfoKeyFn(clientOptions, queryKey), queryFn: ({ signal }) => getApiServerInfo({ ...clientOptions, signal, throwOnError: true }).then(response => response.data as TData) as TData, ...options });
 /**

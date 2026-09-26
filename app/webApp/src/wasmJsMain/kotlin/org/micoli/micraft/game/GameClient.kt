@@ -3,6 +3,7 @@ package org.micoli.micraft.game
 import io.ktor.client.*
 import io.ktor.client.engine.js.*
 import io.ktor.client.plugins.websocket.*
+import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -46,6 +47,8 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.CHUNK_HANDSHAKE_SEPARATOR
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
+import org.micoli.micraft.protocol.PROTOCOL_FINGERPRINT
+import org.micoli.micraft.protocol.PROTOCOL_MISMATCH_CLOSE_CODE
 import org.micoli.micraft.protocol.SUPERSEDED_CONNECTION_CLOSE_CODE
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
@@ -243,6 +246,32 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
      * Returns null on any failure (network error, expired/unknown refresh token) — the caller falls
      * back to a full re-login in that case.
      */
+    /**
+     * False when the server reports another PROTOCOL_FINGERPRINT: this client was built from a
+     * different protocol and would misread every message (ADR-0003). Unknown (server unreachable,
+     * old server) counts as a match — the connection attempt then fails or succeeds on its own.
+     */
+    private suspend fun serverProtocolMatches(): Boolean {
+        val serverFingerprint =
+            runCatching {
+                    val body =
+                        HttpClient(Js)
+                            .get("http://$serverHost:$serverPort/api/server/info")
+                            .bodyAsText()
+                    Json.parseToJsonElement(body)
+                        .jsonObject["protocolFingerprint"]
+                        ?.jsonPrimitive
+                        ?.content
+                }
+                .getOrNull() ?: return true
+        return serverFingerprint == PROTOCOL_FINGERPRINT
+    }
+
+    private fun onProtocolMismatch() {
+        jsLog("Server protocol differs from this client's ($PROTOCOL_FINGERPRINT) — reloading")
+        if (!jsReloadForProtocolMismatch()) jsShowLoginOverlay("protocol_mismatch")
+    }
+
     private suspend fun refreshAccessToken(refreshToken: String): Pair<String, String>? {
         if (refreshToken.isEmpty()) return null
         return runCatching {
@@ -425,6 +454,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 currentRefreshToken = this@GameClient.refreshToken
                 var sessionWelcomed = false
                 var lastCloseCode: Short? = null
+                if (!serverProtocolMatches()) {
+                    onProtocolMismatch()
+                    break
+                }
                 try {
                     uiState.disconnectMessage = null
                     jsLog("WS connecting to ws://$serverHost:$serverPort/game")
@@ -545,6 +578,10 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
 
                 if (!isActive) break
                 resetForReconnect()
+                if (lastCloseCode == PROTOCOL_MISMATCH_CLOSE_CODE) {
+                    onProtocolMismatch()
+                    break
+                }
                 val superseded = lastCloseCode == SUPERSEDED_CONNECTION_CLOSE_CODE
                 if (superseded) {
                     // Another tab/session took over this player — do NOT auto-reconnect: racing

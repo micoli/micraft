@@ -263,10 +263,15 @@ export const org_micoli_micraft_http_ServerInfoSchema = {
         buildTimestamp: {
             type: 'string',
             title: 'String'
+        },
+        protocolFingerprint: {
+            type: 'string',
+            title: 'String'
         }
     },
     required: [
-        'buildTimestamp'
+        'buildTimestamp',
+        'protocolFingerprint'
     ],
     title: 'ServerInfo'
 } as const;

@@ -47,7 +47,7 @@ export const prefetchUseGetApiLayoutRegistry = (queryClient: QueryClient, client
  */
 export const prefetchUseGetApiItemsMeta = (queryClient: QueryClient, clientOptions: Options<GetApiItemsMetaData, true> = {}, options?: Omit<FetchQueryOptions<Common.GetApiItemsMetaDefaultResponse>, "queryKey" | "queryFn">) => queryClient.prefetchQuery({ queryKey: Common.UseGetApiItemsMetaKeyFn(clientOptions), queryFn: ({ signal }) => getApiItemsMeta({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**
- * Server build timestamp
+ * Server build timestamp and protocol fingerprint
  */
 export const prefetchUseGetApiServerInfo = (queryClient: QueryClient, clientOptions: Options<GetApiServerInfoData, true> = {}, options?: Omit<FetchQueryOptions<Common.GetApiServerInfoDefaultResponse>, "queryKey" | "queryFn">) => queryClient.prefetchQuery({ queryKey: Common.UseGetApiServerInfoKeyFn(clientOptions), queryFn: ({ signal }) => getApiServerInfo({ ...clientOptions, signal, throwOnError: true }).then(response => response.data), ...options });
 /**

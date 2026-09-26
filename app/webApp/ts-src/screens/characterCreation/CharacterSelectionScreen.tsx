@@ -41,6 +41,7 @@ const SUPPORTED_LANGS: { code: string; label: string }[] = [
 // Reasons a WebSocket disconnect can hand off to this screen via navigate("/chars", { state }).
 const DISCONNECT_REASON_MESSAGES: Record<string, string> = {
   superseded: "Connected from another device",
+  protocol_mismatch: "A new version of the game is available — reload the page",
 };
 
 export function CharacterSelectionScreen() {

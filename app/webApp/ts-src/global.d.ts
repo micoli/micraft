@@ -585,6 +585,8 @@ declare global {
     drawMinimap(playerX: number, playerZ: number, playerYaw: number): void;
     // Utils
     reload(): void;
+    /** Reloads for a protocol mismatch unless it just did (then false: show a message instead). */
+    reloadForProtocolMismatch(): boolean;
     setConnectedPlayers(namesJson: string): void;
     setNpcNames(namesJson: string): void;
     updateNpcProximity(json: string): void;

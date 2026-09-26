@@ -15,5 +15,9 @@ devtools; it is not a supported production mode.
 ## Consequences
 
 - Never hand-edit the generated registries.
-- A browser tab left open across a deploy talks to an incompatible server. Only Wasm load failures trigger a reload
-  today; there is no version handshake on connect.
+- A browser tab left open across a deploy must not talk to an incompatible server. The processor also emits
+  `PROTOCOL_FINGERPRINT` (a hash of every message, its id and fields, and the project types it carries). The client
+  compares it with `GET /api/server/info` before connecting and reloads on a mismatch (at most once a minute, then it
+  shows a message); the server also closes a `Connect` carrying another fingerprint with
+  `PROTOCOL_MISMATCH_CLOSE_CODE` (4002), which the client handles the same way. A server-only rebuild with an
+  unchanged protocol keeps the fingerprint, so players are not reloaded for nothing.

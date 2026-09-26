@@ -171,6 +171,8 @@ import org.micoli.micraft.protocol.CommandInfo
 import org.micoli.micraft.protocol.EntityRemoveAt
 import org.micoli.micraft.protocol.ItemInfo
 import org.micoli.micraft.protocol.NpcCodexInfo
+import org.micoli.micraft.protocol.PROTOCOL_FINGERPRINT
+import org.micoli.micraft.protocol.PROTOCOL_MISMATCH_CLOSE_CODE
 import org.micoli.micraft.protocol.PlaceableCodexInfo
 import org.micoli.micraft.protocol.PlainColorInfo
 import org.micoli.micraft.protocol.RailInfo
@@ -1881,6 +1883,10 @@ class GameLoop(
                     } else null
                 }
                 .getOrNull()
+        if (connectMsg != null && connectMsg.protocolFingerprint != PROTOCOL_FINGERPRINT) {
+            socket.close(CloseReason(PROTOCOL_MISMATCH_CLOSE_CODE, "protocol mismatch"))
+            return
+        }
         val authResult =
             if (tokenStore != null) {
                 val token = connectMsg?.token ?: ""

@@ -2,6 +2,7 @@ package org.micoli.micraft.game
 
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readBytes
+import io.ktor.websocket.readReason
 import java.nio.file.Files
 import java.util.UUID
 import kotlin.test.Test
@@ -34,6 +35,7 @@ import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ClientMessageCodec
+import org.micoli.micraft.protocol.PROTOCOL_MISMATCH_CLOSE_CODE
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
 import org.micoli.micraft.support.FakeWebSocketSession
@@ -221,6 +223,27 @@ class GameLoopTest {
         assertEquals(true, prefs.overrideUseImpostor)
         assertEquals(0, prefs.overrideImpostorRadiusChunks)
         assertEquals(0, prefs.overrideImpostorFovBonusChunks)
+    }
+
+    @Test
+    fun onConnect_otherProtocolFingerprint_closesWithProtocolMismatch() = runTest {
+        val gameLoop = GameLoop(testWorld())
+
+        val socket = FakeWebSocketSession()
+        val connect =
+            ClientMessage.Connect(
+                playerName = "Stale",
+                userName = "stale@example.com",
+                protocolFingerprint = "0000000000000000")
+        socket.incomingChannel.trySend(Frame.Binary(true, ClientMessageCodec.encode(connect)))
+        socket.incomingChannel.close()
+        gameLoop.onConnect(socket)
+
+        val frames = generateSequence { socket.outgoingChannel.tryReceive().getOrNull() }.toList()
+        val close = frames.filterIsInstance<Frame.Close>().singleOrNull()
+        assertEquals(PROTOCOL_MISMATCH_CLOSE_CODE, close?.readReason()?.code)
+        assertTrue(
+            frames.none { it is Frame.Binary }, "no game message reaches a mismatched client")
     }
 
     @Test

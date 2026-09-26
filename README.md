@@ -292,7 +292,7 @@ never hand-edit either.
 | GET | `/api/players/by-email/{email}` | Player characters (name + id) linked to an account email |
 | GET | `/api/players/names` | Names of all known players |
 | GET | `/api/quests` | All quest definitions |
-| GET | `/api/server/info` | Server build timestamp |
+| GET | `/api/server/info` | Server build timestamp and protocol fingerprint |
 | GET | `/api/siege-weapons` | List all siege weapon definitions |
 | GET | `/api/skins` | Names of all available player skins |
 | GET | `/api/skins/{name}/config` | Skin config (eye offset, hidden bones) for a named skin |

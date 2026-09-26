@@ -1,4 +1,5 @@
 import { getApiAutocompleteByCommandIdByArgIndex } from "../../generated/api/requests";
+import { reloadForProtocolMismatch } from "../../lib/protocolReload";
 import type { Suggestion } from "../types";
 
 function registerCompleter(cmd: string, fn: (partial: string) => Suggestion[] | Promise<Suggestion[]>): void {
@@ -41,7 +42,12 @@ function registerServerCompleters(commands: Array<{ id: string; command: string;
 
 export function registerUtils(): Pick<
   McBindings,
-  "reload" | "setConnectedPlayers" | "setNpcNames" | "registerCompleter" | "registerServerCompleters"
+  | "reload"
+  | "reloadForProtocolMismatch"
+  | "setConnectedPlayers"
+  | "setNpcNames"
+  | "registerCompleter"
+  | "registerServerCompleters"
 > {
   window.mcState.connectedPlayers = [];
   window.mcState.npcNames = [];
@@ -95,6 +101,8 @@ export function registerUtils(): Pick<
     reload: (): void => {
       window.location.reload();
     },
+
+    reloadForProtocolMismatch: (): boolean => reloadForProtocolMismatch(),
 
     setConnectedPlayers: (namesJson: string): void => {
       try {
