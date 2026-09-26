@@ -404,9 +404,10 @@ const FACE_BUF_SLOTS = 840_000; // 7 ints × up to 120k faces per chunk
 // (not chunk meshing) the dominant per-frame cost — draw-call count, not vertex throughput, was
 // the actual bottleneck. 16→32 cut totalMeshes ~25% and renderMs ~40-50% (activeMeshes barely
 // moved — most of the win came from less per-mesh bookkeeping over the *total* mesh set, not
-// fewer post-cull draw calls); 32→64 pushes further in the same direction. Revisit with the same
-// instrumentation before tuning further.
-const SLAB_HEIGHT = 64;
+// fewer post-cull draw calls); 32→64 pushes further in the same direction. 64→256 (make perf-cpu /
+// make perf, 2026-09-26): chunk meshes −27 %, main-thread busy time −13 %, traverse draw calls −13 %,
+// GPU p95 7.6 → 9.1 ms — the CPU is the bottleneck, the GPU has headroom.
+const SLAB_HEIGHT = 256;
 
 // --- Chunk state ---
 

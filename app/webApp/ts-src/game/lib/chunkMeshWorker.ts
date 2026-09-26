@@ -303,7 +303,7 @@ function stretchUVAxis(uv: Float32Array, verts: Float32Array, runLen: number, ax
 
 const FACE_STRIDE = 7;
 // Must match chunkBuilder.ts's SLAB_HEIGHT — see that file's comment for why 64.
-const SLAB_HEIGHT = 64;
+const SLAB_HEIGHT = 256;
 
 interface MeshRequest {
   type: "mesh";
