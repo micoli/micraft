@@ -126,6 +126,11 @@ tasks.register<JavaExec>("runPerfServer") {
     mainClass.set("org.micoli.micraft.ApplicationKt")
     workingDir = rootProject.projectDir
     providers.gradleProperty("perfXmx").orNull?.let { jvmArgs("-Xmx$it") }
+    // `-PperfJfr` records a Java Flight Recording of the whole run into perf/server.jfr
+    if (providers.gradleProperty("perfJfr").isPresent) {
+        jvmArgs(
+            "-XX:StartFlightRecording=filename=${rootDir.resolve("perf/server.jfr")},settings=profile,dumponexit=true")
+    }
     systemProperty("projectDir", rootDirPath)
     environment("MICRAFT_PORT", providers.gradleProperty("perfPort").getOrElse("8092"))
     environment("MICRAFT_DATA_DIR", perfDataDir.path)
