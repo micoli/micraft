@@ -172,6 +172,20 @@ class NpcManagerTest {
     }
 
     @Test
+    fun tick_npcJustPastANegativeChunkEdge_doesNotGenerateTheNextChunk() = runBlocking {
+        // x = -16.5 lies in chunk -2; truncating it to -16 used to place the NPC in chunk -1.
+        val world = testWorld(Triple(-10, 0, 8))
+        val nearby = testSession(pos = Vec3(-16.5f, 50f, 8.5f))
+        val (m, _) = testNpcManager(mapOf("SELLER" to staticDef()), nearbySession = nearby)
+        m.spawnNpc("Bob", "SELLER", Vec3(-16.5f, 50f, 8.5f))
+
+        m.tick(world)
+
+        assertNull(
+            world.getChunkIfDiscovered(ChunkPos(-2, 0)), "the NPC tick generated chunk (-2, 0)")
+    }
+
+    @Test
     fun tick_gravityApplied_npcFalls() = runBlocking {
         val world = testWorld(Triple(8, 0, 8)) // pre-generates chunk (0,0) so NPC physics tick runs
         val nearby = testSession(pos = Vec3(8.5f, 50f, 8.5f))

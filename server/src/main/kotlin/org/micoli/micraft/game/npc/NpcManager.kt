@@ -10,6 +10,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.math.abs
+import kotlin.math.floor
 import kotlinx.serialization.builtins.ListSerializer
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.combat.ActiveStatusEffect
@@ -243,8 +244,9 @@ class NpcManager(
     private suspend fun tickBreath(instance: NpcInstance, world: WorldState, now: Long) {
         if (instance.definition.canSwim) return
         val pos = instance.state.pos
+        // Never generates: a breath check must not cost a whole chunk generation on the tick.
         val headBlock =
-            world.getBlock(
+            world.getBlockIfLoaded(
                 Math.floor(pos.x.toDouble()).toInt(),
                 Math.floor(pos.y + instance.definition.height - 0.1).toInt(),
                 Math.floor(pos.z.toDouble()).toInt(),
@@ -432,9 +434,12 @@ class NpcManager(
             }
             val pos = instance.state.pos
             val chunkPos =
+                // floor, not toInt(): truncation put an NPC just past a negative chunk edge in the
+                // neighbouring chunk, so the checks below read (and generated) a chunk it is not
+                // in.
                 ChunkPos(
-                    Math.floorDiv(pos.x.toInt(), WorldConstants.CHUNK_SIZE),
-                    Math.floorDiv(pos.z.toInt(), WorldConstants.CHUNK_SIZE),
+                    Math.floorDiv(floor(pos.x).toInt(), WorldConstants.CHUNK_SIZE),
+                    Math.floorDiv(floor(pos.z).toInt(), WorldConstants.CHUNK_SIZE),
                 )
             if (world.getChunkIfDiscovered(chunkPos) == null) continue
             tickBreath(instance, world, now)
