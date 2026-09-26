@@ -177,6 +177,9 @@ function buildFaceTable(defs: { typeOrd: number; def: McBlockDef }[]): void {
 
 const GROUP_MAX_VERTS = 65_536;
 const GROUP_MAX_IDX = Math.ceil(GROUP_MAX_VERTS * 1.5);
+// Most vertices one face can emit (a cross sprite is several quads): a group with less room left
+// rolls over into an overflow group instead of dropping the face.
+const MAX_FACE_VERTS = 16;
 
 interface FaceGroup {
   p: Float32Array;
@@ -321,6 +324,7 @@ type IncomingMessage = MeshRequest | BlockDefsMessage;
 // of moving this off the main thread is that it no longer has to share a frame budget).
 function processFaces(faceBuf: Int32Array, faceCount: number) {
   const groups: Record<string, FaceGroup> = {};
+  let overflowCount = 0;
   const gltfPositions: Record<number, Set<string>> = {};
   const endI = faceCount * FACE_STRIDE;
   for (let i = 0; i < endI; i += FACE_STRIDE) {
@@ -358,7 +362,12 @@ function processFaces(faceBuf: Int32Array, faceCount: number) {
     const yBand = Math.floor(wy / SLAB_HEIGHT);
     for (const info of infos) {
       const groupKey = `${plainKey ?? info.matKey}|${yBand}`;
-      let g = groups[groupKey];
+      let g: FaceGroup | undefined = groups[groupKey];
+      if (g && g.v + MAX_FACE_VERTS > GROUP_MAX_VERTS) {
+        // "mat|band#n": chunkBuilder reads the material key before the last "|", so it still applies.
+        groups[`${groupKey}#${overflowCount++}`] = g;
+        g = undefined;
+      }
       if (!g) {
         g = acquireGroup();
         groups[groupKey] = g;
