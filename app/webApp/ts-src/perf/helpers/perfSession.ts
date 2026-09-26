@@ -90,7 +90,7 @@ export async function runCommand(page: Page, cmd: string): Promise<void> {
 }
 
 /** Wait until the meshed chunk count has not changed for `stableMs` — streaming around the player is done. */
-export async function waitForChunksSettled(page: Page, stableMs = 5_000, timeoutMs = 120_000): Promise<number> {
+export async function waitForChunksSettled(page: Page, stableMs = 3_000, timeoutMs = 120_000): Promise<number> {
   const deadline = Date.now() + timeoutMs;
   let last = -1;
   let since = Date.now();

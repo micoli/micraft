@@ -27,7 +27,7 @@ endif
         code-standard check-detekt check-docs check-openapi check-schemas ts-code-standard \
         check-configuration spotless-apply ts-typecheck ts-lint ts-lint-fix \
         ts-test-setup ts-test ts-test-storybook test kt-test kt-test-info kt-web-test \
-        e2e e2e-server perf-server perf-server-stop perf-idle perf-traverse \
+        e2e e2e-server perf-server perf-server-stop perf perf-idle perf-traverse \
         docs gen-schemas docs-screenshots check-docs-screenshots \
         docs-site-build docs-site-serve docs-site-stop help \
         security security-locks security-relock security-verify security-audit \
@@ -270,6 +270,9 @@ perf-server: ## Start the perf server daemon: fixed-seed procedural world, fresh
 
 perf-server-stop: ## Stop the perf server daemon
 	$(PITCHFORK) stop perf-server
+
+perf: ## Perf baseline in ~5 min: scenarios A (idle) + B (traverse), one server start → .scratch/perf-baseline/results/
+	$(EXEC) "cd app/webApp/ts-src && npx playwright test --config perf/playwright.config.ts"
 
 perf-idle: ## Perf scenario A (idle at spawn, headed browser) → .scratch/perf-baseline/results/
 	$(EXEC) "cd app/webApp/ts-src && npx playwright test --config perf/playwright.config.ts idle"

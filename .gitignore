@@ -49,3 +49,4 @@ test-results
 
 # perf server throwaway data root
 perf/.data/
+perf/*.log
