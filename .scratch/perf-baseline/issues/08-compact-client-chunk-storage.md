@@ -1,6 +1,6 @@
 # Compact client chunk storage
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: —
 
@@ -30,3 +30,12 @@ Stop holding 256 KB per loaded chunk on the client when most of it is air.
 
 - Live client heap after `make perf-heap` drops by ≥ 100 MB with no frame-time regression (`make perf`, back to back
   with the base commit).
+
+## Answer
+
+Done in `5c7eb206`: `SectionedBytes` (16-layer sections, allocated on first non-zero byte) behind `Chunk.blocks`,
+`states`, `extraStates`; `Chunk.index` is y-major (the wire order); `withBlock` copies one section; the on-disk
+format stays x-major through `LegacyChunkLayout` (existing worlds load unchanged, covered by
+`LegacyChunkLayoutTest`). Client JS heap in use while traversing 775 → 169 MB, live 282 → 100 MB
+(`reports/2026-09-26-5c7eb206.md`). A hand-written x-major stride in the client mesher rendered transposed terrain
+until fixed; strides now come from `Chunk.STRIDE_X/Y`.

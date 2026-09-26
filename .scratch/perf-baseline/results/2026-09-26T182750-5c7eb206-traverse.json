@@ -1,0 +1,764 @@
+{
+  "scenario": "traverse",
+  "gitSha": "5c7eb206",
+  "gitDirty": false,
+  "date": "2026-09-26T18:27:50.588Z",
+  "machine": {
+    "cpu": "Apple M1 Pro",
+    "cores": 10,
+    "memBytes": 17179869184,
+    "os": "darwin 24.3.0",
+    "gpu": "apple metal-3"
+  },
+  "config": {
+    "messageEncoder": "protobuf",
+    "viewport": {
+      "width": 1600,
+      "height": 900
+    }
+  },
+  "summary": {
+    "clientFps": 59.55913056869268,
+    "clientFrameP50Ms": 16.699999928474426,
+    "clientFrameP95Ms": 19.700000047683716,
+    "clientFrameP99Ms": 22.800000071525574,
+    "clientLongFramePct": 0.26824034334763946,
+    "clientGpuP95Ms": 7.632416,
+    "clientDrawCallsAvg": 1233.1239270386266,
+    "clientJsHeapBytes": 177411576,
+    "clientLiveHeapBytes": 108075596,
+    "clientArrayBufferBytes": 36663838,
+    "clientGpuBufferBytes": 160928872,
+    "serverTickP50Ms": 1.038208,
+    "serverTickP95Ms": 2.9335,
+    "serverTickP99Ms": 5.113208,
+    "serverHeapMaxBytes": 725953792,
+    "serverCpuLoadAvg": 0.02126076554844866,
+    "serverGcTimeMs": 72,
+    "networkBytesOut": 3603824,
+    "travelledBlocks": 112.19728978470937,
+    "stuckEvents": 2
+  },
+  "runs": [
+    {
+      "client": {
+        "durationMs": 31850.699999928474,
+        "frames": 1897,
+        "frameMs": {
+          "p50": 16.700000047683716,
+          "p95": 19.399999976158142,
+          "p99": 22.299999952316284,
+          "max": 31.5
+        },
+        "longFrames": 4,
+        "gpuFrameMs": {
+          "p50": 3.780583,
+          "p95": 5.78825,
+          "p99": 5.78825,
+          "max": 5.78825
+        },
+        "drawCalls": {
+          "avg": 995.210332103321,
+          "max": 3435
+        },
+        "activeMeshes": {
+          "avg": 981.5150237216658,
+          "max": 1237
+        },
+        "activeIndices": {
+          "avg": 1960107.0015814444,
+          "max": 6608280
+        },
+        "textures": 188,
+        "memory": {
+          "jsHeapUsedBytes": 174435968,
+          "wasmMemoryBytes": 0,
+          "gpuBufferBytes": 138661264
+        }
+      },
+      "server": {
+        "tick": [
+          {
+            "name": "npcLifecycle",
+            "count": 6,
+            "p50Ms": 1.279291,
+            "p95Ms": 2.184958,
+            "p99Ms": 2.184958,
+            "maxMs": 2.184958
+          },
+          {
+            "name": "total",
+            "count": 635,
+            "p50Ms": 0.951333,
+            "p95Ms": 2.048875,
+            "p99Ms": 4.838583,
+            "maxMs": 11.34875
+          },
+          {
+            "name": "npc",
+            "count": 635,
+            "p50Ms": 0.605542,
+            "p95Ms": 1.071666,
+            "p99Ms": 2.0385,
+            "maxMs": 5.102791
+          },
+          {
+            "name": "players",
+            "count": 635,
+            "p50Ms": 0.273584,
+            "p95Ms": 0.459042,
+            "p99Ms": 0.63775,
+            "maxMs": 3.652
+          },
+          {
+            "name": "chunkRetention",
+            "count": 3,
+            "p50Ms": 0.25075,
+            "p95Ms": 0.3805,
+            "p99Ms": 0.3805,
+            "maxMs": 0.3805
+          },
+          {
+            "name": "weather",
+            "count": 635,
+            "p50Ms": 0.001,
+            "p95Ms": 0.013708,
+            "p99Ms": 0.99975,
+            "maxMs": 2.571666
+          },
+          {
+            "name": "regen",
+            "count": 635,
+            "p50Ms": 0.000959,
+            "p95Ms": 0.012917,
+            "p99Ms": 0.6675,
+            "maxMs": 7.245208
+          },
+          {
+            "name": "worldItems",
+            "count": 635,
+            "p50Ms": 0.002417,
+            "p95Ms": 0.006041,
+            "p99Ms": 0.008125,
+            "maxMs": 0.019
+          },
+          {
+            "name": "statusEffects",
+            "count": 635,
+            "p50Ms": 0.002042,
+            "p95Ms": 0.005333,
+            "p99Ms": 0.013584,
+            "maxMs": 0.033708
+          },
+          {
+            "name": "plugins",
+            "count": 635,
+            "p50Ms": 0.001791,
+            "p95Ms": 0.00425,
+            "p99Ms": 0.007833,
+            "maxMs": 0.034167
+          },
+          {
+            "name": "auction",
+            "count": 635,
+            "p50Ms": 0.001125,
+            "p95Ms": 0.003042,
+            "p99Ms": 0.008459,
+            "maxMs": 0.043375
+          },
+          {
+            "name": "vehicles",
+            "count": 635,
+            "p50Ms": 0.001125,
+            "p95Ms": 0.002667,
+            "p99Ms": 0.005458,
+            "maxMs": 0.024708
+          },
+          {
+            "name": "siegeProjectiles",
+            "count": 635,
+            "p50Ms": 0.000834,
+            "p95Ms": 0.002209,
+            "p99Ms": 0.00425,
+            "maxMs": 0.018584
+          },
+          {
+            "name": "vegetation",
+            "count": 635,
+            "p50Ms": 0.000583,
+            "p95Ms": 0.002083,
+            "p99Ms": 0.085125,
+            "maxMs": 0.544209
+          },
+          {
+            "name": "liquid",
+            "count": 635,
+            "p50Ms": 0.000334,
+            "p95Ms": 0.000875,
+            "p99Ms": 0.002083,
+            "maxMs": 0.01275
+          }
+        ],
+        "process": {
+          "durationMs": 31863,
+          "samples": 31,
+          "heapMinBytes": 252180144,
+          "heapMaxBytes": 671170880,
+          "heapAvgBytes": 447481556,
+          "cpuLoadAvg": 0.020346506910142288,
+          "gcCollections": 10,
+          "gcTimeMs": 44,
+          "networkBytesIn": 18514,
+          "networkBytesOut": 3938500
+        },
+        "characters": 1,
+        "loadedChunks": 595,
+        "npcs": 129
+      },
+      "travelledBlocks": 112.19728978470937,
+      "stuckEvents": 2,
+      "clientLiveHeapBytes": 103438092,
+      "clientArrayBufferBytes": 36663838
+    },
+    {
+      "client": {
+        "durationMs": 31276.100000023842,
+        "frames": 1864,
+        "frameMs": {
+          "p50": 16.699999928474426,
+          "p95": 19.700000047683716,
+          "p99": 22.800000071525574,
+          "max": 29.800000071525574
+        },
+        "longFrames": 5,
+        "gpuFrameMs": {
+          "p50": 6.030375,
+          "p95": 8.168999,
+          "p99": 9.022374,
+          "max": 9.022374
+        },
+        "drawCalls": {
+          "avg": 1233.1239270386266,
+          "max": 3765
+        },
+        "activeMeshes": {
+          "avg": 1219.3916309012875,
+          "max": 1333
+        },
+        "activeIndices": {
+          "avg": 2417998.1620171675,
+          "max": 7469082
+        },
+        "textures": 188,
+        "memory": {
+          "jsHeapUsedBytes": 178420004,
+          "wasmMemoryBytes": 0,
+          "gpuBufferBytes": 165963508
+        }
+      },
+      "server": {
+        "tick": [
+          {
+            "name": "npcLifecycle",
+            "count": 7,
+            "p50Ms": 1.70275,
+            "p95Ms": 7.900083,
+            "p99Ms": 7.900083,
+            "maxMs": 7.900083
+          },
+          {
+            "name": "total",
+            "count": 622,
+            "p50Ms": 1.038208,
+            "p95Ms": 2.9335,
+            "p99Ms": 5.113208,
+            "maxMs": 22.119667
+          },
+          {
+            "name": "npc",
+            "count": 622,
+            "p50Ms": 0.682584,
+            "p95Ms": 1.438667,
+            "p99Ms": 3.400083,
+            "maxMs": 9.814458
+          },
+          {
+            "name": "players",
+            "count": 622,
+            "p50Ms": 0.294459,
+            "p95Ms": 0.533708,
+            "p99Ms": 1.6675,
+            "maxMs": 3.382042
+          },
+          {
+            "name": "chunkRetention",
+            "count": 4,
+            "p50Ms": 0.25525,
+            "p95Ms": 0.443625,
+            "p99Ms": 0.443625,
+            "maxMs": 0.443625
+          },
+          {
+            "name": "regen",
+            "count": 622,
+            "p50Ms": 0.001042,
+            "p95Ms": 0.073208,
+            "p99Ms": 0.604875,
+            "maxMs": 2.436542
+          },
+          {
+            "name": "weather",
+            "count": 622,
+            "p50Ms": 0.001083,
+            "p95Ms": 0.032916,
+            "p99Ms": 1.135125,
+            "maxMs": 1.313542
+          },
+          {
+            "name": "plugins",
+            "count": 622,
+            "p50Ms": 0.001958,
+            "p95Ms": 0.007708,
+            "p99Ms": 0.026792,
+            "maxMs": 17.746875
+          },
+          {
+            "name": "worldItems",
+            "count": 622,
+            "p50Ms": 0.0025,
+            "p95Ms": 0.006667,
+            "p99Ms": 0.023041,
+            "maxMs": 0.159
+          },
+          {
+            "name": "statusEffects",
+            "count": 622,
+            "p50Ms": 0.002125,
+            "p95Ms": 0.004208,
+            "p99Ms": 0.009208,
+            "maxMs": 0.102875
+          },
+          {
+            "name": "vehicles",
+            "count": 622,
+            "p50Ms": 0.001125,
+            "p95Ms": 0.002334,
+            "p99Ms": 0.004416,
+            "maxMs": 0.062583
+          },
+          {
+            "name": "auction",
+            "count": 622,
+            "p50Ms": 0.001166,
+            "p95Ms": 0.002333,
+            "p99Ms": 0.004,
+            "maxMs": 0.151416
+          },
+          {
+            "name": "siegeProjectiles",
+            "count": 622,
+            "p50Ms": 0.000834,
+            "p95Ms": 0.002,
+            "p99Ms": 0.004209,
+            "maxMs": 0.156166
+          },
+          {
+            "name": "vegetation",
+            "count": 622,
+            "p50Ms": 0.000542,
+            "p95Ms": 0.0015,
+            "p99Ms": 0.069292,
+            "maxMs": 0.366167
+          },
+          {
+            "name": "liquid",
+            "count": 622,
+            "p50Ms": 0.000334,
+            "p95Ms": 0.000875,
+            "p99Ms": 0.001792,
+            "maxMs": 0.133209
+          }
+        ],
+        "process": {
+          "durationMs": 31290,
+          "samples": 31,
+          "heapMinBytes": 211319784,
+          "heapMaxBytes": 725953792,
+          "heapAvgBytes": 504936570,
+          "cpuLoadAvg": 0.02126076554844866,
+          "gcCollections": 9,
+          "gcTimeMs": 72,
+          "networkBytesIn": 17885,
+          "networkBytesOut": 3008139
+        },
+        "characters": 1,
+        "loadedChunks": 674,
+        "npcs": 212
+      },
+      "travelledBlocks": 93.7332747765306,
+      "stuckEvents": 4,
+      "clientLiveHeapBytes": 108361468,
+      "clientArrayBufferBytes": 36663819
+    },
+    {
+      "client": {
+        "durationMs": 31194.299999952316,
+        "frames": 1856,
+        "frameMs": {
+          "p50": 16.699999928474426,
+          "p95": 19.899999976158142,
+          "p99": 23.800000071525574,
+          "max": 41.5
+        },
+        "longFrames": 11,
+        "gpuFrameMs": {
+          "p50": 4.935749,
+          "p95": 7.632416,
+          "p99": 8.423874,
+          "max": 8.423874
+        },
+        "drawCalls": {
+          "avg": 1313.0662715517242,
+          "max": 3900
+        },
+        "activeMeshes": {
+          "avg": 1285.2990301724137,
+          "max": 1427
+        },
+        "activeIndices": {
+          "avg": 2476383.7887931033,
+          "max": 7363188
+        },
+        "textures": 188,
+        "memory": {
+          "jsHeapUsedBytes": 177411576,
+          "wasmMemoryBytes": 0,
+          "gpuBufferBytes": 160928872
+        }
+      },
+      "server": {
+        "tick": [
+          {
+            "name": "npcLifecycle",
+            "count": 7,
+            "p50Ms": 2.000375,
+            "p95Ms": 3.606583,
+            "p99Ms": 3.606583,
+            "maxMs": 3.606583
+          },
+          {
+            "name": "total",
+            "count": 622,
+            "p50Ms": 1.212167,
+            "p95Ms": 3.112583,
+            "p99Ms": 7.762041,
+            "maxMs": 24.549709
+          },
+          {
+            "name": "npc",
+            "count": 622,
+            "p50Ms": 0.853917,
+            "p95Ms": 1.659666,
+            "p99Ms": 6.575625,
+            "maxMs": 24.274833
+          },
+          {
+            "name": "chunkRetention",
+            "count": 4,
+            "p50Ms": 0.455125,
+            "p95Ms": 0.771125,
+            "p99Ms": 0.771125,
+            "maxMs": 0.771125
+          },
+          {
+            "name": "players",
+            "count": 622,
+            "p50Ms": 0.280042,
+            "p95Ms": 0.475542,
+            "p99Ms": 1.190541,
+            "maxMs": 3.606083
+          },
+          {
+            "name": "regen",
+            "count": 622,
+            "p50Ms": 0.001084,
+            "p95Ms": 0.118959,
+            "p99Ms": 0.5375,
+            "maxMs": 1.222458
+          },
+          {
+            "name": "weather",
+            "count": 622,
+            "p50Ms": 0.001167,
+            "p95Ms": 0.009292,
+            "p99Ms": 1.282167,
+            "maxMs": 2.089541
+          },
+          {
+            "name": "worldItems",
+            "count": 622,
+            "p50Ms": 0.002542,
+            "p95Ms": 0.005917,
+            "p99Ms": 0.010292,
+            "maxMs": 0.183083
+          },
+          {
+            "name": "statusEffects",
+            "count": 622,
+            "p50Ms": 0.002209,
+            "p95Ms": 0.004125,
+            "p99Ms": 0.007584,
+            "maxMs": 0.059791
+          },
+          {
+            "name": "plugins",
+            "count": 622,
+            "p50Ms": 0.002,
+            "p95Ms": 0.003791,
+            "p99Ms": 0.005958,
+            "maxMs": 0.013625
+          },
+          {
+            "name": "auction",
+            "count": 622,
+            "p50Ms": 0.001291,
+            "p95Ms": 0.002834,
+            "p99Ms": 0.007292,
+            "maxMs": 0.083875
+          },
+          {
+            "name": "vegetation",
+            "count": 622,
+            "p50Ms": 0.000625,
+            "p95Ms": 0.002583,
+            "p99Ms": 0.086708,
+            "maxMs": 0.290959
+          },
+          {
+            "name": "vehicles",
+            "count": 622,
+            "p50Ms": 0.001208,
+            "p95Ms": 0.002458,
+            "p99Ms": 0.004417,
+            "maxMs": 0.123875
+          },
+          {
+            "name": "siegeProjectiles",
+            "count": 622,
+            "p50Ms": 0.000917,
+            "p95Ms": 0.002125,
+            "p99Ms": 0.005208,
+            "maxMs": 0.260875
+          },
+          {
+            "name": "liquid",
+            "count": 622,
+            "p50Ms": 0.000375,
+            "p95Ms": 0.000875,
+            "p99Ms": 0.002417,
+            "maxMs": 0.014375
+          }
+        ],
+        "process": {
+          "durationMs": 31212,
+          "samples": 31,
+          "heapMinBytes": 213704792,
+          "heapMaxBytes": 754156608,
+          "heapAvgBytes": 484306614,
+          "cpuLoadAvg": 0.02389802211699784,
+          "gcCollections": 10,
+          "gcTimeMs": 91,
+          "networkBytesIn": 18326,
+          "networkBytesOut": 3603824
+        },
+        "characters": 1,
+        "loadedChunks": 655,
+        "npcs": 265
+      },
+      "travelledBlocks": 121.78834147008814,
+      "stuckEvents": 1,
+      "clientLiveHeapBytes": 108075596,
+      "clientArrayBufferBytes": 37758594
+    }
+  ],
+  "warmup": {
+    "client": {
+      "durationMs": 16475.699999928474,
+      "frames": 983,
+      "frameMs": {
+        "p50": 16.699999928474426,
+        "p95": 19.5,
+        "p99": 23.600000023841858,
+        "max": 31.699999928474426
+      },
+      "longFrames": 4,
+      "gpuFrameMs": {
+        "p50": 4.425749,
+        "p95": 5.619416,
+        "p99": 5.619416,
+        "max": 5.619416
+      },
+      "drawCalls": {
+        "avg": 1189.6836215666328,
+        "max": 3692
+      },
+      "activeMeshes": {
+        "avg": 1168.3936927772127,
+        "max": 1358
+      },
+      "activeIndices": {
+        "avg": 2229271.17802645,
+        "max": 7031370
+      },
+      "textures": 188,
+      "memory": {
+        "jsHeapUsedBytes": 152882565,
+        "wasmMemoryBytes": 0,
+        "gpuBufferBytes": 144501388
+      }
+    },
+    "server": {
+      "tick": [
+        {
+          "name": "npcLifecycle",
+          "count": 3,
+          "p50Ms": 2.199292,
+          "p95Ms": 2.271792,
+          "p99Ms": 2.271792,
+          "maxMs": 2.271792
+        },
+        {
+          "name": "total",
+          "count": 323,
+          "p50Ms": 0.948333,
+          "p95Ms": 2.258083,
+          "p99Ms": 4.529792,
+          "maxMs": 10.020708
+        },
+        {
+          "name": "npc",
+          "count": 323,
+          "p50Ms": 0.553917,
+          "p95Ms": 1.110167,
+          "p99Ms": 2.046625,
+          "maxMs": 8.629
+        },
+        {
+          "name": "players",
+          "count": 323,
+          "p50Ms": 0.317083,
+          "p95Ms": 0.526333,
+          "p99Ms": 0.657791,
+          "maxMs": 1.174125
+        },
+        {
+          "name": "chunkRetention",
+          "count": 1,
+          "p50Ms": 0.17875,
+          "p95Ms": 0.17875,
+          "p99Ms": 0.17875,
+          "maxMs": 0.17875
+        },
+        {
+          "name": "weather",
+          "count": 323,
+          "p50Ms": 0.001,
+          "p95Ms": 0.011417,
+          "p99Ms": 0.900375,
+          "maxMs": 1.081541
+        },
+        {
+          "name": "regen",
+          "count": 323,
+          "p50Ms": 0.001125,
+          "p95Ms": 0.010208,
+          "p99Ms": 0.692792,
+          "maxMs": 0.900375
+        },
+        {
+          "name": "worldItems",
+          "count": 323,
+          "p50Ms": 0.002375,
+          "p95Ms": 0.0055,
+          "p99Ms": 0.013125,
+          "maxMs": 0.03475
+        },
+        {
+          "name": "statusEffects",
+          "count": 323,
+          "p50Ms": 0.002208,
+          "p95Ms": 0.005,
+          "p99Ms": 0.008,
+          "maxMs": 0.018333
+        },
+        {
+          "name": "plugins",
+          "count": 323,
+          "p50Ms": 0.001958,
+          "p95Ms": 0.0045,
+          "p99Ms": 0.005792,
+          "maxMs": 0.0095
+        },
+        {
+          "name": "vehicles",
+          "count": 323,
+          "p50Ms": 0.001208,
+          "p95Ms": 0.002709,
+          "p99Ms": 0.005583,
+          "maxMs": 0.011083
+        },
+        {
+          "name": "auction",
+          "count": 323,
+          "p50Ms": 0.001167,
+          "p95Ms": 0.002667,
+          "p99Ms": 0.004,
+          "maxMs": 0.011709
+        },
+        {
+          "name": "siegeProjectiles",
+          "count": 323,
+          "p50Ms": 0.000917,
+          "p95Ms": 0.002375,
+          "p99Ms": 0.004875,
+          "maxMs": 0.022041
+        },
+        {
+          "name": "vegetation",
+          "count": 323,
+          "p50Ms": 0.000584,
+          "p95Ms": 0.002291,
+          "p99Ms": 0.04325,
+          "maxMs": 0.1135
+        },
+        {
+          "name": "liquid",
+          "count": 323,
+          "p50Ms": 0.000417,
+          "p95Ms": 0.001,
+          "p99Ms": 0.002291,
+          "maxMs": 0.005208
+        }
+      ],
+      "process": {
+        "durationMs": 16489,
+        "samples": 17,
+        "heapMinBytes": 203028464,
+        "heapMaxBytes": 626093816,
+        "heapAvgBytes": 434756976,
+        "cpuLoadAvg": 0.026148705345795137,
+        "gcCollections": 9,
+        "gcTimeMs": 43,
+        "networkBytesIn": 12173,
+        "networkBytesOut": 1927334
+      },
+      "characters": 1,
+      "loadedChunks": 490,
+      "npcs": 185
+    },
+    "travelledBlocks": 69.20289624482393,
+    "stuckEvents": 0,
+    "clientLiveHeapBytes": 102340520,
+    "clientArrayBufferBytes": 36792989
+  }
+}
