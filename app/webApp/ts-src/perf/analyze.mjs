@@ -227,6 +227,7 @@ function memorySection(windows) {
     `#${i + 1} (inv. ${w.invocation})`,
     mb(w.client.memory.jsHeapUsedBytes ?? 0),
     Number.isNaN(liveHeap(w)) ? "—" : mb(liveHeap(w)),
+    w.clientArrayBufferBytes === undefined ? "—" : mb(w.clientArrayBufferBytes),
     mb(w.client.memory.wasmMemoryBytes ?? 0),
     mb(w.client.memory.gpuBufferBytes ?? 0),
     mb(w.server.process.heapMaxBytes),
@@ -237,13 +238,14 @@ function memorySection(windows) {
         "Window",
         "Client JS heap (in use)",
         "Client JS heap (live, after GC)",
+        "Client ArrayBuffers (live)",
         "Client Wasm memory",
         "Client GPU buffers",
         "Server heap (max)",
       ],
       rows,
     ),
-    `Client JS heap growth first → last window of each invocation (median, ${hasLiveHeap(windows) ? "live heap" : "in-use heap — live heap not recorded"}): ${pct(growth)} (budget ≤ ${BUDGETS.clientJsHeapGrowthPct} %). The in-use heap includes garbage not yet collected and swings with GC timing; the live heap is read after a forced GC at the end of each window. Kotlin/Wasm uses WasmGC, so its objects are in the JS heap and Wasm linear memory stays ~0.`,
+    `Client JS heap growth first → last window of each invocation (median, ${hasLiveHeap(windows) ? "live heap" : "in-use heap — live heap not recorded"}): ${pct(growth)} (budget ≤ ${BUDGETS.clientJsHeapGrowthPct} %). The in-use heap includes garbage not yet collected and swings with GC timing; the live heap is read after a forced GC at the end of each window; ArrayBuffer backing stores (typed arrays, vertex data) are counted apart from the JS heap. Kotlin/Wasm uses WasmGC, so its objects are in the JS heap and Wasm linear memory stays ~0.`,
   ].join("\n\n");
 }
 
@@ -333,6 +335,7 @@ function headline(windows) {
     "Tick p99 (ms)": across(windows, (w) => phase(w, "total")?.p99Ms ?? 0).median,
     "Client JS heap (MB)": median(heap) / MB,
     "Client JS heap live (MB)": across(windows, liveHeap).median / MB,
+    "Client ArrayBuffers live (MB)": across(windows, (w) => w.clientArrayBufferBytes ?? NaN).median / MB,
     "Server heap max (MB)": across(windows, (w) => w.server.process.heapMaxBytes).median / MB,
   };
 }

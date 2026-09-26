@@ -116,16 +116,19 @@ export interface WindowResult {
   stuckEvents: number;
   /** JS heap still in use after a forced full GC at the end of the window: live data, not garbage. */
   clientLiveHeapBytes: number;
+  /** ArrayBuffer backing stores alive at the same moment (typed arrays, vertex data): not in the JS heap. */
+  clientArrayBufferBytes: number;
 }
 
 const cdpSessions = new WeakMap<Page, Promise<CDPSession>>();
 
 /** Forced after the window's snapshot, so the collection never lands in the measured frames. */
-async function liveHeapBytes(page: Page): Promise<number> {
+async function liveMemory(page: Page): Promise<{ heapBytes: number; arrayBufferBytes: number }> {
   if (!cdpSessions.has(page)) cdpSessions.set(page, page.context().newCDPSession(page));
   const cdp = await cdpSessions.get(page)!;
   await cdp.send("HeapProfiler.collectGarbage");
-  return (await cdp.send("Runtime.getHeapUsage")).usedSize;
+  const { usedSize, backingStorageSize } = await cdp.send("Runtime.getHeapUsage");
+  return { heapBytes: usedSize, arrayBufferBytes: backingStorageSize };
 }
 
 /** Measure one window: reset server + client, let `during` run, snapshot both. */
@@ -138,11 +141,13 @@ export async function measure(page: Page, during: () => Promise<number | void>):
   const to = await cameraXz(page);
   const client = await page.evaluate(() => window.mcPerf!.snapshot());
   const server = await (await adminFetch("/api/admin/perf/snapshot")).json();
+  const live = await liveMemory(page);
   return {
     client,
     server,
     travelledBlocks: Math.hypot(to.x - from.x, to.z - from.z),
     stuckEvents,
-    clientLiveHeapBytes: await liveHeapBytes(page),
+    clientLiveHeapBytes: live.heapBytes,
+    clientArrayBufferBytes: live.arrayBufferBytes,
   };
 }

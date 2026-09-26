@@ -17,11 +17,13 @@ const MB = 1024 * 1024;
 interface HeapReading {
   usedBytes: number;
   totalBytes: number;
+  /** ArrayBuffer backing stores (vertex data, typed arrays): outside the JS heap figures. */
+  backingBytes: number;
 }
 
 const heapUsage = async (cdp: CDPSession): Promise<HeapReading> => {
-  const { usedSize, totalSize } = await cdp.send("Runtime.getHeapUsage");
-  return { usedBytes: usedSize, totalBytes: totalSize };
+  const { usedSize, totalSize, backingStorageSize } = await cdp.send("Runtime.getHeapUsage");
+  return { usedBytes: usedSize, totalBytes: totalSize, backingBytes: backingStorageSize };
 };
 
 /** The heap as the perf runs see it, then after a forced full GC: the gap is garbage, not a leak. */
@@ -61,11 +63,11 @@ async function report(
     "",
     "## JS heap before / after a forced GC",
     "",
-    "| Moment | Used before GC | Used after GC (live) | Garbage | Heap reserved |",
-    "|---|---|---|---|---|",
+    "| Moment | Used before GC | Used after GC (live) | Garbage | Heap reserved | ArrayBuffers (live) |",
+    "|---|---|---|---|---|---|",
     ...Object.entries(phases).map(
       ([moment, h]) =>
-        `| ${moment} | ${mb(h.beforeGc.usedBytes)} | ${mb(h.afterGc.usedBytes)} | ${mb(h.beforeGc.usedBytes - h.afterGc.usedBytes)} | ${mb(h.afterGc.totalBytes)} |`,
+        `| ${moment} | ${mb(h.beforeGc.usedBytes)} | ${mb(h.afterGc.usedBytes)} | ${mb(h.beforeGc.usedBytes - h.afterGc.usedBytes)} | ${mb(h.afterGc.totalBytes)} | ${mb(h.afterGc.backingBytes)} |`,
     ),
     "",
     `Collector memory reading at the end: ${JSON.stringify(perfMemory)}`,
