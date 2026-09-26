@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Architecture review MiCraft</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+</script>
+<style>
+  .seam { border-style: dashed !important; }
+  .deep { background: linear-gradient(135deg, #0f172a, #1e293b); color: #e2e8f0; }
+  .lbl { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; }
+  .diagram { min-height: 300px; }
+</style>
+</head>
+<body class="bg-stone-50 text-slate-900 font-sans">
+<main class="max-w-6xl mx-auto px-4 sm:px-6 py-12 space-y-14">
+
+<header class="space-y-4">
+  <h1 class="font-serif text-4xl">MiCraft — architecture review</h1>
+  <p class="text-sm text-slate-500">2026-09-26 · branche <code>framework-improve</code> · hot spots : npc, http/admin, commands, auth, combat, prédiction mouvement · pas de CONTEXT.md ni d'ADR</p>
+  <div class="flex flex-wrap gap-4 text-xs text-slate-600">
+    <span class="flex items-center gap-2"><span class="inline-block w-5 h-4 border border-slate-500 bg-white"></span>module</span>
+    <span class="flex items-center gap-2"><span class="inline-block w-5 h-4 border-2 border-slate-500 seam"></span>seam</span>
+    <span class="flex items-center gap-2"><span class="inline-block w-6 h-0.5 bg-red-600"></span>fuite / dérive</span>
+    <span class="flex items-center gap-2"><span class="inline-block w-5 h-4 deep rounded"></span>module profond</span>
+  </div>
+</header>
+
+<section id="candidates" class="space-y-12">
+
+<!-- 1 -->
+<article id="c1" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+  <div class="flex flex-wrap items-center gap-3">
+    <h2 class="font-serif text-2xl">1. Un seul module de cinématique joueur dans <code>core</code></h2>
+    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">Strong</span>
+    <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process</span>
+  </div>
+  <ul class="font-mono text-sm text-slate-600">
+    <li>server/…/game/tick/MovementProcessor.kt (process L28-176)</li>
+    <li>app/webApp/…/LocalPlayerController.kt (updateMovementAndPhysics L769-~1030)</li>
+    <li>core/…/physics/AabbCollider.kt · server/…/game/GameConstants.kt</li>
+  </ul>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border border-slate-200 p-4 diagram">
+      <p class="lbl text-slate-500 mb-3">Avant — règles copiées, déjà divergentes</p>
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="border border-slate-400 rounded p-2 space-y-1">
+          <p class="lbl">MovementProcessor</p>
+          <p>GRAVITY <b>var</b> (tunable)</p>
+          <p>isSolidOrOccupied</p>
+          <p>submerged = feet ∨ eye</p>
+          <p>canAdoptStance</p>
+          <p>speedMult ±0.5</p>
+        </div>
+        <div class="border border-red-500 rounded p-2 space-y-1">
+          <p class="lbl">LocalPlayerController</p>
+          <p class="text-red-600">CLIENT_GRAVITY const</p>
+          <p class="text-red-600">isSolid</p>
+          <p class="text-red-600">submerged = eye</p>
+          <p class="text-red-600">stance directe</p>
+          <p class="text-red-600">localSpeedMult</p>
+        </div>
+      </div>
+      <div class="mt-3 border border-slate-300 rounded p-2 text-xs text-center"><span class="lbl">core</span> AabbCollider (seule pièce partagée)</div>
+      <p class="mt-2 text-xs text-slate-500">Tests : 23 côté serveur, 0 côté client.</p>
+    </div>
+    <div class="rounded-lg border border-slate-200 p-4 diagram flex flex-col gap-3">
+      <p class="lbl text-slate-500">Après — un module profond, deux adapters</p>
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="border border-slate-400 rounded p-2 text-center">MovementProcessor<br><span class="text-slate-400">adapter serveur</span></div>
+        <div class="border border-slate-400 rounded p-2 text-center">LocalPlayerController<br><span class="text-slate-400">adapter client</span></div>
+      </div>
+      <div class="border-2 border-slate-500 seam rounded p-1 text-center text-xs">seam : BlockQuery + Tuning (poussé par le serveur)</div>
+      <div class="deep rounded-lg p-4 flex-1">
+        <p class="lbl text-emerald-300">core · PlayerKinematics.step(state, intent, dt)</p>
+        <p class="text-xs text-slate-400 mt-2">stance · submerge · gravité · saut · vol · collision X/Z/X · liquidSlowdown · speedMult</p>
+        <p class="text-xs text-emerald-300 mt-3">commonTest : test de parité</p>
+      </div>
+    </div>
+  </div>
+  <p><b>Problème :</b> l'invariant CLAUDE.md « client mirror serveur terme à terme » repose sur de la copie manuelle ; gravité/saut/vol tunables serveur mais constants client, solidité, submerge et stance déjà divergents.</p>
+  <p><b>Solution :</b> déplacer les règles de mouvement dans un module <code>core</code> ; serveur et client deviennent de fins adapters sur une seam <code>BlockQuery</code>.</p>
+  <ul class="list-disc pl-6 text-sm text-slate-700">
+    <li>locality : un mouvement, un endroit</li>
+    <li>Rec XZ cesse de dériver par copie</li>
+    <li>parité testable dans commonTest</li>
+    <li>leverage : nouveau modificateur = 1 edit</li>
+  </ul>
+</article>
+
+<!-- 2 -->
+<article id="c2" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+  <div class="flex flex-wrap items-center gap-3">
+    <h2 class="font-serif text-2xl">2. Resync personnage : un module Loadout</h2>
+    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">Strong</span>
+    <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process</span>
+  </div>
+  <ul class="font-mono text-sm text-slate-600">
+    <li>game/rpg/DerivedStatsCalculator.kt (2 overloads, 21 appelants)</li>
+    <li>ExperienceProcessor.kt:73 · EquipCommand · UnequipCommand · CharacterCommand · CreateCharacterCommand · GameLoop:2118 · AdminController</li>
+    <li>GiveCommand:93 · AdminController:1833 · ArmorLootGranter:38 · QuestManager:252</li>
+  </ul>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border border-slate-200 p-4 diagram">
+      <p class="lbl text-slate-500 mb-2">Avant — fonction pure, bugs chez les appelants</p>
+      <pre class="mermaid">
+flowchart LR
+  E[EquipCommand] --> C[DerivedStats.compute]
+  U[UnequipCommand] --> C
+  CH[CharacterCommand] --> C
+  X[ExperienceProcessor] -. sans bonus équipement .-> C
+  A[AdminController] --> C
+  G[GameLoop] --> C
+  E --> S[CharacterSync x7]
+  X --> S
+  A --> S
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#dc2626;
+  class X leak
+      </pre>
+    </div>
+    <div class="rounded-lg border border-slate-200 p-4 diagram flex flex-col gap-3">
+      <p class="lbl text-slate-500">Après</p>
+      <div class="grid grid-cols-3 gap-2 text-xs text-center">
+        <div class="border border-slate-400 rounded p-1">Equip</div><div class="border border-slate-400 rounded p-1">LevelUp</div><div class="border border-slate-400 rounded p-1">Admin / Give / Loot / Quest</div>
+      </div>
+      <div class="deep rounded-lg p-4 flex-1">
+        <p class="lbl text-emerald-300">Loadout.grant(item) · Loadout.resync(session)</p>
+        <p class="text-xs text-slate-400 mt-2 opacity-70">effectiveBaseStats · bonus équipement · activeEffects · compute · CharacterSync · owned* += x</p>
+      </div>
+    </div>
+  </div>
+  <p><b>Problème :</b> <code>DerivedStatsCalculator</code> est pur mais chaque appelant assemble lui-même bonus + sync ; level-up envoie un <code>CharacterSync</code> sans bonus d'équipement, et aucun appelant ne passe <code>activeEffects</code>.</p>
+  <p><b>Solution :</b> un module Loadout qui possède bonus, effets, stats dérivées, push client et octroi d'équipement.</p>
+  <ul class="list-disc pl-6 text-sm text-slate-700">
+    <li>corrige le bug level-up</li>
+    <li>leverage : 7 sites de sync → 1</li>
+    <li>tests traversent une seule interface</li>
+  </ul>
+</article>
+
+<!-- 3 -->
+<article id="c3" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+  <div class="flex flex-wrap items-center gap-3">
+    <h2 class="font-serif text-2xl">3. Un seul gate d'ability (attaque / sort / AoE)</h2>
+    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">Strong</span>
+    <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process</span>
+  </div>
+  <ul class="font-mono text-sm text-slate-600">
+    <li>game/combat/CombatProcessor.kt (handleAttack L98-151, deductResource L561)</li>
+    <li>game/combat/SpellProcessor.kt (handleSpell L34-130, handleCastAoeSpell L193-330, cooldowns L32)</li>
+  </ul>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border border-slate-200 p-4 diagram">
+      <p class="lbl text-slate-500 mb-3">Avant — 3 copies de la même séquence</p>
+      <div class="grid grid-cols-3 gap-2 text-[11px]">
+        <div class="space-y-1"><p class="lbl">attack</p><div class="border rounded px-1">char?</div><div class="border rounded px-1">def?</div><div class="border rounded px-1">unlock</div><div class="border rounded px-1">GCD</div><div class="border rounded px-1">combatState CD</div><div class="border rounded px-1">deductResource</div></div>
+        <div class="space-y-1"><p class="lbl">spell</p><div class="border rounded px-1">char?</div><div class="border rounded px-1">def?</div><div class="border rounded px-1">unlock</div><div class="border rounded px-1">GCD</div><div class="border border-red-500 text-red-600 rounded px-1">mutableMapOf CD</div><div class="border border-red-500 text-red-600 rounded px-1">coût inline</div></div>
+        <div class="space-y-1"><p class="lbl">aoe</p><div class="border rounded px-1">char?</div><div class="border rounded px-1">def?</div><div class="border rounded px-1">unlock</div><div class="border rounded px-1">GCD</div><div class="border border-red-500 text-red-600 rounded px-1">mutableMapOf CD</div><div class="border border-red-500 text-red-600 rounded px-1">coût inline</div></div>
+      </div>
+    </div>
+    <div class="rounded-lg border border-slate-200 p-4 diagram flex flex-col gap-3">
+      <p class="lbl text-slate-500">Après</p>
+      <div class="deep rounded-lg p-4">
+        <p class="lbl text-emerald-300">AbilityGate.tryUse(session, AbilityRef)</p>
+        <p class="text-xs text-slate-400 mt-2 opacity-70">unlock · rank · GCD · cooldown (un store, dans combatState) · coût mana/rage</p>
+      </div>
+      <div class="grid grid-cols-3 gap-2 text-xs text-center">
+        <div class="border border-slate-400 rounded p-2">effet attaque</div><div class="border border-slate-400 rounded p-2">effet sort</div><div class="border border-slate-400 rounded p-2">effet AoE</div>
+      </div>
+    </div>
+  </div>
+  <p><b>Problème :</b> cooldowns sorts dans une map privée non thread-safe jamais purgée, invisible au status update ; messages GCD différents ; déduction de ressource dupliquée.</p>
+  <p><b>Solution :</b> extraire la séquence de pré-conditions dans un module unique ; les processors ne gardent que l'effet.</p>
+  <ul class="list-disc pl-6 text-sm text-slate-700">
+    <li>locality : règles GCD/cooldown en un lieu</li>
+    <li>parité attaque/sort testée une fois</li>
+    <li>cooldown sort survit au reconnect</li>
+  </ul>
+</article>
+
+<!-- 4 -->
+<article id="c4" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+  <div class="flex flex-wrap items-center gap-3">
+    <h2 class="font-serif text-2xl">4. GameWorld assemble lui-même ses sous-systèmes</h2>
+    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800">Worth exploring</span>
+    <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process</span>
+  </div>
+  <ul class="font-mono text-sm text-slate-600">
+    <li>game/GameLoop.kt (2235 LOC, ~80 params ctor, GameWorld(...) L680-730)</li>
+    <li>game/world/GameWorldFactory.kt (buildGameWorld L103, buildE2eGameWorld L489)</li>
+    <li>game/world/GameWorld.kt · di/GameLoopModule.kt (801 LOC)</li>
+  </ul>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border border-slate-200 p-4 diagram">
+      <p class="lbl text-slate-500 mb-2">Avant — 3 sites de câblage + callbacks retour</p>
+      <pre class="mermaid">
+flowchart TB
+  M[GameLoopModule] -->|new Combat, Spell, Claim, Trade, Pet…| GL[GameLoop]
+  GL -->|45 args| GW[GameWorld]
+  F[GameWorldFactory] -->|new Combat, Spell, Claim, Trade, Pet…| GW
+  GW -. commandContextProvider .-> GL
+  GW -. onCommand / broadcastPlayerAdmin .-> GL
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class GW leak
+      </pre>
+    </div>
+    <div class="rounded-lg border border-slate-200 p-4 diagram">
+      <p class="lbl text-slate-500 mb-2">Après</p>
+      <pre class="mermaid">
+flowchart TB
+  S[SharedGameServices] --> F[GameWorld.build options]
+  F --> GW[(GameWorld profond)]
+  GL[GameLoop : connexions + registry] --> R[GameWorldRegistry]
+  R --> GW
+  classDef deep fill:#0f172a,color:#e2e8f0,stroke:#0f172a;
+  class GW deep
+      </pre>
+    </div>
+  </div>
+  <p><b>Problème :</b> ajouter un manager = éditer 3 sites + <code>CommandContext</code> ; GameWorld est une interface large sans profondeur, qui rappelle GameLoop par lambdas.</p>
+  <p><b>Solution :</b> finir l'extraction : GameWorld construit ses sous-systèmes depuis des services partagés ; GameLoop ne garde que connexions et registry.</p>
+  <ul class="list-disc pl-6 text-sm text-slate-700">
+    <li>supprime 2 sites de câblage</li>
+    <li>tests E2E et unitaires : même build</li>
+    <li>casse les callbacks GameWorld → GameLoop</li>
+  </ul>
+</article>
+
+<!-- 5 -->
+<article id="c5" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+  <div class="flex flex-wrap items-center gap-3">
+    <h2 class="font-serif text-2xl">5. Routes admin : auth + monde + édition joueur derrière un seul module</h2>
+    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800">Worth exploring</span>
+    <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">local-substitutable</span>
+  </div>
+  <ul class="font-mono text-sm text-slate-600">
+    <li>http/AdminController.kt (3778 LOC, 92 routes, requireAdmin ×89, adminWorld ×73)</li>
+    <li>SimulationController.kt:64 · MapController.kt:132 · ChunkController.kt:53</li>
+    <li>adminWsJson L3726 · GameWorld.kt:72 toPlayerAdminJson</li>
+  </ul>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border border-slate-200 p-4 diagram space-y-1">
+      <p class="lbl text-slate-500 mb-2">Avant — coupe transversale d'une route</p>
+      <div class="h-9 border-l-4 border-slate-400 bg-slate-50 px-2 flex items-center text-xs">requireAdmin() manuel (oubli = route ouverte)</div>
+      <div class="h-9 border-l-4 border-slate-400 bg-slate-50 px-2 flex items-center text-xs">adminWorld() / wsWorld() (identiques)</div>
+      <div class="h-9 border-l-4 border-red-500 bg-red-50 px-2 flex items-center text-xs">live ? mutate+broadcast+sync : loadPlayerFile ×6</div>
+      <div class="h-9 border-l-4 border-slate-400 bg-slate-50 px-2 flex items-center text-xs">savePlayerState</div>
+      <div class="h-9 border-l-4 border-red-500 bg-red-50 px-2 flex items-center text-xs">JSON à la main (2 escapers)</div>
+      <div class="h-9 border-l-4 border-emerald-600 bg-white px-2 flex items-center text-xs">logique métier réelle</div>
+    </div>
+    <div class="rounded-lg border border-slate-200 p-4 diagram space-y-2">
+      <p class="lbl text-slate-500 mb-2">Après</p>
+      <div class="deep rounded-lg p-3 text-xs"><span class="lbl text-emerald-300">adminRoute { world -> }</span><br><span class="text-slate-400">auth + résolution X-Micraft-Game-Session</span></div>
+      <div class="deep rounded-lg p-3 text-xs"><span class="lbl text-emerald-300">PlayerEditor.edit(name) { state -> }</span><br><span class="text-slate-400">live vs offline · persistance · resync</span></div>
+      <div class="h-16 border-l-4 border-emerald-600 bg-white px-2 flex items-center text-xs">logique métier réelle</div>
+    </div>
+  </div>
+  <p><b>Problème :</b> chaque route re-fait garde, résolution de monde et split live/offline ; 8 fichiers de tests pour 92 routes.</p>
+  <p><b>Solution :</b> un DSL/plugin Ktor pour auth + monde, un module PlayerEditor pour l'édition joueur.</p>
+  <ul class="list-disc pl-6 text-sm text-slate-700">
+    <li>garde admin impossible à oublier</li>
+    <li>split live/offline testé une fois</li>
+    <li>leverage : 73 routes, 1 résolution</li>
+  </ul>
+</article>
+
+<!-- 6 -->
+<article id="c6" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+  <div class="flex flex-wrap items-center gap-3">
+    <h2 class="font-serif text-2xl">6. Un Authorizer unique ; CommandContext typé par besoin</h2>
+    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800">Worth exploring</span>
+    <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process</span>
+  </div>
+  <ul class="font-mono text-sm text-slate-600">
+    <li>auth/Permission.kt:38 · game/session/PlayerSession.kt:34 (hasPermission ×2)</li>
+    <li>WILDCARD inline : GameLoop.kt:1076, :1812, :2001 · ClaimManager.kt:100, :124 · Claim.kt:39</li>
+    <li>command/CommandContext.kt (52 champs, 45 nullables/défaut)</li>
+  </ul>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border border-slate-200 p-4 diagram">
+      <p class="lbl text-slate-500 mb-3">Avant — masse interface vs implémentation</p>
+      <div class="flex items-end gap-8 h-52">
+        <div class="text-center"><div class="w-24 bg-red-200 border border-red-500" style="height:180px"></div><p class="lbl mt-1">interface<br>52 champs</p></div>
+        <div class="text-center"><div class="w-24 bg-slate-300 border border-slate-500" style="height:40px"></div><p class="lbl mt-1">impl<br>data bag</p></div>
+      </div>
+      <p class="text-xs text-slate-500 mt-2">+ 25 re-null-checks dans les commandes · bypass claims = <code>*</code> seulement</p>
+    </div>
+    <div class="rounded-lg border border-slate-200 p-4 diagram">
+      <p class="lbl text-slate-500 mb-3">Après</p>
+      <div class="flex items-end gap-8 h-52">
+        <div class="text-center"><div class="w-24 bg-emerald-200 border border-emerald-600" style="height:30px"></div><p class="lbl mt-1">can(perm)</p></div>
+        <div class="text-center"><div class="w-24 deep" style="height:170px"></div><p class="lbl mt-1">Authorizer<br>wildcard · owner · trusted · fallback</p></div>
+      </div>
+    </div>
+  </div>
+  <p><b>Problème :</b> la règle wildcard est recopiée inline ; claims ignorent RBAC nommé ; 2 gates de commande séparés dans GameLoop.</p>
+  <p><b>Solution :</b> un Authorizer qui possède toutes les règles ; le dispatcher gate les commandes ; chaque commande déclare ses dépendances.</p>
+  <ul class="list-disc pl-6 text-sm text-slate-700">
+    <li>locality : politique d'accès en un lieu</li>
+    <li>admin override via groupes RBAC</li>
+    <li>interface commande rétrécit</li>
+  </ul>
+</article>
+
+<!-- 7 -->
+<article id="c7" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+  <div class="flex flex-wrap items-center gap-3">
+    <h2 class="font-serif text-2xl">7. NpcInteraction : dépendances toujours présentes</h2>
+    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800">Worth exploring</span>
+    <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process</span>
+  </div>
+  <ul class="font-mono text-sm text-slate-600">
+    <li>game/npc/NpcManager.kt (1133 LOC, ~55 fonctions publiques, 38 fichiers dépendants)</li>
+    <li>NpcTickContext.kt · NpcChatService.kt · NpcManager L573-636</li>
+  </ul>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border border-slate-200 p-4 diagram">
+      <p class="lbl text-slate-500 mb-2">Avant — chaque site remplit un sous-ensemble</p>
+      <table class="text-xs w-full">
+        <thead><tr class="text-left text-slate-500"><th>appel</th><th>i18n</th><th>questManager</th></tr></thead>
+        <tbody>
+          <tr><td>interact (quest giver)</td><td>✓</td><td>✓</td></tr>
+          <tr><td>interact (autre)</td><td>✓</td><td class="text-red-600">null</td></tr>
+          <tr><td>chat send</td><td>✓</td><td>✓</td></tr>
+          <tr><td>testChat</td><td class="text-red-600">null</td><td>✓</td></tr>
+          <tr><td>acceptGift</td><td>✓</td><td class="text-red-600">null</td></tr>
+        </tbody>
+      </table>
+      <p class="text-xs text-slate-500 mt-3">NpcManager mêle spawn, persistance, dégâts, aggro, visibilité, listeners admin, shops.</p>
+    </div>
+    <div class="rounded-lg border border-slate-200 p-4 diagram flex flex-col gap-3">
+      <p class="lbl text-slate-500">Après</p>
+      <div class="border border-slate-400 rounded p-3 text-xs"><span class="lbl">NpcManager</span> — registry + tick</div>
+      <div class="deep rounded-lg p-4 flex-1 text-xs"><span class="lbl text-emerald-300">NpcInteraction</span><br><span class="text-slate-400">interact · chat · gift · test-chat — deps non-null au constructeur</span></div>
+    </div>
+  </div>
+  <p><b>Problème :</b> le comportement dépend des champs optionnels que chaque appelant a pensé à passer.</p>
+  <p><b>Solution :</b> extraire l'interaction/chat dans un module aux dépendances obligatoires. Tests NPC déjà solides (23+ fichiers).</p>
+  <ul class="list-disc pl-6 text-sm text-slate-700">
+    <li>plus de null silencieux</li>
+    <li>NpcManager fan-in réduit</li>
+  </ul>
+</article>
+
+<!-- 8 -->
+<article id="c8" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+  <div class="flex flex-wrap items-center gap-3">
+    <h2 class="font-serif text-2xl">8. Supprimer la couche d'input events stringifiés</h2>
+    <span class="px-2 py-0.5 rounded text-xs font-semibold bg-slate-200 text-slate-700">Speculative</span>
+    <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">in-process</span>
+  </div>
+  <ul class="font-mono text-sm text-slate-600">
+    <li>core/…/input/*.kt (12 fichiers, ex. GuildEvents.kt GuildEventHandler L66-92)</li>
+    <li>ts-src/game/** : 19 emit(`prefix:${a}\t${b}`) (GuildPanel.tsx:55, Inventory.tsx:179)</li>
+  </ul>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-lg border border-slate-200 p-4 diagram">
+      <p class="lbl text-slate-500 mb-2">Avant</p>
+      <pre class="mermaid">
+flowchart LR
+  TS["TSX emit 'guild:invite\tname'"] --> P[ClientInputEvent.parse]
+  P --> H[GuildEventHandler 1:1]
+  H --> CM["ClientMessage.GuildInvite(targetName)"]
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class P,H leak
+      </pre>
+      <p class="text-xs text-red-600">name → playerId → targetName : 3 noms</p>
+    </div>
+    <div class="rounded-lg border border-slate-200 p-4 diagram">
+      <p class="lbl text-slate-500 mb-2">Après</p>
+      <pre class="mermaid">
+flowchart LR
+  TS[TSX typed ClientMessage] --> B[bridge.send]
+  B --> CM[ClientMessage]
+      </pre>
+      <p class="text-xs text-slate-500">ClientInputAction gardé pour les actions locales liées aux touches.</p>
+    </div>
+  </div>
+  <p><b>Problème :</b> handlers pass-through (deletion test : supprimer retire de la complexité) ; payloads non typés des deux côtés.</p>
+  <p><b>Solution :</b> TS envoie un <code>ClientMessage</code> typé généré via un seul bridge. Refactor récent (71666e61, eeac8906) → à peser avant de rouvrir.</p>
+  <ul class="list-disc pl-6 text-sm text-slate-700">
+    <li>supprime 12 modules shallow</li>
+    <li>typage bout en bout</li>
+  </ul>
+</article>
+
+</section>
+
+<section id="top-recommendation" class="rounded-2xl deep p-8 space-y-3">
+  <p class="lbl text-emerald-300">Top recommendation</p>
+  <h2 class="font-serif text-3xl"><a href="#c1" class="underline decoration-emerald-400">1. Un seul module de cinématique joueur dans core</a></h2>
+  <p class="text-slate-300">Seam la plus risquée du projet : invariant documenté, bugs passés (nage, vol), divergences actives aujourd'hui (gravité tunable, solidité, submerge), zéro test client — un module <code>core</code> rend la parité testable. Ensuite <a href="#c2" class="underline">#2</a>, qui corrige un bug réel au level-up.</p>
+</section>
+
+</main>
+</body>
+</html>
