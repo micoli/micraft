@@ -117,6 +117,35 @@ class AdminSessionRoutingTest {
     }
 
     @Test
+    fun `status tick profile comes from the targeted world`() = testApplication {
+        val gameLoop = GameLoop(testWorld())
+        val registry =
+            GameWorldRegistry(
+                defaultWorld = gameLoop.defaultWorld,
+                e2eEnabled = true,
+                factory = { id -> buildE2eGameWorld(id, gen(), shared) },
+            )
+        application {
+            routing { AdminController(null, null, gameLoop, null, registry).register(this) }
+        }
+        gameLoop.defaultWorld.tickProfiler.record("total", 30_000_000L)
+        registry.resolve("w1").tickProfiler.record("total", 7_000_000L)
+
+        val r =
+            client.get("/api/admin/status") {
+                headers.append(AdminController.GAME_SESSION_HEADER, "w1")
+            }
+
+        val avgTickMs =
+            Json.parseToJsonElement(r.bodyAsText())
+                .jsonObject["avgTickDurationMs"]!!
+                .jsonPrimitive
+                .content
+                .toDouble()
+        assertEquals(7.0, avgTickMs, 0.001)
+    }
+
+    @Test
     fun `header is ignored outside e2e mode`() = testApplication {
         application { routing { controller(e2e = false).register(this) } }
 

@@ -248,8 +248,8 @@ fun buildStatusSnapshot(
         peakThreadCount = threadMx.peakThreadCount,
         uptimeMs = runtimeMx.uptime,
         gcStats = gcStats,
-        tickProfile = gameLoop.getTickProfile().filter { it.name != "total" },
-        avgTickDurationMs = gameLoop.getTickProfile().find { it.name == "total" }?.avgMs ?: 0.0,
+        tickProfile = world.getTickProfile().filter { it.name != "total" },
+        avgTickDurationMs = world.getTickProfile().find { it.name == "total" }?.avgMs ?: 0.0,
         tickBudgetMs = TICK_MS,
         buildTimestamps =
             listOf(
