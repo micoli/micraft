@@ -513,4 +513,16 @@ class ProceduralChunkGeneratorTest {
             staircases.isNotEmpty(),
             "expected staircase points, cavern count=${caverns.size}, staircase count=${staircases.size}")
     }
+
+    @Test
+    fun `biomeDefinitionAt answers from its column cache exactly as a fresh Voronoi sample`() {
+        val gen = ProceduralChunkGenerator(seed = 42L)
+        val columns = (-300..300 step 37).flatMap { x -> (-300..300 step 41).map { z -> x to z } }
+
+        val first = columns.map { (x, z) -> gen.biomeDefinitionAt(x, z) }
+        val again = columns.map { (x, z) -> gen.biomeDefinitionAt(x, z) }
+
+        assertEquals(columns.map { (x, z) -> gen.voronoi.sample(x, z).primary }, first)
+        assertEquals(first, again)
+    }
 }

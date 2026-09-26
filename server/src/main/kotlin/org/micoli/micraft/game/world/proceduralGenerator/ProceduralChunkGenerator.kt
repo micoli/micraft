@@ -6,6 +6,7 @@ import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
+import org.micoli.micraft.game.world.biome.BiomeDefinition
 import org.micoli.micraft.game.world.biome.BiomeRegistry
 import org.micoli.micraft.game.world.biome.FillerEntry
 import org.micoli.micraft.game.world.house.HouseConfig
@@ -71,6 +72,9 @@ class ProceduralChunkGenerator(
     companion object {
         /** Empirical standard deviation of the 3-octave island-noise field. */
         private const val ISLAND_NOISE_SIGMA = 0.18
+
+        /** ~ a 64×64-block neighbourhood: where the NPCs around the players wander. */
+        private const val BIOME_CACHE_COLUMNS = 4_096
     }
 
     /**
@@ -229,7 +233,25 @@ class ProceduralChunkGenerator(
 
     override fun biomeAt(wx: Int, wz: Int): String = voronoi.sample(wx, wz).primary.id
 
-    override fun biomeDefinitionAt(wx: Int, wz: Int) = voronoi.sample(wx, wz).primary
+    // Recent columns' biome. NPC wander checks (RandomMovableNpcBehavior.hasClearWalk) ask for the
+    // same few columns every tick, and a Voronoi sample is ~14 % of the NPC phase on its own.
+    private val biomeColumnCache =
+        object : LinkedHashMap<Long, BiomeDefinition>(BIOME_CACHE_COLUMNS, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, BiomeDefinition>) =
+                size > BIOME_CACHE_COLUMNS
+        }
+
+    override fun biomeDefinitionAt(wx: Int, wz: Int): BiomeDefinition {
+        val key = (wx.toLong() shl 32) or (wz.toLong() and 0xffffffffL)
+        synchronized(biomeColumnCache) {
+            biomeColumnCache[key]?.let {
+                return it
+            }
+        }
+        val biome = voronoi.sample(wx, wz).primary
+        synchronized(biomeColumnCache) { biomeColumnCache[key] = biome }
+        return biome
+    }
 
     override fun zoneLevelAt(wx: Int, wz: Int): Int = voronoi.zoneLevelAt(wx, wz)
 
