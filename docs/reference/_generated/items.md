@@ -51,5 +51,6 @@ Defined in `data/config/items.yaml` (bundled defaults in `resources/config/items
 | `SIEGE_CANON` | true | — | CNN | #5A4A2A | — | — | CANON |
 | `FURNITURE_TABLE` | true | — | TBL | #8B5A2B | — | — | TABLE |
 | `FURNITURE_CHAIR` | true | — | CHR | #8B5A2B | — | — | CHAIR |
+| `PANEL_WOOD` | true | — | PNL | #6B4A2B | — | — | PANEL_WOOD |
 | `BOULDER` | false | — | BLD | #767668 | — | — | — |
 | `FLAMING_BOULDER` | false | — | FBL | #C24A1E | — | — | — |

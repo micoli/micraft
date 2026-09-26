@@ -90,6 +90,7 @@ make test                     # all test suites
 | `/npc` | `/npc <spawn\|list\|remove\|tp> [args]` | Manage NPCs in the world. | — |
 | `/npcbuy` | `/npcbuy <npcId> <itemType> [quantity]` | Buy an item from a seller NPC. | — |
 | `/npcsell` | `/npcsell <npcId> <itemType> [quantity]` | Sell an item to a seller NPC. | — |
+| `/panel` | `/panel <edit\|set <url>\|clear>` | Edit the targeted interactive panel. | dynamic |
 | `/pet` | `/pet <list\|spawn\|dismiss\|resurrect\|rename> [name] [newName]` | Manage your tamed pets (list, spawn, dismiss, resurrect, rename). | dynamic |
 | `/preferences` | `/preferences` | Opens the preferences panel. | — |
 | `/pump` | `/pump` | Remove all connected liquid blocks in sight. | — |
