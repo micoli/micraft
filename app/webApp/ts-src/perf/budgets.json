@@ -1,0 +1,8 @@
+{
+  "clientFrameP95Ms": 16.7,
+  "clientFrameP99Ms": 33.3,
+  "serverTickP50Ms": 25,
+  "serverTickP99Ms": 50,
+  "clientJsHeapGrowthPct": 25,
+  "stabilitySpreadPct": 10
+}

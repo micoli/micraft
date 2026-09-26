@@ -55,11 +55,18 @@ function summarize(runs: WindowResult[]) {
 }
 
 async function environment(page: Page) {
-  const gpu = await page.evaluate(() => {
+  const gpu = await page.evaluate(async () => {
+    // Chrome masks the WebGL renderer string; WebGPU's adapter info still names the GPU.
+    type AdapterInfo = { vendor?: string; architecture?: string; description?: string };
+    const gpuApi = (navigator as Navigator & { gpu?: { requestAdapter(): Promise<{ info?: AdapterInfo } | null> } })
+      .gpu;
+    const info = (await gpuApi?.requestAdapter().catch(() => null))?.info;
+    const fromWebGpu = [info?.vendor, info?.architecture, info?.description].filter(Boolean).join(" ");
+    if (fromWebGpu) return fromWebGpu;
     const gl = document.createElement("canvas").getContext("webgl2");
     if (!gl) return "unknown";
-    const info = gl.getExtension("WEBGL_debug_renderer_info");
-    return String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
+    const ext = gl.getExtension("WEBGL_debug_renderer_info");
+    return String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
   });
   const authConfig = (await (await adminFetch("/api/auth/config")).json()) as { messageEncoder?: string };
   return {
