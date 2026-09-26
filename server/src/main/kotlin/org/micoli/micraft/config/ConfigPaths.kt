@@ -17,12 +17,26 @@ data class OverridablePaths(val resources: Path, val data: Path)
  * `MICRAFT_WORLD_NAME`.
  */
 object ConfigPaths {
+    private const val DEFAULT_DATA_DIR = "data"
+
     /** Resolves the data root from a raw env value — blank/null falls back to `data/`. */
     internal fun dataRootFrom(envValue: String?): Path =
-        Path.of(envValue?.takeIf { it.isNotBlank() } ?: "data")
+        Path.of(envValue?.takeIf { it.isNotBlank() } ?: DEFAULT_DATA_DIR)
 
     val dataRoot: Path = dataRootFrom(System.getenv("MICRAFT_DATA_DIR"))
     val resourcesRoot: Path = Path.of("resources")
+
+    /**
+     * A configured file path: one written under the default `data/` directory follows the data root
+     * (so `MICRAFT_DATA_DIR` relocates it too); any other path is used as-is.
+     */
+    internal fun dataPathFrom(configured: String, root: Path): Path {
+        val path = Path.of(configured)
+        if (path.isAbsolute || !path.startsWith(DEFAULT_DATA_DIR)) return path
+        return root.resolve(Path.of(DEFAULT_DATA_DIR).relativize(path))
+    }
+
+    fun dataPath(configured: String): Path = dataPathFrom(configured, dataRoot)
 
     /** `data/config/<rel>` — user-writable config, generated from defaults on first run. */
     fun dataConfig(rel: String): Path = dataRoot.resolve("config").resolve(rel)

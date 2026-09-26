@@ -1,6 +1,5 @@
 package org.micoli.micraft.di
 
-import java.nio.file.Path
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.annotation.Module
@@ -21,7 +20,8 @@ class AuthModule {
     fun groupsConfig(serverConfig: ServerConfig): GroupsConfig {
         val authConfig = serverConfig.auth
         return loadGroupsConfig(
-            Path.of(authConfig.local.groupsFile), ConfigPaths.resourcesConfig("groups.yaml"))
+            ConfigPaths.dataPath(authConfig.local.groupsFile),
+            ConfigPaths.resourcesConfig("groups.yaml"))
     }
 
     @Single
@@ -34,7 +34,7 @@ class AuthModule {
             when (authConfig.provider) {
                 "local" ->
                     LocalAuthProvider(
-                        Path.of(authConfig.local.usersFile),
+                        ConfigPaths.dataPath(authConfig.local.usersFile),
                         groupsConfig,
                         requirePassword = authConfig.local.requirePassword)
                 "oauth" -> {

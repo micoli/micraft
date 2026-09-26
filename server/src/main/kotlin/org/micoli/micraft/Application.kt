@@ -24,7 +24,6 @@ import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
 import java.io.File
-import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
@@ -233,7 +232,7 @@ fun Application.module() {
     val authProvider = get<OptionalAuthProvider>().value
     val tokenStore = get<OptionalTokenStore>().value
 
-    val groupsFilePath = Path.of(authConfig.local.groupsFile)
+    val groupsFilePath = ConfigPaths.dataPath(authConfig.local.groupsFile)
     validateYamlConfig(groupsFilePath, "groups.schema.json")
     val reloadRbacLambda: (() -> Unit)? =
         when (val p = authProvider) {
