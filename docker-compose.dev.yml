@@ -11,6 +11,7 @@ services:
       - app-shared-build:/workspace/app/shared/build
       - app-webapp-build:/workspace/app/webApp/build
       - app-webapp-node-modules:/workspace/app/webApp/ts-src/node_modules
+      - issues-server-node-modules:/workspace/issues-server/node_modules
       - gradle-home:/root/.gradle
       - gradle-build:/workspace/.gradle
     ports:
@@ -18,6 +19,7 @@ services:
       - "6006:6006"
       - "3120:3120"
       - "8000:8000"
+      - "127.0.0.1:4380:4380"
     working_dir: /workspace
     stdin_open: true
     tty: true
@@ -31,5 +33,6 @@ volumes:
   app-shared-build:
   app-webapp-build:
   app-webapp-node-modules:
+  issues-server-node-modules:
   gradle-home:
   gradle-build:

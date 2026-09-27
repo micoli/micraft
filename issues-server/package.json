@@ -1,0 +1,29 @@
+{
+  "name": "micraft-issues-server",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node server/main.ts",
+    "dev": "node --watch server/main.ts & vite --config client/vite.config.ts",
+    "build": "vite build --config client/vite.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test \"server/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@mdxeditor/editor": "4.3.0",
+    "marked": "18.0.14",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@vitejs/plugin-react": "6.1.1",
+    "typescript": "5.9.3",
+    "vite": "8.2.2"
+  }
+}

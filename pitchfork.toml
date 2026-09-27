@@ -67,6 +67,13 @@ ready-port = 8000
 boot_start = false
 retry = true
 
+[daemons.issues]
+run = "bash -c 'npm ci --no-fund --no-audit && npm run build && npm start'"
+dir = "issues-server"
+ready-port = 4380
+boot_start = false
+retry = true
+
 [daemons.e2e-server]
 run = "bash -c './gradlew :app:webApp:copyResourcesToWebDist :app:webApp:copyStaticToWebDist --console=plain && (cd app/webApp/ts-src && npm run build) && ./gradlew :server:runE2eServer --console=plain'"
 dir = "."

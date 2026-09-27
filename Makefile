@@ -31,7 +31,7 @@ endif
         docs gen-schemas docs-screenshots check-docs-screenshots \
         docs-site-build docs-site-serve docs-site-stop help \
         security security-locks security-relock security-verify security-audit \
-        security-osv security-sbom
+        security-osv security-sbom issues-install issues issues-stop issues-dev
 
 ##@ Dev — daemons (port 8080 game-server)
 
@@ -262,6 +262,21 @@ ts-test-storybook: ## Storybook test-runner (CI mode)
 
 e2e-server: ## Run the bounded E2E Ktor server standalone (port 8091)
 	$(EXEC) "./gradlew :server:runE2eServer --console=plain"
+
+##@ Issues browser
+
+issues: ## Start the .scratch/ issues + ADR browser daemon on http://127.0.0.1:4380 (pitchfork)
+	$(PITCHFORK) start issues
+
+issues-stop: ## Stop the issues browser daemon
+	$(PITCHFORK) stop issues
+
+issues-install: ## Host only: install issues-server/ dependencies (for issues-dev)
+	cd issues-server && npm ci
+
+issues-dev: ## Host only: issues browser with Vite HMR on http://127.0.0.1:4381 (API on :4380)
+	cd issues-server && npm run dev
+
 
 ##@ Perf
 
