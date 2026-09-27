@@ -25,6 +25,10 @@ a `quest_giver` whose `spawnBiomes` include the Region's Biome, else any
 `quest_giver` of the right level. `/npc roster` shows the Region's giver and how
 many Quests suit it.
 
+`/quest accept <id>` only accepts a Quest the Quest giver of your current Region
+offers (admins can accept any Quest), and its autocompletion lists those Quests
+plus your own.
+
 ### Claiming the reward: autoloot vs. turn-in
 
 A quest's `autoLoot` flag decides how its reward is claimed:

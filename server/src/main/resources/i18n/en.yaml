@@ -379,6 +379,7 @@ quest:
     already_done: "Quest already completed (not repeatable)."
     ready_to_turn_in: "Quest objective complete — return to the quest giver: {0}"
     nothing_to_turn_in: "Nothing to turn in for this quest."
+    not_offered_here: "No Quest giver offers {0} in this Region."
 
 give_money:
   server:

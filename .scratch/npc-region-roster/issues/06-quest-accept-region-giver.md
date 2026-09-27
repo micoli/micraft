@@ -1,6 +1,6 @@
 # `/quest accept` limited to the current Region's giver
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 05
 
@@ -19,5 +19,15 @@ be accepted anywhere and bypasses the Roster filter.
 
 ## Acceptance criteria
 
-- [ ] Server tests: accept refused outside the offering Region, accepted inside, admin bypass.
-- [ ] Quest E2E specs pass.
+- [x] Server tests: accept refused outside the offering Region, accepted inside, admin bypass.
+- [x] Quest E2E specs pass.
+
+## Comments
+
+- 2026-09-27: `QuestCommand` refuses `/quest accept <id>` (`quest:server:not_offered_here`) unless the Quest suits the
+  Character's current Region (`RegionQuests.suitedTo` on its Roster — exactly the giver's offer, without depending on
+  the giver being spawned yet). Admins and Worlds without Regions are unrestricted. Autocompletion of the id lists the
+  Region's Quests plus the Character's own (the same argument serves `abandon`/`status`).
+- E2E players are admins, so `quests-kill` / `quests-fetch` keep accepting directly. `quests-kill` was already broken
+  since issue 01 (it spawned `goat` and matched the old `Goat #` name): it now spawns `mountain_goat`, finds it by
+  type and reads `progress.mountain_goat`. Both specs pass (`npx playwright test quests-kill quests-fetch`).

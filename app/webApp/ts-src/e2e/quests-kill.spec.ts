@@ -6,7 +6,7 @@ import { actions } from "./helpers/game";
 import { getApiAdminNpcs } from "../generated/api/requests";
 
 // KILL quest progress advances when the player lands the killing blow on a matching NPC.
-// Accept first_steps (kill goats), spawn one, slash it down, assert the counter ticked.
+// Accept first_steps (kill mountain goats), spawn one, slash it down, assert the counter ticked.
 test("a KILL quest counter advances when the player kills a matching NPC", async ({ page }, info) => {
   test.setTimeout(process.env.CI ? 180_000 : 90_000);
   const acct = accountFor(info);
@@ -32,13 +32,13 @@ test("a KILL quest counter advances when the player kills a matching NPC", async
     polling: 100,
   });
 
-  await runAndSettle("/spawn goat 0 65 2");
+  await runAndSettle("/spawn mountain_goat 0 65 2");
   let goatId: string | undefined;
   await expect
     .poll(
       async () => {
-        goatId = ((await getApiAdminNpcs(adminWorldContext(acct))).data ?? []).find((n) =>
-          n.name.startsWith("Goat #"),
+        goatId = ((await getApiAdminNpcs(adminWorldContext(acct))).data ?? []).find(
+          (n) => n.type === "mountain_goat",
         )?.id;
         return goatId ?? null;
       },
@@ -60,7 +60,7 @@ test("a KILL quest counter advances when the player kills a matching NPC", async
         await actions(page).attack("slash");
         await actions(page).moveForward(200); // stay on the goat if it bolts
         await page.waitForTimeout(850); // slash cooldown
-        return (await e2e(page)).quests[QUEST]?.progress?.goat ?? 0;
+        return (await e2e(page)).quests[QUEST]?.progress?.mountain_goat ?? 0;
       },
       { timeout: 45_000, intervals: [200] },
     )

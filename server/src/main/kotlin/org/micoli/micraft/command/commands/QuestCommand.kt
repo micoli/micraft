@@ -1,10 +1,14 @@
 package org.micoli.micraft.command.commands
 
 import java.util.UUID
+import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.game.npc.roster.RegionPopulation
+import org.micoli.micraft.game.npc.roster.RegionQuests
 import org.micoli.micraft.game.quest.QuestType
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.session.hasPermission
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.quest.QuestStatus
 
@@ -51,6 +55,14 @@ class QuestCommand : CommandHandler {
             "accept" -> {
                 if (rest.isBlank()) {
                     session.send(ServerMessage.Notification("Usage: /quest accept <id>"))
+                    return
+                }
+                val offered = offeredInRegion(session, context)
+                if (offered != null && rest !in offered) {
+                    session.send(
+                        ServerMessage.Notification(
+                            context.i18n.t(
+                                session.state.language, "quest:server:not_offered_here", rest)))
                     return
                 }
                 qm.accept(session, rest)
@@ -122,8 +134,27 @@ class QuestCommand : CommandHandler {
                 listOf("list", "accept", "abandon", "turnin", "status", "ui").filter {
                     it.contains(partial, ignoreCase = true)
                 }
-            1 -> qm.getDefinitions().keys.filter { it.contains(partial, ignoreCase = true) }
+            1 -> {
+                val ids =
+                    session
+                        ?.let { offeredInRegion(it, context) }
+                        ?.let { it + session.state.quests.keys } ?: qm.getDefinitions().keys
+                ids.filter { it.contains(partial, ignoreCase = true) }.distinct()
+            }
             else -> emptyList()
         }
+    }
+
+    /**
+     * The Quests the Quest giver of the Character's Region offers, or null when nothing restricts
+     * acceptance: admins, and Worlds without Regions.
+     */
+    private fun offeredInRegion(session: PlayerSession, context: CommandContext): List<String>? {
+        if (session.hasPermission(CorePermissions.ADMIN)) return null
+        val npcManager = context.npcManager ?: return null
+        val quests = context.questManager?.getDefinitions()?.values ?: return null
+        val region = context.world.regionAt(session.state.pos) ?: return null
+        val roster = RegionPopulation(context.world, npcManager::getDefinitions).rosterOf(region)
+        return RegionQuests.suitedTo(roster, quests)
     }
 }

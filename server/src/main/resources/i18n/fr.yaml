@@ -379,6 +379,7 @@ quest:
     already_done: "Quête déjà complétée (non répétable)."
     ready_to_turn_in: "Objectif atteint — retournez voir le donneur de quête : {0}"
     nothing_to_turn_in: "Rien à récupérer pour cette quête."
+    not_offered_here: "Aucun donneur de quêtes ne propose {0} dans cette Région."
 
 give_money:
   server:
