@@ -60,11 +60,15 @@ class QuestGiverSpawner(private val population: RegionPopulation) {
     ): NpcInstance? {
         val def = giverTypeFor(region, giverTypes) ?: return null
         val pos = groundNearSeed(world, region, chunks) ?: return null
-        val name = npcManager.generateUniqueName(def.type)
-        val giver = npcManager.spawnNpc(name, def.type, pos, region.dangerTier.npcLevelRange.first)
+        val giver =
+            npcManager.spawnNpc(
+                npcManager.generateUniqueName(def.type),
+                def.type,
+                pos,
+                region.dangerTier.npcLevelRange.first)
         log.info(
             "Quest giver '{}' ({}) spawned in {} (tier {})",
-            name,
+            giver.state.name,
             def.type,
             region.name,
             region.dangerTier.tier)

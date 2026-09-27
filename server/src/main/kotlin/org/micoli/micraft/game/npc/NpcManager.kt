@@ -19,6 +19,8 @@ import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.npc.animal.AnimalInstanceData
+import org.micoli.micraft.game.npc.resident.Resident
+import org.micoli.micraft.game.npc.resident.Residents
 import org.micoli.micraft.game.quest.QuestDefinition
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
@@ -47,6 +49,7 @@ data class ParkedNpc(
     val type: String,
     val spawnPos: Vec3,
     val instanceLevel: Int,
+    val resident: Resident? = null,
 )
 
 class NpcManager(
@@ -83,6 +86,8 @@ class NpcManager(
     private val getChatHistoryStore: () -> NpcChatHistoryStore? = { null },
     /** Host-provided check so a generated NPC name never collides with a player's. */
     private val isPlayerName: (String) -> Boolean = { false },
+    /** Gives Quest givers and merchants their Resident identity. Null hosts have no Residents. */
+    private val residents: Residents? = null,
 ) {
     private val ctx: NpcTickContext
         get() = ctxOf()
@@ -323,18 +328,23 @@ class NpcManager(
          * here to force a follow behaviour and strip animal/pack/hibernation config.
          */
         defOverride: (NpcDefinition) -> NpcDefinition = { it },
+        /** Identity to keep, e.g. when a parked Resident comes back; settled afresh when null. */
+        resident: Resident? = null,
     ): NpcInstance {
         val def =
             (definitions[type]
                     ?: error("Unknown NPC type: '$type'. Available: ${definitions.keys}"))
                 .let(defOverride)
+        val settled =
+            resident ?: if (def.isResident) residents?.settle(type, pos, npcs.values) else null
+        val shownName = settled?.name ?: name
         val effectiveLevel = if (instanceLevel < 1) def.minLevel else instanceLevel
         val spawnMaxHp = def.computeMaxHp(effectiveLevel)
         val id = nextNpcId()
         val state =
             NpcState(
                 id = id,
-                name = name,
+                name = shownName,
                 type = type,
                 pos = pos,
                 yaw = 0f,
@@ -350,7 +360,8 @@ class NpcManager(
                 spawnPos = pos,
                 instanceLevel = effectiveLevel,
                 tuning = tuning,
-                random = childRandom())
+                random = childRandom(),
+                resident = settled)
         // Attached here rather than by each caller: a spawn that skipped this — a console spawn, a
         // persisted NPC, a manual arena spawn — produced an animal with no lifecycle record, so it
         // never aged, never got hungry and never reproduced. Immortal by omission.
@@ -384,10 +395,10 @@ class NpcManager(
             }
         }
         notifyAdmins(
-            """{"type":"npcSpawned","id":"$id","name":${name.adminJson()},"npcType":${type.adminJson()},"x":${pos.x},"y":${pos.y},"z":${pos.z},"yaw":0,"currentHp":$spawnMaxHp,"maxHp":$spawnMaxHp,"isDead":false}""")
+            """{"type":"npcSpawned","id":"$id","name":${shownName.adminJson()},"npcType":${type.adminJson()},"x":${pos.x},"y":${pos.y},"z":${pos.z},"yaw":0,"currentHp":$spawnMaxHp,"maxHp":$spawnMaxHp,"isDead":false}""")
         log.debug(
             "NPC spawned: {} ({}) lv{} at ({},{},{})",
-            name,
+            shownName,
             type,
             effectiveLevel,
             pos.x,
@@ -521,7 +532,9 @@ class NpcManager(
     suspend fun park(npc: NpcInstance, regionKey: Long) {
         parked
             .getOrPut(regionKey) { mutableListOf() }
-            .add(ParkedNpc(npc.state.name, npc.state.type, npc.spawnPos, npc.instanceLevel))
+            .add(
+                ParkedNpc(
+                    npc.state.name, npc.state.type, npc.spawnPos, npc.instanceLevel, npc.resident))
         despawnNpc(npc.state.id)
     }
 
@@ -531,7 +544,12 @@ class NpcManager(
     suspend fun respawnParked(regionKey: Long, accepts: (type: String) -> Boolean = { true }) {
         val pending = parked.remove(regionKey) ?: return
         for (entry in pending.filter { accepts(it.type) && definitions.containsKey(it.type) }) {
-            spawnNpc(entry.name, entry.type, entry.spawnPos, entry.instanceLevel)
+            spawnNpc(
+                entry.name,
+                entry.type,
+                entry.spawnPos,
+                entry.instanceLevel,
+                resident = entry.resident)
         }
         log.info("Respawned parked NPCs in Region {}", regionKey)
     }
@@ -604,8 +622,7 @@ class NpcManager(
 
     fun getSellerItems(npcId: String): List<ShopItemEntry>? {
         val instance = npcs[npcId] ?: return null
-        return if (instance.definition.behaviorKey == "seller") instance.definition.shopItems
-        else null
+        return if (instance.definition.isMerchant) instance.definition.shopItems else null
     }
 
     suspend fun sendAllTo(session: PlayerSession) {

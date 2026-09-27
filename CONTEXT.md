@@ -165,6 +165,30 @@ The one NPC per Region that offers Quests suited to that Region: every kill targ
 **Quest**:
 A task offered by a Quest giver (kill, fetch…) with objectives and a reward, turned in on completion.
 
+**Resident**:
+A social NPC that lives in a Region (its Quest giver, its merchants) with an identity that survives restarts: a stable name, a Temperament and a Disposition towards each Character. Wild NPCs and Pets are not Residents.
+_Avoid_: villager, notable, townsfolk
+
+**Disposition**:
+What one Resident thinks of one Character, moved only by game events between them (Quests turned in, purchases, attacks…), never by chat wording. It shapes the NPC's tone, greeting and prices, and at its lowest the NPC refuses to talk or trade. Wild NPCs have none. Read as one of five Disposition bands; it starts Neutral and drifts back towards Neutral without contact.
+_Avoid_: affinity, reputation (reserved for a Region-wide opinion), relationship
+
+**Disposition band**:
+The named step a Disposition falls in: Hostile (refuses to talk or trade), Wary (higher prices), Neutral, Friendly (lower prices), Devoted (lowest prices, warm greeting).
+_Avoid_: level, tier (both taken)
+
+**Memory**:
+A dated fact a Resident keeps about one Character (a Quest turned in, a blow received…); a Resident keeps only the latest few, and they feed its greetings and chat.
+_Avoid_: history (the chat transcript), log
+
+**Temperament**:
+The fixed character trait of a Resident (gruff, cheerful, fearful…), drawn from the World seed, that picks which variant of a Bark it says and colours its chat tone.
+_Avoid_: personality, mood (mood changes; a Temperament does not)
+
+**Bark**:
+A short unprompted line a Resident says aloud (a greeting, a reaction to something nearby, a remark on the weather or the hour), shown above it and in the chat of nearby Characters only. Drawn from written lines, never generated.
+_Avoid_: shout, NPC message, ambient chat
+
 ### Social
 
 **Group**:

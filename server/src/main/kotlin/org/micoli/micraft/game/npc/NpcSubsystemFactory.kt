@@ -6,6 +6,7 @@ import org.micoli.micraft.game.npc.animal.AnimalEvent
 import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.npc.pack.PackCoordinator
 import org.micoli.micraft.game.npc.pack.PackEvent
+import org.micoli.micraft.game.npc.resident.Residents
 import org.micoli.micraft.game.npc.roster.RegionPopulation
 import org.micoli.micraft.game.pet.PetCoordinator
 import org.micoli.micraft.game.quest.QuestManager
@@ -104,6 +105,7 @@ class NpcSubsystemFactory(
             getOllamaClient = hooks.getOllamaClient,
             getChatHistoryStore = hooks.getChatHistoryStore,
             isPlayerName = hooks.isPlayerName,
+            residents = Residents(world),
         )
 
     /** The one view of this World's Regions, shared by everything that spawns or breeds NPCs. */

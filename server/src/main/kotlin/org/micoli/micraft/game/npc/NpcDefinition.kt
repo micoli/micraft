@@ -66,6 +66,13 @@ data class NpcDefinition(
     val isQuestGiver: Boolean
         get() = behaviorKey == "quest_giver"
 
+    val isMerchant: Boolean
+        get() = behaviorKey == "seller"
+
+    /** Quest givers and merchants live in a Region with a stable identity (CONTEXT.md). */
+    val isResident: Boolean
+        get() = isQuestGiver || isMerchant
+
     /** Pure water dweller: spawns in the water column instead of on land. */
     val isAquatic: Boolean
         get() = canSwim && !canWalk

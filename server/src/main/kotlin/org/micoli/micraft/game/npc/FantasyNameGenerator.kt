@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.npc
 
+import kotlin.random.Random
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonObject
@@ -36,23 +37,24 @@ object FantasyNameGenerator {
             else -> "human"
         }
 
-    fun generate(npcType: String, isAnimal: Boolean = false): String {
+    fun generate(npcType: String, isAnimal: Boolean = false, random: Random = Random): String {
         val r = race(npcType, isAnimal)
         val d = data[r] ?: data["human"]!!
         return when (r) {
             "orc" -> {
-                val first = d["first_start"]!!.random() + d["first_end"]!!.random()
-                val title = d["titles"]!!.random()
+                val first = d["first_start"]!!.random(random) + d["first_end"]!!.random(random)
+                val title = d["titles"]!!.random(random)
                 "${first.replaceFirstChar { it.uppercase() }} $title"
             }
             // A pet gets one plain name, not a "First Last" fantasy name.
             "animal" -> {
-                val first = d["first_start"]!!.random() + d["first_end"]!!.random()
+                val first = d["first_start"]!!.random(random) + d["first_end"]!!.random(random)
                 first.replaceFirstChar { it.uppercase() }
             }
             else -> {
-                val first = d["first_start"]!!.random() + d["first_end"]!!.random()
-                val last = d["surname_prefix"]!!.random() + d["surname_suffix"]!!.random()
+                val first = d["first_start"]!!.random(random) + d["first_end"]!!.random(random)
+                val last =
+                    d["surname_prefix"]!!.random(random) + d["surname_suffix"]!!.random(random)
                 "${first.replaceFirstChar { it.uppercase() }} ${last.replaceFirstChar { it.uppercase() }}"
             }
         }

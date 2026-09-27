@@ -3,6 +3,7 @@ package org.micoli.micraft.game.npc
 import kotlin.random.Random
 import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.game.npc.animal.AnimalInstanceData
+import org.micoli.micraft.game.npc.resident.Resident
 import org.micoli.micraft.game.rpg.DerivedStatsCalculator
 import org.micoli.micraft.game.world.BreathConstants
 import org.micoli.micraft.npc.NpcState
@@ -88,6 +89,7 @@ class NpcInstance(
      * makes a seeded simulation reproducible.
      */
     val random: Random = Random,
+    val resident: Resident? = null,
 ) {
     /**
      * Quest ids a Quest giver offers: the Quests suited to its Region, kept by QuestGiverSpawner.

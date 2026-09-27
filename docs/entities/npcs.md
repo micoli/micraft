@@ -30,6 +30,13 @@ Region nobody is near are parked and come back when a player returns; a wild NPC
 no longer in its Region's Roster is dropped instead, Quest givers are recreated
 by their spawner, and Pets are never parked.
 
+**Residents** — Quest givers and merchants (`SELLER`) are Residents: each is
+keyed by its Region, its NPC type and its rank among NPCs of that type in the
+Region (1st, 2nd… merchant). Its name and Temperament (gruff, cheerful or
+fearful) are derived from the World seed and that key, so the same Resident
+comes back under the same name after a restart or once its Region is parked and
+reactivated. Wild NPCs and Pets are not Residents.
+
 **Roster** — each Region has a Roster ([ADR-0010](../adr/0010-wild-npc-population-per-region-roster.md)):
 2–4 passive and 1–3 hostile NPC types drawn from those its Biome (`spawnBiomes`)
 and Danger level (`minLevel..maxLevel`) allow, derived from the World seed and

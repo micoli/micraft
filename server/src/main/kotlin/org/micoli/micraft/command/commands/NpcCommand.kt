@@ -79,13 +79,13 @@ class NpcCommand : CommandHandler {
         }
         val name = if (parts.size >= 2) parts[1].trim() else npcManager.generateUniqueName(type)
         val pos = session.state.pos
-        npcManager.spawnNpc(name, type, pos)
+        val npc = npcManager.spawnNpc(name, type, pos)
         session.send(
             ServerMessage.Notification(
                 i18n.t(
                     lang,
                     "npc:server:spawned",
-                    name,
+                    npc.state.name,
                     type,
                     "(${pos.x.toInt()},${pos.y.toInt()},${pos.z.toInt()})")))
     }
