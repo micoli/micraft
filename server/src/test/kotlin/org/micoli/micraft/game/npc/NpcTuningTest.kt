@@ -76,16 +76,6 @@ class NpcTuningTest {
     }
 
     @Test
-    fun zoneKey_followsInjectedZoneSize() {
-        val manager =
-            NpcManager(
-                broadcast = {},
-                ctxOf = { NpcTickContext(NpcConstants.live.copy(npcZoneSize = 16), Random(1)) },
-            )
-        assertEquals("2,3", manager.zoneKey(33f, 50f))
-    }
-
-    @Test
     fun behavior_readsJumpVelocityFromContext() = runBlocking {
         // wall in front of the NPC at its own level, free one block above → it jumps
         val world = testWorld(Triple(8, 4, 8), Triple(9, 5, 8), Triple(9, 4, 8))

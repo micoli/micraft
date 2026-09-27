@@ -4,6 +4,7 @@ import java.nio.file.Path
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.GameTimeService
@@ -15,11 +16,14 @@ import org.micoli.micraft.game.npc.roster.RegionPopulation
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.ChunkGenerator
 import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.FlatArenaChunkGenerator
 import org.micoli.micraft.game.world.vegetation.VegetationConfig
 import org.micoli.micraft.game.world.vegetation.VegetationManager
 import org.micoli.micraft.player.Vec3
+import org.micoli.micraft.support.SeededRegionsGenerator
 import org.micoli.micraft.support.testI18n
+import org.micoli.micraft.support.testSession
 
 private const val HALF = 32
 private const val GROUND = 7
@@ -36,9 +40,12 @@ private fun walkerDef() =
         wanderRadius = 12f,
     )
 
-private class Harness(tuning: NpcTuning = NpcConstants.live, seed: Long = 7L) {
-    val world =
-        WorldState(FlatArenaChunkGenerator(halfSize = HALF, groundY = GROUND), persistence = null)
+private class Harness(
+    tuning: NpcTuning = NpcConstants.live,
+    seed: Long = 7L,
+    generator: ChunkGenerator = FlatArenaChunkGenerator(halfSize = HALF, groundY = GROUND),
+) {
+    val world = WorldState(generator, persistence = null)
     val ctx = NpcTickContext(tuning, Random(seed))
     val npcManager = NpcManager(broadcast = {}, getSessions = { emptyList() }, ctxOf = { ctx })
     val combat =
@@ -65,10 +72,11 @@ private class Harness(tuning: NpcTuning = NpcConstants.live, seed: Long = 7L) {
             broadcast = {},
             ctxOf = { ctx },
         )
+    val population = RegionPopulation(world) { npcManager.getDefinitions() }
     val pipeline =
         NpcTickPipeline(
             npcManager = npcManager,
-            npcSpawner = NpcSpawner(RegionPopulation(world) { npcManager.getDefinitions() }),
+            npcSpawner = NpcSpawner(population),
             animals = animals,
             ctxOf = { ctx },
         )
@@ -118,16 +126,69 @@ class NpcTickPipelineTest {
     }
 
     @Test
-    fun zoneOf_usesInjectedZoneSize() {
-        val h = Harness(tuning = NpcConstants.live.copy(npcZoneSize = 64))
-        assertEquals(Pair(0, 1), h.pipeline.zoneOf(10f, 70f))
-        assertEquals(Pair(-1, -1), h.pipeline.zoneOf(-5f, -5f))
-    }
-
-    @Test
     fun lifecycle_withoutPlayers_doesNotSpawnAnything() = runBlocking {
         val h = Harness()
         h.pipeline.lifecycle(h.world, emptyList())
         assertEquals(0, h.npcManager.getAll().size)
     }
+
+    // ── Region activation and parking ────────────────────────────────────────
+
+    private fun regionsHarness() =
+        Harness(generator = SeededRegionsGenerator(listOf(0 to 0, 5_000 to 0))).also { h ->
+            h.npcManager.loadDefinitions(
+                mapOf(
+                    "walker" to walkerDef(),
+                    "deer" to wildDef("deer", biomes = emptyList()),
+                    "camel" to wildDef("camel", biomes = listOf("desert"))))
+        }
+
+    private val farAway = Vec3(5_000.5f, GROUND + 1f, 0.5f)
+
+    @Test
+    fun lifecycle_parksNpcsOfRegionsNobodyIsIn() = runBlocking {
+        val h = regionsHarness()
+        val near = h.npcManager.spawnNpc("Near", "deer", Vec3(0.5f, GROUND + 1f, 0.5f))
+        val far = h.npcManager.spawnNpc("Far", "deer", farAway)
+
+        h.pipeline.lifecycle(h.world, listOf(testSession(pos = Vec3(0.5f, GROUND + 1f, 0.5f))))
+
+        assertTrue(h.npcManager.getInstance(near.state.id) != null)
+        assertNull(h.npcManager.getInstance(far.state.id))
+    }
+
+    @Test
+    fun onRegionEntered_bringsParkedNpcsBack() = runBlocking {
+        val h = regionsHarness()
+        h.npcManager.spawnNpc("Far", "deer", farAway)
+        h.pipeline.lifecycle(h.world, listOf(testSession(pos = Vec3(0.5f, GROUND + 1f, 0.5f))))
+
+        h.pipeline.onRegionEntered(h.world, testSession(pos = farAway))
+
+        assertTrue(h.npcManager.getAll().any { it.state.name == "Far" })
+    }
+
+    @Test
+    fun parking_dropsWildNpcsOutsideTheirRoster() = runBlocking {
+        val h = regionsHarness()
+        h.npcManager.spawnNpc("Stray", "camel", farAway)
+        h.pipeline.lifecycle(h.world, emptyList())
+
+        h.pipeline.onRegionEntered(h.world, testSession(pos = farAway))
+
+        assertTrue(h.npcManager.getAll().none { it.state.name == "Stray" })
+    }
+
+    @Test
+    fun parking_neverTakesAPet() = runBlocking {
+        val h = regionsHarness()
+        val pet = h.npcManager.spawnNpc("Rex", "deer", farAway).also { it.ownerId = "owner" }
+
+        h.pipeline.lifecycle(h.world, emptyList())
+
+        assertTrue(h.npcManager.getInstance(pet.state.id) != null)
+    }
 }
+
+private fun wildDef(type: String, biomes: List<String>) =
+    walkerDef().copy(type = type, spawn = NpcSpawnConfig(autoSpawn = true, spawnBiomes = biomes))

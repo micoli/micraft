@@ -145,16 +145,17 @@ class NpcManagerTest {
     }
 
     @Test
-    fun despawnOrphanedNpcs_keepsNpcInsideSpawnBoxCorner() = runBlocking {
-        val session = testSession(pos = Vec3(0f, 5f, 0f))
+    fun park_removesTheNpcUntilItsRegionIsRespawned() = runBlocking {
         val (m, _) = testNpcManager(mapOf("SELLER" to staticDef()))
-        // Diagonal corner of the spawner's candidate box: outside a 256-radius circle but
-        // inside the axis-aligned keep zone the spawner actually fills.
-        val corner = m.spawnNpc("Corner", "SELLER", Vec3(200f, 5f, 200f))
-        val faraway = m.spawnNpc("Far", "SELLER", Vec3(600f, 5f, 600f))
-        m.despawnOrphanedNpcs(listOf(session))
-        assertTrue(m.getInstance(corner.state.id) != null)
-        assertNull(m.getInstance(faraway.state.id))
+        val npc = m.spawnNpc("Bob", "SELLER", Vec3(600f, 5f, 600f))
+
+        m.park(npc, regionKey = 42L)
+        assertNull(m.getInstance(npc.state.id))
+
+        m.respawnParked(7L)
+        assertTrue(m.getAll().isEmpty())
+        m.respawnParked(42L)
+        assertEquals(listOf("Bob"), m.getAll().map { it.state.name })
     }
 
     @Test

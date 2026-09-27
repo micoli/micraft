@@ -1,6 +1,6 @@
 # Activation and parking per Region
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 03
 
@@ -20,6 +20,16 @@ squares (`NpcTickPipeline`, `NpcManager`).
 
 ## Acceptance criteria
 
-- [ ] Server tests: activation set for a Character on a Region border; park/respawn round trip; non-Roster NPC
+- [x] Server tests: activation set for a Character on a Region border; park/respawn round trip; non-Roster NPC
       dropped on parking; pet kept.
-- [ ] `make dc CMD="./gradlew :server:test"` clean.
+- [x] `make dc CMD="./gradlew :server:test"` clean.
+
+## Comments
+
+- 2026-09-27: `NpcTickPipeline` computes the active Regions (each Character's Region plus the Regions whose seed lies
+  within 2 × `npcZoneSize` of its seed), only offers the spawners chunks of active Regions, and parks NPCs of inactive
+  Regions in `NpcManager.park` keyed by `Region.key`. On parking, Quest givers are dropped (their spawner recreates
+  them with fresh offers) and wild NPCs outside their Region's Roster are dropped; Pets are never parked.
+- `onZoneCrossed` → `onRegionEntered` (per session, throttled by `REGION_CHANGE_COOLDOWN_TICKS`); `PlayerSession`
+  tracks `lastRegionKey`. The grid `zoneKey`/`countInZone` and the per-zone density snapshot are gone.
+- `npcZoneSize` stays: it is the spawn candidate radius around a player and the admin NPC view's grid.

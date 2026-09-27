@@ -266,7 +266,7 @@ class GameWorld(
         petManager.onPlayerDisconnected(session)
         npcManager.clearPlayer(id)
         vehicleManager.clearRider(id)
-        npcTickPipeline.onPlayerDisconnected(sessions.playing())
+        npcTickPipeline.onPlayerDisconnected(world, sessions.playing())
         tradeManager.onPlayerDisconnect(id)
         auctionManager?.clearFilter(id)
         groupManager.onDisconnect(session)
@@ -324,19 +324,15 @@ class GameWorld(
                         chunkStreamer.checkAndRequest(session)
                         chunkStreamer.deliverReady(session)
                     }
-                    val (newZoneX, newZoneZ) =
-                        npcTickPipeline.zoneOf(session.state.pos.x, session.state.pos.z)
-                    val lastZone = session.lastZonePos
-                    if (lastZone == null ||
-                        lastZone.first != newZoneX ||
-                        lastZone.second != newZoneZ) {
-                        session.lastZonePos = Pair(newZoneX, newZoneZ)
-                        val lastCrossTick = session.lastZoneCrossTick
-                        if (lastCrossTick == null ||
-                            gameTicks - lastCrossTick >=
-                                NpcSubsystemFactory.ZONE_CROSS_COOLDOWN_TICKS) {
-                            session.lastZoneCrossTick = gameTicks
-                            npcTickPipeline.onZoneCrossed(world, newZoneX, newZoneZ)
+                    val regionKey = world.regionAt(session.state.pos)?.key
+                    if (regionKey != session.lastRegionKey) {
+                        session.lastRegionKey = regionKey
+                        val lastChange = session.lastRegionChangeTick
+                        if (lastChange == null ||
+                            gameTicks - lastChange >=
+                                NpcSubsystemFactory.REGION_CHANGE_COOLDOWN_TICKS) {
+                            session.lastRegionChangeTick = gameTicks
+                            npcTickPipeline.onRegionEntered(world, session)
                         }
                     }
                     if (session.hasPermission(CorePermissions.ADMIN)) {

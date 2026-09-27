@@ -208,6 +208,6 @@ An Item released when a block is broken or an NPC dies.
 
 - **"playerId"** carries the Account email in some flows (auth token) and the Character id in others (Session keys). Resolved: in-game identifiers designate the Character; the Account is only named at login and in admin.
 - **"group"** resolved: a **Group** is a gameplay party, an **RBAC group** is a permission set on a Character; never say "group" alone for the latter. Account-level access is a distinct concept: the **Admin role**.
-- **"zone"** resolved: never used alone. It is split into **Region**, **Danger level**, **Danger tier**, **Instance** and **Weather cell**. The NPC spawn grid (`npcZoneSize`, `onZoneCrossed`) is an implementation detail, not a domain term. "NPCs of a zone" means the **Roster** of a **Region**.
+- **"zone"** resolved: never used alone. It is split into **Region**, **Danger level**, **Danger tier**, **Instance** and **Weather cell**. `npcZoneSize` (the spawn candidate radius) is an implementation detail, not a domain term. "NPCs of a zone" means the **Roster** of a **Region**.
 - **"skill level"** resolved: it is the Ability **Rank** expected in a Danger tier.
 - **"rank"** resolved: **Rank** is the Ability tier; a Guild's positions are **Guild ranks**.

@@ -123,7 +123,7 @@ class NpcManager(
     @Volatile private var definitions: Map<String, NpcDefinition> = emptyMap()
     private var lastEffectTickMs = System.currentTimeMillis()
     private val lastSentToPlayer = ConcurrentHashMap<String, ConcurrentHashMap<String, NpcState>>()
-    private val pendingRespawns = ConcurrentHashMap<String, MutableList<PendingRespawn>>()
+    private val parked = ConcurrentHashMap<Long, MutableList<PendingRespawn>>()
     private val broadCastNpcPositions = false
 
     private val adminListeners = CopyOnWriteArrayList<suspend (String) -> Unit>()
@@ -517,59 +517,22 @@ class NpcManager(
         }
     }
 
-    suspend fun despawnOrphanedNpcs(sessions: Collection<PlayerSession>) {
-        // Keep radius must cover the spawner's candidate box (±npcZoneSize/CHUNK_SIZE chunks around
-        // a player, plus the intra-chunk random offset), and use the same axis-aligned metric —
-        // a circular test culls the box corners the spawner just filled, so spawn and despawn
-        // fight each other every slow-lane tick.
-        val keepDist = tuning.npcZoneSize.toFloat() + 2f * WorldConstants.CHUNK_SIZE
-        val orphans =
-            npcs.values.filter { npc ->
-                sessions.none { s ->
-                    val dx = abs(s.state.pos.x - npc.state.pos.x)
-                    val dz = abs(s.state.pos.z - npc.state.pos.z)
-                    dx <= keepDist && dz <= keepDist
-                }
-            }
-        for (npc in orphans) {
-            val key = zoneKey(npc.state.pos.x, npc.state.pos.z)
-            pendingRespawns
-                .getOrPut(key) { mutableListOf() }
-                .add(
-                    PendingRespawn(npc.state.name, npc.state.type, npc.spawnPos, npc.instanceLevel))
-            despawnNpc(npc.state.id)
-        }
-        if (orphans.isNotEmpty()) log.info("Orphan-despawned {} NPCs", orphans.size)
+    /** Takes [npc] out of the World until its Region, keyed [regionKey], is active again. */
+    suspend fun park(npc: NpcInstance, regionKey: Long) {
+        parked
+            .getOrPut(regionKey) { mutableListOf() }
+            .add(PendingRespawn(npc.state.name, npc.state.type, npc.spawnPos, npc.instanceLevel))
+        despawnNpc(npc.state.id)
     }
 
-    suspend fun respawnPendingInZone(zoneX: Int, zoneZ: Int) {
-        val key = "$zoneX,$zoneZ"
-        val pending = pendingRespawns.remove(key) ?: return
+    suspend fun respawnParked(regionKey: Long) {
+        val pending = parked.remove(regionKey) ?: return
         for (entry in pending) {
             if (definitions.containsKey(entry.type))
                 spawnNpc(entry.name, entry.type, entry.spawnPos, entry.instanceLevel)
         }
         if (pending.isNotEmpty())
-            log.info("Respawned {} pending NPCs in zone {}", pending.size, key)
-    }
-
-    fun zoneKey(wx: Float, wz: Float): String {
-        val zx = Math.floorDiv(wx.toInt(), tuning.npcZoneSize)
-        val zz = Math.floorDiv(wz.toInt(), tuning.npcZoneSize)
-        return "$zx,$zz"
-    }
-
-    fun countInZone(zoneKey: String): Int {
-        val parts = zoneKey.split(",")
-        val zx = parts[0].toInt()
-        val zz = parts[1].toInt()
-        val minX = zx * tuning.npcZoneSize.toFloat()
-        val maxX = minX + tuning.npcZoneSize
-        val minZ = zz * tuning.npcZoneSize.toFloat()
-        val maxZ = minZ + tuning.npcZoneSize
-        return npcs.values.count {
-            (it.state.pos.x in minX..<maxX) && (it.state.pos.z in minZ..<maxZ)
-        }
+            log.info("Respawned {} parked NPCs in Region {}", pending.size, regionKey)
     }
 
     fun clearPlayer(sessionId: String) {
@@ -698,29 +661,24 @@ class NpcManager(
     }
 
     /**
-     * One-pass chunk/zone population snapshot for the spawner, which otherwise calls
-     * [countByTypeInChunk] and [countInZone] once per candidate chunk per type — each a full rescan
-     * of [npcs]. Built once per [NpcSpawner.trySpawn] invocation and kept up to date locally as new
-     * NPCs are placed during that same pass.
+     * One-pass chunk population snapshot for the spawner, which otherwise calls
+     * [countByTypeInChunk] once per candidate chunk per type — each a full rescan of [npcs]. Built
+     * once per [NpcSpawner.trySpawn] invocation and kept up to date locally as new NPCs are placed
+     * during that same pass.
      */
     class SpawnDensitySnapshot(
         val perChunkType: MutableMap<ChunkPos, MutableMap<String, Int>>,
-        val perZone: MutableMap<String, Int>,
     ) {
         fun countByTypeInChunk(type: String, chunkPos: ChunkPos): Int =
             perChunkType[chunkPos]?.get(type) ?: 0
 
-        fun countInZone(zoneKey: String): Int = perZone[zoneKey] ?: 0
-
-        fun recordSpawn(chunkPos: ChunkPos, type: String, zoneKey: String) {
+        fun recordSpawn(chunkPos: ChunkPos, type: String) {
             perChunkType.getOrPut(chunkPos) { HashMap() }.merge(type, 1, Int::plus)
-            perZone.merge(zoneKey, 1, Int::plus)
         }
     }
 
     fun spawnDensitySnapshot(): SpawnDensitySnapshot {
         val perChunkType = HashMap<ChunkPos, MutableMap<String, Int>>()
-        val perZone = HashMap<String, Int>()
         for (instance in npcs.values) {
             if (instance.isDead) continue
             val pos = instance.state.pos
@@ -730,9 +688,8 @@ class NpcManager(
                     Math.floorDiv(pos.z.toInt(), WorldConstants.CHUNK_SIZE),
                 )
             perChunkType.getOrPut(chunkPos) { HashMap() }.merge(instance.state.type, 1, Int::plus)
-            perZone.merge(zoneKey(pos.x, pos.z), 1, Int::plus)
         }
-        return SpawnDensitySnapshot(perChunkType, perZone)
+        return SpawnDensitySnapshot(perChunkType)
     }
 
     fun findByNameOrId(query: String): NpcInstance? =

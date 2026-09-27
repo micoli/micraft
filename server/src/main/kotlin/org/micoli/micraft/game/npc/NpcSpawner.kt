@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(NpcSpawner::class.java)
 
-class NpcSpawner(private val population: RegionPopulation) {
+class NpcSpawner(val population: RegionPopulation) {
 
     /**
      * Fills the Regions around [loadedChunks] from their Roster, each type up to its share of the
@@ -59,7 +59,7 @@ class NpcSpawner(private val population: RegionPopulation) {
                 (region.dangerLevel + ctx.random.nextInt(-3, 4)).coerceIn(
                     1, WorldConstants.RPG_LEVEL_MAX)
             npcManager.spawnNpc(npcManager.generateUniqueName(type), type, spawnPos, instanceLevel)
-            density.recordSpawn(chunkPos, type, npcManager.zoneKey(wx.toFloat(), wz.toFloat()))
+            density.recordSpawn(chunkPos, type)
             census.record(region, type)
             counts.merge(type, 1, Int::plus)
             log.debug("Auto-spawned {} in {} at ({},{},{})", type, region.name, wx, spawnPos.y, wz)

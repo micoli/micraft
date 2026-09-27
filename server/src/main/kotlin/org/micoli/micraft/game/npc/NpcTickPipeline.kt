@@ -4,11 +4,13 @@ import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.npc.pack.PackCoordinator
+import org.micoli.micraft.game.npc.roster.RegionPopulation
 import org.micoli.micraft.game.pet.PetCoordinator
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.player.Vec3
 
 /**
  * Single owner of the NPC tick sequence and its cadences.
@@ -30,6 +32,9 @@ class NpcTickPipeline(
     private val canSpawn: () -> Boolean = { true },
     private val questGiverSpawner: QuestGiverSpawner? = null,
 ) {
+    private val population: RegionPopulation
+        get() = npcSpawner.population
+
     private var visibilityTickCounter = 0
 
     private val ctx: NpcTickContext
@@ -58,50 +63,72 @@ class NpcTickPipeline(
         }
     }
 
-    /**
-     * A player left: NPCs that nobody is near are parked for respawn. Same operation the slow lane
-     * performs, exposed separately so disconnect handling does not reach into the manager directly.
-     */
-    suspend fun onPlayerDisconnected(sessions: Collection<PlayerSession>) {
-        npcManager.despawnOrphanedNpcs(sessions)
+    /** A player left: Regions nobody is in any more are parked. */
+    suspend fun onPlayerDisconnected(world: WorldState, sessions: Collection<PlayerSession>) {
+        parkInactiveRegions(world, activeRegions(world, sessions))
     }
 
-    /** Slow lane (every few seconds): drop NPCs nobody can see, then auto-spawn near players. */
+    /** Slow lane (every few seconds): park inactive Regions, then fill the active ones. */
     suspend fun lifecycle(world: WorldState, sessions: Collection<PlayerSession>) {
-        npcManager.despawnOrphanedNpcs(sessions)
-        val chunks = nearChunks(world, sessions)
-        npcSpawner.trySpawn(world, npcManager, npcManager.getDefinitions(), chunks, ctx, canSpawn)
-        questGiverSpawner?.trySpawn(world, npcManager, npcManager.getDefinitions(), chunks)
-    }
-
-    /** Zone cell a world position falls into. */
-    fun zoneOf(x: Float, z: Float): Pair<Int, Int> {
-        val size = ctx.tuning.npcZoneSize
-        return Pair(Math.floorDiv(x.toInt(), size), Math.floorDiv(z.toInt(), size))
+        val active = activeRegions(world, sessions)
+        parkInactiveRegions(world, active)
+        spawnIn(world, active, nearChunks(world, sessions))
     }
 
     /**
-     * A player entered zone ([zoneX], [zoneZ]): bring back what was orphan-despawned there and give
-     * the spawner a chance on the 3×3 neighbourhood.
+     * [session] walked into a new Region: bring back what was parked around it and give the
+     * spawners a pass there.
      */
-    suspend fun onZoneCrossed(world: WorldState, zoneX: Int, zoneZ: Int) {
-        val size = ctx.tuning.npcZoneSize
-        val adjacentChunks = mutableListOf<ChunkPos>()
-        for (dzx in -1..1) for (dzz in -1..1) {
-            val zx = zoneX + dzx
-            val zz = zoneZ + dzz
-            npcManager.respawnPendingInZone(zx, zz)
-            world.discoveredChunks().filterTo(adjacentChunks) { cp ->
-                Math.floorDiv(cp.cx * WorldConstants.CHUNK_SIZE, size) == zx &&
-                    Math.floorDiv(cp.cz * WorldConstants.CHUNK_SIZE, size) == zz
+    suspend fun onRegionEntered(world: WorldState, session: PlayerSession) {
+        val active = activeRegions(world, listOf(session))
+        active.forEach { npcManager.respawnParked(it) }
+        spawnIn(world, active, nearChunks(world, listOf(session)))
+    }
+
+    private suspend fun spawnIn(world: WorldState, active: Set<Long>, chunks: List<ChunkPos>) {
+        val inActiveRegions =
+            chunks.filter { chunk -> world.regionAt(centerOf(chunk))?.key in active }
+        if (inActiveRegions.isEmpty()) return
+        npcSpawner.trySpawn(
+            world, npcManager, npcManager.getDefinitions(), inActiveRegions, ctx, canSpawn)
+        questGiverSpawner?.trySpawn(world, npcManager, npcManager.getDefinitions(), inActiveRegions)
+    }
+
+    /** The Region of each Character and the Regions around it (ADR-0010). */
+    private fun activeRegions(world: WorldState, sessions: Collection<PlayerSession>): Set<Long> =
+        sessions
+            .mapNotNull { world.regionAt(it.state.pos) }
+            .flatMap { region ->
+                world.regionsNear(
+                    region.seedX, region.seedZ, NEIGHBOUR_RADIUS_ZONES * ctx.tuning.npcZoneSize) +
+                    region
             }
+            .mapTo(HashSet()) { it.key }
+
+    /**
+     * Takes NPCs of inactive Regions out of the World. Quest givers are dropped (their spawner
+     * places them again with fresh offers) and so are wild NPCs no longer in their Region's Roster;
+     * Pets follow their owner and are never parked.
+     */
+    private suspend fun parkInactiveRegions(world: WorldState, active: Set<Long>) {
+        val outside =
+            npcManager
+                .getAll()
+                .filter { it.ownerId == null }
+                .mapNotNull { npc -> world.regionAt(npc.state.pos)?.let { npc to it } }
+                .filter { (_, region) -> region.key !in active }
+        for ((npc, region) in outside) {
+            val keep = !npc.definition.isQuestGiver && population.fitsRoster(npc, region)
+            if (keep) npcManager.park(npc, region.key) else npcManager.despawnNpc(npc.state.id)
         }
-        if (adjacentChunks.isNotEmpty()) {
-            npcSpawner.trySpawn(
-                world, npcManager, npcManager.getDefinitions(), adjacentChunks, ctx, canSpawn)
-            questGiverSpawner?.trySpawn(
-                world, npcManager, npcManager.getDefinitions(), adjacentChunks)
-        }
+    }
+
+    private fun centerOf(chunk: ChunkPos): Vec3 {
+        val half = WorldConstants.CHUNK_SIZE / 2f
+        return Vec3(
+            chunk.cx * WorldConstants.CHUNK_SIZE + half,
+            0f,
+            chunk.cz * WorldConstants.CHUNK_SIZE + half)
     }
 
     /**
@@ -127,5 +154,10 @@ class NpcTickPipeline(
             }
         }
         return result.toList()
+    }
+
+    private companion object {
+        /** Neighbouring Voronoi seeds lie within about two cells of a Region's own seed. */
+        const val NEIGHBOUR_RADIUS_ZONES = 2
     }
 }
