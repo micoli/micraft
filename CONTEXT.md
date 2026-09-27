@@ -55,7 +55,7 @@ The difficulty of a Region, derived from the distance of its Voronoi seed to spa
 _Avoid_: zone level, area level
 
 **Danger tier**:
-A band of Danger levels (1–5). NPCs in a tier use Abilities of the matching Rank, and a Character needs Abilities of that Rank to survive there.
+A band of Danger levels (1–5). NPCs born in a tier mostly use Abilities of the matching Rank, and a Character needs Abilities of that Rank to survive there.
 _Avoid_: zone tier
 
 **Instance**:
@@ -100,7 +100,7 @@ Correcting the predicted position toward the server's authoritative one.
 ### RPG
 
 **Level**:
-A Character's progression step, raised by earning XP from kills and Quests.
+The progression step of a Character or NPC. A Character (or a Pet) raises it by earning XP; a wild NPC's Level is set at birth from its Region's Danger level.
 
 **Class**:
 The archetype of a Character (e.g. warrior) that sets resource type, stat bonuses and unlocked abilities.
@@ -126,7 +126,7 @@ A physical Ability, usually costing rage.
 A magical Ability, usually costing mana, sometimes affecting an area.
 
 **Rank**:
-The power tier of an Ability, unlocked at a given Level and matched to a Danger tier.
+The power tier of an Ability (1–5), set by Level: a Character unlocks it at a given Level, an NPC uses the Rank of its Level's band. The bands match the Danger tiers.
 _Avoid_: skill level, attack level, spell level
 
 **Global cooldown**:

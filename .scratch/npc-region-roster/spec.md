@@ -73,7 +73,7 @@ offered by nobody. 7 Quests target `goat`, which is not an NPC type (`mountain_g
 ## Out of scope
 
 - No hostile NPC type beyond Danger level 25: `.scratch/zone-tier-rank/issues/02-no-hostiles-above-danger-level-25.md`.
-- NPC Ability Rank from Danger tier: `.scratch/zone-tier-rank/issues/01-npc-ability-rank-from-zone-tier.md`.
+- NPC Ability Rank from NPC Level: `.scratch/zone-tier-rank/issues/01-npc-ability-rank-from-level.md`.
 - Merchants and blacksmith placement.
 
 ## Risks
