@@ -17,6 +17,6 @@ bonuses, and the `SpellProcessor` cooldown map. Line numbers and call counts may
 | 6 | Single Authorizer; CommandContext typed per need | Worth exploring | [06](issues/06-authorizer.md) |
 | 7 | NpcInteraction with always-present dependencies | Worth exploring | [07](issues/07-npc-interaction.md) |
 | 8 | Remove stringified client input-event layer | Speculative | [08](issues/08-typed-client-messages.md) |
-| 9 | Loadout: ownership grants and equip rules (split from 02) | Worth exploring | [09](issues/09-loadout-grants.md) |
+| 9 | Loadout: ownership grants and equip rules (split from 02, resolved) | Worth exploring | [09](issues/09-loadout-grants.md) |
 
 Top recommendation: #1 (riskiest seam, active drift, zero client tests), then #2 (fixes a real level-up bug).
