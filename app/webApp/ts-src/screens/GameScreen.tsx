@@ -4,6 +4,7 @@ import { startPreloading } from "../game/shared/blockPreviewCache";
 import { ClientEventPrefix } from "../generated/input/clientEvents";
 import {
   getStoredToken,
+  getStoredRefreshToken,
   getLastLang,
   getAccountEmail,
   getLastPlayer,
@@ -121,8 +122,14 @@ export function GameScreen() {
     if (reconnectAttempted.current || !encodedEmail) return;
     reconnectAttempted.current = true;
     if (loginResultRef.current) return;
-    const email = decodeURIComponent(encodedEmail);
     const token = getStoredToken();
+    // A tokenless Connect is always rejected (1008); feeding it to the Wasm client while it waits
+    // for a login result bounces /game ↔ /auth forever. AuthScreen handles the refresh token.
+    if (!token) {
+      navigate("/auth");
+      return;
+    }
+    const email = decodeURIComponent(encodedEmail);
     const lang = getLastLang();
     const accountKey = getAccountEmail() || email;
 
@@ -153,7 +160,7 @@ export function GameScreen() {
 
     resolveCharName().then((charName) => {
       if (charName) {
-        loginResultRef.current = `${email}\t${charName}\t${lang}\t${token}`;
+        loginResultRef.current = `${email}\t${charName}\t${lang}\t${token}\t${getStoredRefreshToken()}`;
       } else {
         navigate("/auth");
       }
