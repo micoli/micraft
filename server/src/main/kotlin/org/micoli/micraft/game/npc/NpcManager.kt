@@ -336,7 +336,9 @@ class NpcManager(
                     ?: error("Unknown NPC type: '$type'. Available: ${definitions.keys}"))
                 .let(defOverride)
         val settled =
-            resident ?: if (def.isResident) residents?.settle(type, pos, npcs.values) else null
+            resident
+                ?: if (def.isResident) residents?.settle(type, pos, npcs.values, ::isNameTaken)
+                else null
         val shownName = settled?.name ?: name
         val effectiveLevel = if (instanceLevel < 1) def.minLevel else instanceLevel
         val spawnMaxHp = def.computeMaxHp(effectiveLevel)
@@ -718,10 +720,10 @@ class NpcManager(
 
     /** Unique across every live NPC and, via [isPlayerName], every player too. */
     fun generateUniqueName(type: String): String =
-        NpcNameGenerator.generate(type, isAnimal = definitions[type]?.animalConfig != null) {
-            candidate ->
-            hasNpcNamed(candidate) || isPlayerName(candidate)
-        }
+        NpcNameGenerator.generate(
+            type, isAnimal = definitions[type]?.animalConfig != null, isTaken = ::isNameTaken)
+
+    private fun isNameTaken(name: String): Boolean = hasNpcNamed(name) || isPlayerName(name)
 
     fun getDefinitions(): Map<String, NpcDefinition> = definitions
 

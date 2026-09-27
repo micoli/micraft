@@ -86,4 +86,19 @@ class ResidentIdentityWorldTest {
         assertNull(wolf.resident)
         assertNull(world.npcManager.ownedPets().single().resident)
     }
+
+    @Test
+    fun `a Resident never takes the name of another NPC or of a Character`() = runBlocking {
+        val world = buildGameWorld("resident-unique", gen(), shared)
+        val regionKey = assertNotNull(world.world.regionAt(home)).key
+        val usual = { rank: Int -> Resident.of(1234L, ResidentKey(regionKey, "seller", rank)).name }
+        world.npcManager.spawnNpc(usual(1), "alpha_direwolf", home)
+        world.onPlayerJoin(testSession(name = usual(2), pos = home))
+
+        val merchants = List(2) { world.npcManager.spawnNpc("placeholder", "seller", home) }
+
+        assertNotEquals(usual(1), merchants[0].state.name)
+        assertNotEquals(usual(2), merchants[1].state.name)
+        assertEquals(merchants.map { it.resident?.name }, merchants.map { it.state.name })
+    }
 }

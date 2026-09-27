@@ -32,4 +32,14 @@ class ResidentTest {
 
         assertEquals(Temperament.entries.toSet(), drawn)
     }
+
+    @Test
+    fun `a taken name is skipped, the same way on every build`() {
+        val usual = Resident.of(1234L, key).name
+
+        val settled = { Resident.of(1234L, key) { it.equals(usual, ignoreCase = true) } }
+
+        assertNotEquals(usual, settled().name)
+        assertEquals(settled(), settled())
+    }
 }

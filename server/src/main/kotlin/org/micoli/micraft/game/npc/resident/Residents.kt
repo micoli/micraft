@@ -7,8 +7,16 @@ import org.micoli.micraft.player.Vec3
 /** Settles a Quest giver or merchant spawning at a position as a Resident of that Region. */
 class Residents(private val world: WorldState) {
 
-    /** The first rank of [npcType] no living Resident of the Region holds; null outside Regions. */
-    fun settle(npcType: String, pos: Vec3, living: Collection<NpcInstance>): Resident? {
+    /**
+     * The first rank of [npcType] no living Resident of the Region holds, named apart from every
+     * [isTaken] name; null outside Regions.
+     */
+    fun settle(
+        npcType: String,
+        pos: Vec3,
+        living: Collection<NpcInstance>,
+        isTaken: (String) -> Boolean,
+    ): Resident? {
         val region = world.regionAt(pos) ?: return null
         val taken =
             living
@@ -18,6 +26,6 @@ class Residents(private val world: WorldState) {
                 .map { it.rank }
                 .toSet()
         val rank = generateSequence(1) { it + 1 }.first { it !in taken }
-        return Resident.of(world.worldSeed, ResidentKey(region.key, npcType, rank))
+        return Resident.of(world.worldSeed, ResidentKey(region.key, npcType, rank), isTaken)
     }
 }
