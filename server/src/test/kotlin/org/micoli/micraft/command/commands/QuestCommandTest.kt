@@ -88,4 +88,11 @@ class QuestCommandTest {
         val names = cmd.completeArg(1, "", testSession(), context())
         assertEquals(listOf("deer_hunt"), names)
     }
+
+    @Test
+    fun accept_unknownQuest_isReportedAsNotFound() = runBlocking {
+        val session = testSession()
+        cmd.execute(session, "accept no_such_quest", context())
+        assertTrue(session.sent.none { it.toString().contains("in this Region") })
+    }
 }

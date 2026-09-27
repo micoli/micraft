@@ -58,7 +58,7 @@ class QuestCommand : CommandHandler {
                     return
                 }
                 val offered = offeredInRegion(session, context)
-                if (offered != null && rest !in offered) {
+                if (offered != null && rest in qm.getDefinitions() && rest !in offered) {
                     session.send(
                         ServerMessage.Notification(
                             context.i18n.t(

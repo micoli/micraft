@@ -51,7 +51,7 @@ class ShippedQuestConfigTest {
         println("Quest coverage gaps (${gaps.size} of ${biomes.size * ZoneTier.entries.size}):")
         gaps.forEach {
             println(
-                "  ${it.biome} T${it.tier}: ${it.reason}; NPC types: ${it.npcTypes.joinToString(", ")}")
+                "  ${it.biome} T${it.tier.tier}: ${it.reason}; NPC types: ${it.npcTypes.joinToString(", ")}")
         }
         assertTrue(
             gaps.size < biomes.size * ZoneTier.entries.size,

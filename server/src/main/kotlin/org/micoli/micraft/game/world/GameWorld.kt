@@ -324,17 +324,7 @@ class GameWorld(
                         chunkStreamer.checkAndRequest(session)
                         chunkStreamer.deliverReady(session)
                     }
-                    val regionKey = world.regionAt(session.state.pos)?.key
-                    if (regionKey != session.lastRegionKey) {
-                        session.lastRegionKey = regionKey
-                        val lastChange = session.lastRegionChangeTick
-                        if (lastChange == null ||
-                            gameTicks - lastChange >=
-                                NpcSubsystemFactory.REGION_CHANGE_COOLDOWN_TICKS) {
-                            session.lastRegionChangeTick = gameTicks
-                            npcTickPipeline.onRegionEntered(world, session)
-                        }
-                    }
+                    trackRegionChange(session)
                     if (session.hasPermission(CorePermissions.ADMIN)) {
                         val pos = session.state.pos
                         val instanceZone =
@@ -382,6 +372,23 @@ class GameWorld(
                 }
             }
         }
+    }
+
+    /**
+     * Runs the NPC pass of the Region [session] just entered, at most once per
+     * [NpcSubsystemFactory.REGION_CHANGE_COOLDOWN_TICKS] — oscillating across a border must not
+     * rescan every tick; the slow lane catches up on anything skipped.
+     */
+    private suspend fun trackRegionChange(session: PlayerSession) {
+        val regionKey = world.regionAt(session.state.pos)?.key
+        if (regionKey == session.lastRegionKey) return
+        session.lastRegionKey = regionKey
+        val lastChange = session.lastRegionChangeTick
+        if (lastChange != null &&
+            gameTicks - lastChange < NpcSubsystemFactory.REGION_CHANGE_COOLDOWN_TICKS)
+            return
+        session.lastRegionChangeTick = gameTicks
+        npcTickPipeline.onRegionEntered(world, session)
     }
 
     private suspend fun broadcastWorldChangeAndSessions(msg: ServerMessage) {

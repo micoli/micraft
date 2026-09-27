@@ -47,11 +47,11 @@ class QuestCoverageTest {
             QuestCoverage.gaps(
                 listOf(biome("forest"), biome("desert")), mapOf("wolf" to wolf), listOf(wolfHunt))
 
-        val forest = gaps.filter { it.biome == "forest" }.map { it.tier }
-        val desert = gaps.filter { it.biome == "desert" }.map { it.tier }
+        val forest = gaps.filter { it.biome == "forest" }.map { it.tier.tier }
+        val desert = gaps.filter { it.biome == "desert" }.map { it.tier.tier }
         assertEquals(listOf(2, 3, 4, 5), forest)
         assertEquals(listOf(1, 2, 3, 4, 5), desert)
-        assertEquals(emptySet(), gaps.first { it.biome == "forest" && it.tier == 2 }.npcTypes)
+        assertEquals(emptySet(), gaps.first { it.biome == "forest" && it.tier.tier == 2 }.npcTypes)
     }
 
     @Test
@@ -60,6 +60,20 @@ class QuestCoverageTest {
             QuestCoverage.gaps(listOf(biome("sea", liquid = true)), emptyMap(), listOf(wolfHunt))
 
         assertEquals(5, gaps.size)
-        assertEquals("no dry ground for a Quest giver", gaps.first().reason)
+        assertEquals(CoverageGapReason.NO_DRY_GROUND_FOR_A_QUEST_GIVER, gaps.first().reason)
+    }
+
+    @Test
+    fun targetsThatNeverShareALevelDoNotCoverThePair() {
+        val bear = wolf.copy(type = "bear", minLevel = 1, maxLevel = 2)
+        val lateWolf = wolf.copy(minLevel = 4, maxLevel = 5)
+        val both =
+            wolfHunt.copy(objectives = listOf(KillObjective("wolf", 1), KillObjective("bear", 1)))
+
+        val gaps =
+            QuestCoverage.gaps(
+                listOf(biome("forest")), mapOf("wolf" to lateWolf, "bear" to bear), listOf(both))
+
+        assertEquals(CoverageGapReason.NO_SUITED_QUEST, gaps.first { it.tier.tier == 1 }.reason)
     }
 }

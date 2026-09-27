@@ -37,6 +37,14 @@ class SeededRegionsGenerator(
     override fun regionsNear(wx: Int, wz: Int, radiusBlocks: Int): List<Region> =
         regions.filter { distanceSq(it, wx, wz) <= radiusBlocks.toLong() * radiusBlocks }
 
+    /** Seeds within [NEIGHBOUR_REACH] blocks border each other. */
+    override fun regionsAround(region: Region): List<Region> =
+        regionsNear(region.seedX, region.seedZ, NEIGHBOUR_REACH)
+
+    private companion object {
+        const val NEIGHBOUR_REACH = 1_000
+    }
+
     private fun distanceSq(region: Region, wx: Int, wz: Int): Long {
         val dx = (region.seedX - wx).toLong()
         val dz = (region.seedZ - wz).toLong()

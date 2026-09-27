@@ -33,3 +33,7 @@ squares (`NpcTickPipeline`, `NpcManager`).
 - `onZoneCrossed` → `onRegionEntered` (per session, throttled by `REGION_CHANGE_COOLDOWN_TICKS`); `PlayerSession`
   tracks `lastRegionKey`. The grid `zoneKey`/`countInZone` and the per-zone density snapshot are gone.
 - `npcZoneSize` stays: it is the spawn candidate radius around a player and the admin NPC view's grid.
+- Review follow-up: the slow lane also restores the parked NPCs of every active Region (not only `onRegionEntered`),
+  and the Roster is checked again on restore. Neighbours come from `ChunkGenerator.regionsAround` (Voronoi seeds
+  within three grid cells), no longer from `npcZoneSize`. NPCs standing where no Region exists are never parked —
+  no production generator has such places.

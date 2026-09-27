@@ -88,6 +88,10 @@ offered by nobody. 7 Quests target `goat`, which is not an NPC type (`mountain_g
 
 ## Issues
 
+All resolved on 2026-09-27. Follow-ups: a Quest giver for sea/lake Regions (issue 07), hostiles beyond
+Danger level 25 (`zone-tier-rank` issue 02), `ZoneTier` → `DangerTier`.
+
+
 | # | Issue | Blocked by |
 |---|-------|------------|
 | 01 | [Quest target validation at load](issues/01-quest-target-validation.md) | – |

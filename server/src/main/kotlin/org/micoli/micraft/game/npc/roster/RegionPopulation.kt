@@ -35,6 +35,13 @@ class RegionPopulation(
     fun fitsRoster(npc: NpcInstance, region: Region): Boolean =
         !isWild(npc) || npc.state.type in rosterOf(region).types
 
+    /** Same rule by type, for NPCs that are parked and have no instance. */
+    fun fitsRoster(type: String, region: Region): Boolean {
+        val def = definitions()[type] ?: return false
+        val wild = def.spawn.autoSpawn || def.animalConfig != null
+        return !wild || type in rosterOf(region).types
+    }
+
     /** Spawned or born into the World and owned by nobody: Pets and Quest givers stay out. */
     private fun isWild(npc: NpcInstance): Boolean {
         if (npc.isDead || npc.ownerId != null) return false

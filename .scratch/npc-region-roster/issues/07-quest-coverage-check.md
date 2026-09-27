@@ -32,3 +32,6 @@ whose Quest giver offers nothing, so no giver appears there.
   - lake T1–T5 (dolphin, squid; T4 adds eel, jellyfish, kraken_spawn, octopus; T5 kraken_spawn)
   Backlog: a giver able to stand on water (boat, pier, shore) or shore-side placement for aquatic Regions, before
   writing sea/lake Quests. Coverage is "some Roster could serve it": a given Region's random Roster may still miss.
+- Review follow-up: a pair is covered only if one Roster drawn at a single Danger level of the tier could hold every
+  target of some Quest (≤ 4 passive, ≤ 3 hostile, ≤ 1 rare). The load warning names the NPC types. Gaps unchanged:
+  sea and lake, T1–T5.

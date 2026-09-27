@@ -169,6 +169,30 @@ class NpcTickPipelineTest {
     }
 
     @Test
+    fun lifecycle_restoresParkedNpcsOfRegionsThatBecameActive() = runBlocking {
+        val h = regionsHarness()
+        h.npcManager.spawnNpc("Far", "deer", farAway)
+        h.pipeline.lifecycle(h.world, emptyList())
+
+        h.pipeline.lifecycle(h.world, listOf(testSession(pos = farAway)))
+
+        assertTrue(h.npcManager.getAll().any { it.state.name == "Far" })
+    }
+
+    @Test
+    fun restoring_dropsTypesThatLeftTheRosterWhileParked() = runBlocking {
+        val h = regionsHarness()
+        h.npcManager.spawnNpc("Far", "deer", farAway)
+        h.pipeline.lifecycle(h.world, emptyList())
+        h.npcManager.loadDefinitions(
+            h.npcManager.getDefinitions() + ("deer" to wildDef("deer", biomes = listOf("desert"))))
+
+        h.pipeline.lifecycle(h.world, listOf(testSession(pos = farAway)))
+
+        assertTrue(h.npcManager.getAll().none { it.state.name == "Far" })
+    }
+
+    @Test
     fun parking_dropsWildNpcsOutsideTheirRoster() = runBlocking {
         val h = regionsHarness()
         h.npcManager.spawnNpc("Stray", "camel", farAway)

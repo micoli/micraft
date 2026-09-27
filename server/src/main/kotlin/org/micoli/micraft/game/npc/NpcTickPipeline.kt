@@ -8,6 +8,7 @@ import org.micoli.micraft.game.npc.roster.RegionPopulation
 import org.micoli.micraft.game.pet.PetCoordinator
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.Region
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.player.Vec3
@@ -68,24 +69,33 @@ class NpcTickPipeline(
         parkInactiveRegions(world, activeRegions(world, sessions))
     }
 
-    /** Slow lane (every few seconds): park inactive Regions, then fill the active ones. */
+    /** Slow lane (every few seconds): park inactive Regions, restore and fill the active ones. */
     suspend fun lifecycle(world: WorldState, sessions: Collection<PlayerSession>) {
         val active = activeRegions(world, sessions)
         parkInactiveRegions(world, active)
+        restoreParked(active)
         spawnIn(world, active, nearChunks(world, sessions))
     }
 
-    /**
-     * [session] walked into a new Region: bring back what was parked around it and give the
-     * spawners a pass there.
-     */
+    /** [session] walked into a new Region: restore and fill the Regions around it right away. */
     suspend fun onRegionEntered(world: WorldState, session: PlayerSession) {
         val active = activeRegions(world, listOf(session))
-        active.forEach { npcManager.respawnParked(it) }
+        restoreParked(active)
         spawnIn(world, active, nearChunks(world, listOf(session)))
     }
 
-    private suspend fun spawnIn(world: WorldState, active: Set<Long>, chunks: List<ChunkPos>) {
+    /** Parked NPCs come back unless their type left the Region's Roster meanwhile. */
+    private suspend fun restoreParked(active: Map<Long, Region>) {
+        for ((key, region) in active) {
+            npcManager.respawnParked(key) { type -> population.fitsRoster(type, region) }
+        }
+    }
+
+    private suspend fun spawnIn(
+        world: WorldState,
+        active: Map<Long, Region>,
+        chunks: List<ChunkPos>
+    ) {
         val inActiveRegions =
             chunks.filter { chunk -> world.regionAt(centerOf(chunk))?.key in active }
         if (inActiveRegions.isEmpty()) return
@@ -94,23 +104,22 @@ class NpcTickPipeline(
         questGiverSpawner?.trySpawn(world, npcManager, npcManager.getDefinitions(), inActiveRegions)
     }
 
-    /** The Region of each Character and the Regions around it (ADR-0010). */
-    private fun activeRegions(world: WorldState, sessions: Collection<PlayerSession>): Set<Long> =
+    /** The Region of each Character and the Regions bordering it (ADR-0010). */
+    private fun activeRegions(
+        world: WorldState,
+        sessions: Collection<PlayerSession>
+    ): Map<Long, Region> =
         sessions
             .mapNotNull { world.regionAt(it.state.pos) }
-            .flatMap { region ->
-                world.regionsNear(
-                    region.seedX, region.seedZ, NEIGHBOUR_RADIUS_ZONES * ctx.tuning.npcZoneSize) +
-                    region
-            }
-            .mapTo(HashSet()) { it.key }
+            .flatMap { world.regionsAround(it) + it }
+            .associateBy { it.key }
 
     /**
      * Takes NPCs of inactive Regions out of the World. Quest givers are dropped (their spawner
      * places them again with fresh offers) and so are wild NPCs no longer in their Region's Roster;
      * Pets follow their owner and are never parked.
      */
-    private suspend fun parkInactiveRegions(world: WorldState, active: Set<Long>) {
+    private suspend fun parkInactiveRegions(world: WorldState, active: Map<Long, Region>) {
         val outside =
             npcManager
                 .getAll()
@@ -154,10 +163,5 @@ class NpcTickPipeline(
             }
         }
         return result.toList()
-    }
-
-    private companion object {
-        /** Neighbouring Voronoi seeds lie within about two cells of a Region's own seed. */
-        const val NEIGHBOUR_RADIUS_ZONES = 2
     }
 }

@@ -64,6 +64,8 @@ class QuestRegistryLoader(
         log.warn(
             "Quest coverage: no Quest giver in {} Biome x Danger tier pair(s): {}",
             gaps.size,
-            gaps.joinToString("; ") { "${it.biome} T${it.tier} (${it.reason})" })
+            gaps.joinToString("; ") {
+                "${it.biome} T${it.tier.tier} (${it.reason}; ${it.npcTypes.joinToString()})"
+            })
     }
 }

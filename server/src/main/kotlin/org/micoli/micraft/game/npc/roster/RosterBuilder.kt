@@ -18,8 +18,8 @@ data class Roster(val region: Region, val budget: Int, val entries: List<RosterE
  * same inputs always give the same Roster (ADR-0010).
  */
 object RosterBuilder {
-    private val PASSIVE_COUNT = 2..4
-    private val HOSTILE_COUNT = 1..3
+    val PASSIVE_COUNT = 2..4
+    val HOSTILE_COUNT = 1..3
     private const val RARE_MAX_TOTAL = 5
     private const val RARE_CHANCE = 0.2
     private const val RARE_MAX_SHARE = 2
@@ -56,7 +56,7 @@ object RosterBuilder {
             region.dangerLevel in def.minLevel..def.maxLevel &&
             def.isAquatic == region.biome.liquid
 
-    private fun isRare(def: NpcDefinition): Boolean = def.spawn.maxTotal in 1..RARE_MAX_TOTAL
+    fun isRare(def: NpcDefinition): Boolean = def.spawn.maxTotal in 1..RARE_MAX_TOTAL
 
     private fun draw(
         pool: List<NpcDefinition>,

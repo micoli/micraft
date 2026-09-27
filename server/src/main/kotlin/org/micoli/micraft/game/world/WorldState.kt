@@ -102,6 +102,8 @@ class WorldState(
     fun regionsNear(wx: Int, wz: Int, radiusBlocks: Int): List<Region> =
         generator.regionsNear(wx, wz, radiusBlocks)
 
+    fun regionsAround(region: Region): List<Region> = generator.regionsAround(region)
+
     fun distinctLowLevelSpawns(count: Int, ringRadius: Double, maxLevel: Int = 5) =
         generator.distinctLowLevelSpawns(count, ringRadius, maxLevel)
 

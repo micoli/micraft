@@ -20,3 +20,4 @@ editing its decision. Domain vocabulary comes from `CONTEXT.md` at the repo root
 | [0008](0008-web-client-stack.md) | Web client: Kotlin/Wasm for the game, BabylonJS for 3D, React for the UI |
 | [0009](0009-layered-yaml-config.md) | Layered YAML configuration: bundled defaults, data overrides |
 | [0010](0010-wild-npc-population-per-region-roster.md) | Wild NPCs spawn from a derived per-Region Roster and budget; Quests follow the Roster |
+| [0011](0011-llm-is-read-only-npc-voice.md) | The LLM only voices NPC chat; Disposition and Barks never depend on it |

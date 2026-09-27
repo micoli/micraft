@@ -21,6 +21,9 @@ interface ChunkGenerator {
 
     fun regionsNear(wx: Int, wz: Int, radiusBlocks: Int): List<Region> = emptyList()
 
+    /** [region] and the Regions bordering it. */
+    fun regionsAround(region: Region): List<Region> = listOf(region)
+
     fun distinctLowLevelSpawns(
         count: Int,
         ringRadius: Double,

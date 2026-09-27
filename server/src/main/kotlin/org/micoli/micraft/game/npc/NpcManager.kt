@@ -42,7 +42,7 @@ private fun NpcState.round1() =
         yaw = yaw.round1(),
     )
 
-data class PendingRespawn(
+data class ParkedNpc(
     val name: String,
     val type: String,
     val spawnPos: Vec3,
@@ -123,7 +123,7 @@ class NpcManager(
     @Volatile private var definitions: Map<String, NpcDefinition> = emptyMap()
     private var lastEffectTickMs = System.currentTimeMillis()
     private val lastSentToPlayer = ConcurrentHashMap<String, ConcurrentHashMap<String, NpcState>>()
-    private val parked = ConcurrentHashMap<Long, MutableList<PendingRespawn>>()
+    private val parked = ConcurrentHashMap<Long, MutableList<ParkedNpc>>()
     private val broadCastNpcPositions = false
 
     private val adminListeners = CopyOnWriteArrayList<suspend (String) -> Unit>()
@@ -521,18 +521,19 @@ class NpcManager(
     suspend fun park(npc: NpcInstance, regionKey: Long) {
         parked
             .getOrPut(regionKey) { mutableListOf() }
-            .add(PendingRespawn(npc.state.name, npc.state.type, npc.spawnPos, npc.instanceLevel))
+            .add(ParkedNpc(npc.state.name, npc.state.type, npc.spawnPos, npc.instanceLevel))
         despawnNpc(npc.state.id)
     }
 
-    suspend fun respawnParked(regionKey: Long) {
+    /**
+     * Brings back what was parked in the Region keyed [regionKey], keeping only [accepts]ed types.
+     */
+    suspend fun respawnParked(regionKey: Long, accepts: (type: String) -> Boolean = { true }) {
         val pending = parked.remove(regionKey) ?: return
-        for (entry in pending) {
-            if (definitions.containsKey(entry.type))
-                spawnNpc(entry.name, entry.type, entry.spawnPos, entry.instanceLevel)
+        for (entry in pending.filter { accepts(it.type) && definitions.containsKey(it.type) }) {
+            spawnNpc(entry.name, entry.type, entry.spawnPos, entry.instanceLevel)
         }
-        if (pending.isNotEmpty())
-            log.info("Respawned {} parked NPCs in Region {}", pending.size, regionKey)
+        log.info("Respawned parked NPCs in Region {}", regionKey)
     }
 
     fun clearPlayer(sessionId: String) {

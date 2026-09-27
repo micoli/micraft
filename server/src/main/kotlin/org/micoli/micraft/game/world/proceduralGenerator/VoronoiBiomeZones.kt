@@ -205,6 +205,13 @@ class VoronoiBiomeZones(
         return result
     }
 
+    /**
+     * [region] and every Region whose seed could border it. Seeds jitter inside their grid cell, so
+     * a bordering seed lies at most three cells away; farther ones never touch.
+     */
+    fun regionsAround(region: Region): List<Region> =
+        regions(region.seedX, region.seedZ, NEIGHBOUR_REACH_CELLS * cellSize)
+
     fun regions(centerX: Int, centerZ: Int, radiusBlocks: Int): List<Region> {
         val minCX = floor((centerX - radiusBlocks).toDouble() / cellSize).toInt() - 1
         val maxCX = floor((centerX + radiusBlocks).toDouble() / cellSize).toInt() + 1
@@ -389,5 +396,9 @@ class VoronoiBiomeZones(
             ColumnBlocks(
                 surf, col.primary.subsurface, col.primary.subsurfaceDepth, col.primary.fillers)
         }
+    }
+
+    private companion object {
+        const val NEIGHBOUR_REACH_CELLS = 3
     }
 }

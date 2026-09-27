@@ -264,6 +264,8 @@ class ProceduralChunkGenerator(
     override fun regionsNear(wx: Int, wz: Int, radiusBlocks: Int): List<Region> =
         voronoi.regions(wx, wz, radiusBlocks)
 
+    override fun regionsAround(region: Region): List<Region> = voronoi.regionsAround(region)
+
     override fun distinctLowLevelSpawns(count: Int, ringRadius: Double, maxLevel: Int) =
         voronoi.distinctLowLevelSpawns(count, ringRadius, maxLevel)
 
