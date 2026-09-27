@@ -77,7 +77,8 @@ class ChunkController(
                             chunk.encodeWire(),
                             chunk.encodeWireStates() ?: ByteArray(0),
                             world.chunkEntityProtos(chunk.pos),
-                            chunk.encodeWireExtraStates() ?: ByteArray(0))
+                            chunk.encodeWireExtraStates() ?: ByteArray(0),
+                            world.grassTintsAt(chunk.pos))
                     call.respondBytes(
                         ServerMessageCodec.encode(msg), ContentType.Application.OctetStream)
                 }

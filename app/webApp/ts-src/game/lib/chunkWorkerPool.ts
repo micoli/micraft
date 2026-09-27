@@ -88,13 +88,16 @@ function ensurePool(): Worker[] {
   return workers;
 }
 
-// faceBuf must be a copy dedicated to this call — its ArrayBuffer is transferred (detached from
-// the caller) for zero-copy handoff to the worker.
-export function requestChunkMesh(key: string, faceBuf: Int32Array, faceCount: number): void {
+// faceBuf and grassTints must be dedicated to this call — their ArrayBuffers are transferred
+// (detached from the caller) for zero-copy handoff to the worker.
+export function requestChunkMesh(key: string, faceBuf: Int32Array, faceCount: number, grassTints: Int32Array): void {
   const pool = ensurePool();
   const worker = pool[nextWorker];
   nextWorker = (nextWorker + 1) % pool.length;
-  worker.postMessage({ type: "mesh", reqId: key, key, faceBuf, faceCount }, [faceBuf.buffer]);
+  worker.postMessage({ type: "mesh", reqId: key, key, faceBuf, faceCount, grassTints }, [
+    faceBuf.buffer,
+    grassTints.buffer,
+  ]);
 }
 
 export function isChunkMeshReady(key: string): boolean {

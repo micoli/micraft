@@ -70,6 +70,8 @@ sealed class ServerMessage {
         val wireStates: ByteArray = ByteArray(0),
         val entities: List<BlockEntityProto> = emptyList(),
         val wireExtraStates: ByteArray = ByteArray(0),
+        /** Grass color per column, RGB bytes indexed by `(lz * CHUNK_SIZE + lx) * 3`. */
+        val grassTints: ByteArray = ByteArray(0),
     ) : ServerMessage() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -82,6 +84,7 @@ sealed class ServerMessage {
             if (!wireBlocks.contentEquals(other.wireBlocks)) return false
             if (!wireStates.contentEquals(other.wireStates)) return false
             if (!wireExtraStates.contentEquals(other.wireExtraStates)) return false
+            if (!grassTints.contentEquals(other.grassTints)) return false
             if (entities != other.entities) return false
 
             return true
@@ -93,6 +96,7 @@ sealed class ServerMessage {
             result = 31 * result + wireBlocks.contentHashCode()
             result = 31 * result + wireStates.contentHashCode()
             result = 31 * result + wireExtraStates.contentHashCode()
+            result = 31 * result + grassTints.contentHashCode()
             result = 31 * result + entities.hashCode()
             return result
         }

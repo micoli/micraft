@@ -419,6 +419,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                                 networkStats.chunkDecodeMsAccum += jsPerfNow() - decodeT0
                                 networkStats.chunkDecodeCount++
                                 if (msg is ServerMessage.ChunkData) {
+                                    chunkManager.setGrassTints(msg.pos, msg.grassTints)
                                     chunkManager.enqueueChunk(
                                         Chunk.decodeWire(
                                             msg.pos,
@@ -719,6 +720,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             put(
                 ServerMessage.ChunkData::class,
                 typedHandler { msg: ServerMessage.ChunkData ->
+                    chunkManager.setGrassTints(msg.pos, msg.grassTints)
                     chunkManager.enqueueChunk(
                         Chunk.decodeWire(
                             msg.pos,

@@ -69,7 +69,8 @@ class ChunkStreamer(private val world: WorldState) {
                 chunk.encodeWire(),
                 chunk.encodeWireStates() ?: ByteArray(0),
                 world.chunkEntityProtos(chunk.pos),
-                chunk.encodeWireExtraStates() ?: ByteArray(0)))
+                chunk.encodeWireExtraStates() ?: ByteArray(0),
+                world.grassTintsAt(chunk.pos)))
     }
 
     private fun forwardViewRadius(session: PlayerSession): Int =
@@ -149,7 +150,10 @@ class ChunkStreamer(private val world: WorldState) {
             session.inFlightChunks.add(cp)
             ioScope.launch {
                 try {
-                    pool[cp] = world.getOrGenerate(cp)
+                    val chunk = world.getOrGenerate(cp)
+                    // Warms the generator's cache off the tick thread, where delivery reads it.
+                    world.grassTintsAt(cp)
+                    pool[cp] = chunk
                 } catch (e: Exception) {
                     // Left in-flight forever otherwise: MAX_IN_FLIGHT slots fill up with poisoned
                     // chunks and drainPending() stalls indefinitely for this session.
@@ -188,7 +192,8 @@ class ChunkStreamer(private val world: WorldState) {
                         chunk.topY(),
                         chunk.encodeWire(),
                         chunk.encodeWireStates() ?: ByteArray(0),
-                        wireExtraStates = chunk.encodeWireExtraStates() ?: ByteArray(0)))
+                        wireExtraStates = chunk.encodeWireExtraStates() ?: ByteArray(0),
+                        grassTints = world.grassTintsAt(chunk.pos)))
             } catch (e: Exception) {
                 log.debug("chunk send failed for {}: {}", session.id.take(8), e.message)
                 break

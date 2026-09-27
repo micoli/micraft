@@ -23,9 +23,7 @@ class BiomesController(private val biomeRegistry: BiomeRegistry) {
                     response { code(HttpStatusCode.OK) { body<Map<String, List<Double>>>() } }
                 }) {
                     val colors =
-                        biomeRegistry.biomes.associate { b ->
-                            b.id to (b.grassColor ?: listOf(0.47, 0.75, 0.35))
-                        }
+                        biomeRegistry.biomes.associate { b -> b.id to b.effectiveGrassColor }
                     val serializer =
                         MapSerializer(String.serializer(), ListSerializer(Double.serializer()))
                     call.respondText(

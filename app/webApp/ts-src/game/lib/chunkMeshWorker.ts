@@ -13,6 +13,7 @@
 // so the worker global is accessed through this narrow local cast instead.
 import { plainMatKey, setPlainColors } from "./blockDefs";
 import { TERRAIN_ARRAY_MAT_KEY, type TerrainLayerTable } from "./materials/terrainTextureArray";
+import { BIOME_TINT_SUFFIX, grassTintLayer } from "./materials/grassTint";
 import { MC_BUILD_TIMESTAMP } from "../../buildConfig";
 
 interface WorkerScope {
@@ -88,6 +89,7 @@ interface FaceInfo {
   verts: Float32Array;
   isCrossSprite: boolean;
   isPlastic: boolean;
+  biomeTint: boolean;
 }
 
 let faceTable: (FaceInfo[] | null)[] = [];
@@ -130,6 +132,7 @@ function buildFaceTable(defs: { typeOrd: number; def: McBlockDef }[]): void {
                 verts: CROSS_SPRITE_VERTS,
                 isCrossSprite: true,
                 isPlastic,
+                biomeTint: fi.matKey.endsWith(BIOME_TINT_SUFFIX),
               });
           }
         } else {
@@ -166,6 +169,7 @@ function buildFaceTable(defs: { typeOrd: number; def: McBlockDef }[]): void {
               verts,
               isCrossSprite: false,
               isPlastic,
+              biomeTint: fi.matKey.endsWith(BIOME_TINT_SUFFIX),
             });
           }
         }
@@ -339,6 +343,7 @@ interface MeshRequest {
   key: string;
   faceBuf: Int32Array;
   faceCount: number;
+  grassTints: Int32Array;
 }
 
 interface BlockDefsMessage {
@@ -352,7 +357,9 @@ type IncomingMessage = MeshRequest | BlockDefsMessage;
 
 // Processes the whole transferred face buffer in one pass (no slicing/budget — the entire point
 // of moving this off the main thread is that it no longer has to share a frame budget).
-function processFaces(faceBuf: Int32Array, faceCount: number) {
+const tintScratch = [0, 0, 0, 0];
+
+function processFaces(faceBuf: Int32Array, faceCount: number, grassTints: Int32Array) {
   const groups: Record<string, FaceGroup> = {};
   let overflowCount = 0;
   const gltfPositions: Record<number, Set<string>> = {};
@@ -392,8 +399,12 @@ function processFaces(faceBuf: Int32Array, faceCount: number) {
     const yBand = Math.floor(wy / SLAB_HEIGHT);
     for (const info of infos) {
       const matKey = plainKey ?? info.matKey;
-      const layer = layerTable?.[matKey];
-      const groupKey = `${layer ? TERRAIN_ARRAY_MAT_KEY : matKey}|${yBand}`;
+      const tableLayer = layerTable?.[matKey];
+      const groupKey = `${tableLayer ? TERRAIN_ARRAY_MAT_KEY : matKey}|${yBand}`;
+      const layer =
+        info.biomeTint && !plainKey
+          ? grassTintLayer(grassTints, faceBuf[i], faceBuf[i + 2], tableLayer?.[3] ?? 0, tintScratch)
+          : tableLayer;
       let g: FaceGroup | undefined = groups[groupKey];
       if (g && g.v + MAX_FACE_VERTS > GROUP_MAX_VERTS) {
         // "mat|band#n": chunkBuilder reads the material key before the last "|", so it still applies.
@@ -450,7 +461,7 @@ ctx.onmessage = (ev: MessageEvent<IncomingMessage>) => {
     return;
   }
   if (msg.type === "mesh") {
-    const { groups, gltfPositions } = processFaces(msg.faceBuf, msg.faceCount);
+    const { groups, gltfPositions } = processFaces(msg.faceBuf, msg.faceCount, msg.grassTints);
     const outGroups: {
       key: string;
       p: Float32Array;

@@ -12,6 +12,11 @@ interface ChunkGenerator {
 
     fun biomeDefinitionAt(wx: Int, wz: Int): BiomeDefinition? = null
 
+    /**
+     * Grass color of each column, RGB bytes indexed by `(lz * CHUNK_SIZE + lx) * 3`; empty if none.
+     */
+    fun grassTintsAt(pos: ChunkPos): ByteArray = ByteArray(0)
+
     fun zoneLevelAt(wx: Int, wz: Int): Int = 0
 
     val worldSeed: Long

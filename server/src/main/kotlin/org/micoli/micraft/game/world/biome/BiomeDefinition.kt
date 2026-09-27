@@ -68,6 +68,9 @@ data class BiomeDefinition(
     val isAquatic: Boolean
         get() = liquid && waterLevel > 0
 
+    val effectiveGrassColor: List<Double>
+        get() = grassColor ?: DEFAULT_GRASS_COLOR
+
     /** Terrain a walking NPC may stand on — excludes tree trunks/canopy and player builds. */
     val naturalGroundTypes: Set<BlockType> by lazy {
         setOf(surface, subsurface) + fillers.map { it.type }
@@ -81,6 +84,10 @@ data class BiomeDefinition(
             if (hash < cumulative) return entry.type
         }
         return fillers.last().type
+    }
+
+    companion object {
+        val DEFAULT_GRASS_COLOR = listOf(0.47, 0.75, 0.35)
     }
 }
 

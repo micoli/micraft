@@ -82,6 +82,8 @@ class WorldState(
 
     fun biomeDefinitionAt(wx: Int, wz: Int) = generator.biomeDefinitionAt(wx, wz)
 
+    fun grassTintsAt(pos: ChunkPos): ByteArray = generator.grassTintsAt(pos)
+
     /**
      * True if the block at (wx, wy, wz) is the biome's natural terrain — never a tree or a build.
      */

@@ -44,7 +44,6 @@ import { configureApiClient } from "./lib/apiClient";
 import { queryClient } from "./lib/queryClient";
 import {
   getApiServerInfo,
-  getApiBiomes,
   getApiI18nByLocale,
   getApiLayoutRegistry,
   getApiAssetsManifest,
@@ -182,7 +181,6 @@ let _i18nTable: Record<string, string> = {};
 
 // ── Biome colors ──────────────────────────────────────────────────────────────
 
-let _biomeColors: Record<string, [number, number, number]> = {};
 let _biomeTints: Record<string, [number, number, number]> = {};
 
 // ── Assemble window.mc from all registered modules ────────────────────────────
@@ -267,22 +265,12 @@ window.mc = {
   // ── Biome colors ─────────────────────────────────────────────────────────────
 
   fetchBiomeColors: () => {
-    getApiBiomes({ throwOnError: true })
-      .then((r) => {
-        _biomeColors = r.data as unknown as Record<string, [number, number, number]>;
-      })
-      .catch(() => {});
     fetch("/api/biomes/tints")
       .then((r) => r.json())
       .then((data) => {
         _biomeTints = data as Record<string, [number, number, number]>;
       })
       .catch(() => {});
-  },
-
-  applyBiomeGrassTint: (biome: string) => {
-    const [r, g, b] = _biomeColors[biome] ?? [0.47, 0.75, 0.35];
-    window.mc.setGrassTint(r, g, b);
   },
 
   applyBiomeEnvTint: (biome: string, submerged: boolean) => {

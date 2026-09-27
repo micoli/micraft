@@ -56,8 +56,6 @@ fun jsFetchI18n(locale: String): Unit = js("mc.fetchI18n(locale)")
 
 fun jsFetchBiomeColors(): Unit = js("mc.fetchBiomeColors()")
 
-fun jsApplyBiomeGrassTint(biome: String): Unit = js("mc.applyBiomeGrassTint(biome)")
-
 fun jsApplyBiomeEnvTint(biome: String, submerged: Boolean): Unit =
     js("mc.applyBiomeEnvTint(biome, submerged)")
 

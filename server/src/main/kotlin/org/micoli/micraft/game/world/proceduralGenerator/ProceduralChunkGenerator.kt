@@ -76,6 +76,9 @@ class ProceduralChunkGenerator(
 
         /** ~ a 64×64-block neighbourhood: where the NPCs around the players wander. */
         private const val BIOME_CACHE_COLUMNS = 4_096
+
+        /** A 32×32-chunk view, 768 bytes each. */
+        private const val GRASS_TINT_CACHE_CHUNKS = 1_024
     }
 
     /**
@@ -252,6 +255,37 @@ class ProceduralChunkGenerator(
         val biome = voronoi.sample(wx, wz).primary
         synchronized(biomeColumnCache) { biomeColumnCache[key] = biome }
         return biome
+    }
+
+    private val grassTintCache =
+        object : LinkedHashMap<ChunkPos, ByteArray>(GRASS_TINT_CACHE_CHUNKS, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<ChunkPos, ByteArray>) =
+                size > GRASS_TINT_CACHE_CHUNKS
+        }
+
+    // Primary weight goes from 0.5 on a border (blendFactor 0) to 1 inside the cell, so both sides
+    // of a border meet on the same color.
+    override fun grassTintsAt(pos: ChunkPos): ByteArray {
+        synchronized(grassTintCache) {
+            grassTintCache[pos]?.let {
+                return it
+            }
+        }
+        val s = WorldConstants.CHUNK_SIZE
+        val tints = ByteArray(s * s * 3)
+        for (lz in 0 until s) for (lx in 0 until s) {
+            val sample = voronoi.sample(pos.cx * s + lx, pos.cz * s + lz)
+            val primaryWeight = 0.5 + sample.blendFactor / 2.0
+            val primary = sample.primary.effectiveGrassColor
+            val secondary = sample.secondary.effectiveGrassColor
+            val i = (lz * s + lx) * 3
+            for (c in 0..2) {
+                val v = primary[c] * primaryWeight + secondary[c] * (1.0 - primaryWeight)
+                tints[i + c] = (v * 255.0).roundToInt().coerceIn(0, 255).toByte()
+            }
+        }
+        synchronized(grassTintCache) { grassTintCache[pos] = tints }
+        return tints
     }
 
     override fun zoneLevelAt(wx: Int, wz: Int): Int = voronoi.zoneLevelAt(wx, wz)

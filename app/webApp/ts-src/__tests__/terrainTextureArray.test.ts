@@ -23,7 +23,7 @@ describe("terrain texture array", () => {
     expect(table).toEqual({
       stone: [1, 1, 1, 0],
       grass_top: [0.5, 1, 0.5, 1],
-      "grass_top:biome_tint": [-1, -1, -1, 1],
+      "grass_top:biome_tint": [0.47, 0.75, 0.35, 1],
       "plain:ff0000": [1, 0, 0, 3],
     });
   });

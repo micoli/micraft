@@ -11,6 +11,7 @@ import { BLOCK_VERT, BLOCK_GHOST_FRAG, IMPOSTOR_FRAG } from "./block";
 import { plainMatKey } from "./blockDefs";
 import { setBoundsFromPositions } from "./meshBounds";
 import { WHITE_PIXEL_URL } from "./materials/whitePixel";
+import { BIOME_TINT_SUFFIX, defaultGrassTints, grassTintLayer } from "./materials/grassTint";
 import { getChunkSurface, getTopColorRGB, getSideColorRGB } from "./minimap";
 import {
   requestChunkMesh as poolRequestChunkMesh,
@@ -117,6 +118,7 @@ interface FaceInfo {
   verts: Float32Array;
   isCrossSprite: boolean;
   isPlastic: boolean;
+  biomeTint: boolean;
 }
 
 // faceTable[faceMat] = list of FaceInfo to emit (one per element that has this face)
@@ -198,6 +200,7 @@ function buildFaceTable(): void {
                 verts: CROSS_SPRITE_VERTS,
                 isCrossSprite: true,
                 isPlastic,
+                biomeTint: fi.matKey.endsWith(BIOME_TINT_SUFFIX),
               });
           }
         } else {
@@ -238,6 +241,7 @@ function buildFaceTable(): void {
               verts,
               isCrossSprite: false,
               isPlastic,
+              biomeTint: fi.matKey.endsWith(BIOME_TINT_SUFFIX),
             });
           }
         }
@@ -258,9 +262,11 @@ interface FaceGroup {
   n: Float32Array; // normals    v*3
   u: Float32Array; // uvs        v*2
   c: Float32Array; // colors     v*4
+  t: Float32Array; // tintLayer  v*4, biome-tinted faces only
   i: Int32Array; // indices    faces*6
   v: number; // vertex count
   ic: number; // index count
+  layered: boolean;
 }
 
 const groupPool: FaceGroup[] = [];
@@ -269,6 +275,7 @@ function acquireGroup(): FaceGroup {
   if (groupPool.length > 0) {
     const g = groupPool.pop()!;
     g.v = g.ic = 0;
+    g.layered = false;
     return g;
   }
   return {
@@ -276,9 +283,11 @@ function acquireGroup(): FaceGroup {
     n: new Float32Array(GROUP_MAX_VERTS * 3),
     u: new Float32Array(GROUP_MAX_VERTS * 2),
     c: new Float32Array(GROUP_MAX_VERTS * 4),
+    t: new Float32Array(GROUP_MAX_VERTS * 4),
     i: new Int32Array(GROUP_MAX_IDX),
     v: 0,
     ic: 0,
+    layered: false,
   };
 }
 
@@ -301,9 +310,19 @@ function emitQuad(
   shade: number,
   ao: number,
   isPlastic = false,
+  layer: readonly number[] | undefined = undefined,
 ): void {
   if (g.v + 4 > GROUP_MAX_VERTS) return; // safety guard
   const baseV = g.v;
+  if (layer) {
+    g.layered = true;
+    for (let k = 0, ti = baseV * 4; k < 4; k++) {
+      g.t[ti++] = layer[0];
+      g.t[ti++] = layer[1];
+      g.t[ti++] = layer[2];
+      g.t[ti++] = layer[3];
+    }
+  }
   let pi = baseV * 3;
   let ni = baseV * 3;
   let ui = baseV * 2;
@@ -342,9 +361,19 @@ const CROSS_QUADS: Float32Array[] = [
   new Float32Array([1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0]),
 ];
 
-function emitCrossSprite(wx: number, wy: number, wz: number, g: FaceGroup, uv: Float32Array, ao: number): void {
-  for (const q of CROSS_QUADS) emitQuad(g, wx, wy, wz, q, 0, 1, 0, uv, 0.8, ao);
+function emitCrossSprite(
+  wx: number,
+  wy: number,
+  wz: number,
+  g: FaceGroup,
+  uv: Float32Array,
+  ao: number,
+  layer: readonly number[] | undefined = undefined,
+): void {
+  for (const q of CROSS_QUADS) emitQuad(g, wx, wy, wz, q, 0, 1, 0, uv, 0.8, ao, false, layer);
 }
+
+const tintScratch = [0, 0, 0, 0];
 
 // --- Greedy-merge stretch (runLen > 1 runs from ChunkManager.renderRow) ---
 // Applied to simple-cube blocks (see mergeableByOrd in Kotlin), stretched along one local
@@ -695,6 +724,7 @@ export function registerChunks(): Pick<
   | "chunkEndFromWorker"
   | "buildChunkImpostor"
   | "setImpostorSkirtDepth"
+  | "biomeTintFaceMask"
 > {
   window.mcState.chunks = {};
 
@@ -709,6 +739,17 @@ export function registerChunks(): Pick<
       impostorSkirtDepth = depth;
     },
 
+    // Bit fd set when face fd of the unrotated block is biome-tinted — Kotlin's greedy merge must
+    // not stretch such a face across columns of different grass colors.
+    biomeTintFaceMask: (typeOrd: number): number => {
+      if (faceTable.length === 0) buildFaceTable();
+      let mask = 0;
+      for (let fd = 0; fd < 6; fd++) {
+        if (faceTable[typeOrd * 24 + fd]?.some((info) => info.biomeTint)) mask |= 1 << fd;
+      }
+      return mask;
+    },
+
     chunkBegin: (cx: number, cz: number): void => {
       if (faceTable.length === 0) buildFaceTable();
       if (__mcBuf) {
@@ -717,6 +758,7 @@ export function registerChunks(): Pick<
       __mcBuf = { key: `${cx},${cz}`, groups: {}, gltfPositions: {} };
       if (!window.__mcFB) window.__mcFB = new Int32Array(FACE_BUF_SLOTS);
       window.__mcFI = 0;
+      window.__mcGT = defaultGrassTints();
     },
 
     // no-op stub — Kotlin uses jsChunkFaceAppend (writes directly to __mcFB)
@@ -776,8 +818,10 @@ export function registerChunks(): Pick<
             g = acquireGroup();
             grp[groupKey] = g;
           }
+          const layer =
+            info.biomeTint && !plainKey ? grassTintLayer(window.__mcGT!, fb[i], fb[i + 2], 0, tintScratch) : undefined;
           if (info.isCrossSprite) {
-            emitCrossSprite(wx, wy, wz, g, info.uv, ao);
+            emitCrossSprite(wx, wy, wz, g, info.uv, ao, layer);
           } else if (runLenX > 1 || runLenZ > 1) {
             // Stretch each axis independently — south/north only ever set runLenX, east/west
             // only runLenZ, top/bottom can have both (full 2D rectangle merge). UV high/low
@@ -794,7 +838,21 @@ export function registerChunks(): Pick<
               verts = stretchVertsAxis(verts, runLenZ, 2);
               uv = stretchUVAxis(uv, info.verts, runLenZ, 2);
             }
-            emitQuad(g, wx, wy, wz, verts, info.normX, info.normY, info.normZ, uv, info.shade, ao, info.isPlastic);
+            emitQuad(
+              g,
+              wx,
+              wy,
+              wz,
+              verts,
+              info.normX,
+              info.normY,
+              info.normZ,
+              uv,
+              info.shade,
+              ao,
+              info.isPlastic,
+              layer,
+            );
           } else {
             emitQuad(
               g,
@@ -809,6 +867,7 @@ export function registerChunks(): Pick<
               info.shade,
               ao,
               info.isPlastic,
+              layer,
             );
           }
         }
@@ -826,8 +885,10 @@ export function registerChunks(): Pick<
       const fi = window.__mcFI ?? 0;
       const faceCount = (fi / FACE_STRIDE) | 0;
       const faceBuf = window.__mcFB!.slice(0, fi);
+      const grassTints = window.__mcGT ?? defaultGrassTints();
+      window.__mcGT = undefined;
       __mcBuf = null;
-      poolRequestChunkMesh(key, faceBuf, faceCount);
+      poolRequestChunkMesh(key, faceBuf, faceCount, grassTints);
     },
 
     isChunkMeshReady: (cx: number, cz: number): boolean => poolIsChunkMeshReady(`${cx},${cz}`),
@@ -929,6 +990,7 @@ export function registerChunks(): Pick<
         vd.colors = g.c.subarray(0, g.v * 4);
         vd.indices = g.i.subarray(0, g.ic);
         vd.applyToMesh(mesh, false);
+        if (g.layered) mesh.setVerticesData("tintLayer", g.t.slice(0, g.v * 4), false, 4);
         mesh.material = materials[matKey] ?? null;
         setBoundsFromPositions(mesh, positions);
         finishTerrainMesh(mesh);

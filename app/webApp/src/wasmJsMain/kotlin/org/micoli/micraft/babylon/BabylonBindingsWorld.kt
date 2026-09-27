@@ -47,6 +47,12 @@ fun jsSetMeshMaterial(mesh: JsAny, mat: JsAny): Unit = js("mesh.material = mat")
 
 fun jsChunkBegin(cx: Int, cz: Int): Unit = js("mc.chunkBegin(cx, cz)")
 
+/** Grass color (packed 0xRRGGBB) of column `lz * 16 + lx` in the chunk opened by [jsChunkBegin]. */
+fun jsChunkGrassTint(column: Int, rgb: Int): Unit = js("window.__mcGT[column] = rgb")
+
+/** Bit fd set when face fd of block [typeOrd] takes its column's grass color. */
+fun jsBiomeTintFaceMask(typeOrd: Int): Int = js("mc.biomeTintFaceMask(typeOrd)")
+
 // Batch approach: write face data directly into a pre-allocated JS Int32Array.
 // Eliminates JS function-call dispatch and dict lookup per face; work deferred to
 // the tight loop in chunkEnd (which the JS engine can JIT more aggressively).

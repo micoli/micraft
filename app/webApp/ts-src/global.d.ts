@@ -354,7 +354,6 @@ declare global {
     getBlockTextures(): McBlockTextureDef[];
     getPlainColors(): McPlainColor[];
     createBlockMaterials(scene: Scene): Record<string, ShaderMaterial | StandardMaterial>;
-    setGrassTint(r: number, g: number, b: number): void;
     // Registry
     setBlockRegistry(json: string): void;
     setItemRegistry(json: string): void;
@@ -463,6 +462,7 @@ declare global {
     setPlacementRotation(rotation: number): void;
     // Chunk builder
     chunkBegin(cx: number, cz: number): void;
+    biomeTintFaceMask(typeOrd: number): number;
     chunkFace(wx: number, wy: number, wz: number, faceMat: number, ao: number): void;
     chunkProcessFaces(cursor: number, maxFaces: number): number;
     chunkEnd(scene: Scene, materials: Record<string, ShaderMaterial | StandardMaterial>): void;
@@ -599,7 +599,6 @@ declare global {
     fetchI18n(locale: string): void;
     t(key: string, ...args: (string | number)[]): string;
     fetchBiomeColors(): void;
-    applyBiomeGrassTint(biome: string): void;
     applyBiomeEnvTint(biome: string, submerged: boolean): void;
     setEnvironmentTint(r: number, g: number, b: number, strength: number): void;
     applyFaviconPref(animated: boolean): void;
@@ -779,6 +778,8 @@ declare global {
     __mcDragItem?: string | null;
     __mcFB?: Int32Array;
     __mcFI?: number;
+    /** Current chunk's grass color per column (packed 0xRRGGBB), see materials/grassTint.ts. */
+    __mcGT?: Int32Array;
     // e2e test mode — set by the Playwright harness before the app boots
     __mcE2E?: boolean;
     __mcE2ESession?: string;

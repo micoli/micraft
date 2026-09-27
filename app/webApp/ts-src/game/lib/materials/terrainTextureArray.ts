@@ -1,4 +1,5 @@
 import type { Scene } from "@babylonjs/core";
+import { BIOME_TINT_SUFFIX, DEFAULT_GRASS_TINT } from "./grassTint";
 
 /** Material key of the single terrain material the texture array replaces the others with. */
 export const TERRAIN_ARRAY_MAT_KEY = "terrain:array";
@@ -6,7 +7,7 @@ export const TERRAIN_ARRAY_MAT_KEY = "terrain:array";
 /** Material keys that must keep their own material (not a block ShaderMaterial). */
 const OWN_MATERIAL_KEYS = new Set(["water"]);
 
-/** Per material key: [r, g, b, layer]; r < 0 means the live biome tint. */
+/** Per material key: [r, g, b, layer]; biome-tinted keys hold the default grass color, replaced per column. */
 export type TerrainLayerTable = Record<string, [number, number, number, number]>;
 
 export interface TerrainLayers {
@@ -27,7 +28,7 @@ export function buildTerrainLayerTable(
     if (layer === undefined || OWN_MATERIAL_KEYS.has(t.name)) continue;
     const [r, g, b] = t.tint ?? [1, 1, 1];
     table[t.name] = [r, g, b, layer];
-    if (t.biomeTint) table[`${t.name}:biome_tint`] = [-1, -1, -1, layer];
+    if (t.biomeTint) table[`${t.name}${BIOME_TINT_SUFFIX}`] = [...DEFAULT_GRASS_TINT, layer];
   }
   for (const c of plainColors) table[`plain:${c.hex}`] = [c.r / 255, c.g / 255, c.b / 255, layers.whiteLayer];
   return table;

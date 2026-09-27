@@ -1,19 +1,20 @@
 import type { Scene, ShaderMaterial, StandardMaterial } from "@babylonjs/core";
-import { BLOCK_ARRAY_FRAG, BLOCK_ARRAY_VERT, BLOCK_VERT, BLOCK_FRAG } from "../block";
+import {
+  BLOCK_ARRAY_FRAG,
+  BLOCK_ARRAY_VERT,
+  BLOCK_VERT,
+  BLOCK_FRAG,
+  BLOCK_VERTEX_TINT_FRAG,
+  BLOCK_VERTEX_TINT_VERT,
+} from "../block";
+import { BIOME_TINT_SUFFIX } from "./grassTint";
 import { createTerrainTextureArray, TERRAIN_ARRAY_MAT_KEY } from "./terrainTextureArray";
 import { WHITE_PIXEL_URL } from "./whitePixel";
 
 export function registerMaterials(): Pick<
   McBindings,
-  | "createTextureMaterial"
-  | "createLeavesMaterial"
-  | "createCrossSpriteMaterial"
-  | "createBlockMaterials"
-  | "setGrassTint"
+  "createTextureMaterial" | "createLeavesMaterial" | "createCrossSpriteMaterial" | "createBlockMaterials"
 > {
-  // Updated by createBlockMaterials once mats are available
-  let setGrassTintImpl: McBindings["setGrassTint"] = () => {};
-
   return {
     createTextureMaterial: (name: string, url: string, scene: Scene): StandardMaterial => {
       const mat = new BABYLON.StandardMaterial(name, scene);
@@ -57,7 +58,8 @@ export function registerMaterials(): Pick<
 
     // Creates a ShaderMaterial for each block texture defined in blocks.bbmodel.
     // Returns a Record<matKey, Material> used by chunkEnd.
-    // The special key "<name>:biome_tint" is created for biome-tinted faces (e.g. grass_top).
+    // The special key "<name>:biome_tint" is created for biome-tinted faces (e.g. grass_top); their
+    // tint travels per vertex, one grass color per column.
     createBlockMaterials: (scene: Scene): Record<string, ShaderMaterial | StandardMaterial> => {
       const textures: McBlockTextureDef[] = window.mc.getBlockTextures();
       const mats: Record<string, ShaderMaterial | StandardMaterial> = {};
@@ -67,7 +69,7 @@ export function registerMaterials(): Pick<
       const fogEnd: number = scene.fogEnd ?? 40;
 
       // Uniforms every terrain shader shares; the per-texture variant adds "tint", the texture-array
-      // variant "biomeTint" (its tint travels per vertex).
+      // and biome-tinted variants carry theirs per vertex.
       const sharedUniforms = [
         "worldViewProjection",
         "view",
@@ -137,6 +139,24 @@ export function registerMaterials(): Pick<
         return configure(mat);
       };
 
+      const makeVertexTintMat = (name: string, url: string): ShaderMaterial => {
+        const mat = new BABYLON.ShaderMaterial(
+          name,
+          scene,
+          { vertexSource: BLOCK_VERTEX_TINT_VERT, fragmentSource: BLOCK_VERTEX_TINT_FRAG },
+          {
+            attributes: ["position", "normal", "uv", "color", "tintLayer"],
+            uniforms: sharedUniforms,
+            samplers: ["textureSampler", "shadowSampler"],
+          },
+        );
+        mat.setTexture(
+          "textureSampler",
+          new BABYLON.Texture(url, scene, true, true, BABYLON.Texture.NEAREST_SAMPLINGMODE),
+        );
+        return configure(mat);
+      };
+
       // Plain colors reuse the block shader with a 1×1 white texture: the `tint` uniform
       // (already multiplied into texColor) paints every face a flat color, so studs still get
       // AO, face shading and the plastic highlight from the vertex colors.
@@ -151,8 +171,7 @@ export function registerMaterials(): Pick<
         mats[t.name] = makeMat(t.name, t.url, tr, tg, tb);
 
         if (t.biomeTint) {
-          // Separate instance for biome-tinted variant; tint updated via setGrassTint
-          mats[t.name + ":biome_tint"] = makeMat(t.name + ":biome_tint", t.url, 0.47, 0.75, 0.35);
+          mats[t.name + BIOME_TINT_SUFFIX] = makeVertexTintMat(t.name + BIOME_TINT_SUFFIX, t.url);
         }
       }
 
@@ -166,27 +185,13 @@ export function registerMaterials(): Pick<
           { vertexSource: BLOCK_ARRAY_VERT, fragmentSource: BLOCK_ARRAY_FRAG },
           {
             attributes: ["position", "normal", "uv", "color", "tintLayer"],
-            uniforms: [...sharedUniforms, "biomeTint"],
+            uniforms: sharedUniforms,
             samplers: ["textureArray", "shadowSampler"],
           },
         );
         arrayMat.setTexture("textureArray", textureArray);
-        arrayMat.setVector3("biomeTint", new BABYLON.Vector3(0.47, 0.75, 0.35));
         mats[TERRAIN_ARRAY_MAT_KEY] = configure(arrayMat);
       }
-
-      // Wire setGrassTint now that mats are available
-      setGrassTintImpl = (r: number, g: number, b: number) => {
-        for (const key of Object.keys(mats)) {
-          if (key.endsWith(":biome_tint")) {
-            (mats[key] as ShaderMaterial).setVector3("tint", new BABYLON.Vector3(r, g, b));
-          }
-        }
-        (mats[TERRAIN_ARRAY_MAT_KEY] as ShaderMaterial | undefined)?.setVector3(
-          "biomeTint",
-          new BABYLON.Vector3(r, g, b),
-        );
-      };
 
       const waterMat = new BABYLON.StandardMaterial("water", scene);
       waterMat.diffuseColor = new BABYLON.Color3(0.2, 0.47, 0.78);
@@ -205,8 +210,5 @@ export function registerMaterials(): Pick<
       window.mcState.blockMaterials = mats;
       return mats;
     },
-
-    // Wrapper delegates to setGrassTintImpl — captures var by ref so update from createBlockMaterials is visible
-    setGrassTint: (r: number, g: number, b: number) => setGrassTintImpl(r, g, b),
   };
 }

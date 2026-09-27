@@ -571,7 +571,6 @@ class LocalPlayerController(
         hudSpeed = state.speedMultiplier.toDouble()
         hudBiome = state.biome
         hudZoneLevel = state.zoneLevel
-        chunkManager.applyBiomeGrassTint(state.biome)
         chunkManager.applyBiomeEnvTint(state.biome, state.headInLiquid)
     }
 

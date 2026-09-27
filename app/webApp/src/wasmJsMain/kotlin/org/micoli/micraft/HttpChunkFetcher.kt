@@ -65,7 +65,8 @@ class HttpChunkFetcher(
                     }
                     .body<ByteArray>()
             val msg = runCatching { ServerMessageCodec.decode(bytes) }.getOrNull()
-            if (msg is ServerMessage.ChunkData)
+            if (msg is ServerMessage.ChunkData) {
+                chunkManager.setGrassTints(msg.pos, msg.grassTints)
                 chunkManager.enqueueChunk(
                     Chunk.decodeWire(
                         msg.pos,
@@ -74,6 +75,7 @@ class HttpChunkFetcher(
                         msg.wireStates.takeIf { it.isNotEmpty() },
                         msg.wireExtraStates.takeIf { it.isNotEmpty() }),
                     msg.topY)
+            }
         } finally {
             inFlight.remove(cp)
             pumpQueue()

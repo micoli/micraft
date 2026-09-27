@@ -144,7 +144,13 @@ class ChunkManager(private val scene: JsAny) {
     // brick/sub-voxel blocks (isMultiCellByOrd); non-solid blocks (cross-sprite decorations like
     // FLOWER/WEED) are excluded too since their real geometry isn't a full-cube face.
     private val mergeableByOrd = ByteArray(256)
+
+    // Bit fd set when face fd takes its column's grass color (see jsBiomeTintFaceMask)
+    private val biomeTintMaskByOrd = ByteArray(256)
     private var ordFlagsBuilt = false
+
+    // Packed 0xRRGGBB per column (lz * CHUNK_SIZE + lx), from ChunkData.grassTints
+    private val grassTints = mutableMapOf<ChunkPos, IntArray>()
     private val strideX = Chunk.STRIDE_X
     private val strideY = Chunk.STRIDE_Y
 
@@ -170,6 +176,7 @@ class ChunkManager(private val scene: JsAny) {
                     isMultiCellByOrd[i].toInt() == 0)
                     1
                 else 0
+            biomeTintMaskByOrd[i] = jsBiomeTintFaceMask(i).toByte()
         }
         ordFlagsBuilt = true
     }
@@ -235,8 +242,23 @@ class ChunkManager(private val scene: JsAny) {
         return blockMaterials
     }
 
-    fun applyBiomeGrassTint(biome: String) {
-        if (blockMaterials != null) jsApplyBiomeGrassTint(biome)
+    fun setGrassTints(pos: ChunkPos, rgb: ByteArray) {
+        val columns = WorldConstants.CHUNK_SIZE * WorldConstants.CHUNK_SIZE
+        if (rgb.size < columns * 3) {
+            grassTints.remove(pos)
+            return
+        }
+        grassTints[pos] =
+            IntArray(columns) { i ->
+                ((rgb[i * 3].toInt() and 0xFF) shl 16) or
+                    ((rgb[i * 3 + 1].toInt() and 0xFF) shl 8) or
+                    (rgb[i * 3 + 2].toInt() and 0xFF)
+            }
+    }
+
+    private fun beginChunk(pos: ChunkPos) {
+        jsChunkBegin(pos.cx, pos.cz)
+        grassTints[pos]?.forEachIndexed { column, rgb -> jsChunkGrassTint(column, rgb) }
     }
 
     fun applyBiomeEnvTint(biome: String, submerged: Boolean) {
@@ -342,7 +364,7 @@ class ChunkManager(private val scene: JsAny) {
                     }
                 }
                 impostorChunks.remove(chunk.pos)
-                jsChunkBegin(chunk.pos.cx, chunk.pos.cz)
+                beginChunk(chunk.pos)
                 activeRender = ChunkRender(chunk, topY)
                 continue
             }
@@ -552,7 +574,7 @@ class ChunkManager(private val scene: JsAny) {
                 }
         buildOrdFlags()
         chunkData[chunk.pos] = Pair(chunk, topY)
-        jsChunkBegin(chunk.pos.cx, chunk.pos.cz)
+        beginChunk(chunk.pos)
         for (y in 0..topY) renderRow(chunk, topY, y)
         renderFractionalEntities(chunk)
         // Drain face buffer before GPU upload (same as async Phase 2)
@@ -597,6 +619,7 @@ class ChunkManager(private val scene: JsAny) {
             jsClearMinimapChunk(cp.cx, cp.cz)
             loadedChunks.remove(cp)
             chunkData.remove(cp)
+            grassTints.remove(cp)
             impostorChunks.remove(cp)
         }
         pendingUnloads.addAll(toUnload)
@@ -685,6 +708,7 @@ class ChunkManager(private val scene: JsAny) {
         loadedChunks.clear()
         impostorChunks.clear()
         chunkData.clear()
+        grassTints.clear()
         pendingChunks.clear()
         pendingMinimapPushes.clear()
         activeRender = null
@@ -754,9 +778,12 @@ class ChunkManager(private val scene: JsAny) {
         val topActive = BooleanArray(s * s)
         val topFaceMat = IntArray(s * s)
         val topAo = IntArray(s * s)
+        val topTint = IntArray(s * s)
         val botActive = BooleanArray(s * s)
         val botFaceMat = IntArray(s * s)
         val botAo = IntArray(s * s)
+        val botTint = IntArray(s * s)
+        val tints = grassTints[chunk.pos]
         for (x in 0 until s) {
             val wx = ox + x
             for (z in 0 until s) {
@@ -811,6 +838,7 @@ class ChunkManager(private val scene: JsAny) {
                         topActive[mi] = true
                         topFaceMat[mi] = faceMatV
                         topAo[mi] = aoV
+                        topTint[mi] = columnTint(tints, ord, 4, x, z)
                     } else {
                         jsChunkFaceAppend(wx, y, wz2, faceMatV, aoV)
                     }
@@ -831,6 +859,7 @@ class ChunkManager(private val scene: JsAny) {
                         botActive[mi] = true
                         botFaceMat[mi] = faceMatV
                         botAo[mi] = aoV
+                        botTint[mi] = columnTint(tints, ord, 5, x, z)
                     } else {
                         jsChunkFaceAppend(wx, y, wz2, faceMatV, aoV)
                     }
@@ -1063,20 +1092,27 @@ class ChunkManager(private val scene: JsAny) {
                 z, mergeActiveN, mergeStartXN, mergeLenN, mergeFaceMatN, mergeAoN, y, ox, oz)
         }
         // 2D greedy-rectangle merge for top/bottom, now that the whole row's mask is filled.
-        emitGreedyRects(topActive, topFaceMat, topAo, s, y, ox, oz)
-        emitGreedyRects(botActive, botFaceMat, botAo, s, y, ox, oz)
+        emitGreedyRects(topActive, topFaceMat, topAo, topTint, s, y, ox, oz)
+        emitGreedyRects(botActive, botFaceMat, botAo, botTint, s, y, ox, oz)
         return faceCount
+    }
+
+    // 0 for faces without biome tint, so they keep merging across grass color changes.
+    private fun columnTint(tints: IntArray?, ord: Int, fd: Int, x: Int, z: Int): Int {
+        if (tints == null || (biomeTintMaskByOrd[ord].toInt() shr fd) and 1 == 0) return 0
+        return tints[z * WorldConstants.CHUNK_SIZE + x]
     }
 
     // Standard greedy-mesher sweep over a per-row (x,z) mask: for each unvisited active cell,
     // grow a rectangle as wide as possible along X, then as tall as possible along Z (only where
-    // every cell in the new row matches the same faceMat/ao), and emit one quad per rectangle.
+    // every cell in the new row matches the same faceMat/ao/tint), and emit one quad per rectangle.
     // Used for top/bottom faces only — the one face pair whose whole plane (X and Z) is available
     // within a single renderRow(y) call, unlike east/west/south/north whose second axis is Y.
     private fun emitGreedyRects(
         active: BooleanArray,
         faceMatArr: IntArray,
         aoArr: IntArray,
+        tintArr: IntArray,
         s: Int,
         y: Int,
         ox: Int,
@@ -1089,17 +1125,27 @@ class ChunkManager(private val scene: JsAny) {
                 if (!active[i] || visited[i]) continue
                 val fm = faceMatArr[i]
                 val ao = aoArr[i]
+                val tint = tintArr[i]
                 var w = 1
                 while (x + w < s) {
                     val j = (x + w) * s + z
-                    if (!active[j] || visited[j] || faceMatArr[j] != fm || aoArr[j] != ao) break
+                    if (!active[j] ||
+                        visited[j] ||
+                        faceMatArr[j] != fm ||
+                        aoArr[j] != ao ||
+                        tintArr[j] != tint)
+                        break
                     w++
                 }
                 var h = 1
                 rows@ while (z + h < s) {
                     for (dx in 0 until w) {
                         val j = (x + dx) * s + (z + h)
-                        if (!active[j] || visited[j] || faceMatArr[j] != fm || aoArr[j] != ao) {
+                        if (!active[j] ||
+                            visited[j] ||
+                            faceMatArr[j] != fm ||
+                            aoArr[j] != ao ||
+                            tintArr[j] != tint) {
                             break@rows
                         }
                     }
