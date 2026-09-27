@@ -7,9 +7,9 @@ import org.micoli.micraft.physics.KinematicTuning
 internal var TICK_MS = 50L
 internal val TICK_SECONDS
     get() = TICK_MS / 1000f
-internal var GRAVITY = -20f
-internal var JUMP_SPEED = 8.5f
-internal var FLY_VERTICAL_SPEED = 8f
+internal var GRAVITY = KinematicTuning().gravity
+internal var JUMP_SPEED = KinematicTuning().jumpSpeed
+internal var FLY_VERTICAL_SPEED = KinematicTuning().flyVerticalSpeed
 
 internal fun kinematicTuning() = KinematicTuning(GRAVITY, JUMP_SPEED, FLY_VERTICAL_SPEED)
 

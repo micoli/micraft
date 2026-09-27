@@ -206,6 +206,7 @@ class LocalPlayerController(
     private var prevEyeOffset = 0.0
     var localFlying = false
     var localStance = PlayerStance.STANDING
+    private var predStance = PlayerStance.STANDING
     var localSpeedMult = 1f
     var localSkin = "articulated"
     var localArmors: List<String> = emptyList()
@@ -355,7 +356,7 @@ class LocalPlayerController(
 
     var kinematicTuning = KinematicTuning()
 
-    // Blocks only: the client doesn't know which entities occupy cells (issue 01, decision 4).
+    // Blocks only: the client doesn't know which entities occupy cells; Reconciliation absorbs it.
     private val predictionBlocks =
         object : BlockQuery {
             override fun isSolid(x: Int, y: Int, z: Int) =
@@ -526,6 +527,7 @@ class LocalPlayerController(
             predZ = serverZ
             predY = serverY
             predVy = 0.0
+            predStance = state.stance
             prevPredX = serverX
             prevPredY = serverY
             prevPredZ = serverZ
@@ -822,7 +824,7 @@ class LocalPlayerController(
                     KinematicState(
                         Vec3(predX.toFloat(), predY.toFloat(), predZ.toFloat()),
                         predVy.toFloat(),
-                        localStance,
+                        predStance,
                         localFlying,
                         localSpeedMult),
                     MoveIntent(
@@ -839,7 +841,7 @@ class LocalPlayerController(
             predY = next.pos.y.toDouble()
             predZ = next.pos.z.toDouble()
             predVy = next.vy.toDouble()
-            localStance = next.stance
+            predStance = next.stance
             val swimming = result.submerged
             if (autoAdvance && result.blockedHorizontally) autoAdvance = false
 
@@ -1935,7 +1937,6 @@ class LocalPlayerController(
     fun buildMoveIntent(): ClientMessage.MoveIntent =
         currentMove(flyToggle = pendingFlyToggle.also { pendingFlyToggle = false })
 
-    /** The intent the held keys express right now — sent to the server and fed to Prediction. */
     private fun currentMove(flyToggle: Boolean): ClientMessage.MoveIntent {
         val basis = moveBasis()
         val fwdX = basis.fwdX
@@ -2036,6 +2037,7 @@ class LocalPlayerController(
 
     fun reset() {
         hasPrediction = false
+        predStance = PlayerStance.STANDING
         predX = 0.0
         predY = 0.0
         predZ = 0.0

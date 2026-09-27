@@ -12,6 +12,7 @@ repeatedly drifted apart and broken **Prediction**, so this is strict, even for 
 
 ## Consequences
 
-- Movement composition and gravity/jump/fly constants still violate this today (`MovementProcessor` vs
-  `LocalPlayerController`, `CLIENT_GRAVITY`); tracked in `.scratch/architecture-review/issues/01-player-kinematics-core.md`.
+- Player movement runs through `core` `PlayerKinematics.step()`: `MovementProcessor` and the client Prediction are
+  adapters over a `BlockQuery`, and gravity / jump / fly speeds reach the client as `KinematicTuning` in `Welcome`
+  and `GameConfigSync`. Only what counts as solid differs: the client does not see occupied entities.
 - A TypeScript UI never re-implements a game rule; it asks Kotlin/`core` or the server.

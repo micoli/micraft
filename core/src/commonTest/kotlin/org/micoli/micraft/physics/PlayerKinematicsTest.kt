@@ -85,6 +85,14 @@ class PlayerKinematicsTest {
     }
 
     @Test
+    fun `a flying player keeps no vertical velocity`() {
+        val result = step(state(y = 10f, vy = -5f, flying = true), OPEN_AIR)
+
+        assertEquals(0f, result.state.vy)
+        assertEquals(10f, result.state.pos.y, EPS)
+    }
+
+    @Test
     fun `a submerged player swims crawling at its land speed slowed by the liquid`() {
         val water = FakeBlocks({ _, y, _ -> y <= 0 }, { _, y, _ -> y in 1..3 })
 

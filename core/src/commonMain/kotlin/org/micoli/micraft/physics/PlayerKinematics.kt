@@ -133,6 +133,7 @@ object PlayerKinematics {
             val flyDy = intent.dy * tuning.flyVerticalSpeed * speedMultiplier * dt
             val resolvedDy = AabbCollider.resolveY(solid, newX, pos.y, newZ, w, h, flyDy)
             newY = (pos.y + resolvedDy).coerceIn(0f, WorldConstants.WORLD_MAX_Y.toFloat())
+            vy = 0f
         } else {
             val swimUp = submerged && (intent.jump || intent.dy > 0f)
             val swimDown = submerged && intent.dy < 0f
