@@ -12,8 +12,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 3
   spawnBiomes: [forest, pine_forest, snow_peaks]
-  maxTotal: 60
-  minTotal: 30
 tameable: false
 attacks:
   - attackId: cave_bat_bite

@@ -36,7 +36,7 @@ flowchart TD
     end
 
     GL -->|"every 20 ticks"| T1["TimeUpdate broadcast"]
-    GL -->|"every 200 ticks"| T2["NpcSpawner.trySpawn"]
+    GL -->|"every 100 ticks"| T2["NpcSpawner.trySpawn"]
     GL -->|"every 600 ticks"| T3["flushDirty chunks + player/NPC/vegetation state"]
 ```
 

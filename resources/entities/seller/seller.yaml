@@ -9,7 +9,6 @@ spawn:
   maxPerChunk: 1
   spawnBiomes: []
   maxTotal: 0
-  minTotal: 0
 shopItems:
   - itemType: HEALTH_POTION
     buyPrice: 12

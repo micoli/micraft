@@ -19,7 +19,6 @@ private fun NpcSpawnConfigRaw.applyOverride(o: NpcSpawnConfigRawOverride) =
         maxPerChunk = o.maxPerChunk ?: maxPerChunk,
         spawnBiomes = o.spawnBiomes ?: spawnBiomes,
         maxTotal = o.maxTotal ?: maxTotal,
-        minTotal = o.minTotal ?: minTotal,
         weight = o.weight ?: weight,
     )
 
@@ -77,7 +76,6 @@ fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition =
                     maxPerChunk = it.maxPerChunk ?: spawn.maxPerChunk,
                     spawnBiomes = it.spawnBiomes ?: spawn.spawnBiomes,
                     maxTotal = it.maxTotal ?: spawn.maxTotal,
-                    minTotal = it.minTotal ?: spawn.minTotal,
                     weight = it.weight ?: spawn.weight,
                 )
             } ?: spawn,
@@ -147,7 +145,6 @@ class NpcRegistryLoader(
                                             maxPerChunk = entry.spawn.maxPerChunk,
                                             spawnBiomes = entry.spawn.spawnBiomes,
                                             maxTotal = entry.spawn.maxTotal,
-                                            minTotal = entry.spawn.minTotal,
                                             weight = entry.spawn.weight,
                                         ),
                                     hp = entry.hp,

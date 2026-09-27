@@ -216,7 +216,7 @@ private fun biomesPage(): String {
                 b.str("subsurface"),
                 "${zone.str("altitudeMin")}–${zone.str("altitudeMax")}",
                 "${zone.str("moistureMin")}–${zone.str("moistureMax")}",
-                b.str("maxNpcs"),
+                b.str("regionBudget"),
                 b["vegetation"]?.items?.joinToString(", ") {
                     "${it.str("type")} @${it.str("density")}"
                 } ?: "—",
@@ -229,7 +229,13 @@ private fun biomesPage(): String {
             "keyed on moisture × altitude.",
         table(
             listOf(
-                "Biome", "Surface", "Subsurface", "Altitude", "Moisture", "Max NPCs", "Vegetation"),
+                "Biome",
+                "Surface",
+                "Subsurface",
+                "Altitude",
+                "Moisture",
+                "Region budget",
+                "Vegetation"),
             rows),
     )
 }

@@ -16,7 +16,6 @@ spawn:
   maxPerChunk: 1
   spawnBiomes: []
   maxTotal: 4
-  minTotal: 1
 tameable: false
 attacks:
   - attackId: octopus_ink

@@ -22,8 +22,10 @@ animations with configurable bone aliases in `walkBoneAliases`
 - Some creatures can be tamed into [pets](pets.md) with **`/tame`**.
 
 `NpcManager` handles wander, pathfinding and interaction each tick;
-`NpcSpawner.trySpawn` runs every 200 ticks, capped per biome by the biome's
-`maxNpcs`.
+`NpcSpawner.trySpawn` runs every 100 ticks (5 s) and when a player crosses into a
+new spawn-grid square. It fills each Region around the players from its Roster,
+every type up to its share of the Region budget; births count toward the same
+budget, and a full Region refuses them.
 
 **Roster** — each Region has a Roster ([ADR-0010](../adr/0010-wild-npc-population-per-region-roster.md)):
 2–4 passive and 1–3 hostile NPC types drawn from those its Biome (`spawnBiomes`)

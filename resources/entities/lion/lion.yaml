@@ -15,8 +15,6 @@ spawn:
     - dry_plains
     - plains
     - desert
-  maxTotal: 14
-  minTotal: 8
 hp: 46
 aggroMode: AGGRESSIVE
 aggroRange: 13.0

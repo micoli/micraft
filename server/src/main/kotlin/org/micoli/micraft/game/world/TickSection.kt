@@ -32,8 +32,9 @@ enum class TickSection {
         val REALTIME: Set<TickSection> = ALL
 
         /**
-         * Browser-E2E worlds: bounded flat generator, `maxNpcs=0`, no vegetation. Only the sections
-         * a static test client observes — matching the pre-[TickSection] `e2eCreative` fast path.
+         * Browser-E2E worlds: bounded flat generator, zero Region budget, no vegetation. Only the
+         * sections a static test client observes — matching the pre-[TickSection] `e2eCreative`
+         * fast path.
          */
         val E2E: Set<TickSection> = setOf(TIME_BROADCAST, PLAYERS, WORLD_ITEMS, PLUGINS)
 

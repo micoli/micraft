@@ -1,6 +1,6 @@
 # Spawn from the Roster within the Region budget
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 02
 
@@ -23,7 +23,18 @@ world-wide and `maxNpcs` per 256² grid square (all types, value from the Biome)
 
 ## Acceptance criteria
 
-- [ ] Server tests: no non-Roster type spawns; a Region never exceeds its budget, births included; shares follow
+- [x] Server tests: no non-Roster type spawns; a Region never exceeds its budget, births included; shares follow
       weight.
-- [ ] Existing E2E NPC specs still pass (see `project_e2e_preexisting_failures` for known failures).
-- [ ] `make dc CMD="./gradlew :server:test"`, `make check-schemas`, `make docs` clean.
+- [x] Existing E2E NPC specs still pass (see `project_e2e_preexisting_failures` for known failures).
+- [x] `make dc CMD="./gradlew :server:test"`, `make check-schemas`, `make docs` clean.
+
+## Comments
+
+- 2026-09-27: `RegionPopulation` (`game/npc/roster`) caches each Region's Roster and counts wild NPCs (no owner;
+  auto-spawned or animal) per Region and type. `NpcSpawner` picks a random column, its Region, then a Roster type
+  still under its share; `maxPerChunk` and the rares' `maxTotal` still apply. Mating and births are refused in a full
+  Region (`AnimalInteractionProcessor.isCrowded` and `spawnOffspring`).
+- `maxNpcs` and `minTotal` removed; `maxTotal` removed from the 65 common types (only ≤ 5 stays).
+- A zero budget turns auto-spawn off without capping births: E2E worlds keep no auto-spawn, and the simulator's
+  `maxNpcs` (kept as the protocol field name) is now its arena Region's budget.
+- Flat arena and E2E bounded generators expose one Region covering the whole world.

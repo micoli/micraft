@@ -57,13 +57,14 @@ private fun deps() =
         definitions = mapOf("rabbit" to rabbitDef()),
     )
 
-private fun config(cap: Int) =
+private fun config(cap: Int, regionBudget: Int = 0) =
     SimulationConfig(
         halfSize = HALF,
         ticksPerSecond = 0,
         seed = 3L,
         gameDayDurationSeconds = 0.5,
         populationCap = cap,
+        maxNpcs = regionBudget,
     )
 
 /**
@@ -174,6 +175,21 @@ class PopulationCapTest {
                     (-HALF + 1 until HALF).map { z -> sim.world.getBlockIfLoaded(x, ground + 1, z) }
                 }
             assertTrue(food.any { it == BlockType.WEED || it == BlockType.FLOWER })
+        } finally {
+            sim.stop()
+        }
+    }
+
+    @Test
+    fun births_stopAtTheRegionBudget() = runBlocking {
+        val sim = WorldSimulator(config(cap = 1_000, regionBudget = 11), deps())
+        try {
+            sim.start()
+            sim.seedHerd()
+            sim.stepOnce(1_500)
+            val population = sim.npcInstances().size
+            assertTrue(
+                population in 9..11, "the herd should breed up to the Region budget: $population")
         } finally {
             sim.stop()
         }

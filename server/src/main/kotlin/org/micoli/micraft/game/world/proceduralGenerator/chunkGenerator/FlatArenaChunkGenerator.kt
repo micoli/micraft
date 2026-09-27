@@ -4,6 +4,7 @@ import kotlin.math.abs
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.Region
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.biome.BiomeDefinition
 import org.micoli.micraft.game.world.biome.BiomeZone
@@ -14,8 +15,8 @@ import org.micoli.micraft.game.world.biome.BiomeZone
  * cannot wander out of view. Ground is generated outside the perimeter too, so nothing can fall
  * into the void when spawned on the edge.
  *
- * [zoneLevel] and [maxNpcs] feed the level window and per-biome cap that
- * [ org.micoli.micraft.game.npc.NpcSpawner] applies, so auto-spawn behaves as it does in the real
+ * The arena is one Region: [zoneLevel] and [regionBudget] feed the Roster and budget that
+ * [org.micoli.micraft.game.npc.NpcSpawner] applies, so auto-spawn behaves as it does in the real
  * world.
  */
 class FlatArenaChunkGenerator(
@@ -23,7 +24,7 @@ class FlatArenaChunkGenerator(
     private val groundY: Int = 7,
     private val wallHeight: Int = 4,
     private val biomeId: String = "plains",
-    private val maxNpcs: Int = 0,
+    private val regionBudget: Int = 0,
     private val zoneLevel: Int = 5,
     /**
      * Share of ground cells carrying a FLOWER or WEED. Herbivores graze those blocks
@@ -42,7 +43,7 @@ class FlatArenaChunkGenerator(
             subsurface = BlockType.DIRT,
             elevationMin = groundY,
             elevationMax = groundY,
-            maxNpcs = maxNpcs,
+            regionBudget = regionBudget,
         )
 
     /** Inclusive world-space bounds of the walkable area. */
@@ -98,4 +99,13 @@ class FlatArenaChunkGenerator(
     override fun biomeDefinitionAt(wx: Int, wz: Int): BiomeDefinition = biome
 
     override fun zoneLevelAt(wx: Int, wz: Int): Int = zoneLevel
+
+    private val region = Region(0, 0, biome, "Arena", zoneLevel)
+
+    override val worldSeed: Long
+        get() = vegetationSeed
+
+    override fun regionAt(wx: Int, wz: Int): Region = region
+
+    override fun regionsNear(wx: Int, wz: Int, radiusBlocks: Int): List<Region> = listOf(region)
 }

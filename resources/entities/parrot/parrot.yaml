@@ -15,8 +15,6 @@ spawn:
   spawnBiomes:
     - forest
     - plains
-  maxTotal: 80
-  minTotal: 40
 walkBoneAliases:
   rightLeg: leg0
   leftLeg: leg1

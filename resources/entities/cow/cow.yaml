@@ -16,8 +16,6 @@ spawn:
     - dry_plains
     - forest
   # world-wide ceiling; the floor below is what the spawner restocks up to
-  maxTotal: 90
-  minTotal: 65
 hp: 14
 tameable: true
 tameBaseChance: 0.35

@@ -10,8 +10,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 3
   spawnBiomes: [plains, dry_plains, forest]
-  maxTotal: 100
-  minTotal: 70
 tameable: false
 walkBoneAliases:
   rightArm: frontLegR

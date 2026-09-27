@@ -13,8 +13,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: [desert]
-  maxTotal: 45
-  minTotal: 25
 tameable: false
 attacks:
   - attackId: scorpion_sting

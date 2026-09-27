@@ -10,8 +10,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: [forest, pine_forest, plains]
-  maxTotal: 80
-  minTotal: 50
 tameable: false
 armorLoot:
   - armor: tier1_cloth_robe

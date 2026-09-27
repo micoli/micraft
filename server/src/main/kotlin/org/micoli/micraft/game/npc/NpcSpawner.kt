@@ -1,6 +1,6 @@
 package org.micoli.micraft.game.npc
 
-import kotlin.collections.iterator
+import org.micoli.micraft.game.npc.roster.RegionPopulation
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
@@ -11,7 +11,13 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger(NpcSpawner::class.java)
 
 class NpcSpawner {
+    @Volatile private var latestDefinitions: Map<String, NpcDefinition> = emptyMap()
+    private var population: RegionPopulation? = null
 
+    /**
+     * Fills the Regions around [loadedChunks] from their Roster, each type up to its share of the
+     * Region budget (ADR-0010).
+     */
     suspend fun trySpawn(
         world: WorldState,
         npcManager: NpcManager,
@@ -21,97 +27,91 @@ class NpcSpawner {
         canSpawn: () -> Boolean = { true },
     ) {
         if (loadedChunks.isEmpty()) return
-        val chunkList = loadedChunks.toList().shuffled(ctx.random)
-
-        // One pass for every type, then kept up to date locally: the per-type quotas below would
-        // otherwise rescan the whole NPC map for each type on each chunk attempt.
+        val population = populationFor(world, definitions)
+        val census = population.census(npcManager.getAll())
+        // Built once per pass, then kept up to date locally: rescanning every NPC for each attempt
+        // is what these snapshots avoid.
         val counts = npcManager.countsByType().toMutableMap()
-        // Same idea for per-chunk/per-zone density: without this, countByTypeInChunk/countInZone
-        // would each rescan the whole NPC map for every candidate chunk of every type.
         val density = npcManager.spawnDensitySnapshot()
+        val attempts = HashMap<Long, Int>()
 
-        for ((type, def) in definitions) {
-            val spawn = def.spawn
-            if (!spawn.autoSpawn) continue
+        for (chunkPos in loadedChunks.toList().shuffled(ctx.random)) {
+            if (!canSpawn()) return
+            val wx =
+                chunkPos.cx * WorldConstants.CHUNK_SIZE +
+                    ctx.random.nextInt(WorldConstants.CHUNK_SIZE)
+            val wz =
+                chunkPos.cz * WorldConstants.CHUNK_SIZE +
+                    ctx.random.nextInt(WorldConstants.CHUNK_SIZE)
+            val region = world.regionAt(wx, wz) ?: continue
+            if (census.isFull(region)) continue
+            val roster = population.rosterOf(region)
+            // Counted before the expensive checks below, which are what this cap bounds.
+            val tried = attempts.merge(region.key, 1, Int::plus) ?: 0
+            if (tried > ctx.tuning.maxSpawnAttemptsPerTick * roster.entries.size) continue
 
-            val alive = counts[type] ?: 0
-            if (spawn.maxTotal > 0 && alive >= spawn.maxTotal) continue
-            // A floor turns the spawner into a restocker: above it, new life has to be born.
-            // Without
-            // one it keeps filling whatever room the chunks leave, which is how spawning came to
-            // outweigh reproduction almost four to one.
-            if (spawn.minTotal > 0 && alive >= spawn.minTotal) continue
+            val def =
+                roster.entries
+                    .filter { census.count(region, it.type) < it.share }
+                    .randomOrNull(ctx.random)
+                    ?.let { definitions[it.type] } ?: continue
+            val type = def.type
+            if (def.spawn.maxTotal > 0 && (counts[type] ?: 0) >= def.spawn.maxTotal) continue
+            if (density.countByTypeInChunk(type, chunkPos) >= def.spawn.maxPerChunk) continue
 
-            var attempts = 0
-            for (chunkPos in chunkList) {
-                if (attempts >= ctx.tuning.maxSpawnAttemptsPerTick) break
-                if (!canSpawn()) return
-                if (density.countByTypeInChunk(type, chunkPos) >= spawn.maxPerChunk) continue
-                // Counted here, not on success only: an unbounded run of misses (quota full,
-                // biome mismatch, blocked collider) must not scan every loaded chunk before
-                // giving up — the expensive checks below are what the budget is meant to cap.
-                attempts++
-
-                val wx =
-                    chunkPos.cx * WorldConstants.CHUNK_SIZE +
-                        ctx.random.nextInt(WorldConstants.CHUNK_SIZE)
-                val wz =
-                    chunkPos.cz * WorldConstants.CHUNK_SIZE +
-                        ctx.random.nextInt(WorldConstants.CHUNK_SIZE)
-
-                val biomeDef = world.biomeDefinitionAt(wx, wz)
-                if (spawn.spawnBiomes.isNotEmpty() && biomeDef?.id !in spawn.spawnBiomes) continue
-                // A liquid biome is water top to bottom — only a swimmer can live there.
-                if (biomeDef?.liquid == true && !def.canSwim) continue
-
-                val zk = npcManager.zoneKey(wx.toFloat(), wz.toFloat())
-                val maxNpcs = biomeDef?.maxNpcs ?: 0
-                if (maxNpcs > 0 && density.countInZone(zk) >= maxNpcs) continue
-
-                // A walker must land on the biome's actual terrain — never a tree canopy/trunk
-                // or a player-built roof, both of which are `isSolid` too.
-                val surfaceY =
-                    findSurfaceY(world, wx, wz, requireNaturalGround = !def.isAquatic) ?: continue
-
-                val spawnY =
-                    if (def.isAquatic) {
-                        val bd = biomeDef ?: continue
-                        if (!bd.liquid || bd.waterLevel <= surfaceY) continue
-                        val y = ctx.random.nextInt(surfaceY, bd.waterLevel)
-                        if (!world.getBlockIfLoaded(wx, y, wz).isLiquid) continue
-                        y
-                    } else surfaceY
-                val spawnPos = Vec3(wx + 0.5f, spawnY.toFloat(), wz + 0.5f)
-
-                val solid = { bx: Int, by: Int, bz: Int ->
-                    world.getBlockIfLoaded(bx, by, bz).isSolid
-                }
-                val clearX =
-                    AabbCollider.resolveX(
-                        solid, spawnPos.x, spawnPos.y, spawnPos.z, def.width, def.height, 0f)
-                val clearZ =
-                    AabbCollider.resolveZ(
-                        solid, spawnPos.x, spawnPos.y, spawnPos.z, def.width, def.height, 0f)
-                if (clearX != 0f || clearZ != 0f) continue
-
-                val zoneLevel = world.zoneLevelAt(wx, wz)
-                if (zoneLevel < def.minLevel || zoneLevel > def.maxLevel) continue
-                val instanceLevel =
-                    (zoneLevel + ctx.random.nextInt(-3, 4)).coerceIn(
-                        1, WorldConstants.RPG_LEVEL_MAX)
-                val name = npcManager.generateUniqueName(type)
-                // the animal record comes with the spawn now — see NpcManager.spawnNpc
-                npcManager.spawnNpc(name, type, spawnPos, instanceLevel)
-                density.recordSpawn(chunkPos, type, zk)
-                val nowAlive = (counts[type] ?: 0) + 1
-                counts[type] = nowAlive
-                log.debug("Auto-spawned {} at ({},{},{})", type, wx, spawnY, wz)
-                // re-checked inside the loop: several chunks are tried per type per pass, and the
-                // quota must hold across them, not only on entry
-                if (spawn.maxTotal > 0 && nowAlive >= spawn.maxTotal) break
-                if (spawn.minTotal > 0 && nowAlive >= spawn.minTotal) break
-            }
+            val spawnPos = spawnPosition(world, def, wx, wz, ctx) ?: continue
+            val instanceLevel =
+                (region.dangerLevel + ctx.random.nextInt(-3, 4)).coerceIn(
+                    1, WorldConstants.RPG_LEVEL_MAX)
+            // the animal record comes with the spawn now — see NpcManager.spawnNpc
+            npcManager.spawnNpc(npcManager.generateUniqueName(type), type, spawnPos, instanceLevel)
+            density.recordSpawn(chunkPos, type, npcManager.zoneKey(wx.toFloat(), wz.toFloat()))
+            census.record(region, type)
+            counts.merge(type, 1, Int::plus)
+            log.debug("Auto-spawned {} in {} at ({},{},{})", type, region.name, wx, spawnPos.y, wz)
         }
+    }
+
+    private fun populationFor(
+        world: WorldState,
+        definitions: Map<String, NpcDefinition>,
+    ): RegionPopulation {
+        latestDefinitions = definitions
+        return population ?: RegionPopulation(world) { latestDefinitions }.also { population = it }
+    }
+
+    private fun spawnPosition(
+        world: WorldState,
+        def: NpcDefinition,
+        wx: Int,
+        wz: Int,
+        ctx: NpcTickContext,
+    ): Vec3? {
+        val biomeDef = world.biomeDefinitionAt(wx, wz)
+        // A liquid biome is water top to bottom — only a swimmer can live there.
+        if (biomeDef?.liquid == true && !def.canSwim) return null
+        // A walker must land on the biome's actual terrain — never a tree canopy/trunk or a
+        // player-built roof, both of which are `isSolid` too.
+        val surfaceY =
+            findSurfaceY(world, wx, wz, requireNaturalGround = !def.isAquatic) ?: return null
+        val spawnY =
+            if (def.isAquatic) {
+                if (biomeDef == null || !biomeDef.liquid || biomeDef.waterLevel <= surfaceY)
+                    return null
+                val y = ctx.random.nextInt(surfaceY, biomeDef.waterLevel)
+                if (!world.getBlockIfLoaded(wx, y, wz).isLiquid) return null
+                y
+            } else surfaceY
+        val spawnPos = Vec3(wx + 0.5f, spawnY.toFloat(), wz + 0.5f)
+        val solid = { bx: Int, by: Int, bz: Int -> world.getBlockIfLoaded(bx, by, bz).isSolid }
+        val clearX =
+            AabbCollider.resolveX(
+                solid, spawnPos.x, spawnPos.y, spawnPos.z, def.width, def.height, 0f)
+        val clearZ =
+            AabbCollider.resolveZ(
+                solid, spawnPos.x, spawnPos.y, spawnPos.z, def.width, def.height, 0f)
+        if (clearX != 0f || clearZ != 0f) return null
+        return spawnPos
     }
 
     private fun findSurfaceY(

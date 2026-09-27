@@ -21,8 +21,6 @@ spawn:
   maxPerChunk: 1
   spawnBiomes:
     - forest
-  maxTotal: 24
-  minTotal: 8
 animal:
   diet: HERBIVORE
   starvationDeathDays: 4.0

@@ -11,8 +11,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 3
   spawnBiomes: [forest, desert]
-  maxTotal: 55
-  minTotal: 30
 tameable: false
 attacks:
   - attackId: giant_ant_bite

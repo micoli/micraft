@@ -11,8 +11,6 @@ spawn:
     - pine_forest
     - snow_peaks
   # world-wide ceiling; the floor below is what the spawner restocks up to
-  maxTotal: 60
-  minTotal: 45
 hp: 18
 tameable: true
 tameBaseChance: 0.25

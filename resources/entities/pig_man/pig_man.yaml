@@ -22,8 +22,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 1
   spawnBiomes: []
-  maxTotal: 40
-  minTotal: 15
 loot:
   - item: FLINT
     dropRate: 30

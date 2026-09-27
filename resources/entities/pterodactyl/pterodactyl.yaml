@@ -18,8 +18,6 @@ spawn:
     - dry_plains
     - plains
     - snow_peaks
-  maxTotal: 16
-  minTotal: 6
 animal:
   diet: CARNIVORE
   canReproduce: false

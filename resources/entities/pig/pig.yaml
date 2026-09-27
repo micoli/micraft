@@ -11,8 +11,6 @@ spawn:
     - plains
     - forest
     - dry_plains
-  maxTotal: 90
-  minTotal: 50
 animal:
   diet: OMNIVORE
   starvationDeathDays: 3.0

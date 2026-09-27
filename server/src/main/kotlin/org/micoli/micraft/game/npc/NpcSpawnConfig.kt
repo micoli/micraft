@@ -12,14 +12,6 @@ data class NpcSpawnConfig(
      * simulated days.
      */
     val maxTotal: Int = 0,
-    /**
-     * Floor the spawner restocks up to, and *only* up to. 0 keeps the old behaviour of spawning
-     * whenever there is chunk room.
-     *
-     * With a floor set, the spawner becomes an anti-extinction net rather than the population's
-     * engine: everything above the floor has to be born.
-     */
-    val minTotal: Int = 0,
     /** Share of its Region's budget relative to the other NPC types of the Roster. */
     val weight: Int = 1,
 )

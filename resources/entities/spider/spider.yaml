@@ -11,8 +11,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: [forest, pine_forest]
-  maxTotal: 50
-  minTotal: 30
 tameable: false
 attacks:
   - attackId: spider_web_bite

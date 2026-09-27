@@ -11,8 +11,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 3
   spawnBiomes: [desert, dry_plains]
-  maxTotal: 60
-  minTotal: 40
 tameable: false
 attacks:
   - attackId: poison_bite

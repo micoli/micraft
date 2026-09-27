@@ -119,19 +119,15 @@ class ShippedEntityConfigTest {
     }
 
     /**
-     * A quota only regulates if it is set. Without one the spawner keeps filling whatever room the
-     * chunks leave, which is what made spawning outweigh reproduction almost four to one.
+     * The Region budget regulates common types; a world-wide ceiling only keeps rares rare
+     * (ADR-0010), so a larger one would silently turn a rare into a common type.
      */
     @Test
-    fun everyAutoSpawningTypeHasACeiling() {
+    fun onlyRaresCarryAWorldWideCeiling() {
         val defs = definitions() ?: return
-        val autoSpawning = defs.filter { (_, def) -> def.spawn.autoSpawn }
-        assertTrue(autoSpawning.isNotEmpty(), "expected at least one auto-spawning type")
-        for ((type, def) in autoSpawning) {
-            assertTrue(def.spawn.maxTotal > 0, "$type auto-spawns with no world-wide ceiling")
+        for ((type, def) in defs) {
             assertTrue(
-                def.spawn.minTotal in 1 until def.spawn.maxTotal,
-                "$type needs a restocking floor below its ceiling (${def.spawn.minTotal}/${def.spawn.maxTotal})")
+                def.spawn.maxTotal in 0..5, "$type has a common-type ceiling ${def.spawn.maxTotal}")
         }
     }
 

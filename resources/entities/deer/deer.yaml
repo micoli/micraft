@@ -12,8 +12,6 @@ spawn:
     - plains
     - forest
     - pine_forest
-  maxTotal: 120
-  minTotal: 60
 walkBoneAliases:
   rightArm: frontLegR
   leftArm: frontLegL

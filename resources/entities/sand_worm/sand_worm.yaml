@@ -15,7 +15,6 @@ spawn:
   maxPerChunk: 1
   spawnBiomes: [desert]
   maxTotal: 5
-  minTotal: 1
 tameable: false
 attacks:
   - attackId: sand_worm_burrow_slam

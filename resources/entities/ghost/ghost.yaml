@@ -15,8 +15,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 1
   spawnBiomes: [snow_peaks, forest]
-  maxTotal: 30
-  minTotal: 16
 tameable: false
 attacks:
   - attackId: ghost_curse

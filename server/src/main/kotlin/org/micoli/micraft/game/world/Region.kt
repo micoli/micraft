@@ -12,4 +12,8 @@ data class Region(
 ) {
     val dangerTier: ZoneTier
         get() = ZoneTier.fromZoneLevel(dangerLevel)
+
+    /** Identity of the Region within its World: its Voronoi seed point. */
+    val key: Long
+        get() = (seedX.toLong() shl 32) or (seedZ.toLong() and 0xFFFFFFFFL)
 }

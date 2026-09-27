@@ -11,8 +11,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 3
   spawnBiomes: [desert, plains]
-  maxTotal: 50
-  minTotal: 28
 tameable: false
 attacks:
   - attackId: crab_pinch

@@ -18,8 +18,6 @@ spawn:
   autoSpawn: false
   maxPerChunk: 1
   spawnBiomes: [forest, pine_forest, snow_peaks]
-  maxTotal: 15
-  minTotal: 8
 tameable: false
 offersQuests:
   - zone_tier1_foxes.yaml

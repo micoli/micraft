@@ -49,9 +49,6 @@
         "maxTotal": {
           "type": "integer"
         },
-        "minTotal": {
-          "type": "integer"
-        },
         "weight": {
           "type": "integer"
         }

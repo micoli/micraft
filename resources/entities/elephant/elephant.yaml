@@ -13,8 +13,6 @@ spawn:
   spawnBiomes:
     - dry_plains
     - plains
-  maxTotal: 24
-  minTotal: 8
 walkBoneAliases:
   rightArm: frontLegR
   leftArm: frontLegL

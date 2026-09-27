@@ -157,13 +157,15 @@ class FlatArenaChunkGeneratorTest {
     }
 
     @Test
-    fun biomeAndZone_areReportedSoSpawnerFiltersWork() {
+    fun biomeZoneAndRegion_areReportedSoSpawnerFiltersWork() {
         val generator =
             FlatArenaChunkGenerator(
-                halfSize = HALF, maxNpcs = 12, zoneLevel = 9, biomeId = "plains")
+                halfSize = HALF, regionBudget = 12, zoneLevel = 9, biomeId = "plains")
         assertEquals("plains", generator.biomeAt(3, 4))
         assertEquals("plains", generator.biomeDefinitionAt(3, 4).id)
-        assertEquals(12, generator.biomeDefinitionAt(3, 4).maxNpcs)
+        assertEquals(12, generator.biomeDefinitionAt(3, 4).regionBudget)
         assertEquals(9, generator.zoneLevelAt(3, 4))
+        assertEquals(9, generator.regionAt(3, 4).dangerLevel)
+        assertEquals(generator.regionAt(3, 4), generator.regionAt(-50, 60))
     }
 }

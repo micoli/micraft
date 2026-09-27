@@ -13,8 +13,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: [snow_peaks]
-  maxTotal: 45
-  minTotal: 25
 tameable: true
 tameBaseChance: 0.2
 attacks:

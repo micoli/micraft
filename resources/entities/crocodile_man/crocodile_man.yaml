@@ -9,8 +9,6 @@ spawn:
   spawnBiomes:
     - plains
     - forest
-  maxTotal: 18
-  minTotal: 10
 hp: 42
 aggroMode: AGGRESSIVE
 aggroRange: 9.0

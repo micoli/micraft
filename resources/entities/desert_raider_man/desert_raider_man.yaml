@@ -15,8 +15,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: [desert, dry_plains]
-  maxTotal: 30
-  minTotal: 15
 tameable: false
 attacks:
   - attackId: slash

@@ -13,8 +13,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: [desert, plains]
-  maxTotal: 40
-  minTotal: 22
 tameable: true
 tameBaseChance: 0.3
 walkBoneAliases:

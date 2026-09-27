@@ -53,7 +53,8 @@ basins symmetrically at the shared border.
 
 Aquatic biomes carry no vegetation and no caverns, and are excluded from faction
 spawn placement. Minimap colour comes from their blue `grassColor`. Their
-`maxNpcs` cap only admits NPCs that can swim (`movementMode` with `SWIMMING`);
+Regions only roster NPCs that live in water (`movementMode` `SWIMMING` without
+`WALKING`);
 a `SWIMMING`-only NPC spawns inside the water column rather than on the surface
 — see [NPCs](../entities/npcs.md).
 Players and land NPCs breathe while submerged: see
@@ -77,7 +78,7 @@ biomes:
     surface: SNOW
     subsurface: STONE
     subsurfaceDepth: 2
-    maxNpcs: 40
+    regionBudget: 15
     elevationMin: 150
     elevationMax: 200
     fillers:

@@ -13,8 +13,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: []
-  maxTotal: 35
-  minTotal: 20
 tameable: false
 attacks:
   - attackId: jellyfish_sting

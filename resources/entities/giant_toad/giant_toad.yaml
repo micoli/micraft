@@ -11,8 +11,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: [forest, pine_forest]
-  maxTotal: 40
-  minTotal: 20
 tameable: false
 attacks:
   - attackId: giant_toad_tongue

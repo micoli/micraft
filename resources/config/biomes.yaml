@@ -12,7 +12,6 @@ biomes:
         altitudeMax: 1024
     surface: SNOW
     subsurface: STONE
-    maxNpcs: 40
     regionBudget: 15
     fillers:
       - type: STONE
@@ -47,7 +46,6 @@ biomes:
         moistureMax: 0.06
     surface: SAND
     subsurface: SANDSTONE
-    maxNpcs: 12
     regionBudget: 12
     fillers:
       - type: STONE
@@ -70,7 +68,6 @@ biomes:
         moistureMax: 0.74
     surface: GRAVEL
     subsurface: DIRT
-    maxNpcs: 8
     regionBudget: 6
     fillers:
       - type: STONE
@@ -93,7 +90,6 @@ biomes:
         moistureMax: 0.35
     surface: SAND
     subsurface: SANDSTONE
-    maxNpcs: 10
     regionBudget: 10
     fillers:
       - type: STONE
@@ -120,7 +116,6 @@ biomes:
       wallBlock: SANDSTONE
       staircaseEnabled: true
   - id: dry_plains
-    maxNpcs: 30
     regionBudget: 15
     zones:
       - moistureMin: 0.35
@@ -160,7 +155,6 @@ biomes:
         moistureMax: 0.56
     surface: GRASS
     subsurface: DIRT
-    maxNpcs: 40
     regionBudget: 20
     fillers:
       - type: STONE
@@ -199,7 +193,6 @@ biomes:
         moistureMax: 0.68
     surface: GRASS
     subsurface: DIRT
-    maxNpcs: 50
     regionBudget: 25
     fillers:
       - type: STONE
@@ -238,7 +231,6 @@ biomes:
         moistureMax: 1.0
     surface: GRASS
     subsurface: DIRT
-    maxNpcs: 40
     regionBudget: 20
     fillers:
       - type: STONE

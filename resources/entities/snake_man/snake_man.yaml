@@ -27,8 +27,6 @@ spawn:
   spawnBiomes:
     - dry_plains
     - desert
-  maxTotal: 30
-  minTotal: 10
 animal:
   diet: CARNIVORE
   starvationDeathDays: 4.0

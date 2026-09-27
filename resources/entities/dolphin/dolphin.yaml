@@ -12,8 +12,6 @@ spawn:
   spawnBiomes:
     - sea
     - lake
-  maxTotal: 24
-  minTotal: 8
 animal:
   diet: CARNIVORE
   canReproduce: false

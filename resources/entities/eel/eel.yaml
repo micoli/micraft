@@ -14,8 +14,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: []
-  maxTotal: 40
-  minTotal: 20
 tameable: false
 attacks:
   - attackId: eel_shock

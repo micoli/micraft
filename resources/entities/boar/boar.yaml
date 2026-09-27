@@ -11,8 +11,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: [forest, plains, dry_plains]
-  maxTotal: 70
-  minTotal: 45
 tameable: true
 tameBaseChance: 0.15
 attacks:

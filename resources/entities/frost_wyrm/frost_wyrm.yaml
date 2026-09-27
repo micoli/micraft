@@ -16,7 +16,6 @@ spawn:
   maxPerChunk: 1
   spawnBiomes: [snow_peaks]
   maxTotal: 4
-  minTotal: 1
 tameable: false
 attacks:
   - attackId: slash

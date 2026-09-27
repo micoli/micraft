@@ -14,8 +14,6 @@ spawn:
   spawnBiomes:
     - plains
     - forest
-  maxTotal: 200
-  minTotal: 150
 hp: 8
 animal:
   diet: HERBIVORE

@@ -9,8 +9,6 @@ spawn:
   spawnBiomes:
     - forest
     - pine_forest
-  maxTotal: 20
-  minTotal: 12
 hp: 35
 aggroMode: AGGRESSIVE
 aggroRange: 10.0

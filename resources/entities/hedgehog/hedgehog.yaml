@@ -10,8 +10,6 @@ spawn:
   autoSpawn: true
   maxPerChunk: 2
   spawnBiomes: [plains, forest]
-  maxTotal: 60
-  minTotal: 35
 tameable: false
 attacks:
   - attackId: hedgehog_spikes

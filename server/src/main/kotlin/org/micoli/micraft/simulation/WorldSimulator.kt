@@ -99,7 +99,7 @@ class WorldSimulator(
             halfSize = config.halfSize,
             groundY = config.groundY,
             wallHeight = config.wallHeight,
-            maxNpcs = config.maxNpcs,
+            regionBudget = config.maxNpcs,
             zoneLevel = config.zoneLevel,
             vegetationDensity = config.vegetationDensity,
             vegetationSeed = config.seed,

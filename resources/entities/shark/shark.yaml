@@ -14,8 +14,6 @@ spawn:
   maxPerChunk: 1
   spawnBiomes:
     - sea
-  maxTotal: 12
-  minTotal: 4
 animal:
   diet: CARNIVORE
   canReproduce: false

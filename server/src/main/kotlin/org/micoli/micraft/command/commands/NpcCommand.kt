@@ -5,7 +5,7 @@ import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.npc.NpcManager
-import org.micoli.micraft.game.npc.roster.RosterBuilder
+import org.micoli.micraft.game.npc.roster.RegionPopulation
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.Region
 import org.micoli.micraft.protocol.ServerMessage
@@ -174,7 +174,9 @@ class NpcCommand : CommandHandler {
             session.send(ServerMessage.Notification(i18n.t(lang, key, args)))
             return
         }
-        val roster = RosterBuilder.build(world.worldSeed, region, npcManager.getDefinitions())
+        val population = RegionPopulation(world, npcManager::getDefinitions)
+        val roster = population.rosterOf(region)
+        val census = population.census(npcManager.getAll())
         session.send(
             ServerMessage.Notification(
                 i18n.t(
@@ -184,12 +186,21 @@ class NpcCommand : CommandHandler {
                     region.biome.id,
                     region.dangerLevel,
                     region.dangerTier.tier,
-                    roster.budget)))
+                    roster.budget,
+                    census.total(region))))
         for (entry in roster.entries) {
+            val live = census.count(region, entry.type)
             val line =
                 if (entry.rare)
-                    i18n.t(lang, "npc:server:roster_entry_rare", entry.type, entry.share)
-                else i18n.t(lang, "npc:server:roster_entry", entry.type, entry.weight, entry.share)
+                    i18n.t(lang, "npc:server:roster_entry_rare", entry.type, entry.share, live)
+                else
+                    i18n.t(
+                        lang,
+                        "npc:server:roster_entry",
+                        entry.type,
+                        entry.weight,
+                        entry.share,
+                        live)
             session.send(ServerMessage.Notification(line))
         }
     }

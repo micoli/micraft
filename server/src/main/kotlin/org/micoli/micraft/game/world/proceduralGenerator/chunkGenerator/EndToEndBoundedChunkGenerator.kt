@@ -3,6 +3,7 @@ package org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.Region
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.biome.BiomeDefinition
 import org.micoli.micraft.game.world.biome.BiomeZone
@@ -13,14 +14,14 @@ import org.micoli.micraft.game.world.biome.BiomeZone
  * vegetation, no walls — two calls for the same [ChunkPos] return byte-identical blocks so specs
  * can assert exact coordinates.
  *
- * The biome's `maxNpcs` is 0 so [org.micoli.micraft.game.npc.NpcSpawner] never auto-spawns, keeping
- * the player set under test limited to the connected clients.
+ * The whole plane is one Region with a zero budget, so [org.micoli.micraft.game.npc.NpcSpawner]
+ * never auto-spawns, keeping the player set under test limited to the connected clients.
  */
 class EndToEndBoundedChunkGenerator(
     private val halfChunksX: Int = 4,
     private val halfChunksZ: Int = 4,
     private val groundY: Int = 64,
-    @Suppress("unused") private val seed: Long = 1234L,
+    private val seed: Long = 1234L,
     private val biomeId: String = "plains",
     private val zoneLevel: Int = 1,
 ) : ChunkGenerator {
@@ -39,7 +40,7 @@ class EndToEndBoundedChunkGenerator(
             subsurface = BlockType.DIRT,
             elevationMin = groundY,
             elevationMax = groundY,
-            maxNpcs = 0,
+            regionBudget = 0,
         )
 
     private fun inBounds(wx: Int, wz: Int): Boolean = wx in minX..maxX && wz in minZ..maxZ
@@ -64,4 +65,13 @@ class EndToEndBoundedChunkGenerator(
         if (inBounds(wx, wz)) biome else null
 
     override fun zoneLevelAt(wx: Int, wz: Int): Int = if (inBounds(wx, wz)) zoneLevel else 0
+
+    private val region = Region(0, 0, biome, "Testland", zoneLevel)
+
+    override val worldSeed: Long
+        get() = seed
+
+    override fun regionAt(wx: Int, wz: Int): Region? = if (inBounds(wx, wz)) region else null
+
+    override fun regionsNear(wx: Int, wz: Int, radiusBlocks: Int): List<Region> = listOf(region)
 }

@@ -35,7 +35,7 @@ data class SimulationConfig(
     val seed: Long = 42L,
     /** Zone level the arena reports, driving NPC level windows on spawn. */
     val zoneLevel: Int = 5,
-    /** Per-biome NPC cap applied by the auto-spawner; 0 disables it. */
+    /** Wild NPC budget of the arena's single Region; 0 turns auto-spawn off. */
     val maxNpcs: Int = 0,
     /**
      * Hard ceiling on the arena's population, births included. Reproduction is exponential, so

@@ -16,8 +16,6 @@ spawn:
     - forest
     - pine_forest
     - snow_peaks
-  maxTotal: 20
-  minTotal: 8
 animal:
   diet: CARNIVORE
   canReproduce: false

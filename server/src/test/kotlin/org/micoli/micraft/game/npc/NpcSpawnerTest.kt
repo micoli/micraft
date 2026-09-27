@@ -3,6 +3,7 @@ package org.micoli.micraft.game.npc
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
@@ -11,8 +12,8 @@ import org.micoli.micraft.game.world.BlockDefinition
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
-import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.Region
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.biome.BiomeDefinition
@@ -28,7 +29,7 @@ private fun wanderDef(
     maxPerChunk: Int = 2,
     spawnBiomes: List<String> = emptyList(),
     maxTotal: Int = 0,
-    minTotal: Int = 0,
+    weight: Int = 1,
     movementMode: List<MovementMode> = listOf(MovementMode.WALKING),
 ): NpcDefinition =
     NpcDefinition(
@@ -45,7 +46,7 @@ private fun wanderDef(
                 maxPerChunk = maxPerChunk,
                 spawnBiomes = spawnBiomes,
                 maxTotal = maxTotal,
-                minTotal = minTotal,
+                weight = weight,
             ),
         movementMode = movementMode,
     )
@@ -65,19 +66,62 @@ private fun staticDef(
         spawn = NpcSpawnConfig(autoSpawn = autoSpawn),
     )
 
+private fun biome(id: String = "plains", budget: Int = 25) =
+    BiomeDefinition(
+        id = id,
+        zones = listOf(BiomeZone(moistureMin = 0.0, moistureMax = 1.0)),
+        surface = BlockType.GRASS,
+        subsurface = BlockType.DIRT,
+        regionBudget = budget,
+    )
+
+/** [inner]'s blocks, as one Region of [biome] at Danger level 1. */
+private class OneRegionGenerator(
+    private val inner: ChunkGenerator,
+    private val biome: BiomeDefinition
+) : ChunkGenerator by inner {
+    private val region = Region(0, 0, biome, "Testland", 1)
+
+    override fun biomeDefinitionAt(wx: Int, wz: Int) = biome
+
+    override fun zoneLevelAt(wx: Int, wz: Int) = 1
+
+    override fun regionAt(wx: Int, wz: Int) = region
+
+    override fun regionsNear(wx: Int, wz: Int, radiusBlocks: Int) = listOf(region)
+}
+
+private val floorBlocks = buildList {
+    val size = WorldConstants.CHUNK_SIZE * 5
+    for (x in 0 until size) for (z in 0 until size) add(Triple(x, 3, z))
+}
+
+private fun WorldState.discover(blocks: List<Triple<Int, Int, Int>>) = apply {
+    blocks
+        .map { (x, _, z) ->
+            ChunkPos(
+                Math.floorDiv(x, WorldConstants.CHUNK_SIZE),
+                Math.floorDiv(z, WorldConstants.CHUNK_SIZE))
+        }
+        .toSet()
+        .forEach { getOrGenerate(it) }
+}
+
+private fun regionWorld(biome: BiomeDefinition = biome(), top: BlockType? = null): WorldState {
+    val inner =
+        if (top == null) testWorld(*floorBlocks.toTypedArray()).generator
+        else MapChunkGenerator(floorBlocks.associateWith { top })
+    return WorldState(OneRegionGenerator(inner, biome)).discover(floorBlocks)
+}
+
 private fun testManager(defs: Map<String, NpcDefinition>): NpcManager {
     val m = NpcManager(broadcast = {})
     m.loadDefinitions(defs)
     return m
 }
 
-private fun solidFloorWorld(): WorldState {
-    val chunkSize = WorldConstants.CHUNK_SIZE
-    val blocks = buildList {
-        for (x in 0 until chunkSize * 5) for (z in 0 until chunkSize * 5) add(Triple(x, 3, z))
-    }
-    return testWorld(*blocks.toTypedArray())
-}
+private suspend fun NpcSpawner.passes(world: WorldState, m: NpcManager, count: Int) =
+    repeat(count) { trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
 
 class NpcSpawnerTest {
     private var savedBlocks: Map<BlockType, BlockDefinition> = emptyMap()
@@ -99,238 +143,154 @@ class NpcSpawnerTest {
     }
 
     @Test
-    fun trySpawn_autoSpawnTrue_spawnsNpc() = runBlocking {
-        val world = solidFloorWorld()
+    fun trySpawn_rosterType_spawns() = runBlocking {
+        val world = regionWorld()
         val m = testManager(mapOf("GOAT" to wanderDef()))
-        NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks())
+        NpcSpawner().passes(world, m, 1)
         assertTrue(m.getAll().isNotEmpty())
     }
 
     @Test
     fun trySpawn_autoSpawnFalse_neverSpawns() = runBlocking {
-        val world = solidFloorWorld()
+        val world = regionWorld()
         val m = testManager(mapOf("SELLER" to staticDef(autoSpawn = false)))
-        repeat(5) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
+        NpcSpawner().passes(world, m, 5)
         assertTrue(m.getAll().isEmpty())
     }
 
     @Test
     fun trySpawn_respectsMaxPerChunk() = runBlocking {
-        val world = solidFloorWorld()
+        val world = regionWorld()
         val m = testManager(mapOf("GOAT" to wanderDef(maxPerChunk = 1)))
+        NpcSpawner().passes(world, m, 10)
         val chunk = ChunkPos(0, 0)
-        repeat(10) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
         assertTrue(
-            m.countByTypeInChunk("GOAT", chunk) <= 1,
-            "Expected ≤1 GOAT in chunk, got ${m.countByTypeInChunk("GOAT", chunk)}",
-        )
+            m.countByTypeInChunk("GOAT", chunk) <= 1, "got ${m.countByTypeInChunk("GOAT", chunk)}")
     }
 
     @Test
-    fun trySpawn_respectsBiomeMaxNpcs() = runBlocking {
-        val chunkSize = WorldConstants.CHUNK_SIZE
-        val blocks = buildList {
-            for (x in 0 until chunkSize * 5) for (z in 0 until chunkSize * 5) add(Triple(x, 3, z))
-        }
-        val testBiome =
-            BiomeDefinition(
-                id = "plains",
-                zones = listOf(BiomeZone(moistureMin = 0.0, moistureMax = 1.0)),
-                surface = BlockType.GRASS,
-                subsurface = BlockType.DIRT,
-                maxNpcs = 2,
-            )
-        val baseWorld = testWorld(*blocks.toTypedArray())
-        val worldWithBiome =
-            WorldState(
-                object : ChunkGenerator {
-                    override fun generate(pos: ChunkPos): Chunk = baseWorld.getOrGenerate(pos)
-
-                    override fun biomeDefinitionAt(
-                        wx: Int,
-                        wz: Int,
-                    ) = testBiome
-                })
-        blocks
-            .map { (x, _, z) ->
-                ChunkPos(
-                    Math.floorDiv(x, WorldConstants.CHUNK_SIZE),
-                    Math.floorDiv(z, WorldConstants.CHUNK_SIZE))
-            }
-            .toSet()
-            .forEach { worldWithBiome.getOrGenerate(it) }
-
+    fun trySpawn_fillsTheRegionBudgetAndNoMore() = runBlocking {
+        val world = regionWorld(biome(budget = 4))
         val m = testManager(mapOf("GOAT" to wanderDef(maxPerChunk = 10)))
-        repeat(20) {
-            NpcSpawner()
-                .trySpawn(worldWithBiome, m, m.getDefinitions(), worldWithBiome.discoveredChunks())
-        }
-        val zoneKey = m.zoneKey(chunkSize / 2f, chunkSize / 2f)
-        assertTrue(
-            m.countInZone(zoneKey) <= 2,
-            "Expected ≤2 NPCs in zone, got ${m.countInZone(zoneKey)}",
-        )
+        NpcSpawner().passes(world, m, 20)
+        assertEquals(4, m.getAll().size)
+    }
+
+    @Test
+    fun trySpawn_zeroBudget_neverSpawns() = runBlocking {
+        val world = regionWorld(biome(budget = 0))
+        val m = testManager(mapOf("GOAT" to wanderDef()))
+        NpcSpawner().passes(world, m, 5)
+        assertTrue(m.getAll().isEmpty())
+    }
+
+    @Test
+    fun trySpawn_worldWithoutRegions_neverSpawns() = runBlocking {
+        val world = testWorld(*floorBlocks.toTypedArray())
+        val m = testManager(mapOf("GOAT" to wanderDef()))
+        NpcSpawner().passes(world, m, 5)
+        assertTrue(m.getAll().isEmpty())
+    }
+
+    @Test
+    fun trySpawn_onlyRosterTypesSpawn() = runBlocking {
+        val world = regionWorld()
+        val defs = (1..8).associate { "BEAST$it" to wanderDef(type = "BEAST$it", maxPerChunk = 10) }
+        val m = testManager(defs)
+        val spawner = NpcSpawner()
+        spawner.passes(world, m, 20)
+
+        val spawned = m.getAll().map { it.state.type }.toSet()
+        assertTrue(spawned.size in 1..4, "a Roster holds 2-4 passive types, spawned $spawned")
+    }
+
+    @Test
+    fun trySpawn_splitsTheBudgetByWeight() = runBlocking {
+        val world = regionWorld(biome(budget = 8))
+        val m =
+            testManager(
+                mapOf(
+                    "HEAVY" to wanderDef(type = "HEAVY", weight = 3, maxPerChunk = 10),
+                    "LIGHT" to wanderDef(type = "LIGHT", weight = 1, maxPerChunk = 10)))
+        NpcSpawner().passes(world, m, 30)
+
+        assertEquals(6, m.countByType("HEAVY"))
+        assertEquals(2, m.countByType("LIGHT"))
+    }
+
+    @Test
+    fun trySpawn_restocksWhatDied() = runBlocking {
+        val world = regionWorld(biome(budget = 3))
+        val m = testManager(mapOf("GOAT" to wanderDef(maxPerChunk = 10)))
+        val spawner = NpcSpawner()
+        spawner.passes(world, m, 10)
+        m.getAll().first().let { m.despawnNpc(it.state.id) }
+        assertEquals(2, m.countByType("GOAT"))
+
+        spawner.passes(world, m, 10)
+
+        assertEquals(3, m.countByType("GOAT"))
+    }
+
+    @Test
+    fun trySpawn_rareNeverExceedsItsWorldCeiling() = runBlocking {
+        val world = regionWorld()
+        val m =
+            testManager(
+                mapOf(
+                    "GOAT" to wanderDef(maxPerChunk = 10),
+                    "DRAGON" to wanderDef(type = "DRAGON", maxTotal = 1, maxPerChunk = 10)))
+        NpcSpawner().passes(world, m, 20)
+        assertTrue(m.countByType("DRAGON") <= 1, "was ${m.countByType("DRAGON")}")
     }
 
     @Test
     fun trySpawn_topSurfaceIsTreeCanopy_doesNotSpawnOnIt() = runBlocking {
-        val chunkSize = WorldConstants.CHUNK_SIZE
-        val positions = buildList {
-            for (x in 0 until chunkSize * 5) for (z in 0 until chunkSize * 5) add(Triple(x, 3, z))
-        }
-        val testBiome =
-            BiomeDefinition(
-                id = "forest",
-                zones = listOf(BiomeZone(moistureMin = 0.0, moistureMax = 1.0)),
-                surface = BlockType.GRASS,
-                subsurface = BlockType.DIRT,
-            )
-        // Every column's top block is a tree log, not the biome's natural ground.
-        val treeGenerator = MapChunkGenerator(positions.associateWith { BlockType.OAK_LOG })
-        val world =
-            WorldState(
-                object : ChunkGenerator {
-                    override fun generate(pos: ChunkPos): Chunk = treeGenerator.generate(pos)
-
-                    override fun biomeDefinitionAt(wx: Int, wz: Int) = testBiome
-                })
-        positions
-            .map { (x, _, z) ->
-                ChunkPos(
-                    Math.floorDiv(x, WorldConstants.CHUNK_SIZE),
-                    Math.floorDiv(z, WorldConstants.CHUNK_SIZE))
-            }
-            .toSet()
-            .forEach { world.getOrGenerate(it) }
-
+        val world = regionWorld(biome("forest"), top = BlockType.OAK_LOG)
         val m = testManager(mapOf("GOAT" to wanderDef(maxPerChunk = 10)))
-        repeat(20) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
-
+        NpcSpawner().passes(world, m, 20)
         assertTrue(m.getAll().isEmpty(), "a walker must not spawn on a tree canopy/trunk")
     }
 
     @Test
-    fun trySpawn_emptyBiomeFilter_spawnsAnywhere() = runBlocking {
-        val world = solidFloorWorld()
-        val m = testManager(mapOf("GOAT" to wanderDef(spawnBiomes = emptyList())))
-        NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks())
-        assertTrue(m.getAll().isNotEmpty())
-    }
-
-    @Test
     fun trySpawn_biomeFilterNoMatch_doesNotSpawn() = runBlocking {
-        val world = solidFloorWorld()
+        val world = regionWorld()
         val m = testManager(mapOf("GOAT" to wanderDef(spawnBiomes = listOf("nonexistent_biome"))))
-        repeat(5) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
+        NpcSpawner().passes(world, m, 5)
         assertTrue(m.getAll().isEmpty())
     }
 
     @Test
     fun trySpawn_noDiscoveredChunks_doesNothing() = runBlocking {
-        // Empty testWorld — no blocks pre-generated, so no discovered chunks
-        val world = testWorld()
+        val world = WorldState(OneRegionGenerator(testWorld().generator, biome()))
         val m = testManager(mapOf("GOAT" to wanderDef()))
-        NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks())
+        NpcSpawner().passes(world, m, 1)
         assertTrue(m.getAll().isEmpty())
-    }
-
-    // ── per-type quotas ───────────────────────────────────────────────────────
-
-    @Test
-    fun trySpawn_respectsMaxTotalAcrossChunks() = runBlocking {
-        val world = solidFloorWorld()
-        val m = testManager(mapOf("GOAT" to wanderDef(maxTotal = 3, maxPerChunk = 10)))
-        val spawner = NpcSpawner()
-
-        // several passes: the ceiling has to hold over time, not only within one call
-        repeat(10) { spawner.trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
-
-        assertTrue(m.countByType("GOAT") <= 3, "was ${m.countByType("GOAT")}")
-    }
-
-    @Test
-    fun trySpawn_stopsAtMinTotalEvenWithChunkRoomLeft() = runBlocking {
-        val world = solidFloorWorld()
-        val m = testManager(mapOf("GOAT" to wanderDef(minTotal = 2, maxPerChunk = 10)))
-        val spawner = NpcSpawner()
-
-        repeat(10) { spawner.trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
-
-        // the floor is a restocking target, not a budget to spend: above it, births take over
-        assertTrue(m.countByType("GOAT") == 2, "was ${m.countByType("GOAT")}")
-    }
-
-    @Test
-    fun trySpawn_restocksBackUpToTheFloor() = runBlocking {
-        val world = solidFloorWorld()
-        val m = testManager(mapOf("GOAT" to wanderDef(minTotal = 3, maxPerChunk = 10)))
-        val spawner = NpcSpawner()
-        repeat(10) { spawner.trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
-        m.getAll().first().let { m.despawnNpc(it.state.id) }
-        assertTrue(m.countByType("GOAT") == 2)
-
-        repeat(10) { spawner.trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
-
-        assertTrue(m.countByType("GOAT") == 3, "the net must refill: ${m.countByType("GOAT")}")
-    }
-
-    @Test
-    fun trySpawn_zeroQuotas_keepTheOldBehaviour() = runBlocking {
-        val world = solidFloorWorld()
-        val m = testManager(mapOf("GOAT" to wanderDef(maxTotal = 0, minTotal = 0, maxPerChunk = 2)))
-        val spawner = NpcSpawner()
-
-        repeat(10) { spawner.trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
-
-        // unquotaed, the spawner still fills up to the per-chunk cap as it always did
-        assertTrue(m.countByType("GOAT") > 3, "was ${m.countByType("GOAT")}")
     }
 
     @Test
     fun trySpawn_aquaticNpc_spawnsInsideWaterColumn() = runBlocking {
-        val chunkSize = WorldConstants.CHUNK_SIZE
-        val blocks = buildList {
-            for (x in 0 until chunkSize * 5) for (z in 0 until chunkSize * 5) add(Triple(x, 3, z))
-        }
-        val liquidBiome =
-            BiomeDefinition(
-                id = "sea",
-                zones = listOf(BiomeZone(moistureMin = 0.0, moistureMax = 1.0)),
-                surface = BlockType.SAND,
-                subsurface = BlockType.SANDSTONE,
-                maxNpcs = 20,
-                liquid = true,
-                waterLevel = 10,
-            )
-        val baseWorld = testWorld(*blocks.toTypedArray())
-        val world =
-            WorldState(
-                object : ChunkGenerator {
-                    override fun generate(pos: ChunkPos) = baseWorld.getOrGenerate(pos)
-
-                    override fun biomeDefinitionAt(wx: Int, wz: Int) = liquidBiome
-                })
-        blocks
-            .map { (x, _, z) ->
-                ChunkPos(
-                    Math.floorDiv(x, WorldConstants.CHUNK_SIZE),
-                    Math.floorDiv(z, WorldConstants.CHUNK_SIZE))
-            }
-            .toSet()
-            .forEach { world.getOrGenerate(it) }
-        // Fill the column with water between the floor and the water level.
-        for (x in 0 until chunkSize * 5) for (z in 0 until chunkSize * 5) for (y in 4..9) {
+        val sea =
+            biome("sea", budget = 20)
+                .copy(
+                    surface = BlockType.SAND,
+                    subsurface = BlockType.SANDSTONE,
+                    liquid = true,
+                    waterLevel = 10)
+        val world = regionWorld(sea)
+        val size = WorldConstants.CHUNK_SIZE * 5
+        for (x in 0 until size) for (z in 0 until size) for (y in 4..9) {
             world.applyChange(BlockChange(BlockPos(x, y, z), BlockType.WATER, 0))
         }
-
         val m =
             testManager(
                 mapOf(
                     "FISH" to
                         wanderDef(
+                            type = "FISH",
                             spawnBiomes = listOf("sea"),
                             movementMode = listOf(MovementMode.SWIMMING))))
-        repeat(10) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
+        NpcSpawner().passes(world, m, 10)
 
         assertTrue(m.getAll().isNotEmpty(), "aquatic NPC should spawn in a liquid biome")
         m.getAll().forEach {
@@ -344,18 +304,21 @@ class NpcSpawnerTest {
 
     @Test
     fun trySpawn_aquaticNpc_notInLiquidBiome_doesNotSpawn() = runBlocking {
-        val world = solidFloorWorld()
+        val world = regionWorld()
         val m =
-            testManager(mapOf("FISH" to wanderDef(movementMode = listOf(MovementMode.SWIMMING))))
-        repeat(5) { NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks()) }
+            testManager(
+                mapOf(
+                    "FISH" to
+                        wanderDef(type = "FISH", movementMode = listOf(MovementMode.SWIMMING))))
+        NpcSpawner().passes(world, m, 5)
         assertTrue(m.getAll().isEmpty())
     }
 
     @Test
     fun countsByType_matchesCountByType_andIgnoresTheDead() = runBlocking {
-        val world = solidFloorWorld()
+        val world = regionWorld()
         val m = testManager(mapOf("GOAT" to wanderDef(), "SELLER" to staticDef()))
-        NpcSpawner().trySpawn(world, m, m.getDefinitions(), world.discoveredChunks())
+        NpcSpawner().passes(world, m, 1)
         m.getAll().first().isDead = true
 
         val counts = m.countsByType()

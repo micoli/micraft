@@ -7,6 +7,8 @@ import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcTickContext
+import org.micoli.micraft.game.npc.roster.RegionCensus
+import org.micoli.micraft.game.npc.roster.RegionPopulation
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.WorldState
@@ -38,6 +40,9 @@ class AnimalInteractionProcessor(
     private val onEvent: (AnimalEvent) -> Unit = {},
 ) {
     private var slowTickCounter = 0
+    private val population = RegionPopulation(world) { npcManager.getDefinitions() }
+    /** Built at most once per slow tick, and only if some animal gets as far as wanting a mate. */
+    private var regionCensus: Lazy<RegionCensus>? = null
     private val hpRegenAccumulators = mutableMapOf<String, Float>()
 
     private fun emit(
@@ -236,6 +241,7 @@ class AnimalInteractionProcessor(
         val allAnimal = npcManager.getAll().filter { !it.isDead && it.animalData != null }
 
         updateFlight(allAnimal)
+        regionCensus = lazy { population.census(npcManager.getAll()) }
         updateTargets(allAnimal, currentDay)
         tickPredation(allAnimal)
         tickHerbivoreFeeding(allAnimal)
@@ -298,7 +304,8 @@ class AnimalInteractionProcessor(
     }
 
     /**
-     * Whether [instance] already has too many of its own kind nearby to breed.
+     * Whether [instance] already has too many of its own kind nearby to breed, or lives in a Region
+     * whose budget is full.
      *
      * Counts the animal itself out. A herd hits its local limit and stops growing *there* while the
      * same species keeps breeding elsewhere — which is what a population regulated by its
@@ -309,6 +316,7 @@ class AnimalInteractionProcessor(
         config: AnimalYamlEntry,
         allAnimal: List<NpcInstance>,
     ): Boolean {
+        if (isInFullRegion(instance)) return true
         if (config.maxLocalDensity <= 0) return false
         val pos = instance.state.pos
         val radiusSq = config.densityRadius * config.densityRadius
@@ -323,6 +331,13 @@ class AnimalInteractionProcessor(
             if (neighbours >= config.maxLocalDensity) return true
         }
         return false
+    }
+
+    private fun isInFullRegion(instance: NpcInstance): Boolean {
+        val census = regionCensus?.value ?: return false
+        val pos = instance.state.pos
+        val region = world.regionAt(pos.x.toInt(), pos.z.toInt()) ?: return false
+        return census.isFull(region)
     }
 
     private fun updateTargets(allAnimal: List<NpcInstance>, currentDay: Double) {
@@ -583,18 +598,20 @@ class AnimalInteractionProcessor(
             ((mother.instanceLevel + (mateInstance?.instanceLevel ?: mother.instanceLevel)) / 2 - 5)
                 .coerceAtLeast(1)
         val offspringLevel = avgLevel.coerceAtMost(zoneLevel)
+        val region = world.regionAt(mother.state.pos.x.toInt(), mother.state.pos.z.toInt())
+        val census = region?.let { population.census(npcManager.getAll()) }
 
         repeat(count) {
-            if (!canSpawn()) {
+            val regionFull = region != null && census?.isFull(region) == true
+            if (!canSpawn() || regionFull) {
                 // Counted, not silently dropped: a gestation that produced nothing because the
-                // world
-                // was full is the signal that the population ceiling — and not the ecology — is
-                // what
-                // regulates the arena.
+                // world or its Region was full is the signal that a ceiling — and not the ecology —
+                // is what regulates the population.
                 log.debug("Offspring of {} refused: population ceiling reached", mother.state.name)
                 emit(AnimalEventType.BIRTH_BLOCKED, mother)
                 return@repeat
             }
+            if (region != null) census?.record(region, offspringType)
             val offspringAnimal =
                 AnimalInstanceData.offspring(
                     parentA = motherAnimal,
