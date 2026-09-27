@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.armor.WearableSlots
+import org.micoli.micraft.game.equipment.EquipmentCatalog
 import org.micoli.micraft.player.rpg.BaseStats
 import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.player.rpg.CharacterData
@@ -20,7 +21,7 @@ private val CON_CHEST =
 
 class CharacterStatsTest {
 
-    private val stats = CharacterStats(armorRegistry = mapOf("con_chest" to CON_CHEST))
+    private val stats = CharacterStats(EquipmentCatalog(armors = mapOf("con_chest" to CON_CHEST)))
 
     private fun character(level: Int = 5) =
         CharacterData(

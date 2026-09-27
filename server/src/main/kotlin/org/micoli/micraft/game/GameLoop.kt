@@ -40,7 +40,6 @@ import org.micoli.micraft.di.CommandContextClosures
 import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.di.ReloadCoordinator
 import org.micoli.micraft.di.SessionRegistry
-import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.auction.AuctionConfigLoader
 import org.micoli.micraft.game.auction.AuctionManager
@@ -59,13 +58,10 @@ import org.micoli.micraft.game.combat.SpellDefinition
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
-import org.micoli.micraft.game.equipment.ToolCategoryDefinition
+import org.micoli.micraft.game.equipment.EquipmentCatalog
 import org.micoli.micraft.game.equipment.ToolCategoryRegistryLoader
-import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.equipment.ToolRegistryLoader
-import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryRegistryLoader
-import org.micoli.micraft.game.equipment.WeaponDefinition
 import org.micoli.micraft.game.equipment.WeaponRegistryLoader
 import org.micoli.micraft.game.keybinding.defaultKeyBindingGroups
 import org.micoli.micraft.game.keybinding.defaultKeyBindings
@@ -113,7 +109,6 @@ import org.micoli.micraft.game.vehicle.VehicleTickPipeline
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.ChunkPos
-import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.GameWorld
 import org.micoli.micraft.game.world.GameWorldRegistry
 import org.micoli.micraft.game.world.ItemRegistry
@@ -310,12 +305,13 @@ class GameLoop(
     private val instanceRegistry: InstanceRegistry = InstanceRegistry(persistence),
     private val claimRegistry: ClaimRegistry = ClaimRegistry(persistence),
     private val actionBlockRegistry: ActionBlockRegistry = ActionBlockRegistry(persistence),
-    private var weaponRegistry: Map<String, WeaponDefinition> = weaponRegistryLoader.load(),
-    private var toolRegistry: Map<String, ToolDefinition> = toolRegistryLoader.load(),
-    private var weaponCategories: Map<EquipmentCategory, WeaponCategoryDefinition> =
-        weaponCategoryRegistryLoader.load(),
-    private var toolCategories: Map<EquipmentCategory, ToolCategoryDefinition> =
-        toolCategoryRegistryLoader.load(),
+    val equipmentCatalog: EquipmentCatalog =
+        EquipmentCatalog(
+            armorRegistryLoader.load(),
+            weaponRegistryLoader.load(),
+            toolRegistryLoader.load(),
+            weaponCategoryRegistryLoader.load(),
+            toolCategoryRegistryLoader.load()),
     private val railNetworkRegistry: RailNetworkRegistry = RailNetworkRegistry(world),
     private val vehicleManager: VehicleManager = VehicleManager(sessionRegistry::broadcast),
     private val vehicleTickPipeline: VehicleTickPipeline = VehicleTickPipeline(vehicleManager),
@@ -367,12 +363,7 @@ class GameLoop(
     private val classesConfigLoader: ClassesConfig? = null,
     private val experienceConfigLoader: ExperienceConfig? = null,
     private val characterStats: CharacterStats =
-        CharacterStats(
-            armorRegistryLoader.load(),
-            weaponRegistry,
-            toolRegistry,
-            combatConfig.maxRage,
-            playerPersister::save),
+        CharacterStats(equipmentCatalog, combatConfig.maxRage, playerPersister::save),
     private val combatProcessor: CombatProcessor =
         CombatProcessor(
             config = combatConfig,
@@ -467,8 +458,8 @@ class GameLoop(
             claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
             actionBlockRegistry = actionBlockRegistry,
-            weaponRegistry = { weaponRegistry },
-            toolRegistry = { toolRegistry },
+            weaponRegistry = { equipmentCatalog.weapons },
+            toolRegistry = { equipmentCatalog.tools },
         ),
     private val blockPlacer: BlockPlacer =
         BlockPlacer(
@@ -650,8 +641,6 @@ class GameLoop(
 
     private val pluginTickHandlers: MutableList<TickHandler> = mutableListOf()
 
-    private var armorRegistry: Map<String, ArmorDefinition> = emptyMap()
-
     private val gameWorld: GameWorld =
         GameWorld(
             id = GameWorld.DEFAULT_ID,
@@ -761,11 +750,11 @@ class GameLoop(
                 } else null,
             reloadNpcs = { npcManager.reloadDefinitions(npcRegistryLoader.reload()) },
             reloadRbac = reloadRbac,
-            armorRegistry = { armorRegistry },
-            weaponRegistry = { weaponRegistry },
-            toolRegistry = { toolRegistry },
-            weaponCategories = { weaponCategories },
-            toolCategories = { toolCategories },
+            armorRegistry = { equipmentCatalog.armors },
+            weaponRegistry = { equipmentCatalog.weapons },
+            toolRegistry = { equipmentCatalog.tools },
+            weaponCategories = { equipmentCatalog.weaponCategories },
+            toolCategories = { equipmentCatalog.toolCategories },
             applyBuff = { session, effect, durationSec ->
                 combatProcessor.applyStatusEffectTo(
                     session, effect, durationSec, System.currentTimeMillis())
@@ -829,6 +818,7 @@ class GameLoop(
             questManager = questManager,
             clearAccumulators = regenProcessor::clearAccumulators,
             applyBuff = closures.applyBuff,
+            equipmentCatalog = equipmentCatalog,
             characterStats = characterStats,
         )
 
@@ -1389,14 +1379,14 @@ class GameLoop(
             questRegistryLoader = questRegistryLoader,
             reloadRbac = reloadRbac,
             reloadArmorRegistry = {
-                armorRegistry = armorRegistryLoader.load()
-                weaponRegistry = weaponRegistryLoader.load()
-                toolRegistry = toolRegistryLoader.load()
-                characterStats.reload(armorRegistry, weaponRegistry, toolRegistry)
+                equipmentCatalog.reload(
+                    armorRegistryLoader.load(),
+                    weaponRegistryLoader.load(),
+                    toolRegistryLoader.load())
             },
             reloadEquipmentCategories = {
-                weaponCategories = weaponCategoryRegistryLoader.load()
-                toolCategories = toolCategoryRegistryLoader.load()
+                equipmentCatalog.reloadCategories(
+                    weaponCategoryRegistryLoader.load(), toolCategoryRegistryLoader.load())
             },
             reloadRecipeRegistry = { RecipeRegistry.load(recipeRegistryLoader.load()) },
             reloadCombatSystems =
@@ -1437,10 +1427,9 @@ class GameLoop(
             pluginTickHandlers += plugin.tickHandlers()
         }
         RecipeRegistry.load(recipeRegistryLoader.load())
-        armorRegistry = armorRegistryLoader.load()
         npcConfigLoader.load()
         val npcDefinitions = npcRegistryLoader.load()
-        NpcLootValidator.validate(npcDefinitions, armorRegistry)
+        NpcLootValidator.validate(npcDefinitions, equipmentCatalog.armors)
         npcManager.loadDefinitions(npcDefinitions)
         questRegistryLoader?.load()?.let { questManager?.reloadDefinitions(it) }
         gameWorld.loadPersistedState()

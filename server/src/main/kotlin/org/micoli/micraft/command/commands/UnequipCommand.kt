@@ -3,9 +3,9 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.game.equipment.UnequipResult
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage.Notification
-import org.micoli.micraft.protocol.ServerMessage.PlayerUpdate
 
 class UnequipCommand : CommandHandler {
     override val id: UUID = UUID.fromString("c4f9a2b3-6d7e-4a8f-9c1d-2e3f4a5b6c7d")
@@ -36,15 +36,11 @@ class UnequipCommand : CommandHandler {
             return
         }
 
-        if (name !in session.state.armors) {
-            session.send(Notification(i18n.t(lang, "unequip:server:not_wearing", name)))
-            return
-        }
-
-        session.state = session.state.copy(armors = session.state.armors - name)
-        context.broadcast(PlayerUpdate(session.state))
-        context.savePlayer(session)
-        context.characterStats.resync(session)
-        session.send(Notification(i18n.t(lang, "unequip:server:unequipped", name)))
+        val message =
+            when (context.loadout.unequip(session, name)) {
+                UnequipResult.Unequipped -> i18n.t(lang, "unequip:server:unequipped", name)
+                UnequipResult.NotWorn -> i18n.t(lang, "unequip:server:not_wearing", name)
+            }
+        session.send(Notification(message))
     }
 }

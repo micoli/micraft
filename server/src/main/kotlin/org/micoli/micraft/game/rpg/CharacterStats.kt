@@ -1,10 +1,8 @@
 package org.micoli.micraft.game.rpg
 
 import org.micoli.micraft.combat.StatusEffect
-import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.combat.CombatConfigData
-import org.micoli.micraft.game.equipment.ToolDefinition
-import org.micoli.micraft.game.equipment.WeaponDefinition
+import org.micoli.micraft.game.equipment.EquipmentCatalog
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.rpg.BaseStats
@@ -17,21 +15,11 @@ data class StatSheet(val effective: BaseStats, val derived: DerivedStats)
 
 /** The only place a Character's Effective stats and Derived stats are resolved. */
 class CharacterStats(
-    @Volatile private var armorRegistry: Map<String, ArmorDefinition> = emptyMap(),
-    @Volatile private var weaponRegistry: Map<String, WeaponDefinition> = emptyMap(),
-    @Volatile private var toolRegistry: Map<String, ToolDefinition> = emptyMap(),
+    private val catalog: EquipmentCatalog = EquipmentCatalog(),
     @Volatile private var maxRage: Int = CombatConfigData().maxRage,
     private val savePlayer: suspend (PlayerSession) -> Unit = {},
 ) {
-    fun reload(
-        armorRegistry: Map<String, ArmorDefinition> = this.armorRegistry,
-        weaponRegistry: Map<String, WeaponDefinition> = this.weaponRegistry,
-        toolRegistry: Map<String, ToolDefinition> = this.toolRegistry,
-        maxRage: Int = this.maxRage,
-    ) {
-        this.armorRegistry = armorRegistry
-        this.weaponRegistry = weaponRegistry
-        this.toolRegistry = toolRegistry
+    fun reload(maxRage: Int) {
         this.maxRage = maxRage
     }
 
@@ -42,7 +30,7 @@ class CharacterStats(
         state: PlayerState,
         effects: Collection<StatusEffect> = emptyList(),
     ): StatSheet {
-        val bonuses = state.equipmentBonuses(armorRegistry, weaponRegistry, toolRegistry)
+        val bonuses = state.equipmentBonuses(catalog.armors, catalog.weapons, catalog.tools)
         val effective = DerivedStatsCalculator.effectiveBaseStats(character.baseStats, bonuses)
         val derived =
             DerivedStatsCalculator.compute(
@@ -58,10 +46,11 @@ class CharacterStats(
 
     /**
      * Pushes the Character's full sheet after anything that may change a max (Loadout, Level,
-     * stat-affecting effect), clamping current HP and mana to the new max.
+     * stat-affecting effect), clamping current HP and mana to the new max. Returns whether the
+     * clamp saved the Character.
      */
-    suspend fun resync(session: PlayerSession) {
-        val character = session.characterData ?: return
+    suspend fun resync(session: PlayerSession): Boolean {
+        val character = session.characterData ?: return false
         val sheet = of(session, character)
         val clamped =
             character.copy(
@@ -73,6 +62,7 @@ class CharacterStats(
         }
         session.send(ServerMessage.CharacterSync(clamped, sheet.derived, sheet.effective))
         session.send(statusUpdate(session, clamped, sheet.derived))
+        return clamped != character
     }
 
     suspend fun sendStatus(session: PlayerSession) {

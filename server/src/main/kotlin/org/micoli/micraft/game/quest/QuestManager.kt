@@ -1,6 +1,8 @@
 package org.micoli.micraft.game.quest
 
 import org.micoli.micraft.I18nConfig
+import org.micoli.micraft.game.equipment.EquipmentCatalog
+import org.micoli.micraft.game.equipment.Loadout
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ItemType
@@ -17,6 +19,7 @@ class QuestManager(
     private val grantXp: suspend (PlayerSession, Int) -> Unit = { _, _ -> },
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit = { _, _ -> },
     private val i18n: I18nConfig? = null,
+    private val loadout: Loadout = Loadout(EquipmentCatalog()),
 ) {
     @Volatile private var definitions: Map<String, QuestDefinition> = emptyMap()
 
@@ -247,9 +250,11 @@ class QuestManager(
             }
             session.send(ServerMessage.InventoryUpdate(session.inventory.toMap()))
         }
-        val newArmors = def.rewards.armorRewards.filterNot { it in session.state.ownedArmors }
-        if (newArmors.isNotEmpty()) {
-            session.state = session.state.copy(ownedArmors = session.state.ownedArmors + newArmors)
+        val before = session.state.ownedArmors
+        val rewarded = loadout.grantArmors(session.state, def.rewards.armorRewards)
+        val newArmors = rewarded.ownedArmors - before.toSet()
+        if (rewarded != session.state) {
+            session.state = rewarded
             savePlayer(session)
         }
 

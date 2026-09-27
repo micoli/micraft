@@ -12,6 +12,7 @@ import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.RegenProcessor
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
+import org.micoli.micraft.game.equipment.Loadout
 import org.micoli.micraft.game.mail.MailManager
 import org.micoli.micraft.game.mail.MailPersistence
 import org.micoli.micraft.game.npc.NpcConstants
@@ -125,14 +126,9 @@ fun buildGameWorld(
             chatService.subscribe(s, c)
         }
 
-    // Loaders, not shared.*Registry: same mis-resolved Map bean issue as ArmorLootGranter below.
+    val equipmentCatalog = shared.equipmentCatalog
     val characterStats =
-        CharacterStats(
-            shared.armorRegistryLoader.load(),
-            shared.weaponRegistryLoader.load(),
-            shared.toolRegistryLoader.load(),
-            shared.combatConfigData.maxRage,
-            playerPersister::save)
+        CharacterStats(equipmentCatalog, shared.combatConfigData.maxRage, playerPersister::save)
     val experienceProcessor =
         ExperienceProcessor(
             opts.experienceConfigData ?: shared.experienceConfigData,
@@ -149,6 +145,7 @@ fun buildGameWorld(
             grantXp = experienceProcessor::grantXp,
             subscribeToChannel = subscribeToChannel,
             i18n = shared.i18n,
+            loadout = Loadout(equipmentCatalog),
         )
     questManager.reloadDefinitions(shared.questRegistryLoader.load())
     val worldItems =
@@ -210,12 +207,7 @@ fun buildGameWorld(
                     worldItems.spawnNpcLoot(npc.state.pos, npc.definition.loot)
                     org.micoli.micraft.game.armor.ArmorLootGranter.grant(
                         npc,
-                        // Loaded fresh, not via shared.armorRegistry: that field is resolved
-                        // through Koin from a bare Map<String, ArmorDefinition> bean, and on this
-                        // path it was observed to resolve to the weapon registry instead — see
-                        // the armor-loot E2E test for the repro. armorRegistryLoader is a
-                        // concrete class, so its resolution isn't ambiguous.
-                        shared.armorRegistryLoader.load(),
+                        Loadout(equipmentCatalog),
                         sessions::all,
                         playerPersister::save,
                         shared.i18n)

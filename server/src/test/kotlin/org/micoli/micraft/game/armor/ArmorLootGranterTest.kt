@@ -5,6 +5,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.game.equipment.EquipmentCatalog
+import org.micoli.micraft.game.equipment.Loadout
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.behaviors.StaticNpcBehavior
@@ -14,6 +16,7 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testSession
 
 private val ARMOR = mapOf("iron_chest" to ArmorDefinition(wearable = WearableSlots(body = true)))
+private val LOADOUT = Loadout(EquipmentCatalog(armors = ARMOR))
 
 private fun killedNpc(contributorId: String, armorLoot: List<ArmorDropEntry>): NpcInstance {
     val def =
@@ -44,7 +47,7 @@ class ArmorLootGranterTest {
         val session = testSession()
         val npc =
             killedNpc(session.id, listOf(ArmorDropEntry(armor = "iron_chest", dropRate = 100)))
-        ArmorLootGranter.grant(npc, ARMOR, { listOf(session) }, savePlayer = {})
+        ArmorLootGranter.grant(npc, LOADOUT, { listOf(session) }, savePlayer = {})
         assertTrue("iron_chest" in session.state.ownedArmors)
         assertTrue(session.sent.filterIsInstance<ServerMessage.Notification>().isNotEmpty())
     }
@@ -53,7 +56,8 @@ class ArmorLootGranterTest {
     fun zeroDropRate_grantsNothing() = runBlocking {
         val session = testSession()
         val npc = killedNpc(session.id, listOf(ArmorDropEntry(armor = "iron_chest", dropRate = 0)))
-        ArmorLootGranter.grant(npc, ARMOR, { listOf(session) }, savePlayer = {}, random = Random(1))
+        ArmorLootGranter.grant(
+            npc, LOADOUT, { listOf(session) }, savePlayer = {}, random = Random(1))
         assertTrue("iron_chest" !in session.state.ownedArmors)
     }
 
@@ -63,7 +67,7 @@ class ArmorLootGranterTest {
         session.state = session.state.copy(ownedArmors = listOf("iron_chest"))
         val npc =
             killedNpc(session.id, listOf(ArmorDropEntry(armor = "iron_chest", dropRate = 100)))
-        ArmorLootGranter.grant(npc, ARMOR, { listOf(session) }, savePlayer = {})
+        ArmorLootGranter.grant(npc, LOADOUT, { listOf(session) }, savePlayer = {})
         assertEquals(1, session.state.ownedArmors.count { it == "iron_chest" })
     }
 
@@ -88,7 +92,7 @@ class ArmorLootGranterTest {
                 definition = def,
                 spawnPos = pos,
             )
-        ArmorLootGranter.grant(npc, ARMOR, { listOf(session) }, savePlayer = {})
+        ArmorLootGranter.grant(npc, LOADOUT, { listOf(session) }, savePlayer = {})
         assertTrue("iron_chest" !in session.state.ownedArmors)
     }
 }

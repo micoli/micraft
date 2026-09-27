@@ -3,10 +3,10 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.game.equipment.UnwieldResult
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.player.Hand
 import org.micoli.micraft.protocol.ServerMessage.Notification
-import org.micoli.micraft.protocol.ServerMessage.PlayerUpdate
 
 class UnwieldCommand : CommandHandler {
     override val id: UUID = UUID.fromString("e6b1c3d4-8f9a-4b0c-9d2e-4f5a6b7c8d9e")
@@ -40,20 +40,11 @@ class UnwieldCommand : CommandHandler {
             return
         }
 
-        val current =
-            if (hand == Hand.RIGHT) session.state.rightHandItem else session.state.leftHandItem
-        if (current == null) {
-            session.send(Notification(i18n.t(lang, "unwield:server:empty")))
-            return
-        }
-
-        session.state =
-            when (hand) {
-                Hand.RIGHT -> session.state.copy(rightHandItem = null)
-                Hand.LEFT -> session.state.copy(leftHandItem = null)
+        val message =
+            when (val result = context.loadout.unwield(session, hand)) {
+                is UnwieldResult.Unwielded -> i18n.t(lang, "unwield:server:unwielded", result.item)
+                UnwieldResult.Empty -> i18n.t(lang, "unwield:server:empty")
             }
-        context.broadcast(PlayerUpdate(session.state))
-        context.savePlayer(session)
-        session.send(Notification(i18n.t(lang, "unwield:server:unwielded", current)))
+        session.send(Notification(message))
     }
 }

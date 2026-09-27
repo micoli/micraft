@@ -12,6 +12,7 @@ import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.equipment.EquipmentCatalog
 import org.micoli.micraft.game.equipment.ToolCategoryDefinition
 import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
@@ -107,6 +108,7 @@ class CommandContextModule {
         placeableManager: PlaceableManager,
         siegeWeaponManager: SiegeWeaponManager,
         characterStats: CharacterStats,
+        equipmentCatalog: EquipmentCatalog,
     ): CommandContext {
         val generator = worldState.generator as? ProceduralChunkGenerator
         val cavernPoints = generator?.namedCavernPoints() ?: emptyMap()
@@ -154,6 +156,7 @@ class CommandContextModule {
             armorRegistry = closures.armorRegistry,
             weaponRegistry = closures.weaponRegistry,
             toolRegistry = closures.toolRegistry,
+            equipmentCatalog = equipmentCatalog,
             characterStats = characterStats,
             weaponCategories = closures.weaponCategories,
             toolCategories = closures.toolCategories,

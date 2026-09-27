@@ -15,6 +15,7 @@ import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.SkillsConfig
 import org.micoli.micraft.game.combat.SpellDefinition
 import org.micoli.micraft.game.drop.DropConfig
+import org.micoli.micraft.game.equipment.EquipmentCatalog
 import org.micoli.micraft.game.equipment.ToolCategoryDefinition
 import org.micoli.micraft.game.equipment.ToolCategoryRegistryLoader
 import org.micoli.micraft.game.equipment.ToolDefinition
@@ -78,6 +79,7 @@ class SharedGameServices(
     val toolRegistry: Map<String, ToolDefinition>,
     val weaponCategories: Map<EquipmentCategory, WeaponCategoryDefinition>,
     val toolCategories: Map<EquipmentCategory, ToolCategoryDefinition>,
+    val equipmentCatalog: EquipmentCatalog,
     val attackRegistry: Map<String, AttackDefinition>,
     val spellRegistry: Map<String, SpellDefinition>,
     val combatConfigData: CombatConfigData,
@@ -133,6 +135,13 @@ class SharedGameServices(
                 toolRegistry = toolLoader.load(),
                 weaponCategories = weaponCatLoader.load(),
                 toolCategories = toolCatLoader.load(),
+                equipmentCatalog =
+                    EquipmentCatalog(
+                        armorLoader.load(),
+                        weaponLoader.load(),
+                        toolLoader.load(),
+                        weaponCatLoader.load(),
+                        toolCatLoader.load()),
                 attackRegistry = skills.data.attacks,
                 spellRegistry = skills.data.spells,
                 combatConfigData = combat.data,

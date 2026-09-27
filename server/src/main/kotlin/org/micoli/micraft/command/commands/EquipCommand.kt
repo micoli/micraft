@@ -3,10 +3,9 @@ package org.micoli.micraft.command.commands
 import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
-import org.micoli.micraft.game.armor.ArmorClassRules
+import org.micoli.micraft.game.equipment.EquipResult
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage.Notification
-import org.micoli.micraft.protocol.ServerMessage.PlayerUpdate
 
 class EquipCommand : CommandHandler {
     override val id: UUID = UUID.fromString("b3e8f1a2-5c6d-4f7e-9b0c-1d2e3f4a5b6c")
@@ -38,55 +37,22 @@ class EquipCommand : CommandHandler {
             return
         }
 
-        val armorDef = context.armorRegistry()[name]
-        if (armorDef == null) {
-            val available = context.armorRegistry().keys.sorted().joinToString(", ")
-            session.send(Notification(i18n.t(lang, "equip:server:unknown", name, available)))
-            return
-        }
-
-        if (name !in session.state.ownedArmors) {
-            session.send(Notification(i18n.t(lang, "equip:server:not_owned", name)))
-            return
-        }
-
-        if (name in session.state.armors) {
-            session.send(Notification(i18n.t(lang, "equip:server:already", name)))
-            return
-        }
-
-        session.characterData?.let { char ->
-            if (char.level < armorDef.requiredLevel) {
-                session.send(
-                    Notification(
-                        i18n.t(
-                            lang,
-                            "equip:server:level_too_low",
-                            name,
-                            armorDef.requiredLevel,
-                            char.level)))
-                return
+        val message =
+            when (val result = context.loadout.equip(session, name)) {
+                EquipResult.Equipped -> i18n.t(lang, "equip:server:equipped", name)
+                EquipResult.Unknown -> {
+                    val available = context.equipmentCatalog.armors.keys.sorted().joinToString(", ")
+                    i18n.t(lang, "equip:server:unknown", name, available)
+                }
+                EquipResult.NotOwned -> i18n.t(lang, "equip:server:not_owned", name)
+                EquipResult.AlreadyWorn -> i18n.t(lang, "equip:server:already", name)
+                is EquipResult.LevelTooLow ->
+                    i18n.t(lang, "equip:server:level_too_low", name, result.required, result.actual)
+                is EquipResult.WrongArmorType ->
+                    i18n.t(lang, "equip:server:wrong_armor_type", result.armorType)
+                is EquipResult.Overlap ->
+                    i18n.t(lang, "equip:server:overlap", name, result.conflict)
             }
-            if (!ArmorClassRules.canWear(char.characterClass, armorDef.armorType)) {
-                session.send(
-                    Notification(i18n.t(lang, "equip:server:wrong_armor_type", armorDef.armorType)))
-                return
-            }
-        }
-
-        val conflict =
-            session.state.armors.firstOrNull { worn ->
-                context.armorRegistry()[worn]?.wearable?.overlaps(armorDef.wearable) == true
-            }
-        if (conflict != null) {
-            session.send(Notification(i18n.t(lang, "equip:server:overlap", name, conflict)))
-            return
-        }
-
-        session.state = session.state.copy(armors = session.state.armors + name)
-        context.broadcast(PlayerUpdate(session.state))
-        context.savePlayer(session)
-        context.characterStats.resync(session)
-        session.send(Notification(i18n.t(lang, "equip:server:equipped", name)))
+        session.send(Notification(message))
     }
 }

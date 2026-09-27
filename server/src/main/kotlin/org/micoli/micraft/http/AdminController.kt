@@ -65,10 +65,9 @@ import org.micoli.micraft.auth.writeGroupsConfig
 import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
-import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
-import org.micoli.micraft.game.equipment.ToolRegistryLoader
-import org.micoli.micraft.game.equipment.WeaponRegistryLoader
+import org.micoli.micraft.game.equipment.GrantResult
+import org.micoli.micraft.game.equipment.Loadout
 import org.micoli.micraft.game.npc.ChatTurn
 import org.micoli.micraft.game.npc.NpcConstants
 import org.micoli.micraft.game.perf.JvmRunProbe
@@ -513,14 +512,6 @@ class AdminController(
         }
         return gameWorldRegistry.resolve(id)
     }
-
-    // Loaded fresh per call rather than borrowed from `gameLoop` — its own copies only populate
-    // once `GameLoop.start()` runs, which a bare-bones test setup never calls.
-    private fun armorRegistry() = ArmorRegistryLoader().load()
-
-    private fun weaponRegistry() = WeaponRegistryLoader().load()
-
-    private fun toolRegistry() = ToolRegistryLoader().load()
 
     private val worldsDir = ConfigPaths.dataRoot.resolve("world")
     private val activeWorldName: String = org.micoli.micraft.di.worldName()
@@ -1846,32 +1837,13 @@ class AdminController(
                         return@post call.respond(HttpStatusCode.NoContent)
                     }
 
-                    val armorRegistry = armorRegistry()
-                    val weaponRegistry = weaponRegistry()
-                    val toolRegistry = toolRegistry()
-                    val equipmentName =
-                        (armorRegistry.keys + weaponRegistry.keys + toolRegistry.keys).firstOrNull {
-                            it.equals(itemName, ignoreCase = true)
-                        } ?: return@post call.respond(HttpStatusCode.NotFound)
-
-                    fun grant(state: PlayerState): PlayerState? {
-                        if (equipmentName in state.ownedArmors ||
-                            equipmentName in state.ownedWeapons ||
-                            equipmentName in state.ownedTools) {
-                            return null
-                        }
-                        return when {
-                            equipmentName in armorRegistry ->
-                                state.copy(ownedArmors = state.ownedArmors + equipmentName)
-                            equipmentName in weaponRegistry ->
-                                state.copy(ownedWeapons = state.ownedWeapons + equipmentName)
-                            else -> state.copy(ownedTools = state.ownedTools + equipmentName)
-                        }
-                    }
+                    gameLoop.equipmentCatalog.resolve(itemName)
+                        ?: return@post call.respond(HttpStatusCode.NotFound)
+                    val loadout = Loadout(gameLoop.equipmentCatalog)
 
                     if (live != null) {
-                        grant(live.state)?.let {
-                            live.state = it
+                        (loadout.grant(live.state, itemName) as? GrantResult.Granted)?.let {
+                            live.state = it.state
                             adminWorld().savePlayerSession(live)
                         }
                         return@post call.respond(HttpStatusCode.NoContent)
@@ -1881,7 +1853,9 @@ class AdminController(
                         persistence ?: return@post call.respond(HttpStatusCode.ServiceUnavailable)
                     val existing =
                         p.loadPlayerFile(name) ?: return@post call.respond(HttpStatusCode.NotFound)
-                    grant(existing.state)?.let { p.savePlayerState(name, it) }
+                    (loadout.grant(existing.state, itemName) as? GrantResult.Granted)?.let {
+                        p.savePlayerState(name, it.state)
+                    }
                     call.respond(HttpStatusCode.NoContent)
                 }
 

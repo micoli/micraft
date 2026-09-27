@@ -30,6 +30,8 @@ import org.micoli.micraft.game.combat.SpellDefinition
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
+import org.micoli.micraft.game.equipment.EquipmentCatalog
+import org.micoli.micraft.game.equipment.Loadout
 import org.micoli.micraft.game.equipment.ToolCategoryDefinition
 import org.micoli.micraft.game.equipment.ToolCategoryRegistryLoader
 import org.micoli.micraft.game.equipment.ToolDefinition
@@ -128,6 +130,7 @@ class GameLoopModule {
         experienceProcessor: ExperienceProcessor,
         chatService: ChatService,
         i18nConfig: I18nConfig,
+        equipmentCatalog: EquipmentCatalog,
     ): QuestManager =
         QuestManager(
             getSessions = sessionRegistry::all,
@@ -135,6 +138,7 @@ class GameLoopModule {
             grantXp = experienceProcessor::grantXp,
             subscribeToChannel = { session, channel -> chatService.subscribe(session, channel) },
             i18n = i18nConfig,
+            loadout = Loadout(equipmentCatalog),
         )
 
     @Single
@@ -248,7 +252,7 @@ class GameLoopModule {
         // A concrete class, not Map<String, ArmorDefinition>: Koin was observed resolving that
         // bare Map type to the weapon registry instead on an equivalent wiring — see
         // GameWorldFactory's ArmorLootGranter call for the repro notes.
-        armorRegistryLoader: ArmorRegistryLoader,
+        equipmentCatalog: EquipmentCatalog,
         playerPersister: PlayerPersister,
         i18nConfig: I18nConfig,
         optionalWorldPersistence: OptionalWorldPersistence,
@@ -277,7 +281,7 @@ class GameLoopModule {
                     worldItemManager.spawnNpcLoot(npc.state.pos, npc.definition.loot)
                     ArmorLootGranter.grant(
                         npc,
-                        armorRegistryLoader.load(),
+                        Loadout(equipmentCatalog),
                         sessionRegistry::all,
                         playerPersister::save,
                         i18nConfig)
@@ -394,19 +398,27 @@ class GameLoopModule {
 
     /** Built from the loaders: bare `Map` beans are ambiguous to Koin once generics are erased. */
     @Single
-    fun characterStats(
+    fun equipmentCatalog(
         armorRegistryLoader: ArmorRegistryLoader,
         weaponRegistryLoader: WeaponRegistryLoader,
         toolRegistryLoader: ToolRegistryLoader,
-        combatConfigData: CombatConfigData,
-        playerPersister: PlayerPersister,
-    ): CharacterStats =
-        CharacterStats(
+        weaponCategoryRegistryLoader: WeaponCategoryRegistryLoader,
+        toolCategoryRegistryLoader: ToolCategoryRegistryLoader,
+    ): EquipmentCatalog =
+        EquipmentCatalog(
             armorRegistryLoader.load(),
             weaponRegistryLoader.load(),
             toolRegistryLoader.load(),
-            combatConfigData.maxRage,
-            playerPersister::save)
+            weaponCategoryRegistryLoader.load(),
+            toolCategoryRegistryLoader.load())
+
+    @Single
+    fun characterStats(
+        equipmentCatalog: EquipmentCatalog,
+        combatConfigData: CombatConfigData,
+        playerPersister: PlayerPersister,
+    ): CharacterStats =
+        CharacterStats(equipmentCatalog, combatConfigData.maxRage, playerPersister::save)
 
     @Single
     fun combatProcessor(
@@ -749,6 +761,7 @@ class GameLoopModule {
         ollamaClient: OllamaClient,
         npcChatHistoryStore: NpcChatHistoryStore,
         miniGameRegistry: MiniGameRegistry,
+        equipmentCatalog: EquipmentCatalog,
     ): SharedGameServices =
         SharedGameServices(
             gameConfig = gameConfig,
@@ -780,6 +793,7 @@ class GameLoopModule {
             toolRegistry = toolRegistry,
             weaponCategories = weaponCategories,
             toolCategories = toolCategories,
+            equipmentCatalog = equipmentCatalog,
             attackRegistry = attacks,
             spellRegistry = spells,
             combatConfigData = combatConfigData,

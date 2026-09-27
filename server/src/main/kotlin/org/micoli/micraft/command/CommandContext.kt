@@ -9,6 +9,8 @@ import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.auction.AuctionManager
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.equipment.EquipmentCatalog
+import org.micoli.micraft.game.equipment.Loadout
 import org.micoli.micraft.game.equipment.ToolCategoryDefinition
 import org.micoli.micraft.game.equipment.ToolDefinition
 import org.micoli.micraft.game.equipment.WeaponCategoryDefinition
@@ -74,11 +76,17 @@ data class CommandContext(
     val armorRegistry: () -> Map<String, ArmorDefinition> = { emptyMap() },
     val weaponRegistry: () -> Map<String, WeaponDefinition> = { emptyMap() },
     val toolRegistry: () -> Map<String, ToolDefinition> = { emptyMap() },
-    val characterStats: CharacterStats =
-        CharacterStats(
-            armorRegistry(), weaponRegistry(), toolRegistry(), savePlayer = { savePlayer(it) }),
     val weaponCategories: () -> Map<EquipmentCategory, WeaponCategoryDefinition> = { emptyMap() },
     val toolCategories: () -> Map<EquipmentCategory, ToolCategoryDefinition> = { emptyMap() },
+    val equipmentCatalog: EquipmentCatalog =
+        EquipmentCatalog(
+            armorRegistry(),
+            weaponRegistry(),
+            toolRegistry(),
+            weaponCategories(),
+            toolCategories()),
+    val characterStats: CharacterStats =
+        CharacterStats(equipmentCatalog, savePlayer = { savePlayer(it) }),
     val tradeManager: TradeManager? = null,
     val auctionManager: AuctionManager? = null,
     val clearAccumulators: ((String) -> Unit)? = null,
@@ -95,4 +103,7 @@ data class CommandContext(
     val guildManager: GuildManager? = null,
     val guildRegistry: GuildRegistry? = null,
     val factionManager: FactionManager? = null,
-)
+) {
+    val loadout: Loadout
+        get() = Loadout(equipmentCatalog, characterStats, broadcast) { savePlayer(it) }
+}

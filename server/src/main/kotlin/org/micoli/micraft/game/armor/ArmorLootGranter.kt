@@ -2,6 +2,8 @@ package org.micoli.micraft.game.armor
 
 import kotlin.random.Random
 import org.micoli.micraft.I18nConfig
+import org.micoli.micraft.game.equipment.GrantResult
+import org.micoli.micraft.game.equipment.Loadout
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
@@ -18,7 +20,7 @@ private val log = LoggerFactory.getLogger(ArmorLootGranter::class.java)
 object ArmorLootGranter {
     suspend fun grant(
         npc: NpcInstance,
-        armorRegistry: Map<String, ArmorDefinition>,
+        loadout: Loadout,
         getSessions: () -> Collection<PlayerSession>,
         savePlayer: (PlayerSession) -> Unit,
         i18n: I18nConfig? = null,
@@ -30,12 +32,16 @@ object ArmorLootGranter {
 
         for (drop in npc.definition.armorLoot) {
             if (random.nextInt(100) >= drop.dropRate) continue
-            if (armorRegistry[drop.armor] == null) {
-                log.warn("NPC '{}' drops unknown armor '{}'", npc.state.type, drop.armor)
-                continue
-            }
-            if (drop.armor in session.state.ownedArmors) continue
-            session.state = session.state.copy(ownedArmors = session.state.ownedArmors + drop.armor)
+            val granted =
+                when (val result = loadout.grantArmor(session.state, drop.armor)) {
+                    is GrantResult.Granted -> result
+                    is GrantResult.AlreadyOwned -> continue
+                    GrantResult.Unknown -> {
+                        log.warn("NPC '{}' drops unknown armor '{}'", npc.state.type, drop.armor)
+                        continue
+                    }
+                }
+            session.state = granted.state
             savePlayer(session)
             session.send(
                 ServerMessage.Notification(

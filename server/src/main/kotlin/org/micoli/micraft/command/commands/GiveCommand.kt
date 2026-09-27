@@ -4,6 +4,7 @@ import java.util.UUID
 import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
+import org.micoli.micraft.game.equipment.GrantResult
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.ItemRegistry
@@ -63,39 +64,22 @@ class GiveCommand : CommandHandler {
             return
         }
 
-        val equipmentName =
-            (context.armorRegistry().keys +
-                    context.weaponRegistry().keys +
-                    context.toolRegistry().keys)
-                .firstOrNull { it.equals(typeName, ignoreCase = true) }
-        if (equipmentName == null) {
-            val available =
-                (ItemRegistry.keys().map { it.id.lowercase() } +
-                        context.armorRegistry().keys +
-                        context.weaponRegistry().keys +
-                        context.toolRegistry().keys)
-                    .joinToString(", ")
-            session.send(
-                Notification(context.i18n.t(lang, "give:server:unknown", typeName, available)))
-            return
-        }
-
-        if (equipmentName in session.state.ownedArmors ||
-            equipmentName in session.state.ownedWeapons ||
-            equipmentName in session.state.ownedTools) {
-            session.send(Notification(context.i18n.t(lang, "give:server:already", equipmentName)))
-            return
-        }
-
-        session.state =
-            when {
-                equipmentName in context.armorRegistry() ->
-                    session.state.copy(ownedArmors = session.state.ownedArmors + equipmentName)
-                equipmentName in context.weaponRegistry() ->
-                    session.state.copy(ownedWeapons = session.state.ownedWeapons + equipmentName)
-                else -> session.state.copy(ownedTools = session.state.ownedTools + equipmentName)
+        when (val result = context.loadout.grant(session.state, typeName)) {
+            is GrantResult.Granted -> {
+                session.state = result.state
+                context.savePlayer(session)
+                session.send(Notification(context.i18n.t(lang, "give:server:done", 1, result.name)))
             }
-        context.savePlayer(session)
-        session.send(Notification(context.i18n.t(lang, "give:server:done", 1, equipmentName)))
+            is GrantResult.AlreadyOwned ->
+                session.send(Notification(context.i18n.t(lang, "give:server:already", result.name)))
+            GrantResult.Unknown -> {
+                val available =
+                    (ItemRegistry.keys().map { it.id.lowercase() } +
+                            context.equipmentCatalog.names())
+                        .joinToString(", ")
+                session.send(
+                    Notification(context.i18n.t(lang, "give:server:unknown", typeName, available)))
+            }
+        }
     }
 }

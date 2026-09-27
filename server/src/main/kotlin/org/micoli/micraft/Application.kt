@@ -66,6 +66,7 @@ import org.micoli.micraft.game.combat.SkillsConfig
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.combat.StatusEffectProcessor
 import org.micoli.micraft.game.drop.DropConfig
+import org.micoli.micraft.game.equipment.EquipmentCatalog
 import org.micoli.micraft.game.loadServerConfig
 import org.micoli.micraft.game.minigame.MiniGameRegistry
 import org.micoli.micraft.game.npc.NpcConfigLoader
@@ -299,6 +300,7 @@ fun Application.module() {
             skillsConfigLoader = get<SkillsConfig>(),
             classesConfigLoader = get<ClassesConfig>(),
             experienceConfigLoader = get<ExperienceConfig>(),
+            equipmentCatalog = get<EquipmentCatalog>(),
             characterStats = get<CharacterStats>(),
             combatProcessor = get<CombatProcessor>(),
             statusEffectProcessor = get<StatusEffectProcessor>(),
