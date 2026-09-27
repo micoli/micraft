@@ -9,7 +9,7 @@ bonuses, and the `SpellProcessor` cooldown map. Line numbers and call counts may
 
 | # | Candidate | Strength | Issue |
 |---|-----------|----------|-------|
-| 1 | Single player-kinematics module in `core` | Strong | [01](issues/01-player-kinematics-core.md) |
+| 1 | Single player-kinematics module in `core` (resolved) | Strong | [01](issues/01-player-kinematics-core.md) |
 | 2 | CharacterStats: one source for Effective and Derived stats (resolved) | Strong | [02](issues/02-character-stats.md) |
 | 3 | Single ability gate for attack / spell / AoE | Strong | [03](issues/03-ability-gate.md) |
 | 4 | GameWorld builds its own subsystems | Worth exploring | [04](issues/04-gameworld-self-assembly.md) |
