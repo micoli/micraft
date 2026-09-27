@@ -5,6 +5,7 @@ import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
 import org.micoli.micraft.game.RECONCILE_TOLERANCE_XZ
 import org.micoli.micraft.game.RECONCILE_TOLERANCE_Y
 import org.micoli.micraft.game.drop.DropConfig
+import org.micoli.micraft.game.kinematicTuning
 import org.micoli.micraft.game.npc.NpcConfigLoader
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.NpcRegistryLoader
@@ -64,7 +65,10 @@ class ReloadCoordinator(
             reloadGameConfig.invoke()
             val configSync =
                 ServerMessage.GameConfigSync(
-                    RECONCILE_TOLERANCE_XZ, RECONCILE_TOLERANCE_Y, MAX_INTERACTION_DISTANCE)
+                    RECONCILE_TOLERANCE_XZ,
+                    RECONCILE_TOLERANCE_Y,
+                    MAX_INTERACTION_DISTANCE,
+                    kinematicTuning())
             sessionRegistry.all().forEach { it.send(configSync) }
             lines += i18n.t(lang, "reload:server:game_config")
         }

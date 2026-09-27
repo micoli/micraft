@@ -1,15 +1,12 @@
 package org.micoli.micraft.game.tick
 
-import org.micoli.micraft.game.FLY_VERTICAL_SPEED
-import org.micoli.micraft.game.GRAVITY
-import org.micoli.micraft.game.JUMP_SPEED
 import org.micoli.micraft.game.TICK_SECONDS
+import org.micoli.micraft.game.kinematicTuning
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BreathConstants
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.physics.BlockQuery
 import org.micoli.micraft.physics.KinematicState
-import org.micoli.micraft.physics.KinematicTuning
 import org.micoli.micraft.physics.MoveIntent
 import org.micoli.micraft.physics.PlayerKinematics
 import org.micoli.micraft.player.Orientation
@@ -53,7 +50,7 @@ class MovementProcessor(private val world: WorldState) {
                     speedDown = input.speedDownRequested),
                 TICK_SECONDS,
                 blocks,
-                KinematicTuning(GRAVITY, JUMP_SPEED, FLY_VERTICAL_SPEED))
+                kinematicTuning())
         result.ejectedFromY?.let {
             log.warn("player {} stuck inside block at y={}, ejected upward", session.id.take(8), it)
         }

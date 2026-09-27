@@ -2,6 +2,7 @@ package org.micoli.micraft.game
 
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import org.micoli.micraft.physics.KinematicTuning
 
 internal var TICK_MS = 50L
 internal val TICK_SECONDS
@@ -9,6 +10,9 @@ internal val TICK_SECONDS
 internal var GRAVITY = -20f
 internal var JUMP_SPEED = 8.5f
 internal var FLY_VERTICAL_SPEED = 8f
+
+internal fun kinematicTuning() = KinematicTuning(GRAVITY, JUMP_SPEED, FLY_VERTICAL_SPEED)
+
 internal var SAVE_INTERVAL_TICKS = (30_000L / TICK_MS).toInt()
 
 internal var TICKS_PER_DAY = 72_000L

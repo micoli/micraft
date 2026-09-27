@@ -6,6 +6,7 @@ import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.MAX_INTERACTION_DISTANCE
 import org.micoli.micraft.game.RECONCILE_TOLERANCE_XZ
 import org.micoli.micraft.game.RECONCILE_TOLERANCE_Y
+import org.micoli.micraft.game.kinematicTuning
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.protocol.ServerMessage
 
@@ -89,7 +90,8 @@ class ConfigCommand : CommandHandler {
                         ServerMessage.GameConfigSync(
                             RECONCILE_TOLERANCE_XZ,
                             RECONCILE_TOLERANCE_Y,
-                            MAX_INTERACTION_DISTANCE))
+                            MAX_INTERACTION_DISTANCE,
+                            kinematicTuning()))
                 } else {
                     session.send(
                         ServerMessage.Notification(

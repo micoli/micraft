@@ -2,6 +2,7 @@ package org.micoli.micraft.physics
 
 import kotlin.math.floor
 import kotlin.math.sqrt
+import kotlinx.serialization.Serializable
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.player.PlayerStance
@@ -20,6 +21,7 @@ interface BlockQuery {
 }
 
 /** Server-tunable movement values; the client receives them, never hardcodes them (ADR-0002). */
+@Serializable
 data class KinematicTuning(
     val gravity: Float = -20f,
     val jumpSpeed: Float = 8.5f,

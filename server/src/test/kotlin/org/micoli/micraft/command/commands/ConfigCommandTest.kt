@@ -6,6 +6,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.config.ConfigRegistry
+import org.micoli.micraft.game.GRAVITY
+import org.micoli.micraft.game.world.weather.WeatherConfig
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.FakePlayerSession
 import org.micoli.micraft.support.testContext
@@ -126,5 +128,24 @@ class ConfigCommandTest {
         cmd.execute(session, "get game:gravity", testContext())
         val msgs = session.notifications()
         assertTrue(msgs.any { "/config" in it })
+    }
+
+    @Test
+    fun execute_set_gravity_syncsKinematicTuningToClients() = runBlocking {
+        val broadcasts = mutableListOf<ServerMessage>()
+        val registry = ConfigRegistry.buildConfigRegistry(WeatherConfig())
+        val previous = GRAVITY
+        try {
+            ConfigCommand()
+                .execute(
+                    testSession(),
+                    "set game:gravity -30",
+                    testContext(configRegistry = registry, broadcast = { broadcasts += it }))
+        } finally {
+            GRAVITY = previous
+        }
+
+        val sync = broadcasts.filterIsInstance<ServerMessage.GameConfigSync>().single()
+        assertEquals(-30f, sync.kinematics.gravity)
     }
 }

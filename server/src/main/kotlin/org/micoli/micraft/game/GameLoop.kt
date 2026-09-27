@@ -1992,7 +1992,8 @@ class GameLoop(
                 RECONCILE_TOLERANCE_Y,
                 chunkSection.transport,
                 SERVER_BUILD_TIMESTAMP,
-                MAX_INTERACTION_DISTANCE))
+                MAX_INTERACTION_DISTANCE,
+                kinematicTuning()))
         session.send(buildRegistrySync())
         session.send(ServerMessage.ActionBlockSync(gw.actionBlockService.syncList()))
         session.send(

@@ -15,6 +15,7 @@ import org.micoli.micraft.game.world.WorldItem
 import org.micoli.micraft.game.world.actionblock.ActionBlockInfo
 import org.micoli.micraft.minigame.MiniGameRoomInfo
 import org.micoli.micraft.npc.NpcState
+import org.micoli.micraft.physics.KinematicTuning
 import org.micoli.micraft.placeable.PlaceableState
 import org.micoli.micraft.placeable.panel.PanelEditData
 import org.micoli.micraft.placeable.panel.PanelInfo
@@ -57,6 +58,7 @@ sealed class ServerMessage {
         val chunkTransport: String = "websocket",
         val buildTimestamp: String = "",
         val maxInteractionDistance: Double = 7.0,
+        val kinematics: KinematicTuning = KinematicTuning(),
     ) : ServerMessage()
 
     @ProtoId(1) @Serializable data class ShadersUpdate(val enabled: Boolean) : ServerMessage()
@@ -253,6 +255,7 @@ sealed class ServerMessage {
         val reconcileToleranceXz: Double,
         val reconcileToleranceY: Double,
         val maxInteractionDistance: Double = 7.0,
+        val kinematics: KinematicTuning = KinematicTuning(),
     ) : ServerMessage()
 
     @ProtoId(30)

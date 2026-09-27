@@ -712,6 +712,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     localController.setReconcileTolerances(
                         msg.reconcileToleranceXz, msg.reconcileToleranceY)
                     localController.maxInteractionDistance = msg.maxInteractionDistance.toFloat()
+                    localController.kinematicTuning = msg.kinematics
                 })
             put(ServerMessage.ItemsSpawned::class, ServerMessageHandler {})
             put(ServerMessage.ItemDespawned::class, ServerMessageHandler {})
@@ -875,6 +876,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     localController.setReconcileTolerances(
                         msg.reconcileToleranceXz, msg.reconcileToleranceY)
                     localController.maxInteractionDistance = msg.maxInteractionDistance.toFloat()
+                    localController.kinematicTuning = msg.kinematics
                 })
             put(
                 ServerMessage.ShortcutBarUpdate::class,

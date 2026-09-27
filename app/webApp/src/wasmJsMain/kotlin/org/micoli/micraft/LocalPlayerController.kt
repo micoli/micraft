@@ -38,6 +38,7 @@ import org.micoli.micraft.input.MovementAction
 import org.micoli.micraft.input.NpcChatEvent
 import org.micoli.micraft.input.NpcChatEventHandler
 import org.micoli.micraft.physics.AabbCollider
+import org.micoli.micraft.physics.KinematicTuning
 import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
@@ -55,7 +56,6 @@ private const val SNAP_THRESHOLD = 0.5
 // lerping — scaled by localSpeedMult at the call site so it stays proportionally far above
 // movingToleranceXz regardless of speed.
 private const val HARD_SNAP_DISTANCE_XZ = 5.0
-private const val FLY_VERTICAL_SPEED = 8f
 private const val DEFAULT_RECONCILE_TOLERANCE_XZ = 0.5
 private const val DEFAULT_RECONCILE_TOLERANCE_Y = 0.99
 private const val STATS_WINDOW_MS = 20_000.0
@@ -72,8 +72,6 @@ private const val SPIKE_RING_SIZE = 300
 // was firing too often to be useful while investigating a known-slow session.
 private const val DEFAULT_SPIKE_THRESHOLD_MS = 50.0
 private const val SPIKE_LOG_ENTRIES = 20
-private const val CLIENT_GRAVITY = -20.0
-private const val CLIENT_JUMP_SPEED = 8.5
 private const val TICKS_PER_DAY_CLIENT = 72_000L
 private const val MAX_AUTO_TARGET_RANGE_SQ = 30.0 * 30.0
 // Gap kept between the chase camera and a blocking wall so it never clips inside the face.
@@ -352,6 +350,8 @@ class LocalPlayerController(
             }
         jsLogSpike(json)
     }
+
+    var kinematicTuning = KinematicTuning()
 
     fun setReconcileTolerances(xz: Double, y: Double) {
         reconcileToleranceXz = xz
@@ -686,7 +686,7 @@ class LocalPlayerController(
             velocity.x.toDouble(),
             velocity.y.toDouble(),
             velocity.z.toDouble(),
-            CLIENT_GRAVITY)
+            kinematicTuning.gravity.toDouble())
     }
 
     fun tick() {
@@ -926,7 +926,8 @@ class LocalPlayerController(
                     if (jsIsActionDown(MovementAction.FORWARD.wire) || autoAdvance) dy += fwdY
                     if (jsIsActionDown(MovementAction.BACKWARD.wire)) dy -= fwdY
                 }
-                val flyDy = (dy * FLY_VERTICAL_SPEED * localSpeedMult * actualDt).toFloat()
+                val flyDy =
+                    (dy * kinematicTuning.flyVerticalSpeed * localSpeedMult * actualDt).toFloat()
                 val resolvedFlyDy =
                     AabbCollider.resolveY(
                         solid,
@@ -958,7 +959,7 @@ class LocalPlayerController(
                             jsIsActionDown(MovementAction.DESCEND.wire) ->
                                 -PlayerConstants.SWIM_DOWN_SPEED.toDouble()
                             else ->
-                                (predVy + CLIENT_GRAVITY * 0.2 * actualDt).coerceIn(
+                                (predVy + kinematicTuning.gravity * 0.2 * actualDt).coerceIn(
                                     -2.0, PlayerConstants.SWIM_UP_SPEED.toDouble())
                         }
                     val dy = (predVy * actualDt).toFloat()
@@ -975,9 +976,11 @@ class LocalPlayerController(
                     predY = (predY + resolvedDy).coerceAtLeast(0.0)
                 } else if (grounded && predVy <= 0.0) {
                     predVy =
-                        if (jsIsActionDown(MovementAction.ASCEND.wire)) CLIENT_JUMP_SPEED else 0.0
+                        if (jsIsActionDown(MovementAction.ASCEND.wire))
+                            kinematicTuning.jumpSpeed.toDouble()
+                        else 0.0
                 } else {
-                    predVy += CLIENT_GRAVITY * actualDt
+                    predVy += kinematicTuning.gravity * actualDt
                     val dy = (predVy * actualDt).toFloat()
                     val resolvedDy =
                         AabbCollider.resolveY(
