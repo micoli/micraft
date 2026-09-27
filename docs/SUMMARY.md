@@ -86,6 +86,7 @@
         - [0007 Ephemeral social structures](adr/0007-ephemeral-social-structures.md)
         - [0008 Web client stack](adr/0008-web-client-stack.md)
         - [0009 Layered YAML config](adr/0009-layered-yaml-config.md)
+        - [0010 Region NPC Roster](adr/0010-wild-npc-population-per-region-roster.md)
 - Reference
     - [Overview](reference/index.md)
     - [World & player constants](reference/constants.md)

@@ -51,7 +51,7 @@ A named, fixed area of the World carved by the Voronoi layout, carrying exactly 
 _Avoid_: zone, biome zone, cell
 
 **Danger level**:
-The difficulty of a location, derived only from its distance to spawn (not from its Region); drives which NPCs and Quest givers appear there.
+The difficulty of a Region, derived from the distance of its Voronoi seed to spawn and constant across the whole Region; drives which NPC types can enter its Roster and which Quests its Quest giver offers.
 _Avoid_: zone level, area level
 
 **Danger tier**:
@@ -145,14 +145,22 @@ The entity a Character has currently selected (NPC, Action block, Placeable).
 ### NPCs & quests
 
 **NPC**:
-A non-player creature or person in the World, spawned by Danger level; may be hostile, an animal, a pet, a quest giver or a merchant.
+A non-player creature or person in the World; wild NPCs spawn from their Region's Roster. May be hostile, an animal, a pet, a quest giver or a merchant.
 _Avoid_: mob, entity (for NPCs specifically)
+
+**NPC type**:
+A kind of NPC (wolf, bandit, hermit…) defined once, with the Biomes and Danger levels it can live in.
+_Avoid_: species, entity type, mob type
+
+**Roster**:
+The fixed set of NPC types that populate one Region, drawn from those its Biome and Danger level allow; stable for the life of the World. The Region's wild population, births included, never exceeds its budget, shared among the Roster.
+_Avoid_: spawn list, spawn table
 
 **Pet**:
 An NPC tamed by a Character that follows, fights for it and can be summoned.
 
 **Quest giver**:
-An NPC that offers Quests suited to its Danger tier.
+The one NPC per Region that offers Quests suited to that Region: every kill target is in the Region's Roster and the Quest level fits the Region's Danger tier. A Region with no suitable Quest has no Quest giver.
 
 **Quest**:
 A task offered by a Quest giver (kill, fetch…) with objectives and a reward, turned in on completion.
@@ -200,6 +208,6 @@ An Item released when a block is broken or an NPC dies.
 
 - **"playerId"** carries the Account email in some flows (auth token) and the Character id in others (Session keys). Resolved: in-game identifiers designate the Character; the Account is only named at login and in admin.
 - **"group"** resolved: a **Group** is a gameplay party, an **RBAC group** is a permission set on a Character; never say "group" alone for the latter. Account-level access is a distinct concept: the **Admin role**.
-- **"zone"** resolved: never used alone. It is split into **Region**, **Danger level**, **Danger tier**, **Instance** and **Weather cell**. The NPC spawn grid (`npcZoneSize`, `onZoneCrossed`) is an implementation detail, not a domain term.
+- **"zone"** resolved: never used alone. It is split into **Region**, **Danger level**, **Danger tier**, **Instance** and **Weather cell**. The NPC spawn grid (`npcZoneSize`, `onZoneCrossed`) is an implementation detail, not a domain term. "NPCs of a zone" means the **Roster** of a **Region**.
 - **"skill level"** resolved: it is the Ability **Rank** expected in a Danger tier.
 - **"rank"** resolved: **Rank** is the Ability tier; a Guild's positions are **Guild ranks**.
