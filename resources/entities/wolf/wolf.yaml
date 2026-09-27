@@ -57,7 +57,7 @@ animal:
   diet: CARNIVORE
   lifespanDays: 30.0
   preyTypes:
-    - goat
+    - mountain_goat
     - duck
     - cat
   canReproduce: true

@@ -3,7 +3,7 @@ description: "The village needs protecting. Hunt the wild animals causing troubl
 type: KILL
 level: 1
 objectives:
-  - npcType: goat
+  - npcType: mountain_goat
     requiredCount: 5
   - npcType: wolf
     requiredCount: 2

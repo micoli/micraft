@@ -1,11 +1,11 @@
 title: "Wolf Hunt"
-description: "Kill wolves and bears threatening the village."
+description: "Kill wolves and wolf men threatening the village."
 type: KILL
 level: 3
 objectives:
   - npcType: wolf
     requiredCount: 10
-  - npcType: bear
+  - npcType: wolf_man
     requiredCount: 3
 rewards:
   xp: 500

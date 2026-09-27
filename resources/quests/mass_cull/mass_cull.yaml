@@ -3,7 +3,7 @@ description: "Goats and ducks have overrun the lowlands in alarming numbers. Rec
 type: KILL
 level: 20
 objectives:
-  - npcType: goat
+  - npcType: mountain_goat
     requiredCount: 20
   - npcType: duck
     requiredCount: 20

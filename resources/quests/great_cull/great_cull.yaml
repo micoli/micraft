@@ -3,7 +3,7 @@ description: "The great cull is called — cleanse the land of goats, wolves and
 type: KILL
 level: 25
 objectives:
-  - npcType: goat
+  - npcType: mountain_goat
     requiredCount: 25
   - npcType: wolf
     requiredCount: 20

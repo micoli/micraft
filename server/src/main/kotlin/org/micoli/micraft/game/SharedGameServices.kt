@@ -96,6 +96,7 @@ class SharedGameServices(
          */
         fun default(): SharedGameServices {
             val weatherConfig = WeatherConfig()
+            val npcLoader = NpcRegistryLoader()
             val armorLoader = ArmorRegistryLoader()
             val weaponLoader = WeaponRegistryLoader()
             val toolLoader = ToolRegistryLoader()
@@ -121,8 +122,8 @@ class SharedGameServices(
                 weaponCategoryRegistryLoader = weaponCatLoader,
                 toolCategoryRegistryLoader = toolCatLoader,
                 npcConfigLoader = NpcConfigLoader(),
-                npcRegistryLoader = NpcRegistryLoader(),
-                questRegistryLoader = QuestRegistryLoader(),
+                npcRegistryLoader = npcLoader,
+                questRegistryLoader = QuestRegistryLoader(npcTypes = npcLoader::load),
                 tradeConfigLoader = TradeConfigLoader(),
                 auctionConfigLoader = AuctionConfigLoader(),
                 claimConfigLoader = ClaimConfigLoader(),

@@ -40,7 +40,7 @@ animal:
   # game days before it becomes its adultType
   growthDays: 5.0
   preyTypes:
-    - goat
+    - mountain_goat
     - duck
   baseStats:
     str: 7

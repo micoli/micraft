@@ -4,8 +4,10 @@ import java.nio.file.Files
 import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class QuestRegistryLoaderTest {
     private fun questYaml(title: String) =
@@ -34,5 +36,17 @@ class QuestRegistryLoaderTest {
         assertNotSame(first, reloaded, "reload() must bypass the cache")
         assertEquals("B", reloaded.getValue("quest_a.yaml").title)
         assertSame(reloaded, loader.load(), "load() after reload() must return the fresh value")
+    }
+
+    @Test
+    fun load_failsOnKillTargetThatIsNotAnNpcType() {
+        val dir = Files.createTempDirectory("quest-registry-test")
+        dir.resolve("goat_patrol.yaml")
+            .writeText(
+                questYaml("Goats") + "\nobjectives:\n  - npcType: goat\n    requiredCount: 3")
+        val loader = QuestRegistryLoader(dir, npcTypes = { emptyMap() })
+
+        val error = assertFailsWith<IllegalStateException> { loader.load() }
+        assertTrue("goat" in error.message.orEmpty())
     }
 }

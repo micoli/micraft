@@ -1,6 +1,6 @@
 # Quest target validation at load
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 
 ## Context
@@ -20,6 +20,13 @@ spawns at L11–15.
 
 ## Acceptance criteria
 
-- [ ] Server test: a Quest with an unknown `npcType` fails loading; one with an unreachable target logs a warning.
-- [ ] All bundled Quests load without error.
-- [ ] `docs/gameplay/quests.md` states the rule.
+- [x] Server test: a Quest with an unknown `npcType` fails loading; one with an unreachable target logs a warning.
+- [x] All bundled Quests load without error.
+- [x] `docs/gameplay/quests.md` states the rule.
+
+## Comments
+
+- 2026-09-27: `QuestTargetValidator` (errors: unknown type; warnings: never spawns within the Quest's Danger tier).
+  `QuestRegistryLoader` takes the NPC types and fails on errors. Biomes are not checked: an NPC type's biome list
+  only narrows where it spawns, never makes a tier unreachable. Only warning on shipped data was `wolf_hunt`
+  (`bear`, L11–15): retargeted to `wolf_man` (L2–4). Covered by `ShippedQuestConfigTest`.

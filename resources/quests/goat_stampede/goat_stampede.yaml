@@ -3,7 +3,7 @@ description: "A massive goat stampede is heading toward the village walls. Recom
 type: KILL
 level: 7
 objectives:
-  - npcType: goat
+  - npcType: mountain_goat
     requiredCount: 15
 rewards:
   xp: 520

@@ -121,7 +121,9 @@ class GameLoopModule {
     fun dropConfig(blockRegistryLoader: BlockRegistryLoader): DropConfig =
         DropConfig(blockRegistryLoader)
 
-    @Single fun questRegistryLoader(): QuestRegistryLoader = QuestRegistryLoader()
+    @Single
+    fun questRegistryLoader(npcRegistryLoader: NpcRegistryLoader): QuestRegistryLoader =
+        QuestRegistryLoader(npcTypes = npcRegistryLoader::load)
 
     @Single
     fun questManager(

@@ -3,7 +3,7 @@ description: "A massive horde of thirty goats is devastating farmland across the
 type: KILL
 level: 16
 objectives:
-  - npcType: goat
+  - npcType: mountain_goat
     requiredCount: 30
 rewards:
   xp: 2000

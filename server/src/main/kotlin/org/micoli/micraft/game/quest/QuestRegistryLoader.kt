@@ -8,6 +8,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 import org.micoli.micraft.config.ConfigPaths
+import org.micoli.micraft.game.npc.NpcDefinition
 import org.slf4j.LoggerFactory
 
 fun findRecursive(path: Path, mask: String): List<Path> {
@@ -17,7 +18,10 @@ fun findRecursive(path: Path, mask: String): List<Path> {
 
 private val log = LoggerFactory.getLogger(QuestRegistryLoader::class.java)
 
-class QuestRegistryLoader(private val questsPath: Path = ConfigPaths.resourcesDir("quests")) {
+class QuestRegistryLoader(
+    private val questsPath: Path = ConfigPaths.resourcesDir("quests"),
+    private val npcTypes: (() -> Map<String, NpcDefinition>)? = null,
+) {
     @Volatile private var cached: Map<String, QuestDefinition>? = null
 
     fun load(): Map<String, QuestDefinition> =
@@ -42,7 +46,15 @@ class QuestRegistryLoader(private val questsPath: Path = ConfigPaths.resourcesDi
                         ?.let { entry -> name to entry.toDefinition(name) }
                 }
                 .toMap()
+        validateTargets(result.values)
         log.info("Quest registry loaded: {} quests", result.size)
         return result
+    }
+
+    private fun validateTargets(quests: Collection<QuestDefinition>) {
+        val types = npcTypes?.invoke() ?: return
+        val report = QuestTargetValidator.validate(quests, types)
+        report.warnings.forEach { log.warn(it) }
+        check(report.errors.isEmpty()) { report.errors.joinToString("\n") }
     }
 }
