@@ -75,6 +75,7 @@ import org.micoli.micraft.game.world.EquipmentCategory
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
+import org.micoli.micraft.game.world.biome.BiomeRegistry
 import org.micoli.micraft.game.world.block.BlockBreaker
 import org.micoli.micraft.game.world.block.BlockInteractor
 import org.micoli.micraft.game.world.block.BlockPlacer
@@ -122,8 +123,11 @@ class GameLoopModule {
         DropConfig(blockRegistryLoader)
 
     @Single
-    fun questRegistryLoader(npcRegistryLoader: NpcRegistryLoader): QuestRegistryLoader =
-        QuestRegistryLoader(npcTypes = npcRegistryLoader::load)
+    fun questRegistryLoader(
+        npcRegistryLoader: NpcRegistryLoader,
+        biomeRegistry: BiomeRegistry,
+    ): QuestRegistryLoader =
+        QuestRegistryLoader(npcTypes = npcRegistryLoader::load, biomes = { biomeRegistry.biomes })
 
     @Single
     fun questManager(

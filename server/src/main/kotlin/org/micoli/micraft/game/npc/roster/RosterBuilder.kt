@@ -50,7 +50,7 @@ object RosterBuilder {
 
     private fun weightOf(def: NpcDefinition): Int = def.spawn.weight.coerceAtLeast(0)
 
-    private fun isEligible(def: NpcDefinition, region: Region): Boolean =
+    fun isEligible(def: NpcDefinition, region: Region): Boolean =
         def.spawn.autoSpawn &&
             (def.spawn.spawnBiomes.isEmpty() || region.biome.id in def.spawn.spawnBiomes) &&
             region.dangerLevel in def.minLevel..def.maxLevel &&

@@ -29,6 +29,10 @@ many Quests suit it.
 offers (admins can accept any Quest), and its autocompletion lists those Quests
 plus your own.
 
+At load, the server logs the Biome × Danger tier pairs whose Regions can never
+get a Quest giver (no suited Quest, or no dry ground in a sea/lake), and
+`ShippedQuestConfigTest` prints the same table — the backlog of Quests to write.
+
 ### Claiming the reward: autoloot vs. turn-in
 
 A quest's `autoLoot` flag decides how its reward is claimed:

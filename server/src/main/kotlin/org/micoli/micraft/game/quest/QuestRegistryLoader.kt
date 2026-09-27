@@ -9,6 +9,8 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.game.npc.NpcDefinition
+import org.micoli.micraft.game.npc.roster.QuestCoverage
+import org.micoli.micraft.game.world.biome.BiomeDefinition
 import org.slf4j.LoggerFactory
 
 fun findRecursive(path: Path, mask: String): List<Path> {
@@ -21,6 +23,7 @@ private val log = LoggerFactory.getLogger(QuestRegistryLoader::class.java)
 class QuestRegistryLoader(
     private val questsPath: Path = ConfigPaths.resourcesDir("quests"),
     private val npcTypes: (() -> Map<String, NpcDefinition>)? = null,
+    private val biomes: (() -> Collection<BiomeDefinition>)? = null,
 ) {
     @Volatile private var cached: Map<String, QuestDefinition>? = null
 
@@ -56,5 +59,11 @@ class QuestRegistryLoader(
         val report = QuestTargetValidator.validate(quests, types)
         report.warnings.forEach { log.warn(it) }
         check(report.errors.isEmpty()) { report.errors.joinToString("\n") }
+        val gaps = biomes?.let { QuestCoverage.gaps(it(), types, quests) }.orEmpty()
+        if (gaps.isEmpty()) return
+        log.warn(
+            "Quest coverage: no Quest giver in {} Biome x Danger tier pair(s): {}",
+            gaps.size,
+            gaps.joinToString("; ") { "${it.biome} T${it.tier} (${it.reason})" })
     }
 }
