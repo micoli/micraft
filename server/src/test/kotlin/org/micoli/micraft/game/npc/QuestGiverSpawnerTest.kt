@@ -2,14 +2,25 @@ package org.micoli.micraft.game.npc
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.npc.behaviors.QuestGiverNpcBehavior
+import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
+import org.micoli.micraft.game.npc.roster.RegionPopulation
+import org.micoli.micraft.game.quest.KillObjective
+import org.micoli.micraft.game.quest.QuestDefinition
+import org.micoli.micraft.game.quest.QuestManager
+import org.micoli.micraft.game.quest.QuestType
 import org.micoli.micraft.game.world.ChunkPos
-import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
-import org.micoli.micraft.support.testWorld
+import org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator.FlatArenaChunkGenerator
+import org.micoli.micraft.player.Vec3
 
-private fun questGiverDef(type: String = "hermit_man"): NpcDefinition =
+private fun questGiverDef(
+    type: String = "hermit_man",
+    biomes: List<String> = emptyList(),
+    maxLevel: Int = Int.MAX_VALUE,
+): NpcDefinition =
     NpcDefinition(
         type = type,
         behavior = QuestGiverNpcBehavior(),
@@ -19,48 +30,129 @@ private fun questGiverDef(type: String = "hermit_man"): NpcDefinition =
         height = 1.8f,
         wanderSpeed = 0f,
         wanderRadius = 0f,
-        minLevel = 0,
-        maxLevel = 10,
+        maxLevel = maxLevel,
+        spawn = NpcSpawnConfig(spawnBiomes = biomes),
     )
 
-private fun solidFloorWorld(): WorldState {
-    val chunkSize = WorldConstants.CHUNK_SIZE
-    val blocks = buildList {
-        for (x in 0 until chunkSize * 3) for (z in 0 until chunkSize * 3) add(Triple(x, 3, z))
+private val deer =
+    NpcDefinition(
+        type = "deer",
+        behavior = RandomMovableNpcBehavior(),
+        bbmodelFile = "npc",
+        width = 0.5f,
+        height = 0.9f,
+        wanderSpeed = 2f,
+        wanderRadius = 8f,
+        spawn = NpcSpawnConfig(autoSpawn = true),
+    )
+
+private fun killQuest(id: String, level: Int, target: String) =
+    QuestDefinition(
+        id = id,
+        title = id,
+        description = "",
+        type = QuestType.KILL,
+        level = level,
+        objectives = listOf(KillObjective(target, 1)))
+
+/** A plains arena at Danger level 3: one Region whose Roster holds `deer`. */
+private fun arena(): WorldState =
+    WorldState(
+            FlatArenaChunkGenerator(
+                halfSize = 40, regionBudget = 10, zoneLevel = 3, vegetationDensity = 0.0))
+        .also { world -> chunks.forEach { world.getOrGenerate(it) } }
+
+private val chunks: List<ChunkPos> =
+    (-1..1).flatMap { cx -> (-1..1).map { cz -> ChunkPos(cx, cz) } }
+
+private fun manager(
+    givers: List<NpcDefinition>,
+    quests: List<QuestDefinition> = listOf(killQuest("deer_hunt", 2, "deer")),
+): NpcManager {
+    val questManager =
+        QuestManager(getSessions = { emptyList() }, savePlayer = {}).also { qm ->
+            qm.reloadDefinitions(quests.associateBy { it.id })
+        }
+    return NpcManager(broadcast = {}, getQuestManager = { questManager }).also { m ->
+        m.loadDefinitions((givers + deer).associateBy { it.type })
     }
-    return testWorld(*blocks.toTypedArray())
 }
 
-/** Chunks 0..2 in both axes — matches the solid floor laid down in [solidFloorWorld]. */
-private fun chunksAround(max: Int): List<ChunkPos> =
-    (0..max).flatMap { cx -> (0..max).map { cz -> ChunkPos(cx, cz) } }
+private fun giverSpawner(world: WorldState, m: NpcManager) =
+    QuestGiverSpawner(RegionPopulation(world) { m.getDefinitions() })
+
+private fun NpcManager.givers() = getAll().filter { it.definition.behaviorKey == "quest_giver" }
 
 class QuestGiverSpawnerTest {
-    private fun testManager(defs: Map<String, NpcDefinition>): NpcManager {
-        val m = NpcManager(broadcast = {})
-        m.loadDefinitions(defs)
-        return m
+    @Test
+    fun spawnsExactlyOnePerRegionWithTheSuitedQuests() = runBlocking {
+        val world = arena()
+        val m = manager(listOf(questGiverDef()))
+        val spawner = giverSpawner(world, m)
+
+        spawner.trySpawn(world, m, m.getDefinitions(), chunks)
+        spawner.trySpawn(world, m, m.getDefinitions(), chunks)
+
+        assertEquals(listOf("deer_hunt"), m.givers().single().offeredQuests)
     }
 
     @Test
-    fun spawnsExactlyOnePerCell() = runBlocking {
-        val world = solidFloorWorld()
-        val manager = testManager(mapOf("hermit_man" to questGiverDef()))
-        val spawner = QuestGiverSpawner()
-        val chunks = chunksAround(2)
+    fun noGiverWhereNoQuestFitsTheRegion() = runBlocking {
+        val world = arena()
+        val m =
+            manager(
+                listOf(questGiverDef()),
+                listOf(killQuest("eel_hunt", 2, "eel"), killQuest("deer_cull", 14, "deer")))
 
-        spawner.trySpawn(world, manager, manager.getDefinitions(), chunks)
-        spawner.trySpawn(world, manager, manager.getDefinitions(), chunks)
+        giverSpawner(world, m).trySpawn(world, m, m.getDefinitions(), chunks)
 
-        assertEquals(1, manager.getAll().count { it.definition.behaviorKey == "quest_giver" })
+        assertTrue(m.givers().isEmpty())
     }
 
     @Test
-    fun ignoresNpcsWithoutQuestGiverBehavior() = runBlocking {
-        val world = solidFloorWorld()
-        val manager = testManager(emptyMap())
-        val spawner = QuestGiverSpawner()
-        spawner.trySpawn(world, manager, manager.getDefinitions(), chunksAround(1))
-        assertEquals(0, manager.getAll().size)
+    fun extraGiversInARegionAreRemoved() = runBlocking {
+        val world = arena()
+        val m = manager(listOf(questGiverDef()))
+        repeat(3) { m.spawnNpc("Hermit$it", "hermit_man", Vec3(it.toFloat(), 8f, 0f)) }
+
+        giverSpawner(world, m).trySpawn(world, m, m.getDefinitions(), chunks)
+
+        assertEquals(1, m.givers().size)
+    }
+
+    @Test
+    fun prefersAGiverMadeForTheRegionBiome() = runBlocking {
+        val world = arena()
+        val m =
+            manager(
+                listOf(
+                    questGiverDef("hermit_man", biomes = listOf("forest")),
+                    questGiverDef("farmer", biomes = listOf("plains"))))
+
+        giverSpawner(world, m).trySpawn(world, m, m.getDefinitions(), chunks)
+
+        assertEquals("farmer", m.givers().single().state.type)
+    }
+
+    @Test
+    fun fallsBackToAnyGiverOfTheRightLevel() = runBlocking {
+        val world = arena()
+        val m =
+            manager(
+                listOf(
+                    questGiverDef("hermit_man", biomes = listOf("forest")),
+                    questGiverDef("novice_guard", maxLevel = 2)))
+
+        giverSpawner(world, m).trySpawn(world, m, m.getDefinitions(), chunks)
+
+        assertEquals("hermit_man", m.givers().single().state.type)
+    }
+
+    @Test
+    fun doesNothingWithoutQuestGiverTypes() = runBlocking {
+        val world = arena()
+        val m = manager(emptyList())
+        giverSpawner(world, m).trySpawn(world, m, m.getDefinitions(), chunks)
+        assertTrue(m.getAll().isEmpty())
     }
 }

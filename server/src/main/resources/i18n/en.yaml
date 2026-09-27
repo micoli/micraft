@@ -394,6 +394,8 @@ npc:
     roster_header: "{0}: {1}, Danger level {2} (tier {3}), population {5}/{4}"
     roster_entry: "  {0}: weight {1}, {3}/{2}"
     roster_entry_rare: "  {0}: rare, {2}/{1}"
+    roster_giver: "Quest giver: {0} ({1}), {2} suited Quest(s)"
+    roster_no_giver: "No Quest giver yet, {0} suited Quest(s)"
     spawned: "Spawned {0} ({1}) at {2}."
     removed: "Removed NPC {0}."
     not_found: "NPC '{0}' not found."

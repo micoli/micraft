@@ -39,8 +39,8 @@ class AnimalInteractionProcessor(
     /** Lifecycle sink; no-op on the live server, wired to the event log by the world simulator. */
     private val onEvent: (AnimalEvent) -> Unit = {},
 ) {
-    private var slowTickCounter = 0
     private val population = RegionPopulation(world) { npcManager.getDefinitions() }
+    private var slowTickCounter = 0
     /** Built at most once per slow tick, and only if some animal gets as far as wanting a mate. */
     private var regionCensus: Lazy<RegionCensus>? = null
     private val hpRegenAccumulators = mutableMapOf<String, Float>()
@@ -335,8 +335,7 @@ class AnimalInteractionProcessor(
 
     private fun isInFullRegion(instance: NpcInstance): Boolean {
         val census = regionCensus?.value ?: return false
-        val pos = instance.state.pos
-        val region = world.regionAt(pos.x.toInt(), pos.z.toInt()) ?: return false
+        val region = world.regionAt(instance.state.pos) ?: return false
         return census.isFull(region)
     }
 
@@ -598,8 +597,8 @@ class AnimalInteractionProcessor(
             ((mother.instanceLevel + (mateInstance?.instanceLevel ?: mother.instanceLevel)) / 2 - 5)
                 .coerceAtLeast(1)
         val offspringLevel = avgLevel.coerceAtMost(zoneLevel)
-        val region = world.regionAt(mother.state.pos.x.toInt(), mother.state.pos.z.toInt())
-        val census = region?.let { population.census(npcManager.getAll()) }
+        val region = world.regionAt(mother.state.pos)
+        val census = region?.let { regionCensus?.value ?: population.census(npcManager.getAll()) }
 
         repeat(count) {
             val regionFull = region != null && census?.isFull(region) == true

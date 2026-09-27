@@ -19,6 +19,7 @@ import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.combat.SpellProcessor
 import org.micoli.micraft.game.npc.animal.AnimalInstanceData
+import org.micoli.micraft.game.quest.QuestDefinition
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BreathConstants
@@ -588,9 +589,7 @@ class NpcManager(
         }
         val interactCtx =
             ctx.copy(
-                questManager =
-                    if (instance.definition.behaviorKey == "quest_giver") getQuestManager()
-                    else null,
+                questManager = if (instance.definition.isQuestGiver) getQuestManager() else null,
                 i18n = i18n)
         instance.definition.behavior.onInteract(instance, session, interactCtx) { msg ->
             session.send(msg)
@@ -750,6 +749,9 @@ class NpcManager(
         }
 
     fun getDefinitions(): Map<String, NpcDefinition> = definitions
+
+    fun questDefinitions(): Collection<QuestDefinition> =
+        getQuestManager()?.getDefinitions()?.values.orEmpty()
 
     fun getInstance(id: String): NpcInstance? = npcs[id]
 

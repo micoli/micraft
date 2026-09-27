@@ -6,6 +6,7 @@ import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.roster.RegionPopulation
+import org.micoli.micraft.game.npc.roster.RegionQuests
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.Region
 import org.micoli.micraft.protocol.ServerMessage
@@ -202,6 +203,26 @@ class NpcCommand : CommandHandler {
                         entry.share,
                         live)
             session.send(ServerMessage.Notification(line))
+        }
+        val quests = RegionQuests.suitedTo(roster, npcManager.questDefinitions())
+        val giver =
+            npcManager.getAll().firstOrNull { npc ->
+                npc.definition.isQuestGiver &&
+                    !npc.isDead &&
+                    world.regionAt(npc.state.pos) == region
+            }
+        val giverLine =
+            if (giver == null) i18n.t(lang, "npc:server:roster_no_giver", quests.size)
+            else
+                i18n.t(
+                    lang,
+                    "npc:server:roster_giver",
+                    giver.state.name,
+                    giver.state.type,
+                    quests.size)
+        session.send(ServerMessage.Notification(giverLine))
+        if (quests.isNotEmpty()) {
+            session.send(ServerMessage.Notification("  ${quests.joinToString(", ")}"))
         }
     }
 

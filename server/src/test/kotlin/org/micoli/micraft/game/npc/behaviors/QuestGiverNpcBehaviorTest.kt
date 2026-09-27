@@ -39,15 +39,16 @@ class QuestGiverNpcBehaviorTest {
                 height = 1.8f,
                 wanderSpeed = 0f,
                 wanderRadius = 0f,
-                offersQuests = questIds.toList(),
             )
         val pos = Vec3(8f, 4f, 8f)
         return NpcInstance(
-            state =
-                NpcState(id = "npc-1", name = "Hermit", type = "hermit_man", pos = pos, yaw = 0f),
-            definition = def,
-            spawnPos = pos,
-        )
+                state =
+                    NpcState(
+                        id = "npc-1", name = "Hermit", type = "hermit_man", pos = pos, yaw = 0f),
+                definition = def,
+                spawnPos = pos,
+            )
+            .also { it.offeredQuests = questIds.toList() }
     }
 
     @Test

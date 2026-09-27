@@ -6,7 +6,7 @@ import org.micoli.micraft.quest.QuestProgress
 import org.micoli.micraft.quest.QuestStatus
 
 /**
- * Quests from [offersQuests] the player can actually accept right now (level, `dependsOn`,
+ * Quests from [offeredQuests] the player can actually accept right now (level, `dependsOn`,
  * cooldown, not already active/completed-non-repeatable). Single source of truth for "what can this
  * NPC legitimately offer" — used both by
  * [org.micoli.micraft.game.npc.behaviors.QuestGiverNpcBehavior] and by `ChatNpcBehavior` to
@@ -14,12 +14,12 @@ import org.micoli.micraft.quest.QuestStatus
  */
 fun computeOfferableQuests(
     qm: QuestManager,
-    offersQuests: List<String>,
+    offeredQuests: List<String>,
     playerLevel: Int,
     playerQuests: Map<String, QuestProgress>,
 ): List<QuestOfferSummary> {
     val definitions = qm.getDefinitions()
-    return offersQuests.mapNotNull { questId ->
+    return offeredQuests.mapNotNull { questId ->
         val def = definitions[questId] ?: return@mapNotNull null
         val current = playerQuests[questId]
         if (current?.status == QuestStatus.IN_PROGRESS ||

@@ -131,8 +131,9 @@ class NpcCommandTest {
 
         cmd.execute(session, "roster", testContext(world = proceduralWorld, npcManager = m))
 
-        val header = session.sent.filterIsInstance<ServerMessage.Notification>().first().message
-        assertTrue(region.name in header && region.biome.id in header, header)
+        val lines = session.sent.filterIsInstance<ServerMessage.Notification>().map { it.message }
+        assertTrue(region.name in lines.first() && region.biome.id in lines.first(), lines.first())
+        assertTrue(lines.last().contains("Quest giver"), lines.last())
     }
 
     @Test

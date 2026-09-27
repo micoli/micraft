@@ -37,8 +37,6 @@ data class NpcDefinition(
     val loot: List<DropEntry> = emptyList(),
     val tameable: Boolean = false,
     val tameBaseChance: Float = 0.5f,
-    /** Quest ids a `quest_giver` behavior NPC can offer. Ignored by every other behavior. */
-    val offersQuests: List<String> = emptyList(),
     /**
      * Optional LLM-dialogue capability, orthogonal to [behavior] — null disables chat entirely and
      * `onInteract` goes to [behavior] as usual (e.g. a `quest_giver` still shows its static offer
@@ -64,6 +62,9 @@ data class NpcDefinition(
 
     val canFly: Boolean
         get() = MovementMode.FLYING in movementMode
+
+    val isQuestGiver: Boolean
+        get() = behaviorKey == "quest_giver"
 
     /** Pure water dweller: spawns in the water column instead of on land. */
     val isAquatic: Boolean

@@ -12,11 +12,11 @@ import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.quest.QuestStatus
 
 /**
- * Offers the quests listed in [org.micoli.micraft.game.npc.NpcDefinition.offersQuests], filtered to
- * what the player can actually accept (level, `dependsOn`, cooldown, not already active), and lists
- * ones [org.micoli.micraft.quest.QuestStatus.READY_TO_TURN_IN] (a non-autoloot quest whose
- * objective is met) as claimable here. Does not accept or claim quests itself — the dialog's
- * actions replay through the existing `/quest accept`/`/quest turnin` paths
+ * Offers the Quests suited to its Region ([org.micoli.micraft.game.npc.NpcInstance.offeredQuests]),
+ * filtered to what the player can actually accept (level, `dependsOn`, cooldown, not already
+ * active), and lists ones [org.micoli.micraft.quest.QuestStatus.READY_TO_TURN_IN] (a non-autoloot
+ * quest whose objective is met) as claimable here. Does not accept or claim quests itself — the
+ * dialog's actions replay through the existing `/quest accept`/`/quest turnin` paths
  * (`QuestManager.accept`/`turnIn`) so there is one code path for each, not two.
  */
 class QuestGiverNpcBehavior : NpcBehavior {
@@ -36,10 +36,10 @@ class QuestGiverNpcBehavior : NpcBehavior {
         val playerQuests = session.state.quests
 
         val offerable =
-            computeOfferableQuests(qm, instance.definition.offersQuests, playerLevel, playerQuests)
+            computeOfferableQuests(qm, instance.offeredQuests, playerLevel, playerQuests)
 
         val turnInable =
-            instance.definition.offersQuests.filter { questId ->
+            instance.offeredQuests.filter { questId ->
                 playerQuests[questId]?.status == QuestStatus.READY_TO_TURN_IN
             }
 

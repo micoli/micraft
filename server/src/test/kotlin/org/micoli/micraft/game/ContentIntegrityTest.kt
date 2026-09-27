@@ -6,6 +6,7 @@ import org.micoli.micraft.game.armor.ArmorRegistryLoader
 import org.micoli.micraft.game.npc.NpcLootValidator
 import org.micoli.micraft.game.npc.NpcRegistryLoader
 import org.micoli.micraft.game.quest.QuestRegistryLoader
+import org.micoli.micraft.game.world.WorldConstants
 
 /**
  * Loads the real `resources/` content (not test fixtures) to catch yaml that silently drops on a
@@ -14,16 +15,15 @@ import org.micoli.micraft.game.quest.QuestRegistryLoader
  */
 class ContentIntegrityTest {
     @Test
-    fun allNpcsLoadAndQuestGiverOffersResolve() {
+    fun allNpcsLoadAndAQuestGiverFitsEveryDangerLevel() {
         val npcs = NpcRegistryLoader().load()
         assertTrue(npcs.size > 40, "expected the full NPC roster, found ${npcs.size}")
 
-        val quests = QuestRegistryLoader().load()
-        val hermitMan = npcs["hermit_man"] ?: error("hermit_man NPC should exist")
-        assertTrue(
-            hermitMan.behaviorKey == "quest_giver", "hermit_man should be the quest-giver NPC")
-        for (questId in hermitMan.offersQuests) {
-            assertTrue(questId in quests, "hermit_man offers unknown quest '$questId'")
+        val givers = npcs.values.filter { it.behaviorKey == "quest_giver" }
+        for (level in 1..WorldConstants.RPG_LEVEL_MAX) {
+            assertTrue(
+                givers.any { level in it.minLevel..it.maxLevel },
+                "no Quest giver fits Danger level $level")
         }
     }
 

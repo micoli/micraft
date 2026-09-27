@@ -21,7 +21,7 @@ private const val TEST_CHAT_PLAYER_LEVEL = 9_999
  * layered on top of whatever behavior the NPC already has ([NpcManager.handleInteract] decides
  * whether to route here instead of `behavior.onInteract`). The model only ever produces text plus a
  * *proposed* intent — it never mutates game state. A proposed quest/item id is revalidated against
- * the NPC's own whitelists ([NpcDefinition.offersQuests]/`chat.giftableItems`) before the player
+ * the NPC's own whitelists ([NpcInstance.offeredQuests]/`chat.giftableItems`) before the player
  * ever sees it as an actionable offer, and accepting it still goes through the existing
  * `QuestManager.accept`/`turnIn` paths or [onAcceptGift] — never a direct call from here.
  */
@@ -67,7 +67,7 @@ object NpcChatService {
         val offerableQuests =
             ctx.questManager?.let {
                 computeOfferableQuests(
-                    it, instance.definition.offersQuests, playerLevel, session.state.quests)
+                    it, instance.offeredQuests, playerLevel, session.state.quests)
             } ?: emptyList()
         val giftableItems = chat.giftableItems
 
@@ -147,7 +147,7 @@ object NpcChatService {
         val offerableQuests =
             ctx.questManager?.let {
                 computeOfferableQuests(
-                    it, instance.definition.offersQuests, TEST_CHAT_PLAYER_LEVEL, emptyMap())
+                    it, instance.offeredQuests, TEST_CHAT_PLAYER_LEVEL, emptyMap())
             } ?: emptyList()
         val giftableItems = chat.giftableItems
 

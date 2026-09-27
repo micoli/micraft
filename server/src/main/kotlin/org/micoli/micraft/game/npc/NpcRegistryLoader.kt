@@ -51,7 +51,6 @@ private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
         tameable = o.tameable ?: tameable,
         tameBaseChance = o.tameBaseChance ?: tameBaseChance,
         movementMode = o.movementMode ?: movementMode,
-        offersQuests = o.offersQuests ?: offersQuests,
         chat = o.chat ?: chat,
         armorLoot = o.armorLoot ?: armorLoot,
     )
@@ -100,7 +99,6 @@ fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition =
         tameable = o.tameable ?: tameable,
         tameBaseChance = o.tameBaseChance ?: tameBaseChance,
         movementMode = o.movementMode ?: movementMode,
-        offersQuests = o.offersQuests ?: offersQuests,
         chat = o.chat ?: chat,
         armorLoot = o.armorLoot ?: armorLoot,
     )
@@ -168,7 +166,6 @@ class NpcRegistryLoader(
                                     tameable = entry.tameable,
                                     tameBaseChance = entry.tameBaseChance,
                                     movementMode = entry.movementMode,
-                                    offersQuests = entry.offersQuests,
                                     chat = entry.chat,
                                     armorLoot = entry.armorLoot,
                                 )

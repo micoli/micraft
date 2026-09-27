@@ -394,6 +394,8 @@ npc:
     roster_header: "{0} : {1}, niveau de danger {2} (palier {3}), population {5}/{4}"
     roster_entry: "  {0} : poids {1}, {3}/{2}"
     roster_entry_rare: "  {0} : rare, {2}/{1}"
+    roster_giver: "Donneur de quêtes : {0} ({1}), {2} quête(s) adaptée(s)"
+    roster_no_giver: "Pas encore de donneur de quêtes, {0} quête(s) adaptée(s)"
     spawned: "{0} ({1}) créé en {2}."
     removed: "PNJ {0} supprimé."
     not_found: "PNJ '{0}' introuvable."

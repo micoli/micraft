@@ -50,7 +50,6 @@ data class NpcYamlEntry(
     val loot: List<DropEntry> = emptyList(),
     val tameable: Boolean = false,
     @JsonSchemaConstraint(minimum = 0.0, maximum = 1.0) val tameBaseChance: Float = 0.5f,
-    val offersQuests: List<String> = emptyList(),
     /** Optional LLM-dialogue capability, orthogonal to [behavior]. */
     val chat: NpcChatCapability? = null,
     val armorLoot: List<ArmorDropEntry> = emptyList(),

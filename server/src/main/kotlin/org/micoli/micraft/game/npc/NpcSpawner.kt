@@ -10,9 +10,7 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(NpcSpawner::class.java)
 
-class NpcSpawner {
-    @Volatile private var latestDefinitions: Map<String, NpcDefinition> = emptyMap()
-    private var population: RegionPopulation? = null
+class NpcSpawner(private val population: RegionPopulation) {
 
     /**
      * Fills the Regions around [loadedChunks] from their Roster, each type up to its share of the
@@ -27,10 +25,7 @@ class NpcSpawner {
         canSpawn: () -> Boolean = { true },
     ) {
         if (loadedChunks.isEmpty()) return
-        val population = populationFor(world, definitions)
         val census = population.census(npcManager.getAll())
-        // Built once per pass, then kept up to date locally: rescanning every NPC for each attempt
-        // is what these snapshots avoid.
         val counts = npcManager.countsByType().toMutableMap()
         val density = npcManager.spawnDensitySnapshot()
         val attempts = HashMap<Long, Int>()
@@ -63,21 +58,12 @@ class NpcSpawner {
             val instanceLevel =
                 (region.dangerLevel + ctx.random.nextInt(-3, 4)).coerceIn(
                     1, WorldConstants.RPG_LEVEL_MAX)
-            // the animal record comes with the spawn now — see NpcManager.spawnNpc
             npcManager.spawnNpc(npcManager.generateUniqueName(type), type, spawnPos, instanceLevel)
             density.recordSpawn(chunkPos, type, npcManager.zoneKey(wx.toFloat(), wz.toFloat()))
             census.record(region, type)
             counts.merge(type, 1, Int::plus)
             log.debug("Auto-spawned {} in {} at ({},{},{})", type, region.name, wx, spawnPos.y, wz)
         }
-    }
-
-    private fun populationFor(
-        world: WorldState,
-        definitions: Map<String, NpcDefinition>,
-    ): RegionPopulation {
-        latestDefinitions = definitions
-        return population ?: RegionPopulation(world) { latestDefinitions }.also { population = it }
     }
 
     private fun spawnPosition(

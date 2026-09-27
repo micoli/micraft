@@ -89,6 +89,11 @@ class NpcInstance(
      */
     val random: Random = Random,
 ) {
+    /**
+     * Quest ids a Quest giver offers: the Quests suited to its Region, kept by QuestGiverSpawner.
+     */
+    @Volatile var offeredQuests: List<String> = emptyList()
+
     val characterClass
         get() = definition.characterClass
 

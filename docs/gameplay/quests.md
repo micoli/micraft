@@ -14,6 +14,17 @@ title: Quests
 Quest types: **KILL** (defeat N of an NPC type) and **FETCH** (collect N of an
 item). `QuestRegistryLoader` loads definitions at startup.
 
+### Quest givers
+
+Every Region with at least one suited Quest has exactly one Quest giver, standing
+near the Region's centre. It offers the Quests whose level lies in the Region's
+Danger tier and whose kill targets all live in the Region's
+[Roster](../entities/npcs.md), so a Quest never sends you after an NPC that does
+not live there (a kill still counts wherever it happens). The giver's NPC type is
+a `quest_giver` whose `spawnBiomes` include the Region's Biome, else any
+`quest_giver` of the right level. `/npc roster` shows the Region's giver and how
+many Quests suit it.
+
 ### Claiming the reward: autoloot vs. turn-in
 
 A quest's `autoLoot` flag decides how its reward is claimed:

@@ -71,7 +71,7 @@ class NpcTickPipeline(
         npcManager.despawnOrphanedNpcs(sessions)
         val chunks = nearChunks(world, sessions)
         npcSpawner.trySpawn(world, npcManager, npcManager.getDefinitions(), chunks, ctx, canSpawn)
-        questGiverSpawner?.trySpawn(world, npcManager, npcManager.getDefinitions(), chunks, ctx)
+        questGiverSpawner?.trySpawn(world, npcManager, npcManager.getDefinitions(), chunks)
     }
 
     /** Zone cell a world position falls into. */
@@ -100,7 +100,7 @@ class NpcTickPipeline(
             npcSpawner.trySpawn(
                 world, npcManager, npcManager.getDefinitions(), adjacentChunks, ctx, canSpawn)
             questGiverSpawner?.trySpawn(
-                world, npcManager, npcManager.getDefinitions(), adjacentChunks, ctx)
+                world, npcManager, npcManager.getDefinitions(), adjacentChunks)
         }
     }
 

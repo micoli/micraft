@@ -11,6 +11,7 @@ import org.micoli.micraft.game.combat.CombatConfigData
 import org.micoli.micraft.game.combat.CombatProcessor
 import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
+import org.micoli.micraft.game.npc.roster.RegionPopulation
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldState
@@ -67,7 +68,7 @@ private class Harness(tuning: NpcTuning = NpcConstants.live, seed: Long = 7L) {
     val pipeline =
         NpcTickPipeline(
             npcManager = npcManager,
-            npcSpawner = NpcSpawner(),
+            npcSpawner = NpcSpawner(RegionPopulation(world) { npcManager.getDefinitions() }),
             animals = animals,
             ctxOf = { ctx },
         )

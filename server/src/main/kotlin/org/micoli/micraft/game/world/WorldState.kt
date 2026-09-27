@@ -97,6 +97,8 @@ class WorldState(
 
     fun regionAt(wx: Int, wz: Int): Region? = generator.regionAt(wx, wz)
 
+    fun regionAt(pos: Vec3): Region? = regionAt(pos.x.toInt(), pos.z.toInt())
+
     fun regionsNear(wx: Int, wz: Int, radiusBlocks: Int): List<Region> =
         generator.regionsNear(wx, wz, radiusBlocks)
 

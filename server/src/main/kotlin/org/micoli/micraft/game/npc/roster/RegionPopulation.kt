@@ -26,9 +26,7 @@ class RegionPopulation(
     fun census(npcs: Collection<NpcInstance>): RegionCensus {
         val census = RegionCensus(this)
         npcs.filter(::isWild).forEach { npc ->
-            world.regionAt(npc.state.pos.x.toInt(), npc.state.pos.z.toInt())?.let {
-                census.record(it, npc.state.type)
-            }
+            world.regionAt(npc.state.pos)?.let { census.record(it, npc.state.type) }
         }
         return census
     }

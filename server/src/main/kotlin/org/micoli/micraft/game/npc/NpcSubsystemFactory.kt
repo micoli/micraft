@@ -6,6 +6,7 @@ import org.micoli.micraft.game.npc.animal.AnimalEvent
 import org.micoli.micraft.game.npc.animal.AnimalInteractionProcessor
 import org.micoli.micraft.game.npc.pack.PackCoordinator
 import org.micoli.micraft.game.npc.pack.PackEvent
+import org.micoli.micraft.game.npc.roster.RegionPopulation
 import org.micoli.micraft.game.pet.PetCoordinator
 import org.micoli.micraft.game.quest.QuestManager
 import org.micoli.micraft.game.session.PlayerSession
@@ -105,9 +106,12 @@ class NpcSubsystemFactory(
             isPlayerName = hooks.isPlayerName,
         )
 
-    val npcSpawner: NpcSpawner = NpcSpawner()
+    /** The one view of this World's Regions, shared by everything that spawns or breeds NPCs. */
+    val regionPopulation: RegionPopulation = RegionPopulation(world) { npcManager.getDefinitions() }
 
-    val questGiverSpawner: QuestGiverSpawner = QuestGiverSpawner()
+    val npcSpawner: NpcSpawner = NpcSpawner(regionPopulation)
+
+    val questGiverSpawner: QuestGiverSpawner = QuestGiverSpawner(regionPopulation)
 
     val gameTimeService: GameTimeService = GameTimeService(gameDayDurationSecondsOf)
 

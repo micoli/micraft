@@ -448,12 +448,6 @@
       "minimum": 0,
       "maximum": 1
     },
-    "offersQuests": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
     "chat": {
       "oneOf": [
         {
