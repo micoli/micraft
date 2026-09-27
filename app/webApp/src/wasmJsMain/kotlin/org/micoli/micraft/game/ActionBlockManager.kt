@@ -10,11 +10,20 @@ import org.micoli.micraft.babylon.jsRemoveActionBlockIcon
 import org.micoli.micraft.babylon.jsSetActionBlockHighlight
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.actionblock.ActionBlockInfo
+import org.micoli.micraft.protocol.ServerMessage
 
 /**
  * Client mirror of the server action-block registry: draws the ★ icons and drives Tab targeting.
  */
-class ActionBlockManager(private val scene: JsAny) {
+class ActionBlockManager(private val scene: JsAny) : ServerMessageHandler {
+    override fun handle(msg: ServerMessage) =
+        when (msg) {
+            is ServerMessage.ActionBlockSync -> sync(msg.blocks)
+            is ServerMessage.ActionBlockUpsert -> upsert(msg.info)
+            is ServerMessage.ActionBlockRemove -> remove(msg.pos)
+            else -> Unit
+        }
+
     private val blocks = LinkedHashMap<String, ActionBlockInfo>()
     private var highlighted: BlockPos? = null
 

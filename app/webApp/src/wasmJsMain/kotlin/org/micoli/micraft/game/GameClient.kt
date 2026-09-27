@@ -25,24 +25,9 @@ import org.micoli.micraft.HttpChunkFetcher
 import org.micoli.micraft.LocalPlayerController
 import org.micoli.micraft.RemotePlayerManager
 import org.micoli.micraft.babylon.*
-import org.micoli.micraft.game.world.BlockDefinition
-import org.micoli.micraft.game.world.BlockEntity
-import org.micoli.micraft.game.world.BlockRegistry
-import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
-import org.micoli.micraft.game.world.ChunkPos
-import org.micoli.micraft.game.world.EntityType
-import org.micoli.micraft.game.world.ItemDefinition
-import org.micoli.micraft.game.world.ItemRegistry
-import org.micoli.micraft.game.world.ItemType
-import org.micoli.micraft.game.world.PlainColor
-import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldConstants
-import org.micoli.micraft.game.world.rail.RailConnectionPoint
-import org.micoli.micraft.game.world.rail.RailDefinition
 import org.micoli.micraft.gameChunkManager
-import org.micoli.micraft.placeable.PlaceableDefinition
-import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.CHUNK_HANDSHAKE_SEPARATOR
 import org.micoli.micraft.protocol.ClientMessage
@@ -52,21 +37,12 @@ import org.micoli.micraft.protocol.PROTOCOL_MISMATCH_CLOSE_CODE
 import org.micoli.micraft.protocol.SUPERSEDED_CONNECTION_CLOSE_CODE
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.protocol.ServerMessageCodec
-import org.micoli.micraft.protocol.SiegeWeaponCodexInfo
-import org.micoli.micraft.social.FactionColors
 import org.micoli.micraft.ui.LayoutSyncPayload
 import org.micoli.micraft.ui.McUiState
 
 private const val SKY_R = 0.53
 private const val SKY_G = 0.81
 private const val SKY_B = 0.98
-
-// Compiled-in client defaults, restored when a graphics-preference override is cleared.
-private const val DEFAULT_VIEW_RADIUS = 3
-private const val DEFAULT_FORWARD_VIEW_RADIUS = 7
-private const val DEFAULT_USE_IMPOSTOR = true
-private const val DEFAULT_IMPOSTOR_RADIUS_CHUNKS = 5
-private const val DEFAULT_IMPOSTOR_FOV_BONUS_CHUNKS = 2
 
 // Minimum camera yaw delta (radians, ~3°) before impostor promotion/demotion is re-evaluated
 // off a look-direction change alone — keeps reevaluateImpostors() off the hot per-frame path
@@ -92,9 +68,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private val panelManager = PanelManager()
     private val siegeWeaponManager = SiegeWeaponManager()
     private val siegeProjectileManager = SiegeProjectileManager(scene)
-    // Populated from ServerMessage.RegistrySync.siegeWeaponDefinitions — launch-math stats keyed
-    // by placeableType id (a siege weapon always composes with a placeable of the same type).
-    private var siegeWeaponDefs: Map<String, SiegeWeaponCodexInfo> = emptyMap()
+    private val registrySyncHandler = RegistrySyncHandler(chunkManager)
 
     /** No-op for a non-panel placeable — the DOM layer only tracks transforms it was told about. */
     private fun pushPanelTransform(placeableId: String) {
@@ -107,7 +81,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
 
     private fun siegeWeaponMuzzleAndVelocity(placeableId: String): Pair<Vec3, Vec3>? {
         val type = placeableManager.getType(placeableId) ?: return null
-        val def = siegeWeaponDefs[type] ?: return null
+        val def = registrySyncHandler.siegeWeaponDefs[type] ?: return null
         val pos = placeableManager.getPosition(placeableId) ?: return null
         val rotationStep = placeableManager.getRotationStep(placeableId) ?: 0
         val weapon = siegeWeaponManager.getByPlaceableId(placeableId) ?: return null
@@ -173,9 +147,46 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
     private val connectionId: String =
         List(4) { Random.nextInt(0x10000000, Int.MAX_VALUE).toString(16) }.joinToString("")
     private val needsWorld: Boolean = if (jsE2eEnabled()) jsE2eNeedsWorld() else true
-    private var lastWorldUpdateJson: String = "null"
     /** Rolling window of `ServerMessage.Notification` texts, mirrored into the e2e snapshot. */
     private val e2eNotifications = ArrayDeque<String>()
+
+    private val chunkWorldHandler = ChunkWorldHandler(chunkManager, localController, e2eSession)
+    private val playerStateHandler =
+        PlayerStateHandler(
+            localController = localController,
+            remotePlayerManager = remotePlayerManager,
+            chunkManager = chunkManager,
+            localPlayerId = { localPlayerId },
+            httpChunkFetcher = { httpChunkFetcher },
+            onPlayerPositionChanged = { cx, cz, yaw ->
+                currentPlayerCx = cx
+                currentPlayerCz = cz
+                currentYaw = yaw
+            },
+        )
+    private val npcDialogHandler = NpcDialogHandler()
+    private val chatNotificationHandler =
+        ChatNotificationHandler(scene, uiState) { text ->
+            if (e2eSession.isNotEmpty()) {
+                e2eNotifications.addLast(text)
+                while (e2eNotifications.size > 50) e2eNotifications.removeFirst()
+            }
+        }
+    private val panelUiHandler = PanelUiHandler()
+    private val tradeHandler = TradeHandler()
+    private val characterStatusHandler = CharacterStatusHandler(scene)
+    private val mailHandler = MailHandler()
+    private val socialAdminHandler = SocialAdminHandler()
+    private val preferencesHandler =
+        PreferencesHandler(
+            camera = camera,
+            chunkManager = chunkManager,
+            localController = localController,
+            uiState = uiState,
+            httpChunkFetcher = { httpChunkFetcher },
+            currentPlayerPos = { Triple(currentPlayerCx, currentPlayerCz, currentYaw) },
+        )
+    private val petRosterHandler = PetRosterHandler()
 
     @OptIn(ExperimentalWasmJsInterop::class)
     private fun applyE2eLook() {
@@ -213,7 +224,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 """"actionBlockTarget":${
                     actionBlockManager.currentTarget()?.let { """{"x":${it.x},"y":${it.y},"z":${it.z}}""" } ?: "null"
                 },""" +
-                """"lastWorldUpdate":$lastWorldUpdateJson,""" +
+                """"lastWorldUpdate":${chunkWorldHandler.lastWorldUpdateJson},""" +
                 """"panelFocusedId":${jsPanelFocusedId()?.let { "\"$it\"" } ?: "null"}}"""
         jsUpdateE2E(json)
     }
@@ -673,251 +684,67 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         dispatchMap[msg::class]?.handle(msg)
     }
 
+    private fun handleWelcome(msg: ServerMessage.Welcome) {
+        isInitialLoading = needsWorld
+        uiState.chunkLoadingProgress = if (needsWorld) Triple(0, 0, expectedChunkCount) else null
+        localPlayerId = msg.playerId
+        chunkTransportMode = msg.chunkTransport
+        if (msg.chunkTransport == "http") {
+            httpChunkFetcher =
+                HttpChunkFetcher(chunkManager = chunkManager, token = token, scope = scope)
+            scope.launch {
+                while (isActive) {
+                    delay(2000)
+                    httpChunkFetcher?.trigger(currentPlayerCx, currentPlayerCz, currentYaw)
+                }
+            }
+        }
+        playerIdReady.complete(msg.playerId)
+        uiState.playerId = msg.playerId
+        uiState.consolePlayerName = msg.playerName
+        jsSetServerBuildTimestamp(msg.buildTimestamp)
+        jsFetchI18n(msg.language)
+        jsFetchBiomeColors()
+        chunkManager.setShadersEnabled(msg.shadersEnabled)
+        jsSyncLayouts(Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
+        localController.setViewMode(msg.viewMode)
+        localController.setReconcileTolerances(msg.reconcileToleranceXz, msg.reconcileToleranceY)
+        localController.maxInteractionDistance = msg.maxInteractionDistance.toFloat()
+        localController.kinematicTuning = msg.kinematics
+    }
+
     private fun buildDispatchMap(): Map<KClass<out ServerMessage>, ServerMessageHandler> =
         buildMap {
             // Session / init
-            put(
-                ServerMessage.Welcome::class,
-                typedHandler { msg: ServerMessage.Welcome ->
-                    isInitialLoading = needsWorld
-                    uiState.chunkLoadingProgress =
-                        if (needsWorld) Triple(0, 0, expectedChunkCount) else null
-                    localPlayerId = msg.playerId
-                    chunkTransportMode = msg.chunkTransport
-                    if (msg.chunkTransport == "http") {
-                        httpChunkFetcher =
-                            HttpChunkFetcher(
-                                chunkManager = chunkManager,
-                                token = token,
-                                scope = scope,
-                            )
-                        scope.launch {
-                            while (isActive) {
-                                delay(2000)
-                                httpChunkFetcher?.trigger(
-                                    currentPlayerCx, currentPlayerCz, currentYaw)
-                            }
-                        }
-                    }
-                    playerIdReady.complete(msg.playerId)
-                    uiState.playerId = msg.playerId
-                    uiState.consolePlayerName = msg.playerName
-                    jsSetServerBuildTimestamp(msg.buildTimestamp)
-                    jsFetchI18n(msg.language)
-                    jsFetchBiomeColors()
-                    chunkManager.setShadersEnabled(msg.shadersEnabled)
-                    jsSyncLayouts(
-                        Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
-                    localController.setViewMode(msg.viewMode)
-                    localController.setReconcileTolerances(
-                        msg.reconcileToleranceXz, msg.reconcileToleranceY)
-                    localController.maxInteractionDistance = msg.maxInteractionDistance.toFloat()
-                    localController.kinematicTuning = msg.kinematics
-                })
+            put(ServerMessage.Welcome::class, typedHandler(::handleWelcome))
             put(ServerMessage.ItemsSpawned::class, ServerMessageHandler {})
             put(ServerMessage.ItemDespawned::class, ServerMessageHandler {})
 
-            // Chunk
-            put(
-                ServerMessage.ChunkData::class,
-                typedHandler { msg: ServerMessage.ChunkData ->
-                    chunkManager.setGrassTints(msg.pos, msg.grassTints)
-                    chunkManager.enqueueChunk(
-                        Chunk.decodeWire(
-                            msg.pos,
-                            msg.topY,
-                            msg.wireBlocks,
-                            msg.wireStates.takeIf { it.isNotEmpty() },
-                            msg.wireExtraStates.takeIf { it.isNotEmpty() },
-                            msg.entities),
-                        msg.topY)
-                })
-            put(
-                ServerMessage.ShadersUpdate::class,
-                typedHandler { msg: ServerMessage.ShadersUpdate ->
-                    chunkManager.setShadersEnabled(msg.enabled)
-                })
-            put(
-                ServerMessage.LightBoostUpdate::class,
-                typedHandler { msg: ServerMessage.LightBoostUpdate ->
-                    localController.lightBoostEnabled = msg.enabled
-                })
-            put(
-                ServerMessage.GodModeUpdate::class,
-                typedHandler { msg: ServerMessage.GodModeUpdate -> jsGodModeUpdate(msg.enabled) })
-            put(
-                ServerMessage.MountUpdate::class,
-                typedHandler { msg: ServerMessage.MountUpdate ->
-                    localController.isMounted = msg.vehicleId != null
-                    localController.mountedVehicleId = msg.vehicleId
-                })
-            put(
-                ServerMessage.EditModeUpdate::class,
-                typedHandler { msg: ServerMessage.EditModeUpdate ->
-                    jsEditModeUpdate(msg.mode.name.lowercase())
-                })
-            put(
-                ServerMessage.WalletUpdate::class,
-                typedHandler { msg: ServerMessage.WalletUpdate -> jsWalletUpdate(msg.copper) })
-            put(
-                ServerMessage.WorldUpdate::class,
-                typedHandler { msg: ServerMessage.WorldUpdate ->
-                    if (e2eSession.isNotEmpty()) {
-                        lastWorldUpdateJson =
-                            msg.changes.joinToString(prefix = "[", postfix = "]") { c ->
-                                """{"x":${c.pos.x},"y":${c.pos.y},"z":${c.pos.z},"block":"${c.type.id}"}"""
-                            }
-                    }
-                    // Collect affected chunk positions for re-enqueue after applying all changes
-                    val affectedChunks = mutableMapOf<ChunkPos, Pair<Chunk, Int>>()
-
-                    msg.changes.forEach { change ->
-                        val cx = change.pos.x.floorDiv(WorldConstants.CHUNK_SIZE)
-                        val cz = change.pos.z.floorDiv(WorldConstants.CHUNK_SIZE)
-                        val cp = ChunkPos(cx, cz)
-                        val (existing, existingTopY) =
-                            affectedChunks[cp] ?: chunkManager.chunkData[cp] ?: return@forEach
-                        val lx = change.pos.x - cx * WorldConstants.CHUNK_SIZE
-                        val lz = change.pos.z - cz * WorldConstants.CHUNK_SIZE
-                        val updated =
-                            existing.withBlock(
-                                lx, change.pos.y, lz, change.type, change.state, change.extraState)
-                        val newTopY =
-                            if (change.type != BlockType.AIR) maxOf(existingTopY, change.pos.y)
-                            else existingTopY
-                        affectedChunks[cp] = Pair(updated, newTopY)
-                        if (change.type == BlockType.AIR) localController.onBlockBroken(change.pos)
-                    }
-
-                    msg.entityAdds.forEach { proto ->
-                        val cx = proto.worldX.floorDiv(WorldConstants.CHUNK_SIZE)
-                        val cz = proto.worldZ.floorDiv(WorldConstants.CHUNK_SIZE)
-                        val cp = ChunkPos(cx, cz)
-                        val (existing, topY) =
-                            affectedChunks[cp] ?: chunkManager.chunkData[cp] ?: return@forEach
-                        val localX = proto.worldX - cx * WorldConstants.CHUNK_SIZE
-                        val localZ = proto.worldZ - cz * WorldConstants.CHUNK_SIZE
-                        val masterIdx = Chunk.index(localX, proto.worldY, localZ)
-                        val entity =
-                            BlockEntity(
-                                masterIdx = masterIdx,
-                                type = BlockType(proto.type),
-                                sizeX = proto.sizeX,
-                                sizeY = proto.sizeY,
-                                sizeZ = proto.sizeZ,
-                                rotation = proto.rotation,
-                                yOffset = proto.yOffset,
-                                xOffset = proto.xOffset,
-                                zOffset = proto.zOffset,
-                                colorIndex = proto.colorIndex,
-                            )
-                        affectedChunks[cp] = Pair(existing.addEntity(entity), topY)
-                    }
-
-                    msg.entityRemoves.forEach { masterWorldPos ->
-                        val cx = masterWorldPos.x.floorDiv(WorldConstants.CHUNK_SIZE)
-                        val cz = masterWorldPos.z.floorDiv(WorldConstants.CHUNK_SIZE)
-                        val cp = ChunkPos(cx, cz)
-                        val (existing, topY) =
-                            affectedChunks[cp] ?: chunkManager.chunkData[cp] ?: return@forEach
-                        val localX = masterWorldPos.x - cx * WorldConstants.CHUNK_SIZE
-                        val localZ = masterWorldPos.z - cz * WorldConstants.CHUNK_SIZE
-                        val masterIdx = Chunk.index(localX, masterWorldPos.y, localZ)
-                        affectedChunks[cp] = Pair(existing.removeEntity(masterIdx), topY)
-                    }
-
-                    msg.entityRemovesAt.forEach { spec ->
-                        val cx = spec.pos.x.floorDiv(WorldConstants.CHUNK_SIZE)
-                        val cz = spec.pos.z.floorDiv(WorldConstants.CHUNK_SIZE)
-                        val cp = ChunkPos(cx, cz)
-                        val (existing, topY) =
-                            affectedChunks[cp] ?: chunkManager.chunkData[cp] ?: return@forEach
-                        val localX = spec.pos.x - cx * WorldConstants.CHUNK_SIZE
-                        val localZ = spec.pos.z - cz * WorldConstants.CHUNK_SIZE
-                        val masterIdx = Chunk.index(localX, spec.pos.y, localZ)
-                        affectedChunks[cp] =
-                            Pair(
-                                existing.removeEntityAt(
-                                    masterIdx, spec.yOffset, spec.xOffset, spec.zOffset),
-                                topY)
-                    }
-
-                    affectedChunks.forEach { (_, pair) ->
-                        chunkManager.updateAndEnqueue(pair.first, pair.second)
-                    }
-                })
+            // Chunk / world
+            put(ServerMessage.ChunkData::class, chunkWorldHandler)
+            put(ServerMessage.ShadersUpdate::class, chunkWorldHandler)
+            put(ServerMessage.LightBoostUpdate::class, chunkWorldHandler)
+            put(ServerMessage.GodModeUpdate::class, chunkWorldHandler)
+            put(ServerMessage.MountUpdate::class, playerStateHandler)
+            put(ServerMessage.EditModeUpdate::class, chunkWorldHandler)
+            put(ServerMessage.WalletUpdate::class, chunkWorldHandler)
+            put(ServerMessage.WorldUpdate::class, chunkWorldHandler)
 
             // Player
-            put(
-                ServerMessage.PlayerUpdate::class,
-                typedHandler { msg: ServerMessage.PlayerUpdate ->
-                    val s = msg.state
-                    if (s.id == localPlayerId) {
-                        currentPlayerCx = s.pos.x.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
-                        currentPlayerCz = s.pos.z.toInt().floorDiv(WorldConstants.CHUNK_SIZE)
-                        currentYaw = s.orientation.yaw
-                        httpChunkFetcher?.trigger(currentPlayerCx, currentPlayerCz, currentYaw)
-                        localController.updateFromServer(s, msg.lastProcessedSeq) { cx, cz ->
-                            chunkManager.unloadDistantChunks(cx, cz)
-                            chunkManager.reevaluateImpostors(cx, cz, currentYaw.toDouble())
-                        }
-                    } else {
-                        remotePlayerManager.updateFromServer(s)
-                    }
-                })
-            put(
-                ServerMessage.PlayerLeft::class,
-                typedHandler { msg: ServerMessage.PlayerLeft ->
-                    remotePlayerManager.remove(msg.playerId)
-                })
-            put(
-                ServerMessage.GameConfigSync::class,
-                typedHandler { msg: ServerMessage.GameConfigSync ->
-                    localController.setReconcileTolerances(
-                        msg.reconcileToleranceXz, msg.reconcileToleranceY)
-                    localController.maxInteractionDistance = msg.maxInteractionDistance.toFloat()
-                    localController.kinematicTuning = msg.kinematics
-                })
-            put(
-                ServerMessage.ShortcutBarUpdate::class,
-                typedHandler { msg: ServerMessage.ShortcutBarUpdate ->
-                    for (page in 0..9) for (i in 0..9) localController.shortcutBarPages[page][i] =
-                        null
-                    msg.pages.forEach { (page, slots) ->
-                        if (page in 0..9)
-                            slots.forEach { (i, item) ->
-                                if (i in 0..9) localController.shortcutBarPages[page][i] = item
-                            }
-                    }
-                    localController.syncShortcutBarToUi()
-                })
-            put(
-                ServerMessage.TimeUpdate::class,
-                typedHandler { msg: ServerMessage.TimeUpdate ->
-                    localController.currentGameTicks = msg.gameTicks
-                })
-            put(
-                ServerMessage.CombatTargetUpdate::class,
-                typedHandler { msg: ServerMessage.CombatTargetUpdate ->
-                    localController.currentCombatTargetId = msg.targetId
-                    jsCombatTargetUpdate(Json.encodeToString(msg))
-                })
+            put(ServerMessage.PlayerUpdate::class, playerStateHandler)
+            put(ServerMessage.PlayerLeft::class, playerStateHandler)
+            put(ServerMessage.GameConfigSync::class, playerStateHandler)
+            put(ServerMessage.ShortcutBarUpdate::class, playerStateHandler)
+            put(ServerMessage.TimeUpdate::class, playerStateHandler)
+            put(ServerMessage.CombatTargetUpdate::class, playerStateHandler)
 
             // NPC — single handler object registered for all NPC message types
             put(ServerMessage.NpcSpawned::class, npcManager)
             put(ServerMessage.NpcUpdate::class, npcManager)
             put(ServerMessage.NpcDespawned::class, npcManager)
             put(ServerMessage.NpcInteractResult::class, npcManager)
-            put(
-                ServerMessage.QuestGiverDialog::class,
-                typedHandler { msg: ServerMessage.QuestGiverDialog ->
-                    jsOpenQuestGiverDialog(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.NpcChatReply::class,
-                typedHandler { msg: ServerMessage.NpcChatReply ->
-                    jsOpenNpcChatDialog(Json.encodeToString(msg))
-                })
+            put(ServerMessage.QuestGiverDialog::class, npcDialogHandler)
+            put(ServerMessage.NpcChatReply::class, npcDialogHandler)
 
             // Vehicle — single handler object registered for all vehicle message types
             put(ServerMessage.VehicleSpawned::class, vehicleManager)
@@ -962,388 +789,78 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             put(ServerMessage.SiegeProjectileImpact::class, siegeProjectileManager)
 
             // UI / notifications
-            put(
-                ServerMessage.Notification::class,
-                typedHandler { msg: ServerMessage.Notification ->
-                    uiState.pushNotification(msg.message)
-                    uiState.pushLog(msg.message, msg.channel)
-                    if (e2eSession.isNotEmpty()) {
-                        e2eNotifications.addLast(msg.message)
-                        while (e2eNotifications.size > 50) e2eNotifications.removeFirst()
-                    }
-                })
-            put(
-                ServerMessage.ChatMessage::class,
-                typedHandler { msg: ServerMessage.ChatMessage ->
-                    uiState.pushChatMessage(msg.channel, msg.sender, msg.message)
-                })
-            put(
-                ServerMessage.ChannelsSync::class,
-                typedHandler { msg: ServerMessage.ChannelsSync ->
-                    uiState.setChannelsSync(msg.subscribedChannels, msg.knownChannels)
-                })
-            put(
-                ServerMessage.BlockBreakProgress::class,
-                typedHandler { msg: ServerMessage.BlockBreakProgress ->
-                    val alpha = 1.0 - msg.progress.toDouble() / msg.hardness.toDouble()
-                    jsShowBreakOverlay(scene, msg.pos.x, msg.pos.y, msg.pos.z, alpha)
-                })
-            put(
-                ServerMessage.InventoryUpdate::class,
-                typedHandler { msg: ServerMessage.InventoryUpdate ->
-                    uiState.inventory = msg.inventory
-                })
+            put(ServerMessage.Notification::class, chatNotificationHandler)
+            put(ServerMessage.ChatMessage::class, chatNotificationHandler)
+            put(ServerMessage.ChannelsSync::class, chatNotificationHandler)
+            put(ServerMessage.BlockBreakProgress::class, chatNotificationHandler)
+            put(ServerMessage.InventoryUpdate::class, chatNotificationHandler)
 
             // Layouts / UI panels
-            put(
-                ServerMessage.LayoutsSync::class,
-                typedHandler { msg: ServerMessage.LayoutsSync ->
-                    jsSyncLayouts(
-                        Json.encodeToString(LayoutSyncPayload(msg.layouts, msg.activeLayout)))
-                })
-            put(
-                ServerMessage.OpenLayoutEditor::class,
-                ServerMessageHandler { jsShowLayoutEditor() })
-            put(ServerMessage.OpenPreferences::class, ServerMessageHandler { jsShowPreferences() })
-            put(ServerMessage.OpenCodex::class, ServerMessageHandler { jsOpenCodex() })
-            put(ServerMessage.OpenCraft::class, ServerMessageHandler { jsOpenCraft() })
-            put(
-                ServerMessage.RecipeSync::class,
-                typedHandler { msg: ServerMessage.RecipeSync ->
-                    jsRecipeSync(Json.encodeToString(msg))
-                })
-            put(ServerMessage.ToggleIngameMap::class, ServerMessageHandler { jsToggleIngameMap() })
-            put(
-                ServerMessage.RegistrySync::class,
-                typedHandler { msg: ServerMessage.RegistrySync ->
-                    val blockDefs =
-                        msg.blocks
-                            .mapIndexed { _, info ->
-                                BlockType(info.name) to
-                                    BlockDefinition(
-                                        hardness = info.hardness,
-                                        solid = info.solid,
-                                        transparent = info.transparent,
-                                        minimapColor = info.minimapColor,
-                                        topColor = info.topColor,
-                                        sideColor = info.sideColor,
-                                        modelElement = info.modelElement,
-                                        gltfModel = info.gltfModel,
-                                        liquid = info.liquid,
-                                        viscosity = info.viscosity,
-                                        minimapVisible = info.minimapVisible,
-                                        rotatable = info.rotatable,
-                                        hasStuds = info.hasStuds,
-                                        brickSize = info.brickSize,
-                                        plainColorable = info.plainColorable,
-                                        isCubic = info.isCubic,
-                                        rail =
-                                            info.rail?.let { rail ->
-                                                RailDefinition(
-                                                    connections =
-                                                        rail.connections.map { group ->
-                                                            group.map {
-                                                                RailConnectionPoint.parse(it)
-                                                            }
-                                                        },
-                                                    height = rail.height,
-                                                )
-                                            },
-                                    )
-                            }
-                            .toMap()
-                    PlainColorRegistry.load(
-                        msg.plainColors.mapNotNull { PlainColor.fromHex(it.name, it.hex) })
-                    BlockRegistry.load(blockDefs, msg.blocks.map { BlockType(it.name) })
-                    chunkManager.repushAllToMinimap()
-                    val itemDefs =
-                        msg.items.entries.associate { (key, info) ->
-                            ItemType(key) to
-                                ItemDefinition(
-                                    buildable = info.buildable,
-                                    placesBlock =
-                                        info.placesBlock?.let {
-                                            runCatching { BlockType(it) }.getOrNull()
-                                        },
-                                    plainColor = info.plainColor,
-                                    consumable = info.consumable,
-                                    spawnsEntity = info.spawnsEntity?.let { EntityType(it) },
-                                )
-                        }
-                    ItemRegistry.load(itemDefs)
-                    WorldConstants.IMPOSTOR_SKIRT_DEPTH = msg.impostorSkirtDepth
-                    jsSetImpostorSkirtDepth(msg.impostorSkirtDepth)
-                    jsSetPlainColors(Json.encodeToString(msg.plainColors))
-                    jsSetBlockRegistry(Json.encodeToString(msg.blocks))
-                    jsSetItemRegistry(Json.encodeToString(msg.items))
-                    if (msg.npcs.isNotEmpty()) jsInitNpcModels(Json.encodeToString(msg.npcs))
-                    if (msg.npcWalkBones.isNotEmpty())
-                        jsInitNpcWalkBones(Json.encodeToString(msg.npcWalkBones))
-                    if (msg.npcDefinitions.isNotEmpty())
-                        jsSetNpcDefinitions(Json.encodeToString(msg.npcDefinitions))
-                    if (msg.vehicles.isNotEmpty())
-                        jsInitVehicleModels(Json.encodeToString(msg.vehicles))
-                    if (msg.vehicleDefinitions.isNotEmpty())
-                        jsSetVehicleDefinitions(Json.encodeToString(msg.vehicleDefinitions))
-                    if (msg.placeables.isNotEmpty()) {
-                        jsInitPlaceableModels(Json.encodeToString(msg.placeables))
-                        PlaceableRegistry.load(
-                            msg.placeables.entries.associate { (type, bbmodelPath) ->
-                                EntityType(type) to PlaceableDefinition(bbmodelPath)
-                            })
-                    }
-                    if (msg.siegeProjectiles.isNotEmpty())
-                        jsInitSiegeProjectileModels(Json.encodeToString(msg.siegeProjectiles))
-                    if (msg.siegeWeaponDefinitions.isNotEmpty())
-                        siegeWeaponDefs = msg.siegeWeaponDefinitions
-                    jsReloadAttackMeta()
-                })
+            put(ServerMessage.LayoutsSync::class, panelUiHandler)
+            put(ServerMessage.OpenLayoutEditor::class, panelUiHandler)
+            put(ServerMessage.OpenPreferences::class, panelUiHandler)
+            put(ServerMessage.OpenCodex::class, panelUiHandler)
+            put(ServerMessage.OpenCraft::class, panelUiHandler)
+            put(ServerMessage.RecipeSync::class, panelUiHandler)
+            put(ServerMessage.ToggleIngameMap::class, panelUiHandler)
+            put(ServerMessage.RegistrySync::class, registrySyncHandler)
 
             // Trade
-            put(
-                ServerMessage.OpenTrade::class,
-                typedHandler { msg: ServerMessage.OpenTrade ->
-                    jsOpenTrade(msg.tradeId, msg.otherPlayerName, msg.myRole)
-                })
-            put(
-                ServerMessage.TradeUpdate::class,
-                typedHandler { msg: ServerMessage.TradeUpdate ->
-                    jsTradeUpdate(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.TradeClosed::class,
-                typedHandler { msg: ServerMessage.TradeClosed ->
-                    jsTradeClosed(msg.tradeId, msg.reason)
-                })
+            put(ServerMessage.OpenTrade::class, tradeHandler)
+            put(ServerMessage.TradeUpdate::class, tradeHandler)
+            put(ServerMessage.TradeClosed::class, tradeHandler)
 
             // Character / combat / status
-            put(
-                ServerMessage.CharacterCreationRequired::class,
-                ServerMessageHandler { jsShowCharacterCreation() })
-            put(
-                ServerMessage.CharacterSync::class,
-                typedHandler { msg: ServerMessage.CharacterSync ->
-                    jsCharacterSync(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.HealthUpdate::class,
-                typedHandler { msg: ServerMessage.HealthUpdate ->
-                    jsHealthUpdate(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.PlayerStatusUpdate::class,
-                typedHandler { msg: ServerMessage.PlayerStatusUpdate ->
-                    jsPlayerStatusUpdate(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.StatusEffectUpdate::class,
-                typedHandler { msg: ServerMessage.StatusEffectUpdate ->
-                    jsStatusEffectUpdate(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.BreathUpdate::class,
-                typedHandler { msg: ServerMessage.BreathUpdate ->
-                    jsBreathUpdate(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.CompassUpdate::class,
-                typedHandler { msg: ServerMessage.CompassUpdate ->
-                    jsCompassUpdate(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.PlayerDowned::class,
-                typedHandler { msg: ServerMessage.PlayerDowned -> jsPlayerDowned(msg.playerId) })
-            put(
-                ServerMessage.PlayerRespawned::class,
-                typedHandler { msg: ServerMessage.PlayerRespawned ->
-                    jsPlayerRespawned(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.XpGained::class,
-                typedHandler { msg: ServerMessage.XpGained ->
-                    jsXpGained(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.QuestSync::class,
-                typedHandler { msg: ServerMessage.QuestSync ->
-                    jsQuestSync(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.QuestUpdate::class,
-                typedHandler { msg: ServerMessage.QuestUpdate ->
-                    jsQuestUpdate(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.OpenQuestJournal::class,
-                typedHandler { _: ServerMessage.OpenQuestJournal -> jsOpenQuestJournal() })
-            put(
-                ServerMessage.AoEEffect::class,
-                typedHandler { msg: ServerMessage.AoEEffect ->
-                    jsAoEEffect(scene, msg.x, msg.y, msg.z, msg.radius)
-                })
-            put(
-                ServerMessage.WeatherUpdate::class,
-                typedHandler { msg: ServerMessage.WeatherUpdate ->
-                    jsSetWeatherZones(Json.encodeToString(msg.zones))
-                })
-            put(
-                ServerMessage.MailSync::class,
-                typedHandler { msg: ServerMessage.MailSync ->
-                    jsMailSync(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.MailReceived::class,
-                typedHandler { msg: ServerMessage.MailReceived ->
-                    jsMailReceived(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.MailUpdate::class,
-                typedHandler { msg: ServerMessage.MailUpdate ->
-                    jsMailUpdate(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.MailDeleted::class,
-                typedHandler { msg: ServerMessage.MailDeleted -> jsMailDeleted(msg.mailId) })
-            put(
-                ServerMessage.OpenMailbox::class,
-                typedHandler { _: ServerMessage.OpenMailbox -> jsOpenMailbox() })
-            put(
-                ServerMessage.OpenAuctionHouse::class,
-                typedHandler { _: ServerMessage.OpenAuctionHouse -> jsOpenAuctionHouse() })
-            put(
-                ServerMessage.OpenCharacter::class,
-                typedHandler { _: ServerMessage.OpenCharacter -> jsOpenCharacter() })
-            put(
-                ServerMessage.AuctionListingsUpdate::class,
-                typedHandler { msg: ServerMessage.AuctionListingsUpdate ->
-                    jsAuctionListingsUpdate(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.ClaimSync::class,
-                typedHandler { msg: ServerMessage.ClaimSync ->
-                    jsClaimSync(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.ClaimDenied::class,
-                typedHandler { msg: ServerMessage.ClaimDenied -> jsClaimDenied(msg.reason) })
-            put(
-                ServerMessage.GroupSync::class,
-                typedHandler { msg: ServerMessage.GroupSync ->
-                    jsGroupSync(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.GuildSync::class,
-                typedHandler { msg: ServerMessage.GuildSync ->
-                    jsGuildSync(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.FactionSync::class,
-                typedHandler { msg: ServerMessage.FactionSync ->
-                    FactionColors.update(msg.definitions.associate { it.id to it.color })
-                    jsFactionSync(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.SocialDenied::class,
-                typedHandler { msg: ServerMessage.SocialDenied ->
-                    jsSocialDenied(msg.scope, msg.reason)
-                })
-            put(
-                ServerMessage.GroupInviteReceived::class,
-                typedHandler { msg: ServerMessage.GroupInviteReceived ->
-                    jsSocialInvite("group", msg.groupId, "", msg.fromName)
-                })
-            put(
-                ServerMessage.GuildInviteReceived::class,
-                typedHandler { msg: ServerMessage.GuildInviteReceived ->
-                    jsSocialInvite("guild", msg.guildId, msg.guildName, msg.fromName)
-                })
-            put(
-                ServerMessage.MiniGameRoomSync::class,
-                typedHandler { msg: ServerMessage.MiniGameRoomSync ->
-                    jsMiniGameRoomSync(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.MiniGameInviteReceived::class,
-                typedHandler { msg: ServerMessage.MiniGameInviteReceived ->
-                    jsSocialInvite("minigame", msg.roomId, msg.gameType, msg.fromName)
-                })
-            put(
-                ServerMessage.MiniGameAction::class,
-                typedHandler { msg: ServerMessage.MiniGameAction ->
-                    jsMiniGameAction(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.AdminZoneWireframe::class,
-                typedHandler { msg: ServerMessage.AdminZoneWireframe ->
-                    jsAdminZoneWireframe(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.InstanceZonesSync::class,
-                typedHandler { msg: ServerMessage.InstanceZonesSync ->
-                    jsInstanceZonesSync(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.ScenesSync::class,
-                typedHandler { msg: ServerMessage.ScenesSync ->
-                    jsScenesSync(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.ScenePreviewData::class,
-                typedHandler { msg: ServerMessage.ScenePreviewData ->
-                    jsScenePreviewData(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.PreferencesSync::class,
-                typedHandler { msg: ServerMessage.PreferencesSync ->
-                    jsCameraSetFov(camera, msg.fieldOfView)
-                    localController.autoTargetEnabled = msg.autoTargetEnabled
-                    localController.continuousBreak = msg.continuousBreak
-                    localController.disabledViewModes = msg.disabledViewModes
-                    localController.turnSpeedHorizontal = msg.turnSpeedHorizontal
-                    localController.turnSpeedVertical = msg.turnSpeedVertical
-                    jsSetContinuousBreak(msg.continuousBreak)
-                    jsSetShadowAngleDeg(msg.shadowAngleDeg)
-                    WorldConstants.VIEW_RADIUS = msg.overrideViewRadius ?: DEFAULT_VIEW_RADIUS
-                    WorldConstants.FORWARD_VIEW_RADIUS =
-                        msg.overrideForwardViewRadius ?: DEFAULT_FORWARD_VIEW_RADIUS
-                    chunkManager.useImpostor = msg.overrideUseImpostor ?: DEFAULT_USE_IMPOSTOR
-                    chunkManager.impostorRadiusChunks =
-                        msg.overrideImpostorRadiusChunks ?: DEFAULT_IMPOSTOR_RADIUS_CHUNKS
-                    chunkManager.impostorFovBonusChunks =
-                        msg.overrideImpostorFovBonusChunks ?: DEFAULT_IMPOSTOR_FOV_BONUS_CHUNKS
-                    // Apply the new radii/impostor settings right away instead of waiting for
-                    // the player to cross a chunk boundary (see onChunkChanged above).
-                    chunkManager.unloadDistantChunks(currentPlayerCx, currentPlayerCz)
-                    chunkManager.reevaluateImpostors(
-                        currentPlayerCx, currentPlayerCz, currentYaw.toDouble())
-                    httpChunkFetcher?.trigger(currentPlayerCx, currentPlayerCz, currentYaw)
-                    uiState.setPreferencesSync(
-                        Json.encodeToString<ServerMessage.PreferencesSync>(msg))
-                })
-            put(
-                ServerMessage.PetRosterSync::class,
-                typedHandler { msg: ServerMessage.PetRosterSync ->
-                    jsPetRosterUpdate(Json.encodeToString(msg))
-                })
-            put(
-                ServerMessage.ActionBlockSync::class,
-                typedHandler { msg: ServerMessage.ActionBlockSync ->
-                    actionBlockManager.sync(msg.blocks)
-                })
-            put(
-                ServerMessage.ActionBlockUpsert::class,
-                typedHandler { msg: ServerMessage.ActionBlockUpsert ->
-                    actionBlockManager.upsert(msg.info)
-                })
-            put(
-                ServerMessage.ActionBlockRemove::class,
-                typedHandler { msg: ServerMessage.ActionBlockRemove ->
-                    actionBlockManager.remove(msg.pos)
-                })
-            put(
-                ServerMessage.ActionBlockPayload::class,
-                typedHandler { msg: ServerMessage.ActionBlockPayload ->
-                    jsOpenActionBlockForm(Json.encodeToString(msg))
-                })
+            put(ServerMessage.CharacterCreationRequired::class, characterStatusHandler)
+            put(ServerMessage.CharacterSync::class, characterStatusHandler)
+            put(ServerMessage.HealthUpdate::class, characterStatusHandler)
+            put(ServerMessage.PlayerStatusUpdate::class, characterStatusHandler)
+            put(ServerMessage.StatusEffectUpdate::class, characterStatusHandler)
+            put(ServerMessage.BreathUpdate::class, characterStatusHandler)
+            put(ServerMessage.CompassUpdate::class, characterStatusHandler)
+            put(ServerMessage.PlayerDowned::class, characterStatusHandler)
+            put(ServerMessage.PlayerRespawned::class, characterStatusHandler)
+            put(ServerMessage.XpGained::class, characterStatusHandler)
+            put(ServerMessage.QuestSync::class, characterStatusHandler)
+            put(ServerMessage.QuestUpdate::class, characterStatusHandler)
+            put(ServerMessage.OpenQuestJournal::class, characterStatusHandler)
+            put(ServerMessage.AoEEffect::class, characterStatusHandler)
+            put(ServerMessage.WeatherUpdate::class, characterStatusHandler)
+            put(ServerMessage.ActionBlockPayload::class, characterStatusHandler)
+
+            // Mail
+            put(ServerMessage.MailSync::class, mailHandler)
+            put(ServerMessage.MailReceived::class, mailHandler)
+            put(ServerMessage.MailUpdate::class, mailHandler)
+            put(ServerMessage.MailDeleted::class, mailHandler)
+            put(ServerMessage.OpenMailbox::class, mailHandler)
+
+            // Social / economy / admin / scenes
+            put(ServerMessage.OpenAuctionHouse::class, socialAdminHandler)
+            put(ServerMessage.OpenCharacter::class, socialAdminHandler)
+            put(ServerMessage.AuctionListingsUpdate::class, socialAdminHandler)
+            put(ServerMessage.ClaimSync::class, socialAdminHandler)
+            put(ServerMessage.ClaimDenied::class, socialAdminHandler)
+            put(ServerMessage.GroupSync::class, socialAdminHandler)
+            put(ServerMessage.GuildSync::class, socialAdminHandler)
+            put(ServerMessage.FactionSync::class, socialAdminHandler)
+            put(ServerMessage.SocialDenied::class, socialAdminHandler)
+            put(ServerMessage.GroupInviteReceived::class, socialAdminHandler)
+            put(ServerMessage.GuildInviteReceived::class, socialAdminHandler)
+            put(ServerMessage.MiniGameRoomSync::class, socialAdminHandler)
+            put(ServerMessage.MiniGameInviteReceived::class, socialAdminHandler)
+            put(ServerMessage.MiniGameAction::class, socialAdminHandler)
+            put(ServerMessage.AdminZoneWireframe::class, socialAdminHandler)
+            put(ServerMessage.InstanceZonesSync::class, socialAdminHandler)
+            put(ServerMessage.ScenesSync::class, socialAdminHandler)
+            put(ServerMessage.ScenePreviewData::class, socialAdminHandler)
+
+            put(ServerMessage.PreferencesSync::class, preferencesHandler)
+            put(ServerMessage.PetRosterSync::class, petRosterHandler)
+
+            // Action blocks — single handler object registered for all action-block message types
+            put(ServerMessage.ActionBlockSync::class, actionBlockManager)
+            put(ServerMessage.ActionBlockUpsert::class, actionBlockManager)
+            put(ServerMessage.ActionBlockRemove::class, actionBlockManager)
         }
 }
