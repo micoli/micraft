@@ -25,12 +25,13 @@ private val FLAT_GROUND = FakeBlocks({ _, y, _ -> y <= 0 })
 private val OPEN_AIR = FakeBlocks({ _, _, _ -> false })
 
 private fun state(
+    x: Float = 8.5f,
     y: Float = 1f,
     vy: Float = 0f,
     stance: PlayerStance = PlayerStance.STANDING,
     flying: Boolean = false,
     speedMultiplier: Float = 1f,
-) = KinematicState(Vec3(8.5f, y, 8.5f), vy, stance, flying, speedMultiplier)
+) = KinematicState(Vec3(x, y, 8.5f), vy, stance, flying, speedMultiplier)
 
 private fun step(
     state: KinematicState,
@@ -63,6 +64,15 @@ class PlayerKinematicsTest {
 
         assertEquals(8.725f, result.state.pos.x, EPS) // 8.5 + 4.5 * 0.05
         assertEquals(1f, result.state.pos.y, EPS)
+    }
+
+    @Test
+    fun `walking into a wall reports the move as blocked`() {
+        val wall = FakeBlocks({ x, y, _ -> y <= 0 || x == 9 })
+
+        assertTrue(step(state(x = 8.7f), wall, MoveIntent(dx = 1f)).blockedHorizontally)
+        assertFalse(step(state(), intent = MoveIntent(dx = 1f)).blockedHorizontally)
+        assertFalse(step(state(), wall).blockedHorizontally)
     }
 
     @Test

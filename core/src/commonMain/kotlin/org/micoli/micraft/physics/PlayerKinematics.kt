@@ -54,6 +54,8 @@ data class KinematicResult(
     val headInLiquid: Boolean,
     /** Y the player was stuck at before being ejected upward, null when it was free. */
     val ejectedFromY: Float? = null,
+    /** A horizontal move was asked for but collision cancelled almost all of it. */
+    val blockedHorizontally: Boolean = false,
 )
 
 /**
@@ -66,6 +68,7 @@ object PlayerKinematics {
     private const val MAX_SPEED_MULTIPLIER = 5f
     private const val LIQUID_GRAVITY_FACTOR = 0.2f
     private const val MAX_SINK_SPEED = 2f
+    private const val BLOCKED_RATIO_SQ = 0.01f
 
     fun step(
         state: KinematicState,
@@ -145,8 +148,12 @@ object PlayerKinematics {
             submerged = submerged,
             headInLiquid = blocks.isLiquid(newPos.blockCoords(stance.eyeOffset)),
             ejectedFromY = if (stuck) raw.y else null,
+            blockedHorizontally = len > 0f && isBlocked(newX - pos.x, newZ - pos.z, speed),
         )
     }
+
+    private fun isBlocked(movedX: Float, movedZ: Float, intended: Float): Boolean =
+        movedX * movedX + movedZ * movedZ < intended * intended * BLOCKED_RATIO_SQ
 
     private fun nextStance(
         solid: (Int, Int, Int) -> Boolean,

@@ -37,14 +37,16 @@ import org.micoli.micraft.input.MiniGameEventHandler
 import org.micoli.micraft.input.MovementAction
 import org.micoli.micraft.input.NpcChatEvent
 import org.micoli.micraft.input.NpcChatEventHandler
-import org.micoli.micraft.physics.AabbCollider
+import org.micoli.micraft.physics.BlockQuery
+import org.micoli.micraft.physics.KinematicState
 import org.micoli.micraft.physics.KinematicTuning
+import org.micoli.micraft.physics.MoveIntent
+import org.micoli.micraft.physics.PlayerKinematics
 import org.micoli.micraft.placeable.PlaceableRegistry
 import org.micoli.micraft.player.PlayerStance
 import org.micoli.micraft.player.PlayerState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.eyeOffset
-import org.micoli.micraft.player.height
 import org.micoli.micraft.player.speed
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.ui.HudData
@@ -352,6 +354,19 @@ class LocalPlayerController(
     }
 
     var kinematicTuning = KinematicTuning()
+
+    // Blocks only: the client doesn't know which entities occupy cells (issue 01, decision 4).
+    private val predictionBlocks =
+        object : BlockQuery {
+            override fun isSolid(x: Int, y: Int, z: Int) =
+                chunkManager.getBlockAtWorld(x, y, z).isSolid
+
+            override fun isLiquid(x: Int, y: Int, z: Int) =
+                chunkManager.getBlockAtWorld(x, y, z).isLiquid
+
+            override fun liquidSlowdown(x: Int, y: Int, z: Int) =
+                chunkManager.getBlockAtWorld(x, y, z).liquidSlowdown
+        }
 
     fun setReconcileTolerances(xz: Double, y: Double) {
         reconcileToleranceXz = xz
@@ -768,10 +783,6 @@ class LocalPlayerController(
     private fun updateMovementAndPhysics(actualDt: Double): String {
         val physicsT0 = jsNow()
         val basis = moveBasis()
-        val fwdX = basis.fwdX
-        val fwdZ = basis.fwdZ
-        val rightX = fwdZ
-        val rightZ = -fwdX
 
         val yawStep = (turnSpeedHorizontal * actualDt).toFloat()
         val pitchStep = (turnSpeedVertical * actualDt).toFloat()
@@ -803,60 +814,41 @@ class LocalPlayerController(
             predVy = 0.0
             animClip = "sitting"
         } else {
-            var dx = 0f
-            var dz = 0f
-            if (jsIsActionDown(MovementAction.FORWARD.wire) || autoAdvance) {
-                dx += fwdX
-                dz += fwdZ
-            }
-            if (jsIsActionDown(MovementAction.BACKWARD.wire)) {
-                dx -= fwdX
-                dz -= fwdZ
-            }
-            if (basis.strafeRight) {
-                dx += rightX
-                dz += rightZ
-            }
-            if (basis.strafeLeft) {
-                dx -= rightX
-                dz -= rightZ
-            }
-
-            val isMovingXZ = dx != 0f || dz != 0f
-
-            val len = kotlin.math.sqrt((dx * dx + dz * dz).toDouble()).toFloat()
-            if (len > 1f) {
-                dx /= len
-                dz /= len
-            }
-
-            val stance =
-                when {
-                    !localFlying && jsIsActionDown(MovementAction.CRAWL.wire) ->
-                        PlayerStance.CRAWLING
-                    !localFlying && jsIsActionDown(MovementAction.SNEAK.wire) ->
-                        PlayerStance.SNEAKING
-                    else -> PlayerStance.STANDING
-                }
-
-            val swimming =
-                !localFlying &&
-                    chunkManager
-                        .getBlockAtWorld(
-                            kotlin.math.floor(predX).toInt(),
-                            kotlin.math.floor(predY + stance.eyeOffset).toInt(),
-                            kotlin.math.floor(predZ).toInt())
-                        .isLiquid
-            // Submerged: crawl pose for rendering/hitbox, but horizontal speed keeps the
-            // player's land stance (matches MovementProcessor on the server).
-            val effStance = if (swimming) PlayerStance.CRAWLING else stance
+            val move = currentMove(flyToggle = false)
+            val isMovingXZ = move.dx != 0f || move.dz != 0f
+            // Flying and speed steps are learned from the server state, never predicted.
+            val result =
+                PlayerKinematics.step(
+                    KinematicState(
+                        Vec3(predX.toFloat(), predY.toFloat(), predZ.toFloat()),
+                        predVy.toFloat(),
+                        localStance,
+                        localFlying,
+                        localSpeedMult),
+                    MoveIntent(
+                        dx = move.dx,
+                        dz = move.dz,
+                        dy = move.dy,
+                        stance = move.stance,
+                        jump = move.jump),
+                    actualDt.toFloat(),
+                    predictionBlocks,
+                    kinematicTuning)
+            val next = result.state
+            predX = next.pos.x.toDouble()
+            predY = next.pos.y.toDouble()
+            predZ = next.pos.z.toDouble()
+            predVy = next.vy.toDouble()
+            localStance = next.stance
+            val swimming = result.submerged
+            if (autoAdvance && result.blockedHorizontally) autoAdvance = false
 
             // Priority: flying > crawling > sneaking > backward > forward > strafe > idle.
             animClip =
                 when {
                     localFlying -> "jump_idle"
-                    effStance == PlayerStance.CRAWLING -> "crawling"
-                    effStance == PlayerStance.SNEAKING -> "sneaking"
+                    next.stance == PlayerStance.CRAWLING -> "crawling"
+                    next.stance == PlayerStance.SNEAKING -> "sneaking"
                     !isMovingXZ -> "idle"
                     jsIsActionDown(MovementAction.BACKWARD.wire) -> "walking_backward"
                     jsIsActionDown(MovementAction.FORWARD.wire) || autoAdvance -> "walking_forward"
@@ -864,137 +856,6 @@ class LocalPlayerController(
                     basis.strafeRight -> "strafe_right"
                     else -> "walking_forward"
                 }
-
-            // Must mirror MovementProcessor on the server, or a swimmer's prediction outruns the
-            // authoritative position and reads as a permanent reconcile gap.
-            val feetBlock =
-                chunkManager.getBlockAtWorld(
-                    kotlin.math.floor(predX).toInt(),
-                    kotlin.math.floor(predY).toInt(),
-                    kotlin.math.floor(predZ).toInt())
-            val speed =
-                stance.speed * localSpeedMult * actualDt.toFloat() * feetBlock.liquidSlowdown
-            val solid = { bx: Int, by: Int, bz: Int ->
-                chunkManager.getBlockAtWorld(bx, by, bz).isSolid
-            }
-            val h = effStance.height
-            val startX = predX
-            val startZ = predZ
-            val midDx =
-                AabbCollider.resolveX(
-                    solid,
-                    startX.toFloat(),
-                    predY.toFloat(),
-                    startZ.toFloat(),
-                    PlayerConstants.WIDTH,
-                    h,
-                    dx * speed)
-            val midX = startX + midDx
-            val resolvedDz =
-                AabbCollider.resolveZ(
-                    solid,
-                    midX.toFloat(),
-                    predY.toFloat(),
-                    startZ.toFloat(),
-                    PlayerConstants.WIDTH,
-                    h,
-                    dz * speed)
-            predZ = startZ + resolvedDz
-            val resolvedDx =
-                AabbCollider.resolveX(
-                    solid,
-                    startX.toFloat(),
-                    predY.toFloat(),
-                    predZ.toFloat(),
-                    PlayerConstants.WIDTH,
-                    h,
-                    dx * speed)
-            predX = startX + resolvedDx
-
-            if (autoAdvance && (dx != 0f || dz != 0f)) {
-                val intendedSq = (dx * speed) * (dx * speed) + (dz * speed) * (dz * speed)
-                val resolvedSq = resolvedDx * resolvedDx + resolvedDz * resolvedDz
-                if (resolvedSq < intendedSq * 0.01f) autoAdvance = false
-            }
-
-            if (localFlying) {
-                val fwdY = jsGetCameraForwardY(camera).toFloat()
-                var dy = 0f
-                if (jsIsActionDown(MovementAction.ASCEND.wire)) dy = 1f
-                else if (jsIsActionDown(MovementAction.DESCEND.wire)) dy = -1f
-                else {
-                    if (jsIsActionDown(MovementAction.FORWARD.wire) || autoAdvance) dy += fwdY
-                    if (jsIsActionDown(MovementAction.BACKWARD.wire)) dy -= fwdY
-                }
-                val flyDy =
-                    (dy * kinematicTuning.flyVerticalSpeed * localSpeedMult * actualDt).toFloat()
-                val resolvedFlyDy =
-                    AabbCollider.resolveY(
-                        solid,
-                        predX.toFloat(),
-                        predY.toFloat(),
-                        predZ.toFloat(),
-                        PlayerConstants.WIDTH,
-                        h,
-                        flyDy)
-                predY = (predY + resolvedFlyDy).coerceIn(0.0, WorldConstants.WORLD_MAX_Y.toDouble())
-                predVy = 0.0
-            } else {
-                val solid2 = { bx: Int, by: Int, bz: Int ->
-                    chunkManager.getBlockAtWorld(bx, by, bz).isSolid
-                }
-                val h2 = localStance.height
-                val grounded =
-                    AabbCollider.isGrounded(
-                        solid2,
-                        predX.toFloat(),
-                        predY.toFloat(),
-                        predZ.toFloat(),
-                        PlayerConstants.WIDTH)
-                if (swimming) {
-                    predVy =
-                        when {
-                            jsIsActionDown(MovementAction.ASCEND.wire) ->
-                                PlayerConstants.SWIM_UP_SPEED.toDouble()
-                            jsIsActionDown(MovementAction.DESCEND.wire) ->
-                                -PlayerConstants.SWIM_DOWN_SPEED.toDouble()
-                            else ->
-                                (predVy + kinematicTuning.gravity * 0.2 * actualDt).coerceIn(
-                                    -2.0, PlayerConstants.SWIM_UP_SPEED.toDouble())
-                        }
-                    val dy = (predVy * actualDt).toFloat()
-                    val resolvedDy =
-                        AabbCollider.resolveY(
-                            solid2,
-                            predX.toFloat(),
-                            predY.toFloat(),
-                            predZ.toFloat(),
-                            PlayerConstants.WIDTH,
-                            h2,
-                            dy)
-                    if (resolvedDy != dy) predVy = 0.0
-                    predY = (predY + resolvedDy).coerceAtLeast(0.0)
-                } else if (grounded && predVy <= 0.0) {
-                    predVy =
-                        if (jsIsActionDown(MovementAction.ASCEND.wire))
-                            kinematicTuning.jumpSpeed.toDouble()
-                        else 0.0
-                } else {
-                    predVy += kinematicTuning.gravity * actualDt
-                    val dy = (predVy * actualDt).toFloat()
-                    val resolvedDy =
-                        AabbCollider.resolveY(
-                            solid2,
-                            predX.toFloat(),
-                            predY.toFloat(),
-                            predZ.toFloat(),
-                            PlayerConstants.WIDTH,
-                            h2,
-                            dy)
-                    if (resolvedDy != dy) predVy = 0.0
-                    predY = (predY + resolvedDy).coerceAtLeast(0.0)
-                }
-            }
 
             val diffX = reconcileErrX
             val diffZ = reconcileErrZ
@@ -1016,7 +877,12 @@ class LocalPlayerController(
                     distXZ,
                     isMovingXZ,
                     swimming,
-                    feetBlock.toString(),
+                    chunkManager
+                        .getBlockAtWorld(
+                            kotlin.math.floor(predX).toInt(),
+                            kotlin.math.floor(predY).toInt(),
+                            kotlin.math.floor(predZ).toInt())
+                        .toString(),
                     actualDt,
                     movingToleranceXz,
                     hardSnapThresholdXz)
@@ -2066,7 +1932,11 @@ class LocalPlayerController(
         while (sentIntentHistory.size > 100) sentIntentHistory.removeFirst()
     }
 
-    fun buildMoveIntent(): ClientMessage.MoveIntent {
+    fun buildMoveIntent(): ClientMessage.MoveIntent =
+        currentMove(flyToggle = pendingFlyToggle.also { pendingFlyToggle = false })
+
+    /** The intent the held keys express right now — sent to the server and fed to Prediction. */
+    private fun currentMove(flyToggle: Boolean): ClientMessage.MoveIntent {
         val basis = moveBasis()
         val fwdX = basis.fwdX
         val fwdZ = basis.fwdZ
@@ -2106,7 +1976,6 @@ class LocalPlayerController(
             dz = 0f
         }
 
-        val flyToggle = pendingFlyToggle.also { pendingFlyToggle = false }
         val speedUp = jsIsActionDown(MovementAction.SPEED_UP.wire)
         val speedDown = jsIsActionDown(MovementAction.SPEED_DOWN.wire)
 
