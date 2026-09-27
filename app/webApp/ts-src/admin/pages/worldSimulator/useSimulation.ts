@@ -116,10 +116,10 @@ export interface SimulationState {
 }
 
 function wsUrl(): string {
-  const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const protocol = location.protocol.includes("https") ? "wss" : "ws";
   const token = sessionStorage.getItem("micraft-auth-token");
   const query = token ? `?token=${encodeURIComponent(token)}` : "";
-  return `${proto}//${window.location.host}/api/admin/ws/simulation${query}`;
+  return `${protocol}://${window.location.host}/api/admin/ws/simulation${query}`;
 }
 
 /**

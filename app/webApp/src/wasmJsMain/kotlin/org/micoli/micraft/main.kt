@@ -35,7 +35,9 @@ fun main() {
             val port = jsGetPagePort()
             runCatching {
                     val config =
-                        HttpClient(Js).get("http://$host:$port/api/auth/config").bodyAsText()
+                        HttpClient(Js)
+                            .get("${pageHttpScheme()}://$host:$port/api/auth/config")
+                            .bodyAsText()
                     Json.parseToJsonElement(config)
                         .jsonObject["messageEncoder"]
                         ?.jsonPrimitive
@@ -94,7 +96,10 @@ fun main() {
         val token = if (parts.size > 3) parts[3] else ""
         val refreshToken = if (parts.size > 4) parts[4] else ""
         runCatching {
-                val config = HttpClient(Js).get("http://$host:$port/api/auth/config").bodyAsText()
+                val config =
+                    HttpClient(Js)
+                        .get("${pageHttpScheme()}://$host:$port/api/auth/config")
+                        .bodyAsText()
                 Json.parseToJsonElement(config).jsonObject["messageEncoder"]?.jsonPrimitive?.content
             }
             .getOrNull()
@@ -102,7 +107,7 @@ fun main() {
         jsLoadBindings(host, port, playerName)
         jsFetchI18n(lang)
         jsLog(
-            "login: user=$username player=$playerName lang=$lang — connecting to ws://$host:$port/game …")
+            "login: user=$username player=$playerName lang=$lang — connecting to ${pageWsScheme()}://$host:$port/game …")
         jsHideLoginOverlay()
         jsEngineRunRenderLoop(engine, scene)
         jsSetupResize(engine)

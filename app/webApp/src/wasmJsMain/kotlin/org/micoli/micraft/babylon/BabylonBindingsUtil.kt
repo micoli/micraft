@@ -17,6 +17,12 @@ fun jsGetPageHost(): String = js("window.location.hostname")
 fun jsGetPagePort(): Int =
     js("parseInt(window.location.port) || (window.location.protocol === 'https:' ? 443 : 80)")
 
+fun jsIsSecurePage(): Boolean = js("window.location.protocol === 'https:'")
+
+fun pageHttpScheme(): String = if (jsIsSecurePage()) "https" else "http"
+
+fun pageWsScheme(): String = if (jsIsSecurePage()) "wss" else "ws"
+
 fun jsNow(): Double = js("Date.now()")
 
 // Sub-millisecond, monotonic clock — Date.now() is integer-millisecond resolution, too coarse

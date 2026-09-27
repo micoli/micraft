@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.micoli.micraft.babylon.jsGetPageHost
 import org.micoli.micraft.babylon.jsGetPagePort
+import org.micoli.micraft.babylon.pageHttpScheme
 import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
@@ -28,7 +29,7 @@ class HttpChunkFetcher(
     private val pendingQueue = ArrayDeque<ChunkPos>()
 
     private val httpClient = HttpClient(Js)
-    private val baseUrl = "http://${jsGetPageHost()}:${jsGetPagePort()}"
+    private val baseUrl = "${pageHttpScheme()}://${jsGetPageHost()}:${jsGetPagePort()}"
 
     fun trigger(playerCx: Int, playerCz: Int, yaw: Float) {
         val yawD = yaw.toDouble()

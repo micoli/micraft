@@ -6,7 +6,8 @@ export function registerAutoUpdate(): void {
 
   function connect(): void {
     try {
-      const ws = new WebSocket(`ws://${location.hostname}:${location.port}/ws`);
+      const protocol = location.protocol.includes("https") ? "wss" : "ws";
+      const ws = new WebSocket(`${protocol}://${location.hostname}:${location.port}/ws`);
 
       ws.onmessage = (e) => {
         try {

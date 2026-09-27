@@ -78,8 +78,8 @@ export function NpcsPage() {
   }, []);
 
   useEffect(() => {
-    const proto = location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${proto}//${location.host}/api/admin/ws/npcs`);
+    const protocol = location.protocol.includes("https") ? "wss" : "ws";
+    const ws = new WebSocket(`${protocol}://${location.host}/api/admin/ws/npcs`);
     ws.onmessage = (ev) => {
       try {
         const msg = JSON.parse(ev.data as string);

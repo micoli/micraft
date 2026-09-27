@@ -256,7 +256,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
             runCatching {
                     val body =
                         HttpClient(Js)
-                            .get("http://$serverHost:$serverPort/api/server/info")
+                            .get("${pageHttpScheme()}://$serverHost:$serverPort/api/server/info")
                             .bodyAsText()
                     Json.parseToJsonElement(body)
                         .jsonObject["protocolFingerprint"]
@@ -277,7 +277,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
         return runCatching {
                 val client = HttpClient(Js)
                 val response =
-                    client.post("http://$serverHost:$serverPort/auth/refresh") {
+                    client.post("${pageHttpScheme()}://$serverHost:$serverPort/auth/refresh") {
                         contentType(ContentType.Application.Json)
                         setBody("""{"refreshToken":"$refreshToken"}""")
                     }
@@ -402,9 +402,7 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                     if (chunkTransportMode != "websocket") break
                     val chunkClient = HttpClient(Js) { install(WebSockets) }
                     chunkClient.webSocket(
-                        host = host,
-                        port = port,
-                        path = "/chunks",
+                        urlString = "${pageWsScheme()}://$host:$port/chunks",
                         request = {
                             if (e2eSession.isNotEmpty())
                                 url.parameters.append("gameSession", e2eSession)
@@ -460,13 +458,12 @@ constructor(private val scene: JsAny, private val camera: JsAny, private val uiS
                 }
                 try {
                     uiState.disconnectMessage = null
-                    jsLog("WS connecting to ws://$serverHost:$serverPort/game")
+                    val gameUrl = "${pageWsScheme()}://$serverHost:$serverPort/game"
+                    jsLog("WS connecting to $gameUrl")
                     val client =
                         HttpClient(Js) { install(WebSockets) { pingInterval = 15.seconds } }
                     client.webSocket(
-                        host = serverHost,
-                        port = serverPort,
-                        path = "/game",
+                        urlString = gameUrl,
                         request = {
                             if (e2eSession.isNotEmpty())
                                 url.parameters.append("gameSession", e2eSession)
