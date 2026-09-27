@@ -1,6 +1,6 @@
 # Region Roster derivation and `/npc roster`
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 
 ## Context
@@ -26,6 +26,19 @@ Spawn behaviour is unchanged in this issue.
 
 ## Acceptance criteria
 
-- [ ] Unit tests: determinism, composition bounds, aquatic rule, rare frequency and cap, weight split.
-- [ ] `/npc roster` works in game and is covered by a server test.
-- [ ] `make check-schemas` and `make docs` clean.
+- [x] Unit tests: determinism, composition bounds, aquatic rule, rare frequency and cap, weight split.
+- [x] `/npc roster` works in game and is covered by a server test.
+- [x] `make check-schemas` and `make docs` clean.
+
+## Comments
+
+- 2026-09-27: `RosterBuilder` (`game/npc/roster`), `Region` (`game/world`, replaces `VoronoiBiomeZones.VoronoiCell`),
+  exposed through `ChunkGenerator`/`WorldState` (`worldSeed`, `regionAt`, `regionsNear`). `/npc roster [region]`.
+- `regionBudget` is added next to `maxNpcs`, not replacing it: the spawner still reads `maxNpcs` until issue 03, which
+  removes it.
+- Each rare rolls its own 20 % chance; one survivor at most. A rare's share is its weight share clamped to 1–2.
+- Small pools stay short: a lake below level 16 has no aquatic hostile, so its Roster has none (counts are upper
+  bounds). Worth a look in issue 07's coverage table.
+- Autocomplete offers Region names at argument 1 for every `/npc` subcommand: `completeArg` does not receive
+  argument 0.
+- Follow-ups from review: rename `ZoneTier` → `DangerTier` (CONTEXT.md avoids "zone").

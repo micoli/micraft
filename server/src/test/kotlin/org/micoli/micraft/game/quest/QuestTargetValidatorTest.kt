@@ -93,4 +93,13 @@ class QuestTargetValidatorTest {
 
         assertTrue(report.errors.isEmpty() && report.warnings.isEmpty())
     }
+
+    @Test
+    fun bossTargetsAreValidatedToo() {
+        val boss = killQuest("yeti_boss", 22, "yeti").copy(type = QuestType.BOSS)
+
+        val report = QuestTargetValidator.validate(listOf(boss), emptyMap())
+
+        assertEquals(1, report.errors.size)
+    }
 }

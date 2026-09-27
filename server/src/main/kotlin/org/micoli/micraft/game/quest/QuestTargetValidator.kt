@@ -6,8 +6,8 @@ import org.micoli.micraft.game.world.ZoneTier
 data class QuestTargetReport(val errors: List<String>, val warnings: List<String>)
 
 /**
- * Checks that every KILL target is a known NPC type (error) and that it can spawn somewhere within
- * the Quest's Danger tier (warning).
+ * Checks that every kill objective target is a known NPC type (error) and that it can spawn
+ * somewhere within the Quest's Danger tier (warning).
  */
 object QuestTargetValidator {
     fun validate(
@@ -17,7 +17,6 @@ object QuestTargetValidator {
         val errors = mutableListOf<String>()
         val warnings = mutableListOf<String>()
         for (quest in quests) {
-            if (quest.type != QuestType.KILL) continue
             val tierLevels = ZoneTier.fromZoneLevel(quest.level).npcLevelRange
             for (objective in quest.objectives) {
                 val target = npcTypes[objective.npcType]

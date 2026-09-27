@@ -193,6 +193,9 @@
           },
           "maxNpcs": {
             "type": "integer"
+          },
+          "regionBudget": {
+            "type": "integer"
           }
         }
       }

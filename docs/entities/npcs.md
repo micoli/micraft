@@ -14,7 +14,8 @@ animations with configurable bone aliases in `walkBoneAliases`
 `rightWing`/`leftWing` and the client plays a wing-flap while the NPC is flying).
 
 - **`/spawn <npc_model> [x y z]`** *(admin)* — spawn on the block you look at.
-- **`/npc <spawn|list|remove|tp> [args]`** — manage NPCs.
+- **`/npc <spawn|list|remove|tp|roster> [args]`** — manage NPCs; `roster [region]`
+  shows a Region's Roster (current Region by default).
 - **`/goto <playerName|npcName>`** — teleport to an NPC.
 - **`/npcbuy` / `/npcsell`** — trade with `SELLER` NPCs. See
   [Economy](../social/economy.md).
@@ -23,6 +24,14 @@ animations with configurable bone aliases in `walkBoneAliases`
 `NpcManager` handles wander, pathfinding and interaction each tick;
 `NpcSpawner.trySpawn` runs every 200 ticks, capped per biome by the biome's
 `maxNpcs`.
+
+**Roster** — each Region has a Roster ([ADR-0010](../adr/0010-wild-npc-population-per-region-roster.md)):
+2–4 passive and 1–3 hostile NPC types drawn from those its Biome (`spawnBiomes`)
+and Danger level (`minLevel..maxLevel`) allow, derived from the World seed and
+never stored. Sea and lake Regions only draw aquatic types. A rare type
+(`maxTotal` ≤ 5) joins about one eligible Region in five, capped at 2
+individuals. The Biome's `regionBudget` is split among the Roster by each
+type's `spawn.weight` (default 1).
 
 **Names** — every auto-spawned NPC gets a randomly generated name, unique
 across every live NPC *and* every player (connected or not). An animal type

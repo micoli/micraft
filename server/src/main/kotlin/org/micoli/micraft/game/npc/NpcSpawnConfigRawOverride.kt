@@ -9,4 +9,5 @@ data class NpcSpawnConfigRawOverride(
     val spawnBiomes: List<String>? = null,
     val maxTotal: Int? = null,
     val minTotal: Int? = null,
+    val weight: Int? = null,
 )

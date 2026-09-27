@@ -32,8 +32,9 @@ A quest's `autoLoot` flag decides how its reward is claimed:
 
 Quest definitions are loaded from YAML by `QuestRegistryLoader`. Objectives
 reference NPC types ([NPCs](../entities/npcs.md)) and item types
-([items](inventory-items.md)). The server refuses to start if a KILL objective
-names an NPC type that does not exist, and logs a warning when the target never
+([items](inventory-items.md)). The server refuses to start if a KILL or BOSS
+objective names an NPC type that does not exist (`/reload` keeps the current
+Quests instead), and logs a warning when the target never
 spawns within the Quest's Danger tier (`autoSpawn` off, or its level range
 misses the tier). All quest definitions are served at
 `GET /api/quests`, including the `autoLoot` flag.

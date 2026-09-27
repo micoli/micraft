@@ -215,14 +215,14 @@ class MapController(private val gameLoop: GameLoop, private val tokenStore: Toke
                     val radius = call.request.queryParameters["radius"]?.toIntOrNull() ?: (50 * 16)
                     val gen = gameLoop.getChunkGenerator() as? ProceduralChunkGenerator
                     val cells =
-                        gen?.voronoi?.cells(cx, cz, radius)?.map { cell ->
+                        gen?.voronoi?.regions(cx, cz, radius)?.map { cell ->
                             VoronoiCellInfo(
                                 cell.seedX,
                                 cell.seedZ,
                                 cell.biome.id,
                                 biomeMapColor(cell.biome),
                                 cell.name,
-                                cell.level)
+                                cell.dangerLevel)
                         } ?: emptyList()
                     call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, "*")
                     call.respondText(Json.encodeToString(cells), ContentType.Application.Json)

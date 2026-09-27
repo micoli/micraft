@@ -20,6 +20,7 @@ private fun NpcSpawnConfigRaw.applyOverride(o: NpcSpawnConfigRawOverride) =
         spawnBiomes = o.spawnBiomes ?: spawnBiomes,
         maxTotal = o.maxTotal ?: maxTotal,
         minTotal = o.minTotal ?: minTotal,
+        weight = o.weight ?: weight,
     )
 
 private fun NpcYamlEntry.applyOverride(o: NpcYamlOverride) =
@@ -77,6 +78,7 @@ fun NpcDefinition.applyOverride(o: NpcYamlOverride): NpcDefinition =
                     spawnBiomes = it.spawnBiomes ?: spawn.spawnBiomes,
                     maxTotal = it.maxTotal ?: spawn.maxTotal,
                     minTotal = it.minTotal ?: spawn.minTotal,
+                    weight = it.weight ?: spawn.weight,
                 )
             } ?: spawn,
         hp = o.hp ?: hp,
@@ -146,6 +148,7 @@ class NpcRegistryLoader(
                                             spawnBiomes = entry.spawn.spawnBiomes,
                                             maxTotal = entry.spawn.maxTotal,
                                             minTotal = entry.spawn.minTotal,
+                                            weight = entry.spawn.weight,
                                         ),
                                     hp = entry.hp,
                                     aggroMode = entry.aggroMode,

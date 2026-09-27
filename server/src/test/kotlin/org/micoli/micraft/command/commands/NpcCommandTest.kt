@@ -1,12 +1,15 @@
 package org.micoli.micraft.command.commands
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.micoli.micraft.game.npc.NpcDefinition
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.behaviors.InteractionableNpcBehavior
 import org.micoli.micraft.game.npc.behaviors.RandomMovableNpcBehavior
+import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.proceduralGenerator.ProceduralChunkGenerator
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testContext
@@ -116,5 +119,69 @@ class NpcCommandTest {
         val session = testSession()
         cmd.execute(session, "foobar", testContext(npcManager = m))
         assertTrue(session.sent.any { it is ServerMessage.Notification })
+    }
+
+    private val proceduralWorld = WorldState(ProceduralChunkGenerator(seed = 42L))
+
+    @Test
+    fun roster_atPlayerPosition_describesTheRegion() = runBlocking {
+        val (m, _) = testNpcManager()
+        val session = testSession()
+        val region = proceduralWorld.regionAt(0, 0)!!
+
+        cmd.execute(session, "roster", testContext(world = proceduralWorld, npcManager = m))
+
+        val header = session.sent.filterIsInstance<ServerMessage.Notification>().first().message
+        assertTrue(region.name in header && region.biome.id in header, header)
+    }
+
+    @Test
+    fun roster_byName_findsANearbyRegion() = runBlocking {
+        val (m, _) = testNpcManager()
+        val session = testSession()
+        val other =
+            proceduralWorld.regionsNear(0, 0, 1024).first {
+                it.name != proceduralWorld.regionAt(0, 0)!!.name
+            }
+
+        cmd.execute(
+            session,
+            "roster ${other.name.lowercase()}",
+            testContext(world = proceduralWorld, npcManager = m))
+
+        val header = session.sent.filterIsInstance<ServerMessage.Notification>().first().message
+        assertTrue(other.name in header, header)
+    }
+
+    @Test
+    fun roster_unknownName_saysSo() = runBlocking {
+        val (m, _) = testNpcManager()
+        val session = testSession()
+
+        cmd.execute(
+            session, "roster Nowhereland", testContext(world = proceduralWorld, npcManager = m))
+
+        val notif = session.sent.filterIsInstance<ServerMessage.Notification>()
+        assertEquals(1, notif.size)
+        assertTrue("Nowhereland" in notif.single().message)
+    }
+
+    @Test
+    fun roster_worldWithoutRegions_saysSo() = runBlocking {
+        val (m, _) = testNpcManager()
+        val session = testSession()
+
+        cmd.execute(session, "roster", testContext(npcManager = m))
+
+        assertEquals(1, session.sent.filterIsInstance<ServerMessage.Notification>().size)
+    }
+
+    @Test
+    fun rosterArgument_completesNearbyRegionNames() = runBlocking {
+        val session = testSession()
+
+        val names = cmd.completeArg(1, "", session, testContext(world = proceduralWorld))
+
+        assertTrue(proceduralWorld.regionAt(0, 0)!!.name in names, names.toString())
     }
 }

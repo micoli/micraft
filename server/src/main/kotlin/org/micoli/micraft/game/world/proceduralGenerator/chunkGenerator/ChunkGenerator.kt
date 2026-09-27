@@ -2,6 +2,7 @@ package org.micoli.micraft.game.world.proceduralGenerator.chunkGenerator
 
 import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.Region
 import org.micoli.micraft.game.world.biome.BiomeDefinition
 
 interface ChunkGenerator {
@@ -12,6 +13,13 @@ interface ChunkGenerator {
     fun biomeDefinitionAt(wx: Int, wz: Int): BiomeDefinition? = null
 
     fun zoneLevelAt(wx: Int, wz: Int): Int = 0
+
+    val worldSeed: Long
+        get() = 0L
+
+    fun regionAt(wx: Int, wz: Int): Region? = null
+
+    fun regionsNear(wx: Int, wz: Int, radiusBlocks: Int): List<Region> = emptyList()
 
     fun distinctLowLevelSpawns(
         count: Int,

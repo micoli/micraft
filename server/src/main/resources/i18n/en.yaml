@@ -19,6 +19,7 @@ reload:
   server:
     unavailable: "Reload not available in this mode."
     done: "Config reloaded — {0}"
+    quests_failed: "Quests kept unchanged: {0}"
     drops: "Drops: {0} block types"
     biomes: "Biomes reloaded"
     registry: "Block/item registry reloaded"
@@ -387,7 +388,12 @@ give_money:
 
 npc:
   server:
-    usage: "Usage: /npc <spawn <type> [name] | list | remove <id|name> | tp <id|name>>"
+    usage: "Usage: /npc <spawn <type> [name] | list | remove <id|name> | tp <id|name> | roster [region]>"
+    roster_no_region: "No Region here."
+    roster_unknown_region: "No Region named '{0}' nearby."
+    roster_header: "{0}: {1}, Danger level {2} (tier {3}), budget {4}"
+    roster_entry: "  {0}: weight {1}, share {2}"
+    roster_entry_rare: "  {0}: rare, share {1}"
     spawned: "Spawned {0} ({1}) at {2}."
     removed: "Removed NPC {0}."
     not_found: "NPC '{0}' not found."

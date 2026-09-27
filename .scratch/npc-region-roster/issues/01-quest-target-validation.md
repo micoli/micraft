@@ -30,3 +30,4 @@ spawns at L11–15.
   `QuestRegistryLoader` takes the NPC types and fails on errors. Biomes are not checked: an NPC type's biome list
   only narrows where it spawns, never makes a tier unreachable. Only warning on shipped data was `wolf_hunt`
   (`bear`, L11–15): retargeted to `wolf_man` (L2–4). Covered by `ShippedQuestConfigTest`.
+- Review follow-up: BOSS objectives are validated too; a failing `/reload` keeps the current Quests.

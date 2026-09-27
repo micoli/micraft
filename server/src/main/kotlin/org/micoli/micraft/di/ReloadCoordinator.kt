@@ -75,7 +75,13 @@ class ReloadCoordinator(
         npcConfigLoader.reload()
         npcManager.reloadDefinitions(npcRegistryLoader.reload())
         lines += i18n.t(lang, "reload:server:npc")
-        questRegistryLoader?.reload()?.let { questManager?.reloadDefinitions(it) }
+        questRegistryLoader?.let { loader ->
+            runCatching { loader.reload() }
+                .onSuccess { questManager?.reloadDefinitions(it) }
+                .onFailure {
+                    lines += i18n.t(lang, "reload:server:quests_failed", it.message.orEmpty())
+                }
+        }
         i18n.reload()
         lines += i18n.t(lang, "reload:server:i18n", i18n.locales.size)
         val newWeatherConfig = WeatherConfig()

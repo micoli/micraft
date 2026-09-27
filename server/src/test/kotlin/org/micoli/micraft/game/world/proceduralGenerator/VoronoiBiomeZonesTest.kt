@@ -56,9 +56,9 @@ class VoronoiBiomeZonesTest {
     }
 
     @Test
-    fun cells_withinRadius_areWithinDistance() {
+    fun regions_withinRadius_areWithinDistance() {
         val z = zones()
-        val found = z.cells(0, 0, 300)
+        val found = z.regions(0, 0, 300)
         for (cell in found) {
             val dx = cell.seedX.toLong()
             val dz = cell.seedZ.toLong()
@@ -130,5 +130,16 @@ class VoronoiBiomeZonesTest {
         val sample = z.sample(10, 10)
         val cols = z.selectColumn(10, 10, surfaceY = 80, col = sample)
         assertEquals(sample.primary.subsurface, cols.subsurface)
+    }
+
+    @Test
+    fun regionAt_agreesWithNearestSeedAndDangerLevel() {
+        val z = zones()
+        for ((x, z0) in listOf(0 to 0, 900 to -1300, -2500 to 400)) {
+            val region = z.regionAt(x, z0)
+            assertEquals(z.nearestSeed(x, z0), region.seedX to region.seedZ)
+            assertEquals(z.zoneLevelAt(x, z0), region.dangerLevel)
+            assertTrue(region in z.regions(region.seedX, region.seedZ, 1))
+        }
     }
 }

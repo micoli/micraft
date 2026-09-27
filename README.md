@@ -87,7 +87,7 @@ make test                     # all test suites
 | `/minigame` | `/minigame create <gameType>\|invite <player>\|accept\|decline\|leave\|who` | Play a mini-game with other players (e.g. tic-tac-toe). | create, invite, accept, decline, leave, who |
 | `/mode` | `/mode <game\|creative>` | Switch between normal game mode and creative edit mode. (admin) | game, creative |
 | `/mount` | `/mount` | Mount or dismount the vehicle you're targeting. | — |
-| `/npc` | `/npc <spawn\|list\|remove\|tp> [args]` | Manage NPCs in the world. | — |
+| `/npc` | `/npc <spawn\|list\|remove\|tp\|roster> [args]` | Manage NPCs in the world. | spawn, list, remove, tp, roster |
 | `/npcbuy` | `/npcbuy <npcId> <itemType> [quantity]` | Buy an item from a seller NPC. | — |
 | `/npcsell` | `/npcsell <npcId> <itemType> [quantity]` | Sell an item to a seller NPC. | — |
 | `/panel` | `/panel <edit\|set <url>\|clear>` | Edit the targeted interactive panel. | dynamic |

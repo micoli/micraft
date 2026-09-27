@@ -218,4 +218,29 @@ class ReloadCoordinatorTest {
             questManager.getDefinitions().getValue("quest_a.yaml").title,
             "/reload must bypass the loader cache and pick up the edited quest file")
     }
+
+    @Test
+    fun reload_invalidQuests_keepsCurrentQuestsAndReportsWhy() = runBlocking {
+        val questsDir = createTempDirectory("reload-quests")
+        questsDir
+            .resolve("quest_a.yaml")
+            .writeText("title: Original\ndescription: desc\ntype: KILL\n")
+        val questRegistryLoader = QuestRegistryLoader(questsDir, npcTypes = { emptyMap() })
+        val questManager =
+            QuestManager(getSessions = { emptyList() }, savePlayer = {}).also {
+                it.reloadDefinitions(questRegistryLoader.load())
+            }
+
+        questsDir
+            .resolve("quest_a.yaml")
+            .writeText(
+                "title: Broken\ndescription: desc\ntype: KILL\n" +
+                    "objectives:\n  - npcType: goat\n    requiredCount: 1\n")
+        val summary =
+            buildCoordinator(questManager = questManager, questRegistryLoader = questRegistryLoader)
+                .reload("en")
+
+        assertEquals("Original", questManager.getDefinitions().getValue("quest_a.yaml").title)
+        assertTrue("goat" in summary, summary)
+    }
 }

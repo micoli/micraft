@@ -58,6 +58,8 @@ data class BiomeDefinition(
     val tintColor: List<Double>? = null,
     val caverns: CavernConfig? = null,
     val maxNpcs: Int = 0,
+    /** Wild NPCs a Region of this Biome holds at most, births included, shared by its Roster. */
+    val regionBudget: Int = 0,
 ) {
     /** No tree vegetation — a valid player/faction spawn biome. */
     val treeless: Boolean

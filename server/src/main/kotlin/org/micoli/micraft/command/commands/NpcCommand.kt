@@ -5,7 +5,9 @@ import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.npc.NpcManager
+import org.micoli.micraft.game.npc.roster.RosterBuilder
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.world.Region
 import org.micoli.micraft.protocol.ServerMessage
 
 class NpcCommand : CommandHandler {
@@ -13,7 +15,23 @@ class NpcCommand : CommandHandler {
     override val name = "npc"
     override val command = "/npc"
     override val description = "Manage NPCs in the world."
-    override val usage = "/npc <spawn|list|remove|tp> [args]"
+    override val usage = "/npc <spawn|list|remove|tp|roster> [args]"
+    override val options = listOf("spawn", "list", "remove", "tp", "roster")
+    override val autocompleteArgs = listOf(0, 1)
+
+    override suspend fun completeArg(
+        argIndex: Int,
+        partial: String,
+        session: PlayerSession?,
+        context: CommandContext,
+    ): List<String> {
+        if (argIndex == 0) return options.filter { it.contains(partial, ignoreCase = true) }
+        if (session == null) return emptyList()
+        return nearbyRegions(session, context)
+            .map { it.name }
+            .filter { it.contains(partial, ignoreCase = true) }
+            .sorted()
+    }
 
     override suspend fun execute(session: PlayerSession, args: String, context: CommandContext) {
         val lang = session.state.language
@@ -33,6 +51,7 @@ class NpcCommand : CommandHandler {
             "remove",
             "rm" -> handleRemove(session, rest, lang, i18n, npcManager)
             "tp" -> handleTp(session, rest, context, lang, i18n, npcManager)
+            "roster" -> handleRoster(session, rest, context, lang, i18n, npcManager)
             else -> session.send(ServerMessage.Notification(i18n.t(lang, "npc:server:usage")))
         }
     }
@@ -130,5 +149,57 @@ class NpcCommand : CommandHandler {
         context.broadcast(ServerMessage.NpcUpdate(instance.state))
         session.send(
             ServerMessage.Notification(i18n.t(lang, "npc:server:tp_done", instance.state.name)))
+    }
+
+    private suspend fun handleRoster(
+        session: PlayerSession,
+        args: String,
+        context: CommandContext,
+        lang: String,
+        i18n: I18nConfig,
+        npcManager: NpcManager,
+    ) {
+        val pos = session.state.pos
+        val world = context.world
+        val region =
+            if (args.isBlank()) world.regionAt(pos.x.toInt(), pos.z.toInt())
+            else
+                nearbyRegions(session, context).firstOrNull {
+                    it.name.equals(args, ignoreCase = true)
+                }
+        if (region == null) {
+            val key =
+                if (args.isBlank()) "npc:server:roster_no_region"
+                else "npc:server:roster_unknown_region"
+            session.send(ServerMessage.Notification(i18n.t(lang, key, args)))
+            return
+        }
+        val roster = RosterBuilder.build(world.worldSeed, region, npcManager.getDefinitions())
+        session.send(
+            ServerMessage.Notification(
+                i18n.t(
+                    lang,
+                    "npc:server:roster_header",
+                    region.name,
+                    region.biome.id,
+                    region.dangerLevel,
+                    region.dangerTier.tier,
+                    roster.budget)))
+        for (entry in roster.entries) {
+            val line =
+                if (entry.rare)
+                    i18n.t(lang, "npc:server:roster_entry_rare", entry.type, entry.share)
+                else i18n.t(lang, "npc:server:roster_entry", entry.type, entry.weight, entry.share)
+            session.send(ServerMessage.Notification(line))
+        }
+    }
+
+    private fun nearbyRegions(session: PlayerSession, context: CommandContext): List<Region> {
+        val pos = session.state.pos
+        return context.world.regionsNear(pos.x.toInt(), pos.z.toInt(), ROSTER_SEARCH_RADIUS)
+    }
+
+    private companion object {
+        const val ROSTER_SEARCH_RADIUS = 2048
     }
 }

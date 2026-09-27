@@ -92,6 +92,14 @@ class WorldState(
 
     fun zoneLevelAt(wx: Int, wz: Int): Int = generator.zoneLevelAt(wx, wz)
 
+    val worldSeed: Long
+        get() = generator.worldSeed
+
+    fun regionAt(wx: Int, wz: Int): Region? = generator.regionAt(wx, wz)
+
+    fun regionsNear(wx: Int, wz: Int, radiusBlocks: Int): List<Region> =
+        generator.regionsNear(wx, wz, radiusBlocks)
+
     fun distinctLowLevelSpawns(count: Int, ringRadius: Double, maxLevel: Int = 5) =
         generator.distinctLowLevelSpawns(count, ringRadius, maxLevel)
 

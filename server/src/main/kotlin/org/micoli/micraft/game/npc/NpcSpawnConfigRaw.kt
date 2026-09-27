@@ -23,4 +23,6 @@ data class NpcSpawnConfigRaw(
      * engine: everything above the floor has to be born.
      */
     val minTotal: Int = 0,
+    /** Share of its Region's budget relative to the other NPC types of the Roster. */
+    val weight: Int = 1,
 )

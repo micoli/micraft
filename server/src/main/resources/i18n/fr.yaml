@@ -19,6 +19,7 @@ reload:
   server:
     unavailable: "Rechargement non disponible dans ce mode."
     done: "Config rechargée — {0}"
+    quests_failed: "Quêtes inchangées : {0}"
     drops: "Drops : {0} types de blocs"
     biomes: "Biomes rechargés"
     registry: "Registre blocs/items rechargé"
@@ -387,7 +388,12 @@ give_money:
 
 npc:
   server:
-    usage: "Usage : /npc <spawn <type> [nom] | list | remove <id|nom> | tp <id|nom>>"
+    usage: "Usage : /npc <spawn <type> [nom] | list | remove <id|nom> | tp <id|nom> | roster [région]>"
+    roster_no_region: "Aucune Région ici."
+    roster_unknown_region: "Aucune Région nommée '{0}' à proximité."
+    roster_header: "{0} : {1}, niveau de danger {2} (palier {3}), budget {4}"
+    roster_entry: "  {0} : poids {1}, part {2}"
+    roster_entry_rare: "  {0} : rare, part {1}"
     spawned: "{0} ({1}) créé en {2}."
     removed: "PNJ {0} supprimé."
     not_found: "PNJ '{0}' introuvable."

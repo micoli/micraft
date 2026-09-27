@@ -51,6 +51,9 @@
         },
         "minTotal": {
           "type": "integer"
+        },
+        "weight": {
+          "type": "integer"
         }
       }
     },

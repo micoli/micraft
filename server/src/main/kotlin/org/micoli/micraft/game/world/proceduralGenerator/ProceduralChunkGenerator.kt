@@ -5,6 +5,7 @@ import org.micoli.micraft.game.world.BlockRegistry
 import org.micoli.micraft.game.world.BlockType
 import org.micoli.micraft.game.world.Chunk
 import org.micoli.micraft.game.world.ChunkPos
+import org.micoli.micraft.game.world.Region
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.biome.BiomeDefinition
 import org.micoli.micraft.game.world.biome.BiomeRegistry
@@ -254,6 +255,14 @@ class ProceduralChunkGenerator(
     }
 
     override fun zoneLevelAt(wx: Int, wz: Int): Int = voronoi.zoneLevelAt(wx, wz)
+
+    override val worldSeed: Long
+        get() = seed
+
+    override fun regionAt(wx: Int, wz: Int): Region = voronoi.regionAt(wx, wz)
+
+    override fun regionsNear(wx: Int, wz: Int, radiusBlocks: Int): List<Region> =
+        voronoi.regions(wx, wz, radiusBlocks)
 
     override fun distinctLowLevelSpawns(count: Int, ringRadius: Double, maxLevel: Int) =
         voronoi.distinctLowLevelSpawns(count, ringRadius, maxLevel)
