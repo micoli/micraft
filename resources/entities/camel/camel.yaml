@@ -27,6 +27,4 @@ baseStats:
   cha: 8
 attacks:
   - attackId: camel_kick
-    rank: 2
   - attackId: charge
-    rank: 1

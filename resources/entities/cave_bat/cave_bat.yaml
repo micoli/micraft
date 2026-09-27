@@ -15,7 +15,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: cave_bat_bite
-    rank: 1
 walkBoneAliases:
   rightArm: wingR
   leftArm: wingL

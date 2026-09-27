@@ -20,6 +20,7 @@ import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.npc.behaviors.StaticNpcBehavior
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.npc.NpcState
 import org.micoli.micraft.player.Vec3
 import org.micoli.micraft.player.rpg.BaseStats
@@ -81,7 +82,7 @@ class CombatProcessorTest {
             onPlayerDownedByNpc = onPlayerDownedByNpc,
         )
 
-    private fun fakeNpc(): NpcInstance {
+    private fun fakeNpc(id: String = "npc-1", level: Int = 1): NpcInstance {
         val def =
             NpcDefinition(
                 type = "zombie",
@@ -91,13 +92,13 @@ class CombatProcessorTest {
                 height = 1.8f,
                 wanderSpeed = 1f,
                 wanderRadius = 5f,
-                attacks = listOf(NpcAttackSlot("basic_attack", 1)),
+                attacks = listOf(NpcAttackSlot("basic_attack")),
                 hp = 30,
                 aggroMode = AggroMode.AGGRESSIVE,
             )
         val state =
             NpcState(
-                id = "npc-1",
+                id = id,
                 name = "Zombie",
                 type = "zombie",
                 pos = Vec3(0f, 0f, 0f),
@@ -105,7 +106,8 @@ class CombatProcessorTest {
                 currentHp = 30,
                 maxHp = 30,
             )
-        return NpcInstance(state = state, definition = def, spawnPos = Vec3(0f, 0f, 0f))
+        return NpcInstance(
+            state = state, definition = def, spawnPos = Vec3(0f, 0f, 0f), instanceLevel = level)
     }
 
     // ── attackPlayer ──────────────────────────────────────────────────────────
@@ -494,6 +496,86 @@ class CombatProcessorTest {
 
         assertEquals(0, combatLog.size)
         assertEquals(20, target.characterData!!.currentHp)
+    }
+
+    // ── NPC Ability Rank from Level ───────────────────────────────────────────
+
+    private val rankedAttack =
+        AttackDefinition(
+            damageType = DamageType.PHYSICAL,
+            ranks = (1..3).associateWith { AttackRankDefinition(weaponDice = "1d4") })
+
+    private fun NpcInstance.usedRanks() = attackCooldownsUntilMs.keys.map { it.substringAfter(':') }
+
+    @Test
+    fun `NPCs of one type at Levels in different bands attack with different Ranks`() =
+        runBlocking {
+            val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
+            target.characterData = testChar("b", "Bob", hp = 20)
+            val proc =
+                buildProcessor(
+                    sessions = { listOf(target) },
+                    attackRegistry = mapOf("basic_attack" to rankedAttack))
+            val low = fakeNpc(id = "low", level = 5)
+            val high = fakeNpc(id = "high", level = 11)
+
+            proc.handleNpcAttack(low, target)
+            proc.handleNpcAttack(high, target)
+
+            assertEquals(listOf("1"), low.usedRanks())
+            assertEquals(listOf("3"), high.usedRanks())
+        }
+
+    @Test
+    fun `an NPC falls back to the highest Rank its Attack defines below its band`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
+        target.characterData = testChar("b", "Bob", hp = 20)
+        val proc =
+            buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry = mapOf("basic_attack" to rankedAttack))
+        val npc = fakeNpc(level = WorldConstants.RPG_LEVEL_MAX)
+
+        proc.handleNpcAttack(npc, target)
+
+        assertEquals(listOf("3"), npc.usedRanks())
+    }
+
+    @Test
+    fun `an NPC does not use an Attack defining only Ranks above its band`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
+        target.characterData = testChar("b", "Bob", hp = 20)
+        val combatLog = mutableListOf<String>()
+        val onlyRank2 =
+            AttackDefinition(ranks = mapOf(2 to AttackRankDefinition(weaponDice = "1d4")))
+        val proc =
+            buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry = mapOf("basic_attack" to onlyRank2),
+                combatLog = combatLog)
+
+        proc.handleNpcAttack(fakeNpc(level = 5), target)
+
+        assertEquals(0, combatLog.size)
+        assertEquals(20, target.characterData!!.currentHp)
+    }
+
+    @Test
+    fun `a Pet levelling across a band boundary attacks with the higher Rank`() = runBlocking {
+        val proc =
+            buildProcessor(
+                sessions = { emptyList() }, attackRegistry = mapOf("basic_attack" to rankedAttack))
+        val pet = fakeNpc(id = "pet", level = 5)
+        val prey = fakeNpc(id = "prey")
+
+        proc.handleNpcAttackNpc(pet, prey)
+        assertEquals(listOf("1"), pet.usedRanks())
+
+        pet.instanceLevel = 6
+        pet.attackCooldownsUntilMs.clear()
+        proc.handleNpcAttackNpc(pet, prey)
+
+        assertEquals(listOf("2"), pet.usedRanks())
     }
 
     // ── HP sync to victim (regression: HP stuck at stale value) ────────────────

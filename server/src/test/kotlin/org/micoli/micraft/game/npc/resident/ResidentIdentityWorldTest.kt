@@ -91,7 +91,9 @@ class ResidentIdentityWorldTest {
     fun `a Resident never takes the name of another NPC or of a Character`() = runBlocking {
         val world = buildGameWorld("resident-unique", gen(), shared)
         val regionKey = assertNotNull(world.world.regionAt(home)).key
-        val usual = { rank: Int -> Resident.of(1234L, ResidentKey(regionKey, "seller", rank)).name }
+        val usual = { ordinal: Int ->
+            Resident.of(1234L, ResidentKey(regionKey, "seller", ordinal)).name
+        }
         world.npcManager.spawnNpc(usual(1), "alpha_direwolf", home)
         world.onPlayerJoin(testSession(name = usual(2), pos = home))
 

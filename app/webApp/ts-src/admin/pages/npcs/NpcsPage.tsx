@@ -155,7 +155,7 @@ export function NpcsPage() {
                   yaw: msg.yaw,
                   zone: "?",
                   parentIds: [],
-                  skills: [],
+                  attacks: [],
                   ageGameDays: null,
                   hunger: null,
                   gestationRemainingDays: null,

@@ -13,7 +13,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: vulture_peck
-    rank: 1
 walkBoneAliases:
   rightArm: wingR
   leftArm: wingL

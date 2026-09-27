@@ -18,6 +18,5 @@ spawn:
 tameable: false
 attacks:
   - attackId: bear_maul
-    rank: 3
 spells:
   - treant_root_grasp

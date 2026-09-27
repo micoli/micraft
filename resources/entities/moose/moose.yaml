@@ -14,7 +14,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: boar_charge
-    rank: 2
 walkBoneAliases:
   rightArm: frontLegR
   leftArm: frontLegL

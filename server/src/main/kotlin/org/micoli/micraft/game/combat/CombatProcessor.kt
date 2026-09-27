@@ -9,7 +9,6 @@ import org.micoli.micraft.combat.AttackRankDefinition
 import org.micoli.micraft.combat.DamageType
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
-import org.micoli.micraft.game.npc.NpcAttackSlot
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
 import org.micoli.micraft.game.placeable.PlaceableManager
@@ -280,35 +279,9 @@ class CombatProcessor(
         })
             return
         val def = npc.definition
-        val slots =
-            def.attacks.ifEmpty {
-                return
-            }
-
-        data class Resolved(
-            val slot: NpcAttackSlot,
-            val attackDef: AttackDefinition,
-            val rankDef: AttackRankDefinition,
-        )
-
         val distSq = target.state.pos.distanceSquaredTo(npc.state.pos)
-
-        val resolved =
-            slots.shuffled().firstNotNullOfOrNull { slot ->
-                val cooldownKey = "${slot.attackId}:${slot.rank}"
-                if (now < (npc.attackCooldownsUntilMs[cooldownKey] ?: 0L))
-                    return@firstNotNullOfOrNull null
-                val aDef = attackRegistry[slot.attackId] ?: return@firstNotNullOfOrNull null
-                val rDef =
-                    aDef.ranks[slot.rank]
-                        ?: aDef.ranks.entries.maxByOrNull { it.key }?.value
-                        ?: return@firstNotNullOfOrNull null
-                val range = rDef.rangeOverride ?: config.npcMaxAttackRange
-                if (distSq > range * range) return@firstNotNullOfOrNull null
-                Resolved(slot, aDef, rDef)
-            } ?: return
-
-        val (slot, _, rankDef) = resolved
+        val choice = pickNpcAttack(npc, now) { range -> distSq <= range * range } ?: return
+        val rankDef = choice.rankDef
 
         when (def.characterClass.classResource) {
             ClassResource.MANA -> {
@@ -325,7 +298,7 @@ class CombatProcessor(
             }
         }
 
-        npc.attackCooldownsUntilMs["${slot.attackId}:${slot.rank}"] = now + rankDef.cooldownMs
+        npc.attackCooldownsUntilMs[choice.cooldownKey] = now + rankDef.cooldownMs
 
         val targetChar = target.characterData ?: return
         val theirDerived = characterStats.derived(target, targetChar)
@@ -363,7 +336,7 @@ class CombatProcessor(
         }
 
         broadcastCombatLog(
-            "[m:${npc.state.name}] → [p:${targetChar.name}] (${slot.attackId}): ${getHitMessage(hit, isCrit, damage)}")
+            "[m:${npc.state.name}] → [p:${targetChar.name}] (${choice.attackId}): ${getHitMessage(hit, isCrit, damage)}")
     }
 
     // ── NPC vs NPC attack ─────────────────────────────────────────────────────
@@ -374,34 +347,10 @@ class CombatProcessor(
             it.effect is StatusEffect.FrozenInTime && it.expiresAtMs > now
         })
             return
-        val slots =
-            predator.definition.attacks.ifEmpty {
-                return
-            }
-
-        data class Resolved(
-            val slot: NpcAttackSlot,
-            val rankDef: AttackRankDefinition,
-        )
-
-        val resolved =
-            slots.shuffled().firstNotNullOfOrNull { slot ->
-                val cooldownKey = "${slot.attackId}:${slot.rank}"
-                if (now < (predator.attackCooldownsUntilMs[cooldownKey] ?: 0L))
-                    return@firstNotNullOfOrNull null
-                val aDef = attackRegistry[slot.attackId] ?: return@firstNotNullOfOrNull null
-                val rDef =
-                    aDef.ranks[slot.rank]
-                        ?: aDef.ranks.entries.maxByOrNull { it.key }?.value
-                        ?: return@firstNotNullOfOrNull null
-                val range = rDef.rangeOverride ?: config.npcMaxAttackRange
-                if (prey.state.pos.distanceSquaredXZTo(predator.state.pos) > range * range)
-                    return@firstNotNullOfOrNull null
-                Resolved(slot, rDef)
-            } ?: return
-
-        val (slot, rankDef) = resolved
-        predator.attackCooldownsUntilMs["${slot.attackId}:${slot.rank}"] = now + rankDef.cooldownMs
+        val distSq = prey.state.pos.distanceSquaredXZTo(predator.state.pos)
+        val choice = pickNpcAttack(predator, now) { range -> distSq <= range * range } ?: return
+        val rankDef = choice.rankDef
+        predator.attackCooldownsUntilMs[choice.cooldownKey] = now + rankDef.cooldownMs
 
         val preyAc = 10 + prey.instanceLevel / 2
         val roll = Random.nextInt(1, 21)
@@ -415,12 +364,39 @@ class CombatProcessor(
             npcManager.applyDamage(prey.state.id, damage, predator.state.id)
             val hitMsg = "hits for $damage${if (isCrit) " [CRIT]" else ""}"
             broadcastCombatLog(
-                "[m:${predator.state.name}] → [m:${prey.state.name}] (${slot.attackId}): $hitMsg")
+                "[m:${predator.state.name}] → [m:${prey.state.name}] (${choice.attackId}): $hitMsg")
         } else {
             broadcastCombatLog(
-                "[m:${predator.state.name}] → [m:${prey.state.name}] (${slot.attackId}): misses")
+                "[m:${predator.state.name}] → [m:${prey.state.name}] (${choice.attackId}): misses")
         }
     }
+
+    private data class NpcAttackChoice(
+        val attackId: String,
+        val rank: Int,
+        val rankDef: AttackRankDefinition,
+    ) {
+        val cooldownKey: String
+            get() = "$attackId:$rank"
+    }
+
+    /**
+     * A random Attack of [npc] off cooldown, at the Rank of its current Level, whose range fits.
+     */
+    private fun pickNpcAttack(
+        npc: NpcInstance,
+        now: Long,
+        inRange: (Float) -> Boolean,
+    ): NpcAttackChoice? =
+        npc.definition.attacks.shuffled().firstNotNullOfOrNull { slot ->
+            val attackDef = attackRegistry[slot.attackId] ?: return@firstNotNullOfOrNull null
+            val rank = attackDef.usableRank(npc.instanceLevel) ?: return@firstNotNullOfOrNull null
+            val choice = NpcAttackChoice(slot.attackId, rank, attackDef.ranks.getValue(rank))
+            if (now < (npc.attackCooldownsUntilMs[choice.cooldownKey] ?: 0L))
+                return@firstNotNullOfOrNull null
+            val range = choice.rankDef.rangeOverride ?: config.npcMaxAttackRange
+            choice.takeIf { inRange(range) }
+        }
 
     // ── Downed / death ────────────────────────────────────────────────────────
 

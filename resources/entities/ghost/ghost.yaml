@@ -18,7 +18,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: ghost_curse
-    rank: 1
 armorLoot:
   - armor: tier4_mail_leggings
     dropRate: 10

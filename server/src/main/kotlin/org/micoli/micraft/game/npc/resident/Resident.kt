@@ -4,10 +4,10 @@ import kotlin.random.Random
 import org.micoli.micraft.game.npc.NpcNameGenerator
 
 /**
- * Which Resident of a Region: the [rank]-th NPC of [npcType] living in the Region keyed
+ * Which Resident of a Region: the [ordinal]-th NPC of [npcType] living in the Region keyed
  * [regionKey].
  */
-data class ResidentKey(val regionKey: Long, val npcType: String, val rank: Int)
+data class ResidentKey(val regionKey: Long, val npcType: String, val ordinal: Int)
 
 enum class Temperament {
     GRUFF,
@@ -33,6 +33,6 @@ data class Resident(val key: ResidentKey, val name: String, val temperament: Tem
         }
 
         private fun seedOf(worldSeed: Long, key: ResidentKey): Long =
-            ((worldSeed * 31 + key.regionKey) * 31 + key.npcType.hashCode()) * 31 + key.rank
+            ((worldSeed * 31 + key.regionKey) * 31 + key.npcType.hashCode()) * 31 + key.ordinal
     }
 }

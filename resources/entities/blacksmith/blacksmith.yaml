@@ -13,6 +13,4 @@ aggroRange: 20.0
 deaggroTimeSec: 10.0
 attacks:
   - attackId: slash
-    rank: 2
   - attackId: heavy_slash
-    rank: 1

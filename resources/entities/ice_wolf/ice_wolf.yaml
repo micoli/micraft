@@ -17,9 +17,7 @@ tameable: true
 tameBaseChance: 0.2
 attacks:
   - attackId: wolf_bite
-    rank: 2
   - attackId: ice_shard_bite
-    rank: 1
 walkBoneAliases:
   rightArm: frontLegR
   leftArm: frontLegL

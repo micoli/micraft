@@ -4253,6 +4253,13 @@ export const org_micoli_micraft_http_NpcAdminDtoSchema = {
                 }
             ]
         },
+        attacks: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.http.NpcAttackAdminDto'
+            },
+            title: 'List<NpcAttackAdminDto>'
+        },
         currentHp: {
             type: 'integer',
             format: 'int32',
@@ -4331,14 +4338,6 @@ export const org_micoli_micraft_http_NpcAdminDtoSchema = {
             },
             title: 'List<String>'
         },
-        skills: {
-            type: 'array',
-            items: {
-                type: 'string',
-                title: 'String'
-            },
-            title: 'List<String>'
-        },
         tier: {
             type: 'string',
             title: 'String'
@@ -4379,6 +4378,7 @@ export const org_micoli_micraft_http_NpcAdminDtoSchema = {
     },
     required: [
         'aggroMode',
+        'attacks',
         'currentHp',
         'hasChat',
         'id',
@@ -4387,7 +4387,6 @@ export const org_micoli_micraft_http_NpcAdminDtoSchema = {
         'maxHp',
         'name',
         'parentIds',
-        'skills',
         'tier',
         'type',
         'x',
@@ -4398,6 +4397,28 @@ export const org_micoli_micraft_http_NpcAdminDtoSchema = {
         'zone'
     ],
     title: 'NpcAdminDto'
+} as const;
+
+export const org_micoli_micraft_http_NpcAttackAdminDtoSchema = {
+    type: 'object',
+    properties: {
+        attackId: {
+            type: 'string',
+            title: 'String'
+        },
+        rank: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int32',
+            title: 'Int'
+        }
+    },
+    required: [
+        'attackId'
+    ],
+    title: 'NpcAttackAdminDto'
 } as const;
 
 export const org_micoli_micraft_http_NpcChatTestTurnSchema = {

@@ -126,6 +126,9 @@ data class GroupDto(val name: String, val permissions: List<String>, val editabl
 
 @Serializable data class GroupsListDto(val groups: List<GroupDto>, val defaultGroups: List<String>)
 
+/** An NPC's Attack with the Rank its current Level uses; null [rank] when it cannot use it. */
+@Serializable data class NpcAttackAdminDto(val attackId: String, val rank: Int?)
+
 @Serializable
 data class NpcAdminDto(
     val id: String,
@@ -145,7 +148,7 @@ data class NpcAdminDto(
     val yaw: Float,
     val zone: String,
     val parentIds: List<String>,
-    val skills: List<String>,
+    val attacks: List<NpcAttackAdminDto>,
     val ageGameDays: Double?,
     val hunger: Double?,
     val gestationRemainingDays: Double?,
@@ -2169,8 +2172,13 @@ class AdminController(
                                 yaw = npc.state.yaw,
                                 zone = "$zoneX,$zoneZ",
                                 parentIds = ad?.parentIds?.toList() ?: emptyList(),
-                                skills =
-                                    npc.definition.attacks.map { "${it.attackId} rk${it.rank}" },
+                                attacks =
+                                    npc.definition.attacks.map {
+                                        NpcAttackAdminDto(
+                                            it.attackId,
+                                            gameLoop.attackRegistry[it.attackId]?.usableRank(
+                                                npc.instanceLevel))
+                                    },
                                 ageGameDays = ad?.ageGameDays,
                                 hunger = ad?.hunger,
                                 gestationRemainingDays = ad?.gestationRemainingDays,

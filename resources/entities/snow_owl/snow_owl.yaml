@@ -15,7 +15,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: owl_dive
-    rank: 1
 walkBoneAliases:
   rightArm: wingR
   leftArm: wingL

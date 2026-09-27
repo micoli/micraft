@@ -13,13 +13,13 @@ export function NpcDetail({ npc, t }: { npc: NpcAdminDto; t: Translate }) {
         </p>
       </div>
 
-      {npc.skills.length > 0 && (
+      {npc.attacks.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1">{t("npcs.skills")}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#8A99AF] mb-1">{t("npcs.attacks")}</p>
           <div className="flex flex-wrap gap-1">
-            {npc.skills.map((s) => (
-              <span key={s} className="px-2 py-0.5 rounded bg-[#1C2434] text-[11px] text-[#8A99AF]">
-                {s}
+            {npc.attacks.map((a) => (
+              <span key={a.attackId} className="px-2 py-0.5 rounded bg-[#1C2434] text-[11px] text-[#8A99AF]">
+                {a.attackId} {a.rank == null ? t("npcs.attackUnusable") : t("npcs.attackRank", a.rank)}
               </span>
             ))}
           </div>

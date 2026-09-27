@@ -7437,6 +7437,11 @@ components:
           oneOf:
           - type: "null"
           - $ref: "#/components/schemas/org.micoli.micraft.player.rpg.BaseStats"
+        attacks:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.http.NpcAttackAdminDto"
+          title: List<NpcAttackAdminDto>
         currentHp:
           type: integer
           format: int32
@@ -7496,12 +7501,6 @@ components:
             type: string
             title: String
           title: List<String>
-        skills:
-          type: array
-          items:
-            type: string
-            title: String
-          title: List<String>
         tier:
           type: string
           title: String
@@ -7533,6 +7532,7 @@ components:
           title: String
       required:
       - aggroMode
+      - attacks
       - currentHp
       - hasChat
       - id
@@ -7541,7 +7541,6 @@ components:
       - maxHp
       - name
       - parentIds
-      - skills
       - tier
       - type
       - x
@@ -7551,6 +7550,21 @@ components:
       - z
       - zone
       title: NpcAdminDto
+    org.micoli.micraft.http.NpcAttackAdminDto:
+      type: object
+      properties:
+        attackId:
+          type: string
+          title: String
+        rank:
+          type:
+          - "null"
+          - integer
+          format: int32
+          title: Int
+      required:
+      - attackId
+      title: NpcAttackAdminDto
     org.micoli.micraft.http.NpcChatTestTurn:
       type: object
       properties:

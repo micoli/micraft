@@ -87,7 +87,7 @@ class SpellProcessorAoeTest {
                 height = 1.8f,
                 wanderSpeed = 1f,
                 wanderRadius = 5f,
-                attacks = listOf(NpcAttackSlot("slash", 1)),
+                attacks = listOf(NpcAttackSlot("slash")),
                 hp = 30,
                 aggroMode = AggroMode.AGGRESSIVE,
             )

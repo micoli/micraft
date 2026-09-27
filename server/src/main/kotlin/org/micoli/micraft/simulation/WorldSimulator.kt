@@ -161,6 +161,8 @@ class WorldSimulator(
                 ),
         )
 
+    private val attackRegistry = shared.attackRegistry
+
     private val npcManager
         get() = gameWorld.npcManager
 
@@ -663,7 +665,11 @@ class WorldSimulator(
             wanderSpeed = def.wanderSpeed,
             wanderRadius = def.wanderRadius,
             aggroRange = def.aggroRange,
-            attacks = def.attacks.map { "${it.attackId} rk${it.rank}" },
+            attacks =
+                def.attacks.map { slot ->
+                    val rank = attackRegistry[slot.attackId]?.usableRank(instance.instanceLevel)
+                    "${slot.attackId} ${rank?.let { "R$it" } ?: "unusable"}"
+                },
             spells = def.spells,
             baseStats = animal?.stats ?: def.baseStats,
             wanderPhase = instance.wanderPhase.toString(),

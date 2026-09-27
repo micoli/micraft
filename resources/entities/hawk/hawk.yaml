@@ -13,7 +13,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: hawk_dive
-    rank: 1
 walkBoneAliases:
   rightArm: wingR
   leftArm: wingL

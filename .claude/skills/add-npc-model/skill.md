@@ -228,7 +228,7 @@ walkBoneAliases:   # omit entirely if bones already use standard names
 
 Full field reference (`NpcYamlEntry`): `behavior, width, height, wanderSpeed, wanderRadius,
 spawn{autoSpawn,maxPerChunk,spawnBiomes,maxTotal,minTotal}, hp, aggroMode, aggroRange,
-deaggroTimeSec, attacks[{attackId,level}], spells, minLevel, maxLevel, characterClass,
+deaggroTimeSec, attacks[{attackId}] (Rank derived from NPC Level), spells, minLevel, maxLevel, characterClass,
 baseStats{str,dex,intel,wis,con,cha}, xpReward, bbmodelFile (override, defaults to directory
 name), walkBoneAliases, animal{diet,lifespanDays,canReproduce,gestationDays,offspringType,
 offspringMinCount,offspringMaxCount,reproductionCooldownDays,matingRange,scale,baseStats,

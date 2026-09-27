@@ -16,7 +16,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: octopus_ink
-    rank: 1
 animal:
   diet: OMNIVORE
   lifespanDays: 18.0

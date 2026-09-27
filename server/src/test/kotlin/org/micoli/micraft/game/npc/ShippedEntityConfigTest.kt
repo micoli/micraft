@@ -5,6 +5,7 @@ import kotlin.io.path.exists
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import org.micoli.micraft.game.combat.SkillsConfig
 
 /**
  * The definitions the game actually ships, loaded through the real loader.
@@ -140,5 +141,17 @@ class ShippedEntityConfigTest {
                 !def.spawn.autoSpawn,
                 "$type is a juvenile form: it should appear through reproduction, not spawning")
         }
+    }
+
+    @Test
+    fun everyAttackingTypeCanUseAnAttackAtItsMinLevel() {
+        val defs = definitions() ?: return
+        val attacks = SkillsConfig().data.attacks
+        val stranded =
+            defs.filter { (_, def) ->
+                def.attacks.isNotEmpty() &&
+                    def.attacks.none { attacks[it.attackId]?.usableRank(def.minLevel) != null }
+            }
+        assertTrue(stranded.isEmpty(), "no usable Attack at minLevel for ${stranded.keys.sorted()}")
     }
 }

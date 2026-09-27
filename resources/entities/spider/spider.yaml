@@ -14,7 +14,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: spider_web_bite
-    rank: 1
 walkBoneAliases:
   rightLeg0: rightLeg0
   leftLeg0: leftLeg0

@@ -18,6 +18,4 @@ spawn:
 tameable: false
 attacks:
   - attackId: slash
-    rank: 2
   - attackId: desert_raider_javelin
-    rank: 1

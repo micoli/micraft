@@ -28,7 +28,6 @@ baseStats:
   cha: 6
 attacks:
   - attackId: wolf_bite
-    rank: 1
 animal:
   diet: CARNIVORE
   lifespanDays: 30.0

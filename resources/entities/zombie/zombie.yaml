@@ -17,4 +17,3 @@ spawn:
 tameable: false
 attacks:
   - attackId: zombie_bite
-    rank: 1

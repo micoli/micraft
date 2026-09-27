@@ -31,7 +31,7 @@ no longer in its Region's Roster is dropped instead, Quest givers are recreated
 by their spawner, and Pets are never parked.
 
 **Residents** — Quest givers and merchants (`SELLER`) are Residents: each is
-keyed by its Region, its NPC type and its rank among NPCs of that type in the
+keyed by its Region, its NPC type and its ordinal among NPCs of that type in the
 Region (1st, 2nd… merchant). Its name and Temperament (gruff, cheerful or
 fearful) are derived from the World seed and that key, so the same Resident
 comes back under the same name after a restart or once its Region is parked and
@@ -95,6 +95,12 @@ flyVerticalStep: 0.4     # max altitude change per tick
 `GET /api/admin/npcs`, `GET /api/admin/ws/npcs`. A definition may also set
 `tameable: true` / `tameBaseChance` to allow taming — see [Pets](pets.md), or
 `movementMode` (see above) for a swimming or flying creature.
+
+**Attacks** — a definition lists `attacks: [{attackId: …}]` without a Rank: an
+NPC uses the Rank of its Level's band (L1–5 → R1, L6–10 → R2, L11–15 → R3,
+L16–20 → R4, L21+ → R5, the Danger tier bands), recomputed at each attack so a
+Pet gains Ranks as it levels up. When an Attack does not define that Rank, the
+highest lower one is used; an Attack defining only higher Ranks is not used.
 
 **Models** — `resources/models/<name>/<name>.bbmodel` with an optional
 `<name>.yaml` skin config.

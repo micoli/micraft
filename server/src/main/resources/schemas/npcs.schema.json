@@ -85,9 +85,6 @@
         "properties": {
           "attackId": {
             "type": "string"
-          },
-          "rank": {
-            "type": "integer"
           }
         }
       }

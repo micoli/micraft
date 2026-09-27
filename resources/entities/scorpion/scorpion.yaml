@@ -16,7 +16,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: scorpion_sting
-    rank: 1
 walkBoneAliases:
   rightLeg0: leg1
   leftLeg0: leg0

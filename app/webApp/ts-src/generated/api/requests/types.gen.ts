@@ -2684,6 +2684,10 @@ export type OrgMicoliMicraftHttpNpcAdminDto = {
     aggroMode: string;
     animalStats?: null | OrgMicoliMicraftPlayerRpgBaseStats;
     /**
+     * List<NpcAttackAdminDto>
+     */
+    attacks: Array<OrgMicoliMicraftHttpNpcAttackAdminDto>;
+    /**
      * Int
      */
     currentHp: number;
@@ -2736,10 +2740,6 @@ export type OrgMicoliMicraftHttpNpcAdminDto = {
      */
     parentIds: Array<string>;
     /**
-     * List<String>
-     */
-    skills: Array<string>;
-    /**
      * String
      */
     tier: string;
@@ -2771,6 +2771,20 @@ export type OrgMicoliMicraftHttpNpcAdminDto = {
      * String
      */
     zone: string;
+};
+
+/**
+ * NpcAttackAdminDto
+ */
+export type OrgMicoliMicraftHttpNpcAttackAdminDto = {
+    /**
+     * String
+     */
+    attackId: string;
+    /**
+     * Int
+     */
+    rank?: null | number;
 };
 
 /**

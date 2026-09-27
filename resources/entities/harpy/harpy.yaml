@@ -18,7 +18,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: harpy_shriek
-    rank: 1
 walkBoneAliases:
   rightArm: wingR
   leftArm: wingL

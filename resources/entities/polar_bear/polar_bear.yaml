@@ -34,11 +34,8 @@ hibernation:
   wakeOnDamage: true
 attacks:
   - attackId: polar_bear_swipe
-    rank: 3
   - attackId: polar_bear_crush
-    rank: 2
   - attackId: ice_claw
-    rank: 2
 animal:
   diet: CARNIVORE
   # mortal at last: with no animal block it never aged, never hungered and nothing preyed on it,

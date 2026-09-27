@@ -8,7 +8,7 @@ import org.micoli.micraft.player.Vec3
 class Residents(private val world: WorldState) {
 
     /**
-     * The first rank of [npcType] no living Resident of the Region holds, named apart from every
+     * The first ordinal of [npcType] no living Resident of the Region holds, named apart from every
      * [isTaken] name; null outside Regions.
      */
     fun settle(
@@ -23,9 +23,9 @@ class Residents(private val world: WorldState) {
                 .filter { !it.isDead }
                 .mapNotNull { it.resident?.key }
                 .filter { it.regionKey == region.key && it.npcType == npcType }
-                .map { it.rank }
+                .map { it.ordinal }
                 .toSet()
-        val rank = generateSequence(1) { it + 1 }.first { it !in taken }
-        return Resident.of(world.worldSeed, ResidentKey(region.key, npcType, rank), isTaken)
+        val ordinal = generateSequence(1) { it + 1 }.first { it !in taken }
+        return Resident.of(world.worldSeed, ResidentKey(region.key, npcType, ordinal), isTaken)
     }
 }

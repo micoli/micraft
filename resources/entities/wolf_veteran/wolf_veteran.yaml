@@ -25,11 +25,8 @@ baseStats:
   cha: 6
 attacks:
   - attackId: wolf_bite
-    rank: 3
   - attackId: wolf_pounce
-    rank: 3
   - attackId: venomous_fang
-    rank: 2
 pack:
   extendPackType:
     - wolf

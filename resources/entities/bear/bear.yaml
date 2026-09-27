@@ -16,7 +16,6 @@ spawn:
 tameable: false
 attacks:
   - attackId: bear_maul
-    rank: 1
 walkBoneAliases:
   rightArm: frontLegR
   leftArm: frontLegL

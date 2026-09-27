@@ -18,6 +18,5 @@ spawn:
 tameable: false
 attacks:
   - attackId: golem_stone_smash
-    rank: 2
 spells:
   - crystal_shard_barrage
