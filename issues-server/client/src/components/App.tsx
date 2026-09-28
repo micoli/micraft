@@ -9,7 +9,7 @@ const EMPTY_FILTERS: Filters = { kind: "", effort: "", q: "", labels: {} };
 
 export function App() {
   const [filters, setFilters] = useState<Filters>(readFiltersFromUrl);
-  const [selectedId, setSelectedId] = useState<string | null>(() => new URLSearchParams(location.search).get("item"));
+  const [selectedId, setSelectedId] = useState<string | null>(readSelectedIdFromUrl);
   const [revision, setRevision] = useState(0);
 
   const efforts = useApi<Effort[]>("/api/efforts", revision);
@@ -17,7 +17,23 @@ export function App() {
   const items = useApi<ItemSummary[]>(itemsQuery(filters), revision);
 
   useEffect(() => {
-    history.replaceState(null, "", `?${toUrlParams(filters, selectedId)}`);
+    const onPopState = () => {
+      setFilters(readFiltersFromUrl());
+      setSelectedId(readSelectedIdFromUrl());
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  useEffect(() => {
+    const next = toUrlParams(filters, selectedId);
+    const current = new URLSearchParams(location.search);
+    if (sortedParams(next) === sortedParams(current)) return;
+    if (onlySearchTextChanged(current, next)) {
+      history.replaceState(null, "", `?${next}`);
+      return;
+    }
+    history.pushState(null, "", `?${next}`);
   }, [filters, selectedId]);
 
   return (
@@ -58,6 +74,21 @@ function readFiltersFromUrl(): Filters {
     q: params.get("q") ?? "",
     labels,
   };
+}
+
+function readSelectedIdFromUrl(): string | null {
+  return new URLSearchParams(location.search).get("item");
+}
+
+function onlySearchTextChanged(current: URLSearchParams, next: URLSearchParams): boolean {
+  return current.get("q") !== next.get("q") && sortedParams(current, "q") === sortedParams(next, "q");
+}
+
+function sortedParams(params: URLSearchParams, ignoredKey?: string): string {
+  const copy = new URLSearchParams(params);
+  if (ignoredKey) copy.delete(ignoredKey);
+  copy.sort();
+  return copy.toString();
 }
 
 function toUrlParams(filters: Filters, selectedId: string | null): URLSearchParams {
