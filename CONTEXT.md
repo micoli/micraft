@@ -72,6 +72,8 @@ _Avoid_: prefab, schematic
 
 **Claim**:
 A set of Chunks owned by a Character, where only the owner, trusted Characters and faction allies may build.
+Building on a Claim and administering one are separate rights: abandoning a Claim or changing its trusted list
+belongs to the owner alone. An RBAC group may grant either right as an override.
 _Avoid_: land, plot
 
 **Action block**:
@@ -130,11 +132,12 @@ The power tier of an Ability (1–5), set by Level: a Character unlocks it at a 
 _Avoid_: skill level, attack level, spell level
 
 **Global cooldown**:
-The short lockout shared by all Abilities after any use.
+The short lockout shared by all Abilities after any use. It lapses with the session; reconnecting clears it.
 _Avoid_: GCD in prose
 
 **Cooldown**:
-The per-Ability delay before that Ability can be used again.
+The per-Ability delay before that Ability can be used again. It belongs to the Character and outlives the session,
+so reconnecting never shortens it.
 
 **Status effect**:
 A timed modifier on a combatant (damage over time, boost, slow…).

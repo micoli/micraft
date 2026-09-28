@@ -1,20 +1,167 @@
 # Single ability gate for attack / spell / AoE
 
-Status: needs-triage
+Status: ready-for-agent
 Strength: Strong
 
 ## Files
-- `game/combat/CombatProcessor.kt` (`handleAttack` L98-151, `deductResource` L561)
-- `game/combat/SpellProcessor.kt` (`handleSpell` L34-130, `handleCastAoeSpell` L193-330, `cooldowns` L32)
+- `game/combat/CombatProcessor.kt` (`handleAttack` L92-145, `deductResource` L487)
+- `game/combat/SpellProcessor.kt` (`handleSpell` L26-122, `handleCastAoeSpell` L175-313, `cooldowns` L24)
+- `combat/CombatState.kt`, `player/rpg/CombatantData.kt`, `game/rpg/CharacterStats.kt` (status update)
+- `core/.../protocol/ServerMessage.kt` (`PlayerStatusUpdate`, `@ProtoId(37)`)
+- Client: `game/types.ts`, `AttackPanel.tsx`, `AttackCooldownOverlay.tsx`, `shortcutBar/ShortcutBar.tsx`
 
 ## Problem
-Three near-identical copies of the same checks: character present → definition exists → unlock at this level → rank exists → GCD → cooldown → mana/rage cost.
-- `SpellProcessor` deducts cost inline instead of reusing `deductResource`.
-- Spell cooldowns live in a private `mutableMapOf` keyed `"sessionId:spell:rank"`. It is not thread-safe and never cleared, `makeStatusUpdate` can't see it, and it doesn't survive a reconnect.
-- The GCD messages differ ("Attack on cooldown" vs "On global cooldown").
+Three near-identical copies of the same checks — `handleAttack`, `handleSpell`, `handleCastAoeSpell` — each running
+character present → definition exists → unlock at this level → rank exists → GCD → cooldown → cost. `tryNpcCast` is a
+fourth, partial copy.
+
+The copies have drifted:
+- GCD message differs ("Attack on cooldown" vs "On global cooldown"); the per-Ability message omits the Rank on the
+  spell path.
+- Check order differs: attack range-checks after cooldowns and deducts cost after range; AoE range-checks before cost.
+- `SpellProcessor` deducts mana/rage inline instead of reusing `deductResource`, because that function's signature
+  takes an `AttackRankDefinition` and spells carry a `SpellRankDefinition`.
+
+Two defects fall out of the split cooldown stores:
+- **Spell cooldowns never reach the client.** `CharacterStats` fills `PlayerStatusUpdate.attackCooldownsRemainingMs`
+  from `CombatState` only, while spell cooldowns sit in a private map on `SpellProcessor`. The client compounds this
+  with an `isAttack &&` guard in `ShortcutBar`, so a spell slot cannot show a cooldown at all.
+- **Attack cooldowns reset on reconnect.** `CombatState` is a fresh default on every `PlayerSession` and is never
+  persisted, so reconnecting clears a long attack cooldown. Spell cooldowns, keyed by the Character id in a map
+  living as long as the World, survive — the opposite of what the original ticket claimed. Moving spell cooldowns
+  into `CombatState` as-is would spread the exploit rather than fix it.
+
+The `mutableMapOf` is the wrong type but races nothing today: all three handlers run from `IntentCollector`, on the
+tick thread.
+
+Combat is also the only server system with no i18n: 27 hard-coded English `Notification(...)` strings across the two
+processors, where every other namespace (`claim:`, `faction:`, `craft:`…) is translated.
 
 ## Solution
-`AbilityGate.tryUse(session, AbilityRef): Result` owns unlock, rank, GCD, a single cooldown store in `combatState`, and cost. The processors keep only the effect.
+An `AbilityGate` owning the shared cascade and returning a typed result; per-Ability cooldowns persisted on the
+Character; the Global cooldown left volatile; a `combat:` i18n namespace.
 
 ## Tests
-CombatProcessorTest plus 3 SpellProcessor test files cover the paths separately; parity between attack and spell is not tested today.
+`CombatProcessorTest` plus 3 `SpellProcessor*Test` files cover the paths separately; parity between attack and spell
+is not tested today, and no test covers cooldown survival across a reconnect.
+
+## Decisions (2026-09-28)
+
+1. **Persistence**: per-Ability cooldowns live on `CombatantData` (already persisted, already in
+   `player.schema.json`, already holding the resources they gate). The Global cooldown stays volatile on
+   `CombatState`, with target and active effects.
+2. **Cost abstraction**: a small `AbilityCost(mana, rage, tokens)` read off the rank definition at the gate
+   boundary. No common supertype for `AttackRankDefinition` and `SpellRankDefinition` — they are two serialized
+   yaml schemas in two packages and only one has `tokenCost`.
+3. **Typed result**, translated by the caller; no strings returned from the gate.
+4. **Range stays out of the gate**: three different ways of measuring distance (locked target, world point,
+   `DIRECT_DAMAGE` falling back to the locked target) would make the gate parameterizable.
+5. **Client cooldowns**: the status-update field is renamed to cover both kinds, and `ShortcutBar`'s `isAttack`
+   guard is removed.
+6. **Concurrency**: immutable map replaced wholesale, no synchronization primitive.
+7. **Eviction**: expired entries dropped on write and on load.
+8. **i18n**: all 27 `Notification` strings in the two processors move to a `combat:` namespace; the broadcast combat
+   log is excluded.
+9. **NPC paths out of scope**: no class unlock, no mana/rage, no Global cooldown; their cooldowns rightly die with
+   the instance.
+10. `CONTEXT.md` gains the lifetime distinction between Global cooldown and Cooldown (2026-09-28).
+
+## Comments
+
+> *This was generated by AI during triage.*
+
+## Agent Brief
+
+**Category:** enhancement (carries two gameplay defects)
+**Summary:** One `AbilityGate` owns the checks shared by attacks and spells; per-Ability cooldowns become durable and
+visible to the client; combat messages get translated.
+
+**Current behavior:**
+
+Using an Attack, casting a Spell and casting an area Spell each run their own copy of the same sequence of checks:
+the Character exists, the Ability is known, the Character's Class unlocks it at this Level, the Rank exists, the
+Global cooldown has lapsed, this Ability's own Cooldown has lapsed, and the Character can pay the cost. The three
+copies have drifted in their wording, in the order they check range against cost, and in whether they reuse the
+existing resource-deduction helper.
+
+Cooldowns are stored in two unrelated places. Attack cooldowns live on the session's combat state, which is created
+empty for every new session and never saved, so reconnecting clears them. Spell cooldowns live in a private map
+owned by the spell processor, keyed by Character, which outlives any session — so they persist, inconsistently with
+attacks. Only the session-held ones reach the client in the player status update, and the client's shortcut bar
+additionally refuses to look up a cooldown for anything that is not an Attack, so a Spell on cooldown appears ready.
+
+Every message either processor sends the player is hard-coded English.
+
+**Desired behavior:**
+
+A single gate answers one question for all player-initiated Ability use: may this Character use this Ability at this
+Rank right now, and if not, why. It checks, in one place and one order: Character present, Ability known, unlocked by
+the Character's Class at its Level, Rank defined, Global cooldown lapsed, this Ability's Cooldown lapsed, cost
+payable. It returns a typed outcome naming the reason; it never produces a message. On success it is also what
+deducts the cost and records both the Global cooldown and the Ability's Cooldown, so no caller can apply one and
+forget the other.
+
+Range is deliberately not the gate's business. Callers check range themselves, between the gate's verdict and the
+effect, because an Attack measures to a locked target while an area Spell measures to a world point.
+
+A Character's per-Ability Cooldowns belong to the Character and survive reconnection; the Global cooldown does not
+and is cleared by it. Cooldown entries that have already expired are never kept: they are dropped whenever the set
+is written and whenever it is loaded, so the stored set is bounded by what is genuinely running, not by every
+Ability the Character has ever used.
+
+The player status update carries the remaining time for every Ability on Cooldown, Attacks and Spells alike, under a
+name that says so. The client shows a cooldown on a Spell slot exactly as it does on an Attack slot.
+
+Both processors address the player through translated keys under a `combat:` namespace.
+
+**Key interfaces:**
+
+- An `AbilityGate` type with one entry point taking the session, the Ability identifier, its Rank, and its cost;
+  returning a sealed result whose failure cases distinguish at least: no Character, unknown Ability, not unlocked by
+  Class, unknown Rank, on Global cooldown, on Cooldown (carrying the remaining milliseconds), and insufficient
+  resource (naming which).
+- `AbilityCost`: a value carrying mana, rage and token cost, built from either rank-definition type at the call site.
+  Neither `AttackRankDefinition` nor `SpellRankDefinition` changes shape, and no supertype is introduced.
+- `CombatantData`: gains the durable per-Ability cooldown expiries, as an immutable map replaced wholesale, never a
+  mutable map mutated in place.
+- `CombatState`: keeps the Global cooldown expiry, the target and the active effects; loses nothing else, and gains
+  no persistence.
+- `ServerMessage.PlayerStatusUpdate`: keeps `@ProtoId(37)`; its attack-cooldown field is renamed to one covering
+  every Ability. The codec registry is regenerated, not edited.
+- The private cooldown map on the spell processor disappears.
+
+**Acceptance criteria:**
+
+- [ ] An Attack and a Spell refused for the same reason produce the same message text, differing only in the Ability
+      named, and both name the Rank.
+- [ ] A Character who uses an Ability, disconnects and reconnects still has that Ability's Cooldown running, for
+      both an Attack and a Spell.
+- [ ] After reconnecting, the Global cooldown is clear.
+- [ ] The player status update lists remaining Cooldowns for Spells as well as Attacks, and a Spell on cooldown is
+      shown as such in the shortcut bar and in any Ability panel.
+- [ ] A Character who cannot pay an Ability's cost is refused, and neither the Global cooldown nor the Ability's
+      Cooldown is started.
+- [ ] A Character refused for range still pays nothing and starts no cooldown, on both the Attack and the area Spell
+      paths.
+- [ ] The stored cooldown set for a Character contains no entry whose expiry is in the past, after a save and reload
+      cycle.
+- [ ] No player-facing message in either processor is a hard-coded English string; each resolves through a
+      `combat:` key present in every locale file.
+- [ ] Attack, single-target Spell and area Spell all obtain their verdict from the gate; none re-checks unlock, Rank,
+      Global cooldown, Cooldown or cost on its own.
+- [ ] A test asserts parity: for a Character lacking the unlock, lacking the resource, and on cooldown, the Attack
+      and Spell paths reach the same outcome case.
+- [ ] `make gen-schemas` leaves `player.schema.json` matching the new `CombatantData`, and `make check-schemas`
+      passes.
+- [ ] `make dc CMD="./gradlew :server:test"` is green and `make quick-code-standard` is clean.
+- [ ] The client bundle is rebuilt through `make build`; `mc_bindings.js` is not hand-edited.
+
+**Out of scope:**
+
+- NPC Ability use (`tryNpcCast` and the NPC attack path): NPCs have no Class unlock, no mana or rage, and no Global
+  cooldown, and their cooldowns correctly die with the instance.
+- The broadcast combat log and hit-message formatting: a separate translation surface.
+- Changing any Ability's balance — costs, cooldown durations, damage, Rank unlock Levels.
+- Introducing a common supertype for the two rank-definition types.
+- Persisting the Global cooldown, active status effects, or the locked target.
+- Adding new Ability types or new `SpellType` cases.
