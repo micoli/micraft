@@ -402,7 +402,7 @@ fun Application.module() {
         PlayersController(gameLoop.getMailManager()).register(this)
         staticFiles("/api/models", File("resources"))
         MapController(gameLoop, tokenStore).register(this)
-        HubController(gameLoop, tokenStore, gameLoop.i18n).register(this)
+        HubController(gameLoop, tokenStore, gameLoop.i18n, groupsConfig).register(this)
         MetricsController(gameLoop).register(this)
         DocsController().register(this)
         val adminController =

@@ -4,7 +4,10 @@ import kotlin.math.floor
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.game.placeable.PlaceableManager
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.claim.Authorizer
 import org.micoli.micraft.game.world.claim.ClaimRegistry
+import org.micoli.micraft.game.world.claim.EditTarget
 import org.micoli.micraft.protocol.ServerMessage
 
 /**
@@ -13,9 +16,11 @@ import org.micoli.micraft.protocol.ServerMessage
  */
 class PanelEditing(
     private val placeables: PlaceableManager,
-    private val claims: ClaimRegistry?,
+    claims: ClaimRegistry?,
     private val i18n: I18nConfig,
 ) {
+    private val authorizer = Authorizer(claims)
+
     private suspend fun notify(session: PlayerSession, key: String, vararg args: Any) {
         session.send(ServerMessage.Notification(i18n.t(session.state.language, key, *args)))
     }
@@ -30,13 +35,14 @@ class PanelEditing(
             notify(session, "panel:server:not_a_panel")
             return false
         }
-        val claim =
-            claims?.claimAt(
+        val owner = placeables.panels.ownerOf(placeableId) ?: return false
+        val pos =
+            BlockPos(
                 floor(instance.pos.x).toInt(),
                 floor(instance.pos.y).toInt(),
                 floor(instance.pos.z).toInt())
-        val claimAllows = claim != null && claims.canEdit(claim, session)
-        if (!placeables.panels.canEdit(session, placeableId, claimAllows)) {
+        if (!authorizer.isAllowed(
+            session, PanelPermissions.EDIT, EditTarget.OwnedInWorld(owner, pos))) {
             notify(session, "panel:server:no_permission")
             return false
         }

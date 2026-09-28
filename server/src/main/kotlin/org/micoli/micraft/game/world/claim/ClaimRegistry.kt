@@ -2,6 +2,7 @@ package org.micoli.micraft.game.world.claim
 
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import org.micoli.micraft.game.social.FactionManager
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldPersistence
@@ -9,12 +10,13 @@ import org.micoli.micraft.game.world.WorldPersistence
 class ClaimRegistry(private val persistence: WorldPersistence?) {
     private val claims = ConcurrentHashMap<String, Claim>()
 
-    /** Wired post-construction: true when actor and claim owner share a faction. */
+    /** True when actor and claim owner share a faction; set only through [bindFactions]. */
     var factionAlly: (actorId: String, ownerId: String) -> Boolean = { _, _ -> false }
+        private set
 
-    /** [Claim.canEdit] plus faction-ally access to a same-faction owner's land. */
-    fun canEdit(claim: Claim, session: org.micoli.micraft.game.session.PlayerSession): Boolean =
-        claim.canEdit(session) || factionAlly(session.id, claim.ownerId)
+    fun bindFactions(factions: FactionManager) {
+        factionAlly = { actorId, ownerId -> factions.sameFaction(actorId, ownerId) }
+    }
 
     // Reverse index: chunk column → claims covering it (almost always a single entry) — turns
     // claimAt() from an O(n_claims) scan into an O(1) lookup, same rationale as
@@ -99,6 +101,7 @@ class ClaimRegistry(private val persistence: WorldPersistence?) {
         val existing = claims[id] ?: return null
         val updated = existing.copy(ownerId = ownerId, ownerName = ownerName)
         claims[id] = updated
+        reindex(existing, updated)
         persist()
         return updated
     }
@@ -115,6 +118,7 @@ class ClaimRegistry(private val persistence: WorldPersistence?) {
                     trustedPlayerIds = existing.trustedPlayerIds - playerId,
                     trustedPlayerNames = existing.trustedPlayerNames - playerName)
         claims[id] = updated
+        reindex(existing, updated)
         persist()
         return updated
     }

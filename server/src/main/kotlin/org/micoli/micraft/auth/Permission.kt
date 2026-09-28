@@ -35,5 +35,7 @@ object CorePermissions {
     val PLAYER = Permission("player")
 }
 
-fun AuthResult.hasPermission(perm: Permission): Boolean =
-    Permission.WILDCARD in permissions || perm in permissions
+/** The single place where "`*` covers everything" is decided. */
+fun Set<Permission>.grants(perm: Permission): Boolean = Permission.WILDCARD in this || perm in this
+
+fun AuthResult.hasPermission(perm: Permission): Boolean = permissions.grants(perm)

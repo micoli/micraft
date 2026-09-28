@@ -4,9 +4,9 @@ import java.util.UUID
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.game.session.PlayerSession
-import org.micoli.micraft.game.session.hasPermission
-import org.micoli.micraft.game.world.actionblock.ActionBlockPermissions
+import org.micoli.micraft.game.world.actionblock.canEditActionBlock
 import org.micoli.micraft.game.world.actionblock.toInfo
+import org.micoli.micraft.game.world.claim.Authorizer
 import org.micoli.micraft.protocol.ServerMessage
 
 /**
@@ -58,7 +58,8 @@ class ActionBlockEditCommand : CommandHandler {
             session.send(ServerMessage.Notification(i18n.t(lang, "actionblock:server:usage")))
             return
         }
-        if (!canEdit(session, block.owner)) {
+        if (!Authorizer(context.claimRegistry)
+            .canEditActionBlock(session, block.pos, block.owner)) {
             session.send(
                 ServerMessage.Notification(i18n.t(lang, "actionblock:server:no_permission")))
             return
@@ -126,7 +127,4 @@ class ActionBlockEditCommand : CommandHandler {
                 session.send(ServerMessage.Notification(i18n.t(lang, "actionblock:server:usage")))
         }
     }
-
-    private fun canEdit(session: PlayerSession, owner: String): Boolean =
-        owner == session.state.name || session.hasPermission(ActionBlockPermissions.EDIT)
 }

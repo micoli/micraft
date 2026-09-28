@@ -9,7 +9,6 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlinx.serialization.builtins.ListSerializer
 import org.micoli.micraft.game.session.PlayerSession
-import org.micoli.micraft.game.session.hasPermission
 import org.micoli.micraft.placeable.panel.PanelConstants
 import org.micoli.micraft.placeable.panel.PanelEditData
 import org.micoli.micraft.placeable.panel.PanelInfo
@@ -59,12 +58,7 @@ class PanelManager(
         broadcast(ServerMessage.PanelRemoved(placeableId))
     }
 
-    fun canEdit(session: PlayerSession, placeableId: String, claimAllowsEdit: Boolean): Boolean {
-        val content = panels[placeableId] ?: return false
-        if (session.hasPermission(PanelPermissions.EDIT)) return true
-        if (content.owner == session.state.name) return true
-        return claimAllowsEdit
-    }
+    fun ownerOf(placeableId: String): String? = panels[placeableId]?.owner
 
     fun editData(placeableId: String): PanelEditData? {
         val content = panels[placeableId] ?: return null

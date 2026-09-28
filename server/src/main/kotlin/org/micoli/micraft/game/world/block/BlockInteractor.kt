@@ -7,6 +7,7 @@ import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockState
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
+import org.micoli.micraft.game.world.claim.Authorizer
 import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.rail.RailConnection
@@ -33,6 +34,8 @@ class BlockInteractor(
     private val railNetworkRegistry: RailNetworkRegistry? = null,
     private val actionBlockRegistry: ActionBlockRegistry? = null,
 ) {
+    private val authorizer = Authorizer(claimRegistry)
+
     /** Wired by GameLoop: runs a named block's `onActivate` script. */
     var onActionBlockActivate: suspend (PlayerSession, BlockPos) -> Unit = { _, _ -> }
 
@@ -44,7 +47,7 @@ class BlockInteractor(
             return
         }
         val claim = claimRegistry?.claimAt(pos.x, pos.y, pos.z)
-        if (claim != null && !claimRegistry.canEdit(claim, session)) {
+        if (claim != null && !authorizer.canBuildIn(session, claim)) {
             log.debug("BlockInteract rejected: pos={} is inside {}'s claim", pos, claim.ownerName)
             return
         }

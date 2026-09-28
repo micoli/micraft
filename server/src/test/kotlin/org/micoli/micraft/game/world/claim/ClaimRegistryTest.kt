@@ -232,4 +232,14 @@ class ClaimRegistryTest {
                 ownerName = "Alice")
         assertTrue(!r.overlaps(setOf(ChunkPos(0, 0)), 0, 10, excludeId = claim.id))
     }
+
+    @Test
+    fun claimAt_afterSetTrusted_returnsTheUpdatedClaim() {
+        val r = registry()
+        val claim = r.create(setOf(ChunkPos(0, 0)), 0, 10, "o", "Alice")
+
+        r.setTrusted(claim.id, "friend", "Bob", true)
+
+        assertTrue("friend" in r.claimAt(1, 1, 1)!!.trustedPlayerIds)
+    }
 }

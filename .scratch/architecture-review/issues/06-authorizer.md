@@ -1,6 +1,6 @@
 # Single Authorizer owns wildcard, owner, trusted and fallback rules
 
-Status: ready-for-agent
+Status: resolved
 Strength: Worth exploring
 
 The `CommandContext` dependency part was split out to [10](10-command-context-deps.md) on 2026-09-28.
@@ -113,26 +113,26 @@ execution — answer from the same call, so a command can never be listed and re
 
 **Acceptance criteria:**
 
-- [ ] A Character in an RBAC group holding the Claim build permission, and holding no `*`, can break and place
+- [x] A Character in an RBAC group holding the Claim build permission, and holding no `*`, can break and place
       inside another Character's Claim.
-- [ ] That same Character cannot abandon that Claim nor change its trusted list.
-- [ ] A Character in a group holding the Claim administer permission, and holding no `*`, can abandon another
+- [x] That same Character cannot abandon that Claim nor change its trusted list.
+- [x] A Character in a group holding the Claim administer permission, and holding no `*`, can abandon another
       Character's Claim, and this does not by itself let them build there.
-- [ ] A trusted Character and a faction ally can still build in the Claim and still cannot administer it.
-- [ ] A Character holding `*` retains today's behaviour on every Claim operation.
-- [ ] A hub companion session and a direct session for the same Character resolve to the same permission set, and
+- [x] A trusted Character and a faction ally can still build in the Claim and still cannot administer it.
+- [x] A Character holding `*` retains today's behaviour on every Claim operation.
+- [x] A hub companion session and a direct session for the same Character resolve to the same permission set, and
       that set comes from the Character's RBAC groups, not from the auth result.
-- [ ] With a token store configured and no auth result, a session is not granted the wildcard permission.
-- [ ] With no token store configured, a session is granted full access, and the code expressing that rule exists in
+- [x] With a token store configured and no auth result, a session is not granted the wildcard permission.
+- [x] With no token store configured, a session is granted full access, and the code expressing that rule exists in
       one place.
-- [ ] Editing an Action block through its slash command applies the same Claim rules as interacting with it: a
+- [x] Editing an Action block through its slash command applies the same Claim rules as interacting with it: a
       Character with neither ownership nor the Action block permission nor Claim build rights is refused on both.
-- [ ] A test walks the command registry and asserts, for at least one permission set that is neither empty nor
+- [x] A test walks the command registry and asserts, for at least one permission set that is neither empty nor
       wildcard, that the visible-command filter and the execution gate agree on every command.
-- [ ] `Permission.WILDCARD` is no longer referenced outside the shared primitive and the session-resolution
+- [x] `Permission.WILDCARD` is no longer referenced outside the shared primitive and the session-resolution
       function.
-- [ ] `ClaimRegistry.factionAlly` is assigned in exactly one place.
-- [ ] `make dc CMD="./gradlew :server:test"` is green, and `make quick-code-standard` is clean.
+- [x] `ClaimRegistry.factionAlly` is assigned in exactly one place.
+- [x] `make dc CMD="./gradlew :server:test"` is green, and `make quick-code-standard` is clean.
 
 **Out of scope:**
 
@@ -143,3 +143,32 @@ execution — answer from the same call, so a command can never be listed and re
 - Renaming `hasPermission`, or merging the Character and Admin role permission catalogs.
 - Splitting the Admin role from RBAC groups, tracked in `.scratch/admin-roles/`.
 - Populating `groups.yaml` with actual groups; it ships empty and stays that way.
+
+## Answer
+
+Fixed on 2026-09-28 in `1dcc5070`. `Authorizer` (`game/world/claim/Authorizer.kt`) owns the cascade named permission →
+owner → Claim (owner, trusted, faction ally, `claim:build`); `EditTarget` is the sealed target type. Block break /
+place / interact, Action blocks, Panels, `ClaimManager` and `/actionblock edit` all go through it.
+`Claim.canEdit` and `ClaimRegistry.canEdit` are gone.
+
+- `Set<Permission>.grants` is the one "`*` covers everything" primitive; both `hasPermission` helpers delegate to it.
+- `resolveSessionPermissions(tokenStore, groupsConfig, groups)` is the single resolution point, used by the direct
+  and hub paths (`HubConnection` gained a `groupsConfig` parameter).
+- `CommandHandler.isPermittedFor` backs both the visible-command filter and the execution gate.
+- `ClaimPermissions.BUILD` / `ADMINISTER` are registered in `PermissionRegistry` and force-loaded in `GameLoop`.
+- `ClaimRegistry.factionAlly` has a private setter, assigned only in `bindFactions`.
+
+Deviations from the brief:
+- **Unclaimed land stays open** for building and for Action block edits, so `Authorizer` has `canBuildAt` next to
+  `isAllowed` (which refuses when no Claim covers the position, the Panel behaviour). `/actionblock edit` therefore
+  now accepts any Character on unclaimed land, as the interaction path always did.
+- **`canBuildIn` / `canAdminister`** are public next to `isAllowed`: callers that already hold a Claim
+  (`ClaimManager`, the block handlers) don't redo the lookup.
+- **`PanelManager.canEdit` replaced by `ownerOf`**; the cascade moved to `PanelEditing` through the Authorizer.
+- Hub session groups fall back to `groupsConfig.defaultGroups` when the Character has none, like the direct path.
+
+Bug found on the way: `ClaimRegistry.setTrusted` and `reassignOwner` did not reindex `byChunk`, so `claimAt` returned
+a stale Claim and a freshly trusted Character could not build until restart. Fixed, with a regression test.
+
+Tests: `AuthorizerTest`, `SessionPermissionsTest`, `HubSessionPermissionsTest`, `CommandGateParityTest`, plus cases in
+`ClaimManagerTest` and `ClaimRegistryTest`.

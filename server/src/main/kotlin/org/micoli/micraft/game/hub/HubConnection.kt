@@ -7,8 +7,9 @@ import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
 import io.ktor.websocket.send
 import org.micoli.micraft.I18nConfig
-import org.micoli.micraft.auth.Permission
+import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.TokenStore
+import org.micoli.micraft.auth.resolveSessionPermissions
 import org.micoli.micraft.di.PlayerPersister
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.GameWorld
@@ -54,6 +55,7 @@ class HubConnection(
     private val gameWorldRegistry: GameWorldRegistry,
     private val tokenStore: TokenStore?,
     private val i18n: I18nConfig,
+    private val groupsConfig: GroupsConfig? = null,
 ) {
     suspend fun handle(
         socket: DefaultWebSocketSession,
@@ -150,7 +152,13 @@ class HubConnection(
                     userName = connectMsg?.userName ?: candidate.name,
                     socket = socket,
                     state = candidate.copy(language = language),
-                    permissions = authResult?.permissions ?: setOf(Permission.WILDCARD),
+                    permissions =
+                        resolveSessionPermissions(
+                            tokenStore,
+                            groupsConfig,
+                            candidate.groups.ifEmpty {
+                                groupsConfig?.defaultGroups ?: emptyList()
+                            }),
                     connectionId = connectMsg?.connectionId ?: "",
                 )
             session.companion = true

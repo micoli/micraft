@@ -3,8 +3,6 @@ package org.micoli.micraft.game.world.claim
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.EncodeDefault.Mode.ALWAYS
 import kotlinx.serialization.Serializable
-import org.micoli.micraft.auth.Permission
-import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.protocol.ClaimInfo
@@ -29,14 +27,6 @@ data class Claim(
             ChunkPos(
                 Math.floorDiv(x, WorldConstants.CHUNK_SIZE),
                 Math.floorDiv(z, WorldConstants.CHUNK_SIZE)) in chunks
-
-    /**
-     * Owner, an explicitly trusted player, or a full admin ("*" permission) may break/place here.
-     */
-    fun canEdit(session: PlayerSession): Boolean =
-        ownerId == session.id ||
-            session.id in trustedPlayerIds ||
-            Permission.WILDCARD in session.permissions
 }
 
 fun Claim.toInfo(): ClaimInfo =

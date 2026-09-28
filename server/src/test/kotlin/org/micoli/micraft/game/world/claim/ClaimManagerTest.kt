@@ -5,8 +5,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BlockPos
+import org.micoli.micraft.game.world.ChunkPos
 import org.micoli.micraft.game.world.WorldPersistence
 import org.micoli.micraft.protocol.ServerMessage
 import org.micoli.micraft.support.testI18n
@@ -85,5 +87,59 @@ class ClaimManagerTest {
 
         assertTrue(alice.sent.any { it is ServerMessage.ClaimDenied })
         assertEquals(emptySet(), registry.get(claim.id)?.trustedPlayerIds)
+    }
+
+    private fun claimOwnedByAlice(registry: ClaimRegistry) =
+        registry.create(setOf(ChunkPos(0, 0)), 0, 10, "alice-id", "Alice")
+
+    @Test
+    fun abandonClaim_administerPermissionWithoutWildcard_deletesAnotherCharactersClaim() =
+        runBlocking {
+            val registry = ClaimRegistry(null)
+            val claim = claimOwnedByAlice(registry)
+            val moderator = testSession(id = "mod-id", name = "Mod")
+            moderator.permissions = setOf(ClaimPermissions.ADMINISTER)
+
+            manager(listOf(moderator), registry).abandonClaim(moderator, claim.id)
+
+            assertEquals(null, registry.get(claim.id))
+        }
+
+    @Test
+    fun abandonClaim_buildPermissionOnly_isDenied() = runBlocking {
+        val registry = ClaimRegistry(null)
+        val claim = claimOwnedByAlice(registry)
+        val builder = testSession(id = "builder-id", name = "Builder")
+        builder.permissions = setOf(ClaimPermissions.BUILD)
+
+        manager(listOf(builder), registry).abandonClaim(builder, claim.id)
+
+        assertTrue(builder.sent.any { it is ServerMessage.ClaimDenied })
+        assertEquals(claim, registry.get(claim.id))
+    }
+
+    @Test
+    fun setTrusted_buildPermissionOnly_isDenied() = runBlocking {
+        val registry = ClaimRegistry(null)
+        val claim = claimOwnedByAlice(registry)
+        val builder = testSession(id = "builder-id", name = "Builder")
+        builder.permissions = setOf(ClaimPermissions.BUILD)
+
+        manager(listOf(builder), registry).setTrusted(builder, claim.id, "Builder", true)
+
+        assertTrue(builder.sent.any { it is ServerMessage.ClaimDenied })
+        assertTrue(registry.get(claim.id)!!.trustedPlayerIds.isEmpty())
+    }
+
+    @Test
+    fun abandonClaim_wildcard_keepsDeletingAnyClaim() = runBlocking {
+        val registry = ClaimRegistry(null)
+        val claim = claimOwnedByAlice(registry)
+        val admin = testSession(id = "admin-id", name = "Admin")
+        admin.permissions = setOf(Permission.WILDCARD)
+
+        manager(listOf(admin), registry).abandonClaim(admin, claim.id)
+
+        assertEquals(null, registry.get(claim.id))
     }
 }

@@ -28,12 +28,14 @@ import org.micoli.micraft.auth.CorePermissions
 import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.auth.TokenStore
+import org.micoli.micraft.auth.resolveSessionPermissions
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.command.CommandContext
 import org.micoli.micraft.command.CommandHandler
 import org.micoli.micraft.command.Completion
 import org.micoli.micraft.command.Plugin
 import org.micoli.micraft.command.commands.resolveSkin
+import org.micoli.micraft.command.isPermittedFor
 import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.di.CommandContextClosures
@@ -585,9 +587,7 @@ class GameLoop(
     init {
         chatService.groupMembers = { id -> groupManager.memberIds(id) }
         chatService.guildMembers = { id -> guildRegistry.memberIds(id) }
-        claimRegistry.factionAlly = { actorId, ownerId ->
-            factionManager.sameFaction(actorId, ownerId)
-        }
+        claimRegistry.bindFactions(factionManager)
         factionManager.applyConfig(factionsSection)
     }
 
@@ -633,7 +633,10 @@ class GameLoop(
         @Suppress("UNUSED_EXPRESSION")
         org.micoli.micraft.game.world.actionblock.ActionBlockPermissions
         @Suppress("UNUSED_EXPRESSION") org.micoli.micraft.game.placeable.panel.PanelPermissions
+        @Suppress("UNUSED_EXPRESSION") org.micoli.micraft.game.world.claim.ClaimPermissions
     }
+
+    internal fun registeredCommands(): List<String> = commands.keys.toList()
 
     /** Every distinct `permission` a registered slash command gates on — for the admin RBAC UI. */
     fun knownCommandPermissions(): Set<Permission> =
@@ -1011,16 +1014,11 @@ class GameLoop(
         }
     }
 
-    private fun buildPreferencesSync(session: PlayerSession): ServerMessage.PreferencesSync {
+    internal fun buildPreferencesSync(session: PlayerSession): ServerMessage.PreferencesSync {
         val knownChannels = worldOf(session).chatChannelManager.listKnownChannels()
         val commandList =
             commands.values
-                .filter { cmd ->
-                    val p = cmd.permission
-                    p == null ||
-                        Permission.WILDCARD in session.permissions ||
-                        p in session.permissions
-                }
+                .filter { cmd -> cmd.isPermittedFor(session) }
                 .map {
                     CommandInfo(it.id.toString(), it.command, it.description, it.autocompleteArgs)
                 }
@@ -1715,7 +1713,7 @@ class GameLoop(
         npcManager.handleChatAcceptGift(session, msg.npcId, msg.itemId, i18n)
     }
 
-    private suspend fun handleCommand(session: PlayerSession, text: String) {
+    internal suspend fun handleCommand(session: PlayerSession, text: String) {
         val trimmed = text.trim()
         val name = trimmed.substringBefore(' ').lowercase()
         val args = trimmed.substringAfter(' ', "")
@@ -1727,10 +1725,7 @@ class GameLoop(
                         i18n.t(session.state.language, "preferences:server:command_disabled")))
                 return
             }
-            val perm = handler.permission
-            if (perm != null &&
-                Permission.WILDCARD !in session.permissions &&
-                perm !in session.permissions) {
+            if (!handler.isPermittedFor(session)) {
                 session.send(
                     ServerMessage.Notification(
                         i18n.t(session.state.language, "rbac:server:no_permission")))
@@ -1915,11 +1910,8 @@ class GameLoop(
                 activePetId = null,
                 compassTarget = saved?.compassTarget,
             )
-        // In-game permissions follow the character's groups, not the account — a session with no
-        // auth backend (dev/no-auth mode) still gets full access.
         val sessionPermissions =
-            if (tokenStore != null) groupsConfig?.resolvePermissions(characterGroups) ?: emptySet()
-            else setOf(Permission.WILDCARD)
+            resolveSessionPermissions(tokenStore, groupsConfig, characterGroups)
         val session =
             PlayerSession(
                 id,

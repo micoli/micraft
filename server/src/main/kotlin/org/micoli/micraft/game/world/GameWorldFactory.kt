@@ -376,7 +376,7 @@ fun buildGameWorld(
     }
     chatService.groupMembers = { gid -> groupManager.memberIds(gid) }
     chatService.guildMembers = { gid -> guildRegistry.memberIds(gid) }
-    claimRegistry.factionAlly = { actorId, ownerId -> factionManager.sameFaction(actorId, ownerId) }
+    claimRegistry.bindFactions(factionManager)
 
     val intentCollector =
         IntentCollector(

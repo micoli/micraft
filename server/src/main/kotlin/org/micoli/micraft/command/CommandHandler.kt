@@ -4,6 +4,7 @@ import java.util.UUID
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.game.session.PlayerSession
+import org.micoli.micraft.game.session.hasPermission
 
 /**
  * One autocomplete suggestion. [label] is shown in the console; [value] is inserted into the
@@ -11,6 +12,12 @@ import org.micoli.micraft.game.session.PlayerSession
  * so the server resolves them without name casing / underscore ambiguity.
  */
 @Serializable data class Completion(val label: String, val value: String = label)
+
+/** The one eligibility rule behind both the visible-command list and the execution gate. */
+fun CommandHandler.isPermittedFor(session: PlayerSession): Boolean {
+    val required = permission ?: return true
+    return session.hasPermission(required)
+}
 
 interface CommandHandler {
     val id: UUID

@@ -3,11 +3,7 @@ package org.micoli.micraft.game.world.claim
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.micoli.micraft.auth.Permission
-import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.ChunkPos
-import org.micoli.micraft.support.FakeWebSocketSession
-import org.micoli.micraft.support.testPlayerState
 
 private fun claim(ownerId: String = "owner-id", trustedPlayerIds: Set<String> = emptySet()) =
     Claim(
@@ -21,44 +17,7 @@ private fun claim(ownerId: String = "owner-id", trustedPlayerIds: Set<String> = 
         trustedPlayerIds = trustedPlayerIds,
     )
 
-private fun sessionWithPermissions(
-    id: String,
-    permissions: Set<Permission> = emptySet()
-): PlayerSession =
-    PlayerSession(
-        id,
-        id,
-        FakeWebSocketSession(),
-        testPlayerState(id = id),
-        permissions = permissions,
-    )
-
 class ClaimTest {
-    @Test
-    fun canEdit_owner_returnsTrue() {
-        val c = claim(ownerId = "owner-id")
-        assertTrue(c.canEdit(sessionWithPermissions("owner-id")))
-    }
-
-    @Test
-    fun canEdit_trustedPlayer_returnsTrue() {
-        val c = claim(ownerId = "owner-id", trustedPlayerIds = setOf("friend-id"))
-        assertTrue(c.canEdit(sessionWithPermissions("friend-id")))
-    }
-
-    @Test
-    fun canEdit_stranger_returnsFalse() {
-        val c = claim(ownerId = "owner-id")
-        assertFalse(c.canEdit(sessionWithPermissions("stranger-id")))
-    }
-
-    @Test
-    fun canEdit_admin_returnsTrue() {
-        val c = claim(ownerId = "owner-id")
-        assertTrue(
-            c.canEdit(sessionWithPermissions("admin-id", permissions = setOf(Permission.WILDCARD))))
-    }
-
     @Test
     fun contains_insideChunkAndYRange_returnsTrue() {
         val c = claim()

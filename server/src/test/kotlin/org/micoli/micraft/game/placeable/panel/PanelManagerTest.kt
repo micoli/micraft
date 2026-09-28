@@ -136,15 +136,12 @@ class PanelManagerTest {
     }
 
     @Test
-    fun canEdit_ownerOrPermissionOrClaim_true_strangerFalse() = runBlocking {
+    fun ownerOf_knownPanel_returnsItsOwner_unknownIsNull() = runBlocking {
         val panels = PanelManager({})
         panels.createFor("p1", "Alice")
-        val owner = testSession(name = "Alice")
-        val stranger = testSession(name = "Bob")
 
-        assertTrue(panels.canEdit(owner, "p1", claimAllowsEdit = false))
-        assertFalse(panels.canEdit(stranger, "p1", claimAllowsEdit = false))
-        assertTrue(panels.canEdit(stranger, "p1", claimAllowsEdit = true))
+        assertEquals("Alice", panels.ownerOf("p1"))
+        assertNull(panels.ownerOf("missing"))
     }
 
     @Test

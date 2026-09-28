@@ -20,6 +20,7 @@ import org.micoli.micraft.game.world.ItemRegistry
 import org.micoli.micraft.game.world.ItemType
 import org.micoli.micraft.game.world.PlainColorRegistry
 import org.micoli.micraft.game.world.WorldState
+import org.micoli.micraft.game.world.claim.Authorizer
 import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.rail.RailNetworkRegistry
@@ -49,6 +50,8 @@ class BlockPlacer(
     private val placeableManager: PlaceableManager? = null,
     private val siegeWeaponManager: SiegeWeaponManager? = null,
 ) {
+    private val authorizer = Authorizer(claimRegistry)
+
     /**
      * `spawnsEntity` items delegate to [PlaceableManager] instead of placing a block — ground
      * validity (solid, non-liquid, non-rail) is checked by [PlaceableManager.spawn] itself. If the
@@ -119,7 +122,7 @@ class BlockPlacer(
             return
         }
         val claim = claimRegistry?.claimAt(rawPos.x, rawPos.y, rawPos.z)
-        if (claim != null && !claimRegistry.canEdit(claim, session)) {
+        if (claim != null && !authorizer.canBuildIn(session, claim)) {
             blockPlacerLog.debug(
                 "BlockPlace rejected: pos={} is inside {}'s claim", rawPos, claim.ownerName)
             return

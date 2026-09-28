@@ -10,6 +10,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.micoli.micraft.auth.Permission
+import org.micoli.micraft.auth.grants
 import org.micoli.micraft.combat.CombatState
 import org.micoli.micraft.combat.ShortcutSlot
 import org.micoli.micraft.game.world.BlockPos
@@ -31,8 +32,7 @@ fun Array<MutableList<ShortcutSlot?>>.toPageMap(): Map<Int, Map<Int, ShortcutSlo
         }
         .toMap()
 
-fun PlayerSession.hasPermission(perm: Permission): Boolean =
-    Permission.WILDCARD in permissions || perm in permissions
+fun PlayerSession.hasPermission(perm: Permission): Boolean = permissions.grants(perm)
 
 /** Adds items to the live inventory and pushes an [ServerMessage.InventoryUpdate]. */
 suspend fun PlayerSession.addItems(items: Map<ItemType, Int>) {

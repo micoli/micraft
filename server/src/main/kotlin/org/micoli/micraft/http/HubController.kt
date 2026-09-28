@@ -8,6 +8,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.websocket.webSocket
 import java.io.File
 import org.micoli.micraft.I18nConfig
+import org.micoli.micraft.auth.GroupsConfig
 import org.micoli.micraft.auth.TokenStore
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.hub.HubConnection
@@ -21,6 +22,7 @@ class HubController(
     private val gameLoop: GameLoop,
     private val tokenStore: TokenStore?,
     private val i18n: I18nConfig,
+    private val groupsConfig: GroupsConfig? = null,
 ) {
     fun register(route: Route) {
         if (System.getenv("MICRAFT_HUB_ENABLED") == "0") return
@@ -35,7 +37,7 @@ class HubController(
             }
 
             webSocket("/hub") {
-                HubConnection(gameLoop.gameWorldRegistry, tokenStore, i18n)
+                HubConnection(gameLoop.gameWorldRegistry, tokenStore, i18n, groupsConfig)
                     .handle(
                         this,
                         call.request.queryParameters["lang"],

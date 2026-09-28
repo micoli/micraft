@@ -15,6 +15,7 @@ import org.micoli.micraft.game.world.WorldConstants
 import org.micoli.micraft.game.world.WorldItemManager
 import org.micoli.micraft.game.world.WorldState
 import org.micoli.micraft.game.world.actionblock.ActionBlockRegistry
+import org.micoli.micraft.game.world.claim.Authorizer
 import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.game.world.instance.InstanceRegistry
 import org.micoli.micraft.game.world.liquid.LiquidManager
@@ -45,6 +46,8 @@ class BlockBreaker(
     private val weaponRegistry: () -> Map<String, WeaponDefinition> = { emptyMap() },
     private val toolRegistry: () -> Map<String, ToolDefinition> = { emptyMap() },
 ) {
+    private val authorizer = Authorizer(claimRegistry)
+
     private val blockProgress = LinkedHashMap<BlockPos, BlockBreakEntry>()
 
     private fun hasRequiredEquipment(session: PlayerSession, block: BlockType): Boolean {
@@ -64,7 +67,7 @@ class BlockBreaker(
             return
         }
         val claim = claimRegistry?.claimAt(rawBp.x, rawBp.y, rawBp.z)
-        if (claim != null && !claimRegistry.canEdit(claim, session)) {
+        if (claim != null && !authorizer.canBuildIn(session, claim)) {
             blockBreakerLog.debug(
                 "BlockBreakStart rejected: pos={} is inside {}'s claim", rawBp, claim.ownerName)
             return

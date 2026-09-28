@@ -4,9 +4,9 @@ import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.game.macro.MacroContext
 import org.micoli.micraft.game.macro.MacroExecutor
 import org.micoli.micraft.game.session.PlayerSession
-import org.micoli.micraft.game.session.hasPermission
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.BlockType
+import org.micoli.micraft.game.world.claim.Authorizer
 import org.micoli.micraft.game.world.claim.ClaimRegistry
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
@@ -27,6 +27,7 @@ class ActionBlockService(
     private val claimRegistry: ClaimRegistry? = null,
     macroExecutor: MacroExecutor = MacroExecutor(),
 ) {
+    private val authorizer = Authorizer(claimRegistry)
     private val engine = ActionBlockScriptEngine(registry, macroExecutor)
 
     fun syncList(): List<ActionBlockInfo> = registry.all().map { it.toInfo() }
@@ -155,12 +156,8 @@ class ActionBlockService(
         }
     }
 
-    private fun canEdit(session: PlayerSession, pos: BlockPos): Boolean {
-        if (session.hasPermission(ActionBlockPermissions.EDIT)) return true
-        registry.at(pos)?.let { if (it.owner == session.state.name) return true }
-        val claim = claimRegistry?.claimAt(pos.x, pos.y, pos.z) ?: return true
-        return claimRegistry.canEdit(claim, session)
-    }
+    private fun canEdit(session: PlayerSession, pos: BlockPos): Boolean =
+        authorizer.canEditActionBlock(session, pos, registry.at(pos)?.owner)
 
     private suspend fun notify(session: PlayerSession, message: String) {
         session.send(ServerMessage.Notification(message))

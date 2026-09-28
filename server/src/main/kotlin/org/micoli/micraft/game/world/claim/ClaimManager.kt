@@ -1,7 +1,6 @@
 package org.micoli.micraft.game.world.claim
 
 import org.micoli.micraft.I18nConfig
-import org.micoli.micraft.auth.Permission
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.game.world.BlockPos
 import org.micoli.micraft.game.world.ChunkPos
@@ -12,7 +11,8 @@ import org.micoli.micraft.protocol.ServerMessage
 /**
  * Player-facing land-ownership ("cadastre") operations: claiming a chunk-aligned region for a
  * copper cost, and granting/revoking build rights to other players on a claim you own. Read-only
- * lookups (`claimAt`, `canEdit`) are exposed directly on [ClaimRegistry] and consumed by
+ * lookups (`claimAt`) are exposed directly on [ClaimRegistry]; access decisions go through
+ * [Authorizer] for
  * [org.micoli.micraft.game.world.block.BlockBreaker]/[org.micoli.micraft.game.world.block.BlockPlacer]/[org.micoli.micraft.game.world.block.BlockInteractor];
  * this class owns the mutating, wallet-charging half, mirroring
  * [org.micoli.micraft.game.auction.AuctionManager]'s shape.
@@ -25,6 +25,8 @@ class ClaimManager(
     private val savePlayer: (PlayerSession) -> Unit,
     private val persistence: WorldPersistence? = null,
 ) {
+    private val authorizer = Authorizer(registry)
+
     private fun chunksBetween(pos1: BlockPos, pos2: BlockPos): Set<ChunkPos> {
         val cx1 = Math.floorDiv(pos1.x, WorldConstants.CHUNK_SIZE)
         val cx2 = Math.floorDiv(pos2.x, WorldConstants.CHUNK_SIZE)
@@ -97,7 +99,7 @@ class ClaimManager(
             session.send(ServerMessage.ClaimDenied(i18n.t(lang, "claim:server:claim_not_found")))
             return
         }
-        if (claim.ownerId != session.id && Permission.WILDCARD !in session.permissions) {
+        if (!authorizer.canAdminister(session, claim)) {
             session.send(ServerMessage.ClaimDenied(i18n.t(lang, "claim:server:not_your_claim")))
             return
         }
@@ -121,7 +123,7 @@ class ClaimManager(
             session.send(ServerMessage.ClaimDenied(i18n.t(lang, "claim:server:claim_not_found")))
             return
         }
-        if (claim.ownerId != session.id && Permission.WILDCARD !in session.permissions) {
+        if (!authorizer.canAdminister(session, claim)) {
             session.send(ServerMessage.ClaimDenied(i18n.t(lang, "claim:server:not_your_claim")))
             return
         }
