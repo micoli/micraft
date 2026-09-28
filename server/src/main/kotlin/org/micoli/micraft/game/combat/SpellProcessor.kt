@@ -1,6 +1,7 @@
 package org.micoli.micraft.game.combat
 
 import kotlin.math.sqrt
+import kotlin.random.Random
 import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcInstance
@@ -18,6 +19,8 @@ class SpellProcessor(
     private val combatProcessor: CombatProcessor,
     private val getSessions: () -> Collection<PlayerSession> = { emptyList() },
     private val getNpcs: () -> Collection<NpcInstance> = { emptyList() },
+    /** Every die this processor rolls comes from here — supplied per World (ADR-0012). */
+    private val rollSource: Random = Random.Default,
 ) {
     private val gate = AbilityGate(classRegistry, combatConfig.globalCooldownMs)
 
@@ -207,7 +210,7 @@ class SpellProcessor(
         val distSq = dx * dx + dy * dy + dz * dz
 
         val cast =
-            spellIds.shuffled().firstNotNullOfOrNull { spellId ->
+            spellIds.shuffled(rollSource).firstNotNullOfOrNull { spellId ->
                 val spell = spellRegistry[spellId] ?: return@firstNotNullOfOrNull null
                 if (spell.type != SpellType.NECROTIC_AOE || !spell.enabled)
                     return@firstNotNullOfOrNull null

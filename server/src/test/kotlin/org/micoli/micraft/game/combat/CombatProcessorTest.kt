@@ -28,6 +28,7 @@ import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.support.ScriptedRoll
 import org.micoli.micraft.support.testI18n
 import org.micoli.micraft.support.testSession
 
@@ -46,6 +47,7 @@ class CombatProcessorTest {
         name: String,
         hp: Int = 20,
         str: Int = 30,
+        dex: Int = 8,
         characterClass: CharacterClass = CharacterClass.WARRIOR,
         level: Int = 1,
     ) =
@@ -53,7 +55,7 @@ class CombatProcessorTest {
             id = id,
             name = name,
             characterClass = characterClass,
-            baseStats = BaseStats(str = str),
+            baseStats = BaseStats(str = str, dex = dex),
             currentHp = hp,
             currentMana = 50,
             currentRage = 50,
@@ -68,6 +70,7 @@ class CombatProcessorTest {
         combatLog: MutableList<String> = mutableListOf(),
         subscribed: MutableList<Pair<PlayerSession, String>> = mutableListOf(),
         onPlayerDownedByNpc: suspend (PlayerSession, String) -> Unit = { _, _ -> },
+        rollSource: kotlin.random.Random = kotlin.random.Random.Default,
     ) =
         CombatProcessor(
             config = config,
@@ -80,6 +83,7 @@ class CombatProcessorTest {
             i18n = testI18n(),
             savePlayer = {},
             onPlayerDownedByNpc = onPlayerDownedByNpc,
+            rollSource = rollSource,
         )
 
     private fun fakeNpc(id: String = "npc-1", level: Int = 1): NpcInstance {
@@ -281,6 +285,53 @@ class CombatProcessorTest {
 
             assertEquals(1, combatLog.size)
         }
+
+    // ── Injectable roll source (ADR-0012) ─────────────────────────────────────
+
+    @Test
+    fun `scripted roll source forces a natural 20 crit`() = runBlocking {
+        val attacker = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+        // str=10 → meleeDmg=0; dex=30 → target AC=20, so only a natural 20 can hit.
+        attacker.characterData = testChar("a", "Alice", str = 10)
+        target.characterData = testChar("b", "Bob", hp = 20, dex = 30)
+        val combatLog = mutableListOf<String>()
+
+        buildProcessor(
+                sessions = { listOf(attacker, target) },
+                combatLog = combatLog,
+                rollSource = ScriptedRoll(20, 3), // d20 roll, then the 1d4 damage roll
+            )
+            .handleAttack(
+                attacker,
+                ClientMessage.AttackTarget(
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1))
+
+        assertTrue(combatLog.single().contains("[CRIT]"))
+        assertEquals(14, target.characterData!!.currentHp) // 20 - (3 raw * 2 crit)
+    }
+
+    @Test
+    fun `scripted roll source forces a natural 1 miss`() = runBlocking {
+        val attacker = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+        attacker.characterData = testChar("a", "Alice", str = 10)
+        target.characterData = testChar("b", "Bob", hp = 20, dex = 30)
+        val combatLog = mutableListOf<String>()
+
+        buildProcessor(
+                sessions = { listOf(attacker, target) },
+                combatLog = combatLog,
+                rollSource = ScriptedRoll(1),
+            )
+            .handleAttack(
+                attacker,
+                ClientMessage.AttackTarget(
+                    attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1))
+
+        assertTrue(combatLog.single().contains("misses"))
+        assertEquals(20, target.characterData!!.currentHp)
+    }
 
     // ── Class level gate ──────────────────────────────────────────────────────
 

@@ -140,6 +140,8 @@ class WorldSimulator(
                     vegetationSavePath = ConfigPaths.dataWorld(".simulator/vegetation_state.yaml"),
                     initialGameTicks = 0L,
                     broadcastWorldChange = { message -> onWorldUpdate(message) },
+                    // same seeded source NpcTickContext uses — reproducible combat/spell rolls too
+                    rollSource = random,
                     npcLifecycleGate = {
                         // the live spawner needs a player nearby; the arena keeps its at start
                         config.autoSpawnEnabled && gameWorld.sessions.all().isNotEmpty()

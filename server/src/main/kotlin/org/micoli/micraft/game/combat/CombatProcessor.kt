@@ -25,12 +25,12 @@ import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(CombatProcessor::class.java)
 
-private fun rollDice(spec: String): Int {
+private fun rollDice(spec: String, rollSource: Random): Int {
     val parts = spec.lowercase().split("d")
     if (parts.size != 2) return 1
     val count = parts[0].toIntOrNull() ?: 1
     val sides = parts[1].toIntOrNull() ?: 4
-    return (1..count).sumOf { Random.nextInt(1, sides + 1) }
+    return (1..count).sumOf { rollSource.nextInt(1, sides + 1) }
 }
 
 /**
@@ -58,6 +58,7 @@ private fun distance3(
     return sqrt(dx * dx + dy * dy + dz * dz)
 }
 
+@Suppress("LongParameterList")
 class CombatProcessor(
     @Volatile private var config: CombatConfigData,
     @Volatile private var attackRegistry: Map<String, AttackDefinition>,
@@ -76,6 +77,8 @@ class CombatProcessor(
     private val factionManager: FactionManager? = null,
     val characterStats: CharacterStats =
         CharacterStats(maxRage = config.maxRage, savePlayer = savePlayer),
+    /** Every die this processor rolls comes from here — supplied per World (ADR-0012). */
+    private val rollSource: Random = Random.Default,
 ) {
     private val abilityGate = AbilityGate(classRegistry, config.globalCooldownMs)
 
@@ -261,13 +264,13 @@ class CombatProcessor(
         val theirDerived = characterStats.derived(target, targetChar)
 
         val npcModifier = rankDef.power
-        val roll = Random.nextInt(1, 21)
+        val roll = rollSource.nextInt(1, 21)
         val isCrit = roll == 20
         val hit = isCrit || (roll + npcModifier) >= theirDerived.armorClass
 
         val damage: Int
         if (hit && !target.state.godMode) {
-            val raw = rollDice(rankDef.weaponDice) + rankDef.power
+            val raw = rollDice(rankDef.weaponDice, rollSource) + rankDef.power
             // Condition multiplier, never below 1 damage on a hit: a starving predator hits weakly
             // but a landed blow that does nothing reads as a bug rather than as weakness.
             damage = scaleNpcDamage(if (isCrit) raw * 2 else raw, npc)
@@ -310,13 +313,13 @@ class CombatProcessor(
         predator.attackCooldownsUntilMs[choice.cooldownKey] = now + rankDef.cooldownMs
 
         val preyAc = 10 + prey.instanceLevel / 2
-        val roll = Random.nextInt(1, 21)
+        val roll = rollSource.nextInt(1, 21)
         val isCrit = roll == 20
         val modifier = rankDef.power
         val hit = isCrit || (roll + modifier) >= preyAc
 
         if (hit) {
-            val raw = rollDice(rankDef.weaponDice) + rankDef.power
+            val raw = rollDice(rankDef.weaponDice, rollSource) + rankDef.power
             val damage = scaleNpcDamage(if (isCrit) raw * 2 else raw, predator)
             npcManager.applyDamage(prey.state.id, damage, predator.state.id)
             val hitMsg = "hits for $damage${if (isCrit) " [CRIT]" else ""}"
@@ -345,7 +348,7 @@ class CombatProcessor(
         now: Long,
         inRange: (Float) -> Boolean,
     ): NpcAttackChoice? =
-        npc.definition.attacks.shuffled().firstNotNullOfOrNull { slot ->
+        npc.definition.attacks.shuffled(rollSource).firstNotNullOfOrNull { slot ->
             val attackDef = attackRegistry[slot.attackId] ?: return@firstNotNullOfOrNull null
             val rank = attackDef.usableRank(npc.instanceLevel) ?: return@firstNotNullOfOrNull null
             val choice = NpcAttackChoice(slot.attackId, rank, attackDef.ranks.getValue(rank))
@@ -365,7 +368,7 @@ class CombatProcessor(
 
     suspend fun tickDowningRolls(session: PlayerSession) {
         if (!session.isDowned) return
-        if (Random.nextInt(1, 21) >= 10) {
+        if (rollSource.nextInt(1, 21) >= 10) {
             val s =
                 session.combatState.copy(
                     downingSuccesses = session.combatState.downingSuccesses + 1)
@@ -430,12 +433,12 @@ class CombatProcessor(
                 DamageType.POISON -> myDerived.rangedDmg
                 else -> myDerived.spellDmg
             }
-        val roll = Random.nextInt(1, 21)
+        val roll = rollSource.nextInt(1, 21)
         val isCrit = roll == 20
         val hit = isCrit || (roll + modifier) >= targetAc
         val damage =
             if (hit) {
-                val raw = rollDice(rankDef.weaponDice) + rankDef.power + modifier
+                val raw = rollDice(rankDef.weaponDice, rollSource) + rankDef.power + modifier
                 if (isCrit) raw * 2 else raw
             } else 0
         return AttackResult(hit, isCrit, damage)

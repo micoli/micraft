@@ -112,6 +112,7 @@ class GameLoopModuleTest {
                         experienceProcessor = koin.get(),
                         experienceConfigData = koin.get(),
                         factionManager = factionManager,
+                        rollSource = koin.get(),
                     )
 
             combatProcessor.handleAttack(

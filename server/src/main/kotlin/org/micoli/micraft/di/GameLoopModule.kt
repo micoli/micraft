@@ -101,6 +101,9 @@ fun npcSeed(): Long? = System.getenv("MICRAFT_NPC_SEED")?.toLongOrNull()
 
 @Module
 class GameLoopModule {
+    /** The World builder's single choice of roll source for the default World (ADR-0012). */
+    @Single fun rollSource(): kotlin.random.Random = kotlin.random.Random.Default
+
     @Single fun sessionRegistry(): SessionRegistry = SessionRegistry()
 
     @Single
@@ -477,6 +480,7 @@ class GameLoopModule {
         experienceProcessor: ExperienceProcessor,
         experienceConfigData: ExperienceConfigData,
         factionManager: FactionManager,
+        rollSource: kotlin.random.Random,
     ): CombatProcessor =
         CombatProcessor(
             config = combatConfigData,
@@ -505,6 +509,7 @@ class GameLoopModule {
             },
             factionManager = factionManager,
             characterStats = characterStats,
+            rollSource = rollSource,
         )
 
     @Single
@@ -566,6 +571,7 @@ class GameLoopModule {
         combatProcessor: CombatProcessor,
         sessionRegistry: SessionRegistry,
         npcManager: NpcManager,
+        rollSource: kotlin.random.Random,
     ): SpellProcessor =
         SpellProcessor(
             spellRegistry = spells,
@@ -574,6 +580,7 @@ class GameLoopModule {
             combatProcessor = combatProcessor,
             getSessions = sessionRegistry::all,
             getNpcs = { npcManager.getAll() },
+            rollSource = rollSource,
         )
 
     @Single fun tradeConfigLoader(): TradeConfigLoader = TradeConfigLoader()

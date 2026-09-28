@@ -93,6 +93,12 @@ data class GameWorldOptions(
      * (production always goes through the Koin-wired [org.micoli.micraft.game.GameLoop] path).
      */
     val persistence: WorldPersistence? = null,
+    /**
+     * Every die [CombatProcessor] and [SpellProcessor] roll for this World — a real source by
+     * default, a scripted one in tests (ADR-0012: the World builder is the single place it's
+     * chosen).
+     */
+    val rollSource: kotlin.random.Random = kotlin.random.Random.Default,
 )
 
 /**
@@ -250,6 +256,7 @@ fun buildGameWorld(
             i18n = shared.i18n,
             savePlayer = playerPersister::save,
             characterStats = characterStats,
+            rollSource = opts.rollSource,
         )
     val petCoordinator = PetCoordinator(npcManager, shared.combatConfigData)
     val petManager =
@@ -286,6 +293,7 @@ fun buildGameWorld(
             combatProcessor = combatProcessor,
             getSessions = sessions::all,
             getNpcs = { npcManager.getAll() },
+            rollSource = opts.rollSource,
         )
     val npcSubsystem = npcSubsystemFactory.build(combatProcessor, petCoordinator)
 

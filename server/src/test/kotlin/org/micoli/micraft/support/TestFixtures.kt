@@ -1,6 +1,7 @@
 package org.micoli.micraft.support
 
 import java.nio.file.Path
+import kotlin.random.Random
 import org.micoli.micraft.I18nConfig
 import org.micoli.micraft.auth.AuthProvider
 import org.micoli.micraft.auth.GroupsConfig
@@ -348,3 +349,20 @@ suspend fun CommandHandler.completions(
         ?: completeArg(argIndex, partial, session, context).map { Completion(it) }
 
 fun testWeatherManager() = WeatherManager(WeatherConfig())
+
+/**
+ * A roll source that returns [rolls] in order for every `nextInt(from, until)` call (what combat
+ * and Spell processing roll: the d20 to-hit, dice, downing), then repeats the last value. Ignores
+ * [from]/[until] — the script gives the absolute roll, not an offset.
+ */
+class ScriptedRoll(private vararg val rolls: Int) : Random() {
+    private var index = 0
+
+    override fun nextInt(from: Int, until: Int): Int {
+        val value = rolls[index.coerceAtMost(rolls.size - 1)]
+        index++
+        return value
+    }
+
+    override fun nextBits(bitCount: Int): Int = Default.nextBits(bitCount)
+}
