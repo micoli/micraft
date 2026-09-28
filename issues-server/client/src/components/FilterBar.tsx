@@ -1,9 +1,5 @@
 import type { Filters, LabelIndex } from "../api.ts";
 
-const MAX_FILTERABLE_VALUES = 12;
-const MAX_VALUE_LENGTH = 30;
-const EXCLUDED_KEYS = new Set(["Blocked by"]);
-
 interface Props {
   labels: LabelIndex;
   filters: Filters;
@@ -11,10 +7,6 @@ interface Props {
 }
 
 export function FilterBar({ labels, filters, onChange }: Props) {
-  const filterableKeys = Object.entries(labels)
-    .filter(([key, values]) => isFilterable(key, values))
-    .map(([key]) => key);
-
   const setLabel = (key: string, value: string) =>
     onChange({ ...filters, labels: { ...filters.labels, [key]: value } });
 
@@ -26,7 +18,7 @@ export function FilterBar({ labels, filters, onChange }: Props) {
         value={filters.q}
         onChange={(event) => onChange({ ...filters, q: event.target.value })}
       />
-      {filterableKeys.map((key) => (
+      {Object.keys(labels).map((key) => (
         <label key={key}>
           {key}
           <select value={filters.labels[key] ?? ""} onChange={(event) => setLabel(key, event.target.value)}>
@@ -43,10 +35,4 @@ export function FilterBar({ labels, filters, onChange }: Props) {
       ))}
     </div>
   );
-}
-
-function isFilterable(key: string, values: Record<string, number>): boolean {
-  if (EXCLUDED_KEYS.has(key)) return false;
-  const distinct = Object.keys(values);
-  return distinct.length <= MAX_FILTERABLE_VALUES && distinct.every((value) => value.length <= MAX_VALUE_LENGTH);
 }

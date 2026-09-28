@@ -13,8 +13,10 @@ import { Sidebar } from "./Sidebar.tsx";
 import { FilterBar } from "./FilterBar.tsx";
 import { ItemList } from "./ItemList.tsx";
 import { ItemDetail } from "./ItemDetail.tsx";
+import { useDebouncedValue } from "../useDebouncedValue.ts";
 
 const EMPTY_FILTERS: Filters = { kind: "", effort: "", q: "", labels: {} };
+const SEARCH_DEBOUNCE_MS = 250;
 
 export function App() {
   const [filters, setFilters] = useState<Filters>(readFiltersFromUrl);
@@ -24,7 +26,9 @@ export function App() {
   const config = useApi<RepositoryConfig>("/api/config");
   const efforts = useApi<Effort[]>("/api/efforts", revision);
   const labels = useApi<LabelIndex>("/api/labels", revision);
-  const items = useApi<ItemSummary[]>(itemsQuery(filters), revision);
+  const filterableLabels = useApi<LabelIndex>("/api/labels?filterable=true", revision);
+  const debouncedQuery = useDebouncedValue(filters.q, SEARCH_DEBOUNCE_MS);
+  const items = useApi<ItemSummary[]>(itemsQuery({ ...filters, q: debouncedQuery }), revision);
 
   useEffect(() => {
     const onPopState = () => {
@@ -55,7 +59,7 @@ export function App() {
         onReset={() => setFilters(EMPTY_FILTERS)}
       />
       <main className="content">
-        <FilterBar labels={labels.data ?? {}} filters={filters} onChange={setFilters} />
+        <FilterBar labels={filterableLabels.data ?? {}} filters={filters} onChange={setFilters} />
         {items.error && <p className="error">API error: {items.error}</p>}
         <div className="panes">
           <ItemList items={items.data ?? []} selectedId={selectedId} onSelect={setSelectedId} />

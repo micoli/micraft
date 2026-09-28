@@ -141,3 +141,18 @@ test("reads the backlog, ADRs and glossary from configured paths", async () => {
     "spec:backlog/roster/spec.md",
   ]);
 });
+
+test("filterable labels skip dependency keys, long values and keys with too many values", async () => {
+  const root = await mkdtemp(join(tmpdir(), "issues-server-"));
+  await mkdir(join(root, ".scratch/roster/issues"), { recursive: true });
+  for (let number = 1; number <= 13; number++) {
+    const padded = String(number).padStart(2, "0");
+    await writeFile(
+      join(root, `.scratch/roster/issues/${padded}-item.md`),
+      `# Item ${padded}\n\nStatus: needs-triage\nOwner: owner-${padded}\nBlocked by: 01\nSummary: ${"x".repeat(31)}\n`,
+    );
+  }
+  const repository = new Repository(root);
+
+  assert.deepEqual(await repository.filterableLabels(), { Status: { "needs-triage": 13 } });
+});

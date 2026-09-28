@@ -62,6 +62,9 @@ export const DEFAULT_PATHS: RepositoryPaths = {
   contextFile: "CONTEXT.md",
 };
 
+const MAX_FILTERABLE_VALUES = 12;
+const MAX_FILTERABLE_VALUE_LENGTH = 30;
+const UNFILTERABLE_KEYS = new Set(["Blocked by"]);
 const CLOSED_STATUSES = new Set(["resolved", "wontfix", "done", "closed", "accepted", "superseded"]);
 
 export function isClosed(item: Pick<Item, "labels">): boolean {
@@ -128,6 +131,11 @@ export class Repository {
     return result;
   }
 
+  async filterableLabels(): Promise<Record<string, Record<string, number>>> {
+    const labels = await this.labels();
+    return Object.fromEntries(Object.entries(labels).filter(([key, values]) => isFilterable(key, values)));
+  }
+
   async save(id: string, update: ItemUpdate): Promise<SaveResult> {
     const current = await this.get(id);
     if (!current) return { outcome: "not-found" };
@@ -182,6 +190,14 @@ export class Repository {
       version: createHash("sha256").update(source).digest("hex"),
     };
   }
+}
+
+function isFilterable(key: string, values: Record<string, number>): boolean {
+  if (UNFILTERABLE_KEYS.has(key)) return false;
+  const distinct = Object.keys(values);
+  return (
+    distinct.length <= MAX_FILTERABLE_VALUES && distinct.every((value) => value.length <= MAX_FILTERABLE_VALUE_LENGTH)
+  );
 }
 
 function kindOf(file: string): ItemKind {

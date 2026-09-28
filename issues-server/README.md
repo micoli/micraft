@@ -39,7 +39,7 @@ Env:
 |-------|---------|
 | `GET /api/config` | Configured `scratchDir`, `adrDir`, `contextFile` (the client resolves repo-rooted links with them) |
 | `GET /api/efforts` | Efforts (`.scratch/<slug>/`) with spec title, issue count, per-Status counts |
-| `GET /api/labels` | Every label key → value → occurrence count |
+| `GET /api/labels[?filterable=true]` | Every label key → value → occurrence count; `filterable=true` keeps the keys offered as filters (≤ 12 values of ≤ 30 chars, not `Blocked by`) |
 | `GET /api/items?kind=&effort=&q=&label.<Key>=<value>` | Item summaries (no body); `kind` ∈ `issue`, `spec`, `map`, `adr`, `doc`, `context` |
 | `GET /api/items/<url-encoded path>` | One item with its markdown body and `version`, e.g. `/api/items/docs%2Fadr%2F0001-….md` |
 | `PUT /api/items/<url-encoded path>` | Saves `{ version, title, labels, body }`; `409` + current item if the file changed since `version` |

@@ -44,7 +44,10 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
 
   if (url.pathname === "/api/config") return sendJson(response, 200, repository.paths);
   if (url.pathname === "/api/efforts") return sendJson(response, 200, await repository.efforts());
-  if (url.pathname === "/api/labels") return sendJson(response, 200, await repository.labels());
+  if (url.pathname === "/api/labels") {
+    const filterable = url.searchParams.get("filterable") === "true";
+    return sendJson(response, 200, await (filterable ? repository.filterableLabels() : repository.labels()));
+  }
   if (url.pathname === "/api/items") return sendJson(response, 200, await repository.list(toFilter(url.searchParams)));
 
   const itemId = /^\/api\/items\/(.+)$/.exec(url.pathname)?.[1];
