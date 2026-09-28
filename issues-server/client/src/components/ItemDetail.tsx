@@ -4,6 +4,7 @@ import { Dependencies } from "./Dependencies.tsx";
 import { FilePath } from "./FilePath.tsx";
 import { LabelBadges } from "./LabelBadges.tsx";
 import { Markdown } from "./Markdown.tsx";
+import { SkillPrompts } from "./SkillPrompts.tsx";
 
 const ItemEditor = lazy(() => import("./ItemEditor.tsx").then((module) => ({ default: module.ItemEditor })));
 
@@ -50,9 +51,12 @@ export function ItemDetail({ id, revision, labelIndex, onNavigate, onSaved }: Pr
     <article className="item-detail">
       <div className="detail-toolbar">
         <FilePath path={item.id} />
-        <button className="primary" onClick={() => setEditingId(id)}>
-          Edit
-        </button>
+        <div className="actions">
+          <SkillPrompts item={item} />
+          <button className="primary" onClick={() => setEditingId(id)}>
+            Edit
+          </button>
+        </div>
       </div>
       <header>
         <h1>{item.title}</h1>

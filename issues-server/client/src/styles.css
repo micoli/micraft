@@ -421,6 +421,27 @@ button {
   gap: 8px;
 }
 
+.skill-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.item-detail button.skill-prompt {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.item-detail button.skill-prompt:hover {
+  background: var(--code-bg);
+  color: var(--text);
+}
+
 .item-detail button.primary,
 .item-editor button {
   border: 1px solid var(--border);
