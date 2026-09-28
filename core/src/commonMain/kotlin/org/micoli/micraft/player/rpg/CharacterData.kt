@@ -21,6 +21,7 @@ data class CharacterData(
     @EncodeDefault val currentRage: Int = 0,
     @EncodeDefault val currentTokens: Int = 0,
     @EncodeDefault val restPoint: List<Vec3> = emptyList(),
+    @EncodeDefault val cooldownsUntilMs: Map<String, Long> = emptyMap(),
 ) {
     val combatant: CombatantData
         get() =
@@ -33,6 +34,7 @@ data class CharacterData(
                 currentMana = currentMana,
                 currentRage = currentRage,
                 currentTokens = currentTokens,
+                cooldownsUntilMs = cooldownsUntilMs,
             )
 
     fun withCombatant(c: CombatantData): CharacterData =
@@ -45,5 +47,9 @@ data class CharacterData(
             currentMana = c.currentMana,
             currentRage = c.currentRage,
             currentTokens = c.currentTokens,
+            cooldownsUntilMs = c.cooldownsUntilMs,
         )
+
+    fun withoutExpiredCooldowns(nowMs: Long): CharacterData =
+        copy(cooldownsUntilMs = cooldownsUntilMs.filterValues { it > nowMs })
 }

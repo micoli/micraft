@@ -15,4 +15,5 @@ data class CombatantData(
     @EncodeDefault val currentMana: Int = 0,
     @EncodeDefault val currentRage: Int = 0,
     @EncodeDefault val currentTokens: Int = 0,
+    @EncodeDefault val cooldownsUntilMs: Map<String, Long> = emptyMap(),
 )

@@ -197,7 +197,7 @@ export const OnCooldown: Story = {
       maxTokens: 5,
       stance: "standing",
       globalCooldownRemainingMs: 0,
-      attackCooldownsRemainingMs: { fireball: 2200 },
+      cooldownsRemainingMs: { fireball: 2200 },
       godMode: false,
     },
   },

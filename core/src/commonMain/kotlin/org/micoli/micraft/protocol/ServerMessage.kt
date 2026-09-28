@@ -333,7 +333,7 @@ sealed class ServerMessage {
         val maxRage: Int,
         val stance: PlayerStance,
         val globalCooldownRemainingMs: Long,
-        val attackCooldownsRemainingMs: Map<String, Long> = emptyMap(),
+        val cooldownsRemainingMs: Map<String, Long> = emptyMap(),
         val currentTokens: Int = 0,
         val maxTokens: Int = 0,
         val godMode: Boolean = false,

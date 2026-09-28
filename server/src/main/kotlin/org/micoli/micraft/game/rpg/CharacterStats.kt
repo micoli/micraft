@@ -88,9 +88,9 @@ class CharacterStats(
             currentTokens = if (isRage) character.currentTokens else 0,
             maxTokens = if (isRage) derived.maxTokens else 0,
             stance = session.state.stance,
-            globalCooldownRemainingMs = (combat.attackCooldownUntilMs - now).coerceAtLeast(0),
-            attackCooldownsRemainingMs =
-                combat.attackCooldownsUntilMs
+            globalCooldownRemainingMs = (combat.globalCooldownUntilMs - now).coerceAtLeast(0),
+            cooldownsRemainingMs =
+                character.cooldownsUntilMs
                     .mapValues { (_, until) -> (until - now).coerceAtLeast(0) }
                     .filter { (_, rem) -> rem > 0 },
             godMode = session.state.godMode,

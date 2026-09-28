@@ -61,14 +61,14 @@ private fun distance3(
 class CombatProcessor(
     @Volatile private var config: CombatConfigData,
     @Volatile private var attackRegistry: Map<String, AttackDefinition>,
-    @Volatile private var classRegistry: Map<String, ClassDefinitionEntry>,
+    classRegistry: Map<String, ClassDefinitionEntry>,
     private val npcManager: NpcManager,
     private val vehicleManager: VehicleManager = VehicleManager { _ -> },
     private val placeableManager: PlaceableManager = PlaceableManager { _ -> },
     private val getSessions: () -> Collection<PlayerSession>,
     private val broadcastCombatLog: suspend (String) -> Unit,
     private val subscribeToChannel: suspend (PlayerSession, String) -> Unit,
-    @Suppress("unused") private val i18n: I18nConfig,
+    val i18n: I18nConfig,
     private val savePlayer: suspend (PlayerSession) -> Unit,
     private val onPlayerDownedByNpc: suspend (session: PlayerSession, killerNpcId: String) -> Unit =
         { _, _ ->
@@ -77,6 +77,8 @@ class CombatProcessor(
     val characterStats: CharacterStats =
         CharacterStats(maxRage = config.maxRage, savePlayer = savePlayer),
 ) {
+    private val abilityGate = AbilityGate(classRegistry, config.globalCooldownMs)
+
     // ── Target selection ──────────────────────────────────────────────────────
 
     suspend fun handleSetTarget(session: PlayerSession, msg: ClientMessage.SetCombatTarget) {
@@ -91,59 +93,38 @@ class CombatProcessor(
     // ── Player attack ─────────────────────────────────────────────────────────
 
     suspend fun handleAttack(session: PlayerSession, msg: ClientMessage.AttackTarget) {
-        val charData =
-            session.characterData
-                ?: run {
-                    session.send(ServerMessage.Notification("No character — use /createcharacter"))
-                    return
-                }
-        val attackDef =
-            attackRegistry[msg.attackId]
-                ?: run {
-                    log.warn("Unknown attackId '{}' from {}", msg.attackId, session.id.take(8))
-                    session.send(ServerMessage.Notification("Unknown attack '${msg.attackId}'"))
-                    return
-                }
-        val classDef = classRegistry[charData.characterClass.name]
-        val unlockedAttacks =
-            classDef
-                ?.levels
-                ?.filter { (classLevel, _) -> classLevel <= charData.level }
-                ?.values
-                ?.flatMap { it.attacks } ?: emptyList()
-        if (classDef != null &&
-            unlockedAttacks.isNotEmpty() &&
-            unlockedAttacks.none { it.attack == msg.attackId && it.rank == msg.attackRank }) {
-            session.send(
-                ServerMessage.Notification(
-                    "Your class cannot use ${msg.attackId} rank ${msg.attackRank}"))
-            return
-        }
-        val rankDef =
-            attackDef.ranks[msg.attackRank]
-                ?: run {
+        val attackDef = attackRegistry[msg.attackId]
+        if (attackDef == null)
+            log.warn("Unknown attackId '{}' from {}", msg.attackId, session.id.take(8))
+        val verdict =
+            abilityGate.check(
+                session,
+                AbilityKind.ATTACK,
+                msg.attackId,
+                msg.attackRank,
+                attackDef?.ranks?.mapValues { (_, rank) ->
+                    AbilityRank(rank.abilityCost(), rank.cooldownMs)
+                })
+        val use =
+            when (verdict) {
+                is AbilityVerdict.Cleared -> verdict.ability
+                is AbilityVerdict.Refused -> {
                     session.send(
-                        ServerMessage.Notification(
-                            "Unknown rank ${msg.attackRank} for '${msg.attackId}'"))
+                        verdict.notification(
+                            i18n, session, AbilityKind.ATTACK, msg.attackId, msg.attackRank))
                     return
                 }
-        val now = System.currentTimeMillis()
-        val cooldownKey = "${msg.attackId}:${msg.attackRank}"
-        if (now < session.combatState.attackCooldownUntilMs) {
-            session.send(ServerMessage.Notification("Attack on cooldown"))
-            return
-        }
-        if (now < (session.combatState.attackCooldownsUntilMs[cooldownKey] ?: 0L)) {
-            session.send(
-                ServerMessage.Notification("${msg.attackId} (rank ${msg.attackRank}) on cooldown"))
-            return
-        }
+            }
+        val charData = session.characterData ?: return
+        val rankDef = attackDef?.ranks?.get(msg.attackRank) ?: return
 
         val range = rankDef.rangeOverride ?: config.maxCombatRange
-        if (msg.isNpc)
-            attackNpc(session, msg, attackDef, rankDef, charData, range, now, cooldownKey)
-        else attackPlayer(session, msg, attackDef, rankDef, charData, range, now, cooldownKey)
+        if (msg.isNpc) attackNpc(session, msg, attackDef, rankDef, charData, range, use)
+        else attackPlayer(session, msg, attackDef, rankDef, charData, range, use)
     }
+
+    private suspend fun notify(session: PlayerSession, key: String, vararg args: Any) =
+        session.send(ServerMessage.Notification(i18n.t(session.state.language, key, *args)))
 
     private suspend fun attackPlayer(
         session: PlayerSession,
@@ -152,48 +133,35 @@ class CombatProcessor(
         rankDef: AttackRankDefinition,
         charData: CharacterData,
         range: Float,
-        now: Long,
-        cooldownKey: String,
+        use: AbilityUse,
     ) {
         val target =
             getSessions().find { it.id == msg.targetId }
                 ?: run {
-                    session.send(ServerMessage.Notification("Target not found"))
+                    notify(session, "combat:server:target_not_found")
                     return
                 }
         if (factionManager != null &&
             !factionManager.friendlyFireEnabled() &&
             factionManager.sameFaction(session, target)) {
-            session.send(
-                ServerMessage.Notification(
-                    i18n.t(session.state.language, "faction:server:friendly_fire_blocked")))
+            notify(session, "faction:server:friendly_fire_blocked")
             return
         }
         val pos = session.state.pos
         val tPos = target.state.pos
         if (distance3(pos.x, pos.y, pos.z, tPos.x, tPos.y, tPos.z) > range) {
-            session.send(ServerMessage.Notification("Target out of range"))
+            notify(session, "combat:server:out_of_range")
             return
         }
         val targetChar = target.characterData ?: return
 
+        abilityGate.commit(session, use)
+        val now = System.currentTimeMillis()
         val myDerived = characterStats.derived(session, charData)
         val theirDerived = characterStats.derived(target, targetChar)
 
-        if (!deductResource(session, charData, rankDef)) {
-            session.send(ServerMessage.Notification("Not enough resources"))
-            return
-        }
-
         val (hit, isCrit, damage) =
             resolveAttack(attackDef, rankDef, myDerived, theirDerived.armorClass)
-        session.combatState =
-            session.combatState.copy(
-                attackCooldownUntilMs = now + config.globalCooldownMs,
-                attackCooldownsUntilMs =
-                    session.combatState.attackCooldownsUntilMs +
-                        (cooldownKey to now + rankDef.cooldownMs),
-            )
 
         if (hit && !target.state.godMode) {
             var newTargetChar =
@@ -225,38 +193,27 @@ class CombatProcessor(
         rankDef: AttackRankDefinition,
         charData: CharacterData,
         range: Float,
-        now: Long,
-        cooldownKey: String,
+        use: AbilityUse,
     ) {
         val npc =
             npcManager.getInstance(msg.targetId)
                 ?: run {
-                    session.send(ServerMessage.Notification("Target not found"))
+                    notify(session, "combat:server:target_not_found")
                     return
                 }
         val pos = session.state.pos
         if (distance3(pos.x, pos.y, pos.z, npc.state.pos.x, npc.state.pos.y, npc.state.pos.z) >
             range) {
-            session.send(ServerMessage.Notification("Target out of range"))
+            notify(session, "combat:server:out_of_range")
             return
         }
 
+        abilityGate.commit(session, use)
+        val now = System.currentTimeMillis()
         val myDerived = characterStats.derived(session, charData)
-
-        if (!deductResource(session, charData, rankDef)) {
-            session.send(ServerMessage.Notification("Not enough resources"))
-            return
-        }
 
         val npcAc = 10
         val (hit, isCrit, damage) = resolveAttack(attackDef, rankDef, myDerived, npcAc)
-        session.combatState =
-            session.combatState.copy(
-                attackCooldownUntilMs = now + config.globalCooldownMs,
-                attackCooldownsUntilMs =
-                    session.combatState.attackCooldownsUntilMs +
-                        (cooldownKey to now + rankDef.cooldownMs),
-            )
 
         if (hit) {
             npcManager.applyDamage(msg.targetId, damage, session.id)
@@ -430,7 +387,7 @@ class CombatProcessor(
         val derived = characterStats.derived(session, updated)
         broadcastHealthUpdate(session.id, false, 1, derived.maxHp)
         broadcastCombatLog("[p:${charData.name}] stabilizes.")
-        session.send(ServerMessage.Notification("You have stabilized!"))
+        notify(session, "combat:server:stabilized")
     }
 
     private suspend fun triggerDeath(session: PlayerSession) {
@@ -482,33 +439,6 @@ class CombatProcessor(
                 if (isCrit) raw * 2 else raw
             } else 0
         return AttackResult(hit, isCrit, damage)
-    }
-
-    private fun deductResource(
-        session: PlayerSession,
-        charData: CharacterData,
-        rankDef: AttackRankDefinition
-    ): Boolean {
-        val resource = charData.characterClass.classResource
-        return when {
-            resource == ClassResource.MANA && rankDef.manaCost > 0 -> {
-                if (charData.currentMana < rankDef.manaCost) false
-                else {
-                    session.characterData =
-                        charData.copy(currentMana = charData.currentMana - rankDef.manaCost)
-                    true
-                }
-            }
-            resource == ClassResource.RAGE && rankDef.rageCost > 0 -> {
-                if (charData.currentRage < rankDef.rageCost) false
-                else {
-                    session.characterData =
-                        charData.copy(currentRage = charData.currentRage - rankDef.rageCost)
-                    true
-                }
-            }
-            else -> true
-        }
     }
 
     private suspend fun applyStatusEffect(
@@ -714,6 +644,8 @@ class CombatProcessor(
         this.config = config
         characterStats.reload(maxRage = config.maxRage)
         this.attackRegistry = attackRegistry
-        this.classRegistry = classRegistry
+        abilityGate.reload(classRegistry, config.globalCooldownMs)
     }
 }
+
+private fun AttackRankDefinition.abilityCost() = AbilityCost(mana = manaCost, rage = rageCost)

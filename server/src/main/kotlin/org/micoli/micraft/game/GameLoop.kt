@@ -1967,7 +1967,9 @@ class GameLoop(
                 if (i in 0..9) session.shortcutBarPages[0][i] = item
             }
         }
-        session.characterData = reservedCharacter ?: saved?.characterData
+        session.characterData =
+            (reservedCharacter ?: saved?.characterData)?.withoutExpiredCooldowns(
+                System.currentTimeMillis())
         if (reservedCharacter != null)
             session.state = session.state.copy(characterData = reservedCharacter)
         log.info(

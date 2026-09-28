@@ -1,6 +1,6 @@
 # Single ability gate for attack / spell / AoE
 
-Status: ready-for-agent
+Status: resolved
 Strength: Strong
 
 ## Files
@@ -165,3 +165,29 @@ Both processors address the player through translated keys under a `combat:` nam
 - Introducing a common supertype for the two rank-definition types.
 - Persisting the Global cooldown, active status effects, or the locked target.
 - Adding new Ability types or new `SpellType` cases.
+
+## Answer
+
+Fixed on 2026-09-28 in `2390f04e`. `AbilityGate` (`game/combat/AbilityGate.kt`) owns the cascade and returns an
+`AbilityVerdict`; `AbilityRefusal.kt` turns a refusal into a translated `Notification`. Attack, single-target Spell
+and area Spell all go through it, and the private cooldown map on `SpellProcessor` is gone.
+
+Deviations from the brief:
+- **Two phases, not one entry point.** `check` gives the verdict, the caller range-checks, then `commit` pays the
+  cost and starts the Global cooldown and the Ability's Cooldown. A single call that deducted on success could not
+  satisfy "refused for range pays nothing".
+- **Cooldowns live on `CharacterData`**, mirrored into `CombatantData` (`cooldownsUntilMs`, keyed `ability:rank`).
+  `CombatantData` is only a derived view of `CharacterData` and is not what gets persisted, so `player.schema.json`
+  changed through `CharacterData`. Expired entries are dropped in `commit` and by `withoutExpiredCooldowns` at login.
+- **One gate per processor**, each reloaded with its own class registry, so no wiring site changed.
+- `CombatState.attackCooldownUntilMs` became `globalCooldownUntilMs`; `attackCooldownsUntilMs` moved to the Character.
+- `PlayerStatusUpdate.attackCooldownsRemainingMs` became `cooldownsRemainingMs` (ProtoId 37 kept); `ShortcutBar`
+  now reads it for Spell slots.
+- 15 `combat:server:*` keys in `en.yaml` and `fr.yaml`; every `Notification` in both processors uses them.
+
+`AbilityGateTest` covers parity (no unlock, no mana, Cooldown, Global cooldown), no charge on range or resource
+refusal, survival across reconnect, the status update listing Spell cooldowns, and eviction.
+
+Known gap: a `TOKEN_RAGE_CONSUME` Spell cast through the area path (which the shortcut bar uses) now costs one token
+and still has no effect — that path already did nothing for this type. Not fixed here, as it is a behaviour question
+about that Spell type rather than about the gate.

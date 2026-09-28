@@ -94,7 +94,7 @@ export function ShortcutBar({
         const itemOrdinal = itemVisual?.ordinal ?? null;
         const itemColorHex = itemVisual?.colorHex ?? null;
 
-        const slotHasCd = isAttack && (playerStatus?.attackCooldownsRemainingMs?.[slot!.id] ?? 0) > 0;
+        const slotHasCd = (isAttack || isSpell) && (playerStatus?.cooldownsRemainingMs?.[slot!.id] ?? 0) > 0;
         return (
           <div
             key={idx}

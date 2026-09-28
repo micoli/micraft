@@ -491,7 +491,7 @@ export type PlayerStatusData = {
   maxTokens: number;
   stance: string;
   globalCooldownRemainingMs: number;
-  attackCooldownsRemainingMs: Record<string, number>;
+  cooldownsRemainingMs: Record<string, number>;
   godMode: boolean;
 };
 

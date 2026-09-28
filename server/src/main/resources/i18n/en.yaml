@@ -588,3 +588,21 @@ summon:
     not_found: "Player not found: {0}"
     summoned_you: "You were summoned by {0}."
     done: "Summoned {0} to your location."
+
+combat:
+  server:
+    no_character: "No character — use /createcharacter"
+    unknown_attack: "Unknown attack '{0}'"
+    unknown_spell: "Unknown spell '{0}'"
+    not_unlocked: "Your class cannot use {0} rank {1}"
+    unknown_rank: "Unknown rank {1} for '{0}'"
+    global_cooldown: "On global cooldown"
+    on_cooldown: "{0} (rank {1}) on cooldown"
+    not_enough_mana: "Not enough mana"
+    not_enough_rage: "Not enough rage"
+    not_enough_tokens: "No rage tokens available"
+    target_not_found: "Target not found"
+    out_of_range: "Target out of range"
+    out_of_range_max: "Target out of range (max {0} m)"
+    no_target: "No target selected"
+    stabilized: "You have stabilized!"

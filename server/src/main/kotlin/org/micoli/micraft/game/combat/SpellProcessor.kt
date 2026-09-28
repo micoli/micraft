@@ -5,8 +5,6 @@ import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.session.PlayerSession
-import org.micoli.micraft.player.rpg.CharacterData
-import org.micoli.micraft.player.rpg.ClassResource
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
 import org.slf4j.LoggerFactory
@@ -15,112 +13,61 @@ private val log = LoggerFactory.getLogger(SpellProcessor::class.java)
 
 class SpellProcessor(
     @Volatile private var spellRegistry: Map<String, SpellDefinition>,
-    @Volatile private var classRegistry: Map<String, ClassDefinitionEntry>,
+    classRegistry: Map<String, ClassDefinitionEntry>,
     @Volatile private var combatConfig: CombatConfigData,
     private val combatProcessor: CombatProcessor,
     private val getSessions: () -> Collection<PlayerSession> = { emptyList() },
     private val getNpcs: () -> Collection<NpcInstance> = { emptyList() },
 ) {
-    private val cooldowns = mutableMapOf<String, Long>()
+    private val gate = AbilityGate(classRegistry, combatConfig.globalCooldownMs)
 
     suspend fun handleSpell(session: PlayerSession, msg: ClientMessage.UseSpell) {
-        val charData =
-            session.characterData
-                ?: run {
-                    session.send(ServerMessage.Notification("No character — use /createcharacter"))
-                    return
-                }
-        val spell =
-            spellRegistry[msg.spellId]
-                ?: run {
-                    log.warn("Unknown spellId '{}' from {}", msg.spellId, session.id.take(8))
-                    session.send(ServerMessage.Notification("Unknown spell '${msg.spellId}'"))
-                    return
-                }
+        val use = clear(session, msg.spellId, msg.spellRank) ?: return
+        val spell = spellRegistry.getValue(msg.spellId)
+        val rankDef = spell.ranks.getValue(msg.spellRank)
 
-        val classDef = classRegistry[charData.characterClass.name]
-        val unlockedSpells =
-            classDef
-                ?.levels
-                ?.filter { (classLevel, _) -> classLevel <= charData.level }
-                ?.values
-                ?.flatMap { it.spells } ?: emptyList()
-        if (classDef != null &&
-            unlockedSpells.isNotEmpty() &&
-            unlockedSpells.none { it.spell == msg.spellId && it.rank == msg.spellRank }) {
-            session.send(
-                ServerMessage.Notification(
-                    "Your class cannot use ${msg.spellId} rank ${msg.spellRank}"))
-            return
-        }
-        val rankDef =
-            spell.ranks[msg.spellRank]
-                ?: run {
-                    session.send(
-                        ServerMessage.Notification(
-                            "Unknown rank ${msg.spellRank} for '${msg.spellId}'"))
-                    return
-                }
-
-        val now = System.currentTimeMillis()
-        if (now < session.combatState.attackCooldownUntilMs) {
-            session.send(ServerMessage.Notification("On global cooldown"))
-            return
-        }
-        val cdKey = "${session.id}:${msg.spellId}:${msg.spellRank}"
-        val cdUntil = cooldowns[cdKey] ?: 0L
-        if (now < cdUntil) {
-            session.send(ServerMessage.Notification("Spell '${msg.spellId}' on cooldown"))
-            return
-        }
-
-        val resource = charData.characterClass.classResource
-        if (rankDef.manaCost > 0 &&
-            resource == ClassResource.MANA &&
-            charData.currentMana < rankDef.manaCost) {
-            session.send(ServerMessage.Notification("Not enough mana"))
-            return
-        }
-        if (rankDef.rageCost > 0 &&
-            resource == ClassResource.RAGE &&
-            charData.currentRage < rankDef.rageCost) {
-            session.send(ServerMessage.Notification("Not enough rage"))
-            return
-        }
-
-        var updated = charData
-        if (rankDef.manaCost > 0 && resource == ClassResource.MANA)
-            updated = updated.copy(currentMana = updated.currentMana - rankDef.manaCost)
-        if (rankDef.rageCost > 0 && resource == ClassResource.RAGE)
-            updated = updated.copy(currentRage = updated.currentRage - rankDef.rageCost)
-
-        when (spell.type) {
-            SpellType.TOKEN_RAGE_CONSUME -> {
-                if (updated.currentTokens <= 0) {
-                    session.send(ServerMessage.Notification("No rage tokens available"))
-                    return
-                }
-                val newRage =
-                    (updated.currentRage + rankDef.rageGain).coerceAtMost(combatConfig.maxRage)
-                updated =
-                    updated.copy(
-                        currentTokens = updated.currentTokens - rankDef.tokenCost.coerceAtLeast(1),
-                        currentRage = newRage,
-                    )
-            }
-            SpellType.DIRECT_DAMAGE -> {
-                if (!castDirectDamage(session, charData, rankDef)) return
-            }
-            SpellType.NECROTIC_AOE -> {}
-        }
-
-        session.characterData = updated
-        session.combatState =
-            session.combatState.copy(attackCooldownUntilMs = now + combatConfig.globalCooldownMs)
-        if (rankDef.cooldownMs > 0) cooldowns[cdKey] = now + rankDef.cooldownMs
+        if (spell.type == SpellType.DIRECT_DAMAGE && !castDirectDamage(session, rankDef)) return
+        gate.commit(session, use)
+        if (spell.type == SpellType.TOKEN_RAGE_CONSUME) grantRage(session, rankDef)
 
         combatProcessor.characterStats.sendStatus(session)
     }
+
+    private fun grantRage(session: PlayerSession, rankDef: SpellRankDefinition) {
+        val character = session.characterData ?: return
+        session.characterData =
+            character.copy(
+                currentRage =
+                    (character.currentRage + rankDef.rageGain).coerceAtMost(combatConfig.maxRage))
+    }
+
+    /** Runs the gate; a refusal is sent to the caster and yields null. */
+    private suspend fun clear(session: PlayerSession, spellId: String, rank: Int): AbilityUse? {
+        val spell = spellRegistry[spellId]
+        if (spell == null) log.warn("Unknown spellId '{}' from {}", spellId, session.id.take(8))
+        val verdict =
+            gate.check(
+                session,
+                AbilityKind.SPELL,
+                spellId,
+                rank,
+                spell?.ranks?.mapValues { (_, rankDef) ->
+                    AbilityRank(rankDef.abilityCost(spell.type), rankDef.cooldownMs)
+                })
+        return when (verdict) {
+            is AbilityVerdict.Cleared -> verdict.ability
+            is AbilityVerdict.Refused -> {
+                session.send(
+                    verdict.notification(
+                        combatProcessor.i18n, session, AbilityKind.SPELL, spellId, rank))
+                null
+            }
+        }
+    }
+
+    private suspend fun notify(session: PlayerSession, key: String, vararg args: Any) =
+        session.send(
+            ServerMessage.Notification(combatProcessor.i18n.t(session.state.language, key, *args)))
 
     /**
      * DIRECT_DAMAGE always resolves against the caster's locked combat target — never an AoE point
@@ -130,12 +77,12 @@ class SpellProcessor(
      */
     private suspend fun castDirectDamage(
         session: PlayerSession,
-        charData: CharacterData,
         rankDef: SpellRankDefinition,
     ): Boolean {
+        val charData = session.characterData ?: return false
         val targetId = session.combatState.targetId
         if (targetId == null) {
-            session.send(ServerMessage.Notification("No target selected"))
+            notify(session, "combat:server:no_target")
             return false
         }
         // "p:" (not a distinct "spell" prefix) — ServerLog's client-side renderer only recognizes
@@ -144,13 +91,11 @@ class SpellProcessor(
         if (session.combatState.targetIsNpc) {
             val npc = getNpcs().find { it.state.id == targetId && !it.isDead }
             if (npc == null) {
-                session.send(ServerMessage.Notification("Target not found"))
+                notify(session, "combat:server:target_not_found")
                 return false
             }
             if (session.state.pos.distanceTo(npc.state.pos) > rankDef.maxRange) {
-                session.send(
-                    ServerMessage.Notification(
-                        "Target out of range (max ${rankDef.maxRange.toInt()} m)"))
+                notify(session, "combat:server:out_of_range_max", rankDef.maxRange.toInt())
                 return false
             }
             combatProcessor.applyDirectDamageToNpc(
@@ -158,13 +103,11 @@ class SpellProcessor(
         } else {
             val target = getSessions().find { it.id == targetId }
             if (target == null) {
-                session.send(ServerMessage.Notification("Target not found"))
+                notify(session, "combat:server:target_not_found")
                 return false
             }
             if (session.state.pos.distanceTo(target.state.pos) > rankDef.maxRange) {
-                session.send(
-                    ServerMessage.Notification(
-                        "Target out of range (max ${rankDef.maxRange.toInt()} m)"))
+                notify(session, "combat:server:out_of_range_max", rankDef.maxRange.toInt())
                 return false
             }
             combatProcessor.applyDirectDamage(target, rankDef.power, sourceLabel)
@@ -173,55 +116,10 @@ class SpellProcessor(
     }
 
     suspend fun handleCastAoeSpell(session: PlayerSession, msg: ClientMessage.CastAoeSpell) {
-        val charData =
-            session.characterData
-                ?: run {
-                    session.send(ServerMessage.Notification("No character — use /createcharacter"))
-                    return
-                }
-        val spell =
-            spellRegistry[msg.spellId]
-                ?: run {
-                    log.warn("Unknown spellId '{}' from {}", msg.spellId, session.id.take(8))
-                    session.send(ServerMessage.Notification("Unknown spell '${msg.spellId}'"))
-                    return
-                }
-
-        val classDef = classRegistry[charData.characterClass.name]
-        val unlockedSpells =
-            classDef
-                ?.levels
-                ?.filter { (classLevel, _) -> classLevel <= charData.level }
-                ?.values
-                ?.flatMap { it.spells } ?: emptyList()
-        if (classDef != null &&
-            unlockedSpells.isNotEmpty() &&
-            unlockedSpells.none { it.spell == msg.spellId && it.rank == msg.spellRank }) {
-            session.send(
-                ServerMessage.Notification(
-                    "Your class cannot use ${msg.spellId} rank ${msg.spellRank}"))
-            return
-        }
-        val rankDef =
-            spell.ranks[msg.spellRank]
-                ?: run {
-                    session.send(
-                        ServerMessage.Notification(
-                            "Unknown rank ${msg.spellRank} for '${msg.spellId}'"))
-                    return
-                }
-
+        val use = clear(session, msg.spellId, msg.spellRank) ?: return
+        val spell = spellRegistry.getValue(msg.spellId)
+        val rankDef = spell.ranks.getValue(msg.spellRank)
         val now = System.currentTimeMillis()
-        if (now < session.combatState.attackCooldownUntilMs) {
-            session.send(ServerMessage.Notification("On global cooldown"))
-            return
-        }
-        val cdKey = "${session.id}:${msg.spellId}:${msg.spellRank}"
-        val cdUntil = cooldowns[cdKey] ?: 0L
-        if (now < cdUntil) {
-            session.send(ServerMessage.Notification("Spell '${msg.spellId}' on cooldown"))
-            return
-        }
 
         // DIRECT_DAMAGE ignores the AoE point entirely — castDirectDamage range-checks the
         // caster's actual locked target instead.
@@ -232,85 +130,62 @@ class SpellProcessor(
             val dz = msg.targetZ - pos.z
             val dist = sqrt(dx * dx + dy * dy + dz * dz)
             if (dist > rankDef.maxRange) {
-                session.send(
-                    ServerMessage.Notification(
-                        "Target out of range (max ${rankDef.maxRange.toInt()} m)"))
+                notify(session, "combat:server:out_of_range_max", rankDef.maxRange.toInt())
                 return
             }
         }
 
-        val resource = charData.characterClass.classResource
-        if (rankDef.manaCost > 0 &&
-            resource == ClassResource.MANA &&
-            charData.currentMana < rankDef.manaCost) {
-            session.send(ServerMessage.Notification("Not enough mana"))
-            return
-        }
-        if (rankDef.rageCost > 0 &&
-            resource == ClassResource.RAGE &&
-            charData.currentRage < rankDef.rageCost) {
-            session.send(ServerMessage.Notification("Not enough rage"))
-            return
-        }
-
-        var updated = charData
-        if (rankDef.manaCost > 0 && resource == ClassResource.MANA)
-            updated = updated.copy(currentMana = updated.currentMana - rankDef.manaCost)
-        if (rankDef.rageCost > 0 && resource == ClassResource.RAGE)
-            updated = updated.copy(currentRage = updated.currentRage - rankDef.rageCost)
-
         when (spell.type) {
-            SpellType.NECROTIC_AOE -> {
-                val radiusSq = rankDef.aoeRadius * rankDef.aoeRadius
-                val effect = resolveStatusEffect(rankDef.statusEffect)
-                val durationSec = effect.durationSec
-                val hitPlayers = mutableListOf<String>()
-                val hitNpcs = mutableListOf<String>()
-
-                for (target in getSessions()) {
-                    if (target.characterData == null) continue
-                    val tp = target.state.pos
-                    val ex = msg.targetX - tp.x
-                    val ey = msg.targetY - tp.y
-                    val ez = msg.targetZ - tp.z
-                    if (ex * ex + ey * ey + ez * ez <= radiusSq) {
-                        combatProcessor.applyStatusEffectTo(target, effect, durationSec, now)
-                        hitPlayers += target.state.name
-                    }
-                }
-
-                for (npc in getNpcs()) {
-                    if (npc.isDead) continue
-                    val np = npc.state.pos
-                    val ex = msg.targetX - np.x
-                    val ey = msg.targetY - np.y
-                    val ez = msg.targetZ - np.z
-                    if (ex * ex + ey * ey + ez * ez <= radiusSq) {
-                        npc.activeEffects.removeAll { it.effect::class == effect::class }
-                        npc.activeEffects.add(
-                            ActiveStatusEffect(effect, now + (durationSec * 1000).toLong()))
-                        hitNpcs += "${npc.state.id.take(8)}(${npc.state.name})"
-                    }
-                }
-
-                log.debug("AoE hit players={} npcs={}", hitPlayers, hitNpcs)
-                val aoeMsg =
-                    ServerMessage.AoEEffect(
-                        msg.targetX, msg.targetY, msg.targetZ, rankDef.aoeRadius)
-                for (s in getSessions()) s.send(aoeMsg)
-            }
+            SpellType.NECROTIC_AOE -> castNecroticAoe(msg, rankDef, now)
             SpellType.TOKEN_RAGE_CONSUME -> {}
-            SpellType.DIRECT_DAMAGE -> {
-                if (!castDirectDamage(session, charData, rankDef)) return
+            SpellType.DIRECT_DAMAGE -> if (!castDirectDamage(session, rankDef)) return
+        }
+
+        gate.commit(session, use)
+        combatProcessor.characterStats.sendStatus(session)
+    }
+
+    private suspend fun castNecroticAoe(
+        msg: ClientMessage.CastAoeSpell,
+        rankDef: SpellRankDefinition,
+        now: Long,
+    ) {
+        val radiusSq = rankDef.aoeRadius * rankDef.aoeRadius
+        val effect = resolveStatusEffect(rankDef.statusEffect)
+        val durationSec = effect.durationSec
+        val hitPlayers = mutableListOf<String>()
+        val hitNpcs = mutableListOf<String>()
+
+        for (target in getSessions()) {
+            if (target.characterData == null) continue
+            val tp = target.state.pos
+            val ex = msg.targetX - tp.x
+            val ey = msg.targetY - tp.y
+            val ez = msg.targetZ - tp.z
+            if (ex * ex + ey * ey + ez * ez <= radiusSq) {
+                combatProcessor.applyStatusEffectTo(target, effect, durationSec, now)
+                hitPlayers += target.state.name
             }
         }
 
-        session.characterData = updated
-        session.combatState =
-            session.combatState.copy(attackCooldownUntilMs = now + combatConfig.globalCooldownMs)
-        if (rankDef.cooldownMs > 0) cooldowns[cdKey] = now + rankDef.cooldownMs
+        for (npc in getNpcs()) {
+            if (npc.isDead) continue
+            val np = npc.state.pos
+            val ex = msg.targetX - np.x
+            val ey = msg.targetY - np.y
+            val ez = msg.targetZ - np.z
+            if (ex * ex + ey * ey + ez * ez <= radiusSq) {
+                npc.activeEffects.removeAll { it.effect::class == effect::class }
+                npc.activeEffects.add(
+                    ActiveStatusEffect(effect, now + (durationSec * 1000).toLong()))
+                hitNpcs += "${npc.state.id.take(8)}(${npc.state.name})"
+            }
+        }
 
-        combatProcessor.characterStats.sendStatus(session)
+        log.debug("AoE hit players={} npcs={}", hitPlayers, hitNpcs)
+        val aoeMsg =
+            ServerMessage.AoEEffect(msg.targetX, msg.targetY, msg.targetZ, rankDef.aoeRadius)
+        for (s in getSessions()) s.send(aoeMsg)
     }
 
     /**
@@ -388,7 +263,13 @@ class SpellProcessor(
         combatConfig: CombatConfigData,
     ) {
         this.spellRegistry = spellRegistry
-        this.classRegistry = classRegistry
         this.combatConfig = combatConfig
+        gate.reload(classRegistry, combatConfig.globalCooldownMs)
     }
 }
+
+private fun SpellRankDefinition.abilityCost(type: SpellType) =
+    AbilityCost(
+        mana = manaCost,
+        rage = rageCost,
+        tokens = if (type == SpellType.TOKEN_RAGE_CONSUME) tokenCost.coerceAtLeast(1) else 0)

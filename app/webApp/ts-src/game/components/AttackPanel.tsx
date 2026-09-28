@@ -122,7 +122,7 @@ export function AttackPanel({
           </div>
         ))}
         {attacks.map(([id, meta]) => {
-          const hasCd = (playerStatus?.attackCooldownsRemainingMs?.[id] ?? 0) > 0;
+          const hasCd = (playerStatus?.cooldownsRemainingMs?.[id] ?? 0) > 0;
           const displayName = meta.attackId ?? id;
           return (
             <div

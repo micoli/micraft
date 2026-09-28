@@ -14,7 +14,7 @@ const base: PlayerStatusData = {
   maxTokens: 5,
   stance: "standing",
   globalCooldownRemainingMs: 0,
-  attackCooldownsRemainingMs: {},
+  cooldownsRemainingMs: {},
   godMode: false,
 };
 

@@ -12,7 +12,7 @@ export function AttackCooldownOverlay({
   meta: AttackMeta | SpellMeta | null;
   playerStatus: UiState["playerStatus"] | undefined;
 }) {
-  const serverCd = playerStatus?.attackCooldownsRemainingMs?.[id] ?? 0;
+  const serverCd = playerStatus?.cooldownsRemainingMs?.[id] ?? 0;
   const cooldownDisplay = useCooldownDisplay(serverCd);
   const hasCd = cooldownDisplay > 0;
   const hasRes = meta ? hasEnoughResources(meta, playerStatus) : true;

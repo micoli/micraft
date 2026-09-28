@@ -390,6 +390,12 @@
                       }
                     }
                   }
+                },
+                "cooldownsUntilMs": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer"
+                  }
                 }
               }
             }

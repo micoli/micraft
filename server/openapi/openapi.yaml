@@ -6685,6 +6685,13 @@ components:
           $ref: "#/components/schemas/org.micoli.micraft.player.rpg.CharacterClass"
         combatant:
           $ref: "#/components/schemas/org.micoli.micraft.player.rpg.CombatantData"
+        cooldownsUntilMs:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+            title: Long
+          title: "Map<String,Long>"
         currentHp:
           type: integer
           format: int32
@@ -6724,6 +6731,7 @@ components:
       - baseStats
       - characterClass
       - combatant
+      - cooldownsUntilMs
       - currentHp
       - currentMana
       - currentRage
@@ -6785,6 +6793,13 @@ components:
           $ref: "#/components/schemas/org.micoli.micraft.player.rpg.BaseStats"
         characterClass:
           $ref: "#/components/schemas/org.micoli.micraft.player.rpg.CharacterClass"
+        cooldownsUntilMs:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+            title: Long
+          title: "Map<String,Long>"
         currentHp:
           type: integer
           format: int32
@@ -6812,6 +6827,7 @@ components:
       required:
       - baseStats
       - characterClass
+      - cooldownsUntilMs
       - currentHp
       - currentMana
       - currentRage

@@ -588,3 +588,21 @@ summon:
     not_found: "Joueur introuvable : {0}"
     summoned_you: "Vous avez été invoqué par {0}."
     done: "{0} a été invoqué à votre position."
+
+combat:
+  server:
+    no_character: "Aucun personnage — utilisez /createcharacter"
+    unknown_attack: "Attaque inconnue '{0}'"
+    unknown_spell: "Sort inconnu '{0}'"
+    not_unlocked: "Votre classe ne peut pas utiliser {0} rang {1}"
+    unknown_rank: "Rang {1} inconnu pour '{0}'"
+    global_cooldown: "Délai global en cours"
+    on_cooldown: "{0} (rang {1}) en recharge"
+    not_enough_mana: "Pas assez de mana"
+    not_enough_rage: "Pas assez de rage"
+    not_enough_tokens: "Aucun jeton de rage disponible"
+    target_not_found: "Cible introuvable"
+    out_of_range: "Cible hors de portée"
+    out_of_range_max: "Cible hors de portée (max {0} m)"
+    no_target: "Aucune cible sélectionnée"
+    stabilized: "Vous êtes stabilisé !"
