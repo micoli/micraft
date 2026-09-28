@@ -2,13 +2,13 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize, resolve, sep } from "node:path";
-import { Repository, type ItemFilter, type ItemUpdate } from "./repository.ts";
+import { DEFAULT_PATHS, Repository, type ItemFilter, type ItemUpdate } from "./repository.ts";
 
 // Inside the dev container the published port only reaches the server on all interfaces.
 const HOST = process.env.ISSUES_HOST ?? (existsSync("/.dockerenv") ? "0.0.0.0" : "127.0.0.1");
 const PORT = Number(process.env.ISSUES_PORT ?? 4380);
 const ROOT = resolve(import.meta.dirname, process.env.ISSUES_ROOT ?? "../..");
-const STATIC_DIR = resolve(import.meta.dirname, "../client/dist");
+const STATIC_DIR = resolve(import.meta.dirname, "..", process.env.ISSUES_STATIC_DIR ?? "client/dist");
 const MAX_BODY_BYTES = 1024 * 1024;
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
@@ -20,7 +20,11 @@ const CONTENT_TYPES: Record<string, string> = {
   ".json": "application/json",
 };
 
-const repository = new Repository(ROOT);
+const repository = new Repository(ROOT, {
+  scratchDir: process.env.ISSUES_SCRATCH_DIR ?? DEFAULT_PATHS.scratchDir,
+  adrDir: process.env.ISSUES_ADR_DIR ?? DEFAULT_PATHS.adrDir,
+  contextFile: process.env.ISSUES_CONTEXT_FILE ?? DEFAULT_PATHS.contextFile,
+});
 
 createServer((request, response) => {
   handle(request, response).catch((error: unknown) => {
@@ -28,7 +32,7 @@ createServer((request, response) => {
     sendJson(response, 500, { error: "internal error" });
   });
 }).listen(PORT, HOST, () => {
-  console.log(`issues-server on http://${HOST}:${PORT} (root ${ROOT})`);
+  console.log(`issues-server on http://${HOST}:${PORT} (root ${ROOT}, ${JSON.stringify(repository.paths)})`);
 });
 
 async function handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
@@ -38,6 +42,7 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
   if (request.method !== "GET") return sendJson(response, 405, { error: "method not allowed" });
   if (!url.pathname.startsWith("/api/")) return serveStatic(url.pathname, response);
 
+  if (url.pathname === "/api/config") return sendJson(response, 200, repository.paths);
   if (url.pathname === "/api/efforts") return sendJson(response, 200, await repository.efforts());
   if (url.pathname === "/api/labels") return sendJson(response, 200, await repository.labels());
   if (url.pathname === "/api/items") return sendJson(response, 200, await repository.list(toFilter(url.searchParams)));

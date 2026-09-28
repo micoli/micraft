@@ -12,11 +12,12 @@ interface Props {
   id: string | null;
   revision: number;
   labelIndex: LabelIndex;
+  rootPrefixes: string[];
   onNavigate: (id: string) => void;
   onSaved: () => void;
 }
 
-export function ItemDetail({ id, revision, labelIndex, onNavigate, onSaved }: Props) {
+export function ItemDetail({ id, revision, labelIndex, rootPrefixes, onNavigate, onSaved }: Props) {
   const { data: item, error } = useApi<Item>(id ? itemUrl(id) : null, revision);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -64,7 +65,7 @@ export function ItemDetail({ id, revision, labelIndex, onNavigate, onSaved }: Pr
         <Dependencies title="Blocked by" ids={item.blockedBy} onNavigate={onNavigate} />
         <Dependencies title="Blocks" ids={item.blocks} onNavigate={onNavigate} />
       </header>
-      <Markdown source={item.body} basePath={item.id} onNavigate={onNavigate} />
+      <Markdown source={item.body} basePath={item.id} rootPrefixes={rootPrefixes} onNavigate={onNavigate} />
     </article>
   );
 }

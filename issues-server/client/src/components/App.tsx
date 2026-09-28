@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { itemsQuery, useApi, type Effort, type Filters, type ItemSummary, type LabelIndex } from "../api.ts";
+import {
+  itemsQuery,
+  repoRootPrefixes,
+  useApi,
+  type Effort,
+  type Filters,
+  type ItemSummary,
+  type LabelIndex,
+  type RepositoryConfig,
+} from "../api.ts";
 import { Sidebar } from "./Sidebar.tsx";
 import { FilterBar } from "./FilterBar.tsx";
 import { ItemList } from "./ItemList.tsx";
@@ -12,6 +21,7 @@ export function App() {
   const [selectedId, setSelectedId] = useState<string | null>(readSelectedIdFromUrl);
   const [revision, setRevision] = useState(0);
 
+  const config = useApi<RepositoryConfig>("/api/config");
   const efforts = useApi<Effort[]>("/api/efforts", revision);
   const labels = useApi<LabelIndex>("/api/labels", revision);
   const items = useApi<ItemSummary[]>(itemsQuery(filters), revision);
@@ -53,6 +63,7 @@ export function App() {
             id={selectedId}
             revision={revision}
             labelIndex={labels.data ?? {}}
+            rootPrefixes={repoRootPrefixes(config.data)}
             onNavigate={setSelectedId}
             onSaved={() => setRevision((current) => current + 1)}
           />

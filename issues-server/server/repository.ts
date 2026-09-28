@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { access, readdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, posix } from "node:path";
 import {
   LABEL_KEY,
   UNLABELLED_KINDS,
@@ -50,7 +50,18 @@ export interface ItemFilter {
   labels: Record<string, string>;
 }
 
-const CONTEXT_FILE = "CONTEXT.md";
+export interface RepositoryPaths {
+  scratchDir: string;
+  adrDir: string;
+  contextFile: string;
+}
+
+export const DEFAULT_PATHS: RepositoryPaths = {
+  scratchDir: ".scratch",
+  adrDir: "docs/adr",
+  contextFile: "CONTEXT.md",
+};
+
 const CLOSED_STATUSES = new Set(["resolved", "wontfix", "done", "closed", "accepted", "superseded"]);
 
 export function isClosed(item: Pick<Item, "labels">): boolean {
@@ -59,9 +70,15 @@ export function isClosed(item: Pick<Item, "labels">): boolean {
 
 export class Repository {
   private readonly root: string;
+  readonly paths: RepositoryPaths;
 
-  constructor(root: string) {
+  constructor(root: string, paths: RepositoryPaths = DEFAULT_PATHS) {
     this.root = root;
+    this.paths = {
+      scratchDir: posix.normalize(paths.scratchDir).replace(/\/$/, ""),
+      adrDir: posix.normalize(paths.adrDir).replace(/\/$/, ""),
+      contextFile: posix.normalize(paths.contextFile),
+    };
   }
 
   async load(): Promise<ItemDetail[]> {
@@ -127,32 +144,35 @@ export class Repository {
   }
 
   private async loadScratch(): Promise<StoredItem[]> {
-    const scratch = join(this.root, ".scratch");
+    const { scratchDir } = this.paths;
     const items: StoredItem[] = [];
-    for (const effort of await listDirectories(scratch)) {
-      const effortDir = join(scratch, effort);
-      for (const file of await listMarkdown(effortDir)) {
-        items.push(await this.readItem(`.scratch/${effort}/${file}`, kindOf(file), effort, file));
+    for (const effort of await listDirectories(join(this.root, scratchDir))) {
+      const effortDir = posix.join(scratchDir, effort);
+      for (const file of await listMarkdown(join(this.root, effortDir))) {
+        items.push(await this.readItem(posix.join(effortDir, file), kindOf(file), effort, file));
       }
-      for (const file of await listMarkdown(join(effortDir, "issues"))) {
-        items.push(await this.readItem(`.scratch/${effort}/issues/${file}`, "issue", effort, file));
+      const issuesDir = posix.join(effortDir, "issues");
+      for (const file of await listMarkdown(join(this.root, issuesDir))) {
+        items.push(await this.readItem(posix.join(issuesDir, file), "issue", effort, file));
       }
     }
     return items;
   }
 
   private async loadContext(): Promise<StoredItem[]> {
-    const exists = await access(join(this.root, CONTEXT_FILE)).then(
+    const { contextFile } = this.paths;
+    const exists = await access(join(this.root, contextFile)).then(
       () => true,
       () => false,
     );
     if (!exists) return [];
-    return [await this.readItem(CONTEXT_FILE, "context", null, CONTEXT_FILE)];
+    return [await this.readItem(contextFile, "context", null, posix.basename(contextFile))];
   }
 
   private async loadAdrs(): Promise<StoredItem[]> {
-    const files = (await listMarkdown(join(this.root, "docs/adr"))).filter((file) => /^\d+-/.test(file));
-    return Promise.all(files.map((file) => this.readItem(`docs/adr/${file}`, "adr", null, file)));
+    const { adrDir } = this.paths;
+    const files = (await listMarkdown(join(this.root, adrDir))).filter((file) => /^\d+-/.test(file));
+    return Promise.all(files.map((file) => this.readItem(posix.join(adrDir, file), "adr", null, file)));
   }
 
   private async readItem(id: string, kind: ItemKind, effort: string | null, file: string): Promise<StoredItem> {

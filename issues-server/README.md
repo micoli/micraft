@@ -20,12 +20,24 @@ The daemon follows `RUN_MODE`. In the dev container its `node_modules` live in t
 volume (Linux binaries, host copy untouched) and port 4380 is published on `127.0.0.1` only. The server listens on
 `0.0.0.0` inside a container (`/.dockerenv`), `127.0.0.1` elsewhere.
 
-Env: `ISSUES_PORT` (4380), `ISSUES_HOST` (see above), `ISSUES_ROOT` (repo root, relative to `server/`).
+Env:
+
+| Variable | Default | Role |
+|----------|---------|------|
+| `ISSUES_PORT` | `4380` | API + built client port (also the Vite proxy target) |
+| `ISSUES_HOST` | see above | Listen interface |
+| `ISSUES_ROOT` | `../..` | Repo root, relative to `server/` |
+| `ISSUES_SCRATCH_DIR` | `.scratch` | Backlog directory (efforts, specs, maps, issues), relative to the root |
+| `ISSUES_ADR_DIR` | `docs/adr` | ADR directory, relative to the root |
+| `ISSUES_CONTEXT_FILE` | `CONTEXT.md` | Domain glossary, relative to the root |
+| `ISSUES_STATIC_DIR` | `client/dist` | Built client, relative to `issues-server/` (Vite `outDir` and served directory) |
+| `ISSUES_DEV_PORT` | `4381` | Vite dev server port |
 
 ## API
 
 | Route | Returns |
 |-------|---------|
+| `GET /api/config` | Configured `scratchDir`, `adrDir`, `contextFile` (the client resolves repo-rooted links with them) |
 | `GET /api/efforts` | Efforts (`.scratch/<slug>/`) with spec title, issue count, per-Status counts |
 | `GET /api/labels` | Every label key → value → occurrence count |
 | `GET /api/items?kind=&effort=&q=&label.<Key>=<value>` | Item summaries (no body); `kind` ∈ `issue`, `spec`, `map`, `adr`, `doc`, `context` |

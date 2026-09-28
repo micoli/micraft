@@ -116,3 +116,28 @@ test("lists CONTEXT.md as an unlabelled context item and saves it", async () => 
   await repository.save("CONTEXT.md", { ...current, body: current.body.replace("login", "sign-in") });
   assert.equal(await readFile(join(root, "CONTEXT.md"), "utf8"), source.replace("login", "sign-in"));
 });
+
+test("reads the backlog, ADRs and glossary from configured paths", async () => {
+  const root = await mkdtemp(join(tmpdir(), "issues-server-"));
+  await mkdir(join(root, "backlog/roster/issues"), { recursive: true });
+  await mkdir(join(root, "decisions"), { recursive: true });
+  await mkdir(join(root, "glossary"), { recursive: true });
+  await writeFile(join(root, "backlog/roster/spec.md"), "# Roster\n\nStatus: needs-triage\n");
+  await writeFile(join(root, "backlog/roster/issues/01-derive.md"), "# Derive\n\nStatus: needs-triage\n");
+  await writeFile(join(root, "decisions/0001-server.md"), "---\nstatus: accepted\n---\n\n# Server authority\n");
+  await writeFile(join(root, "glossary/TERMS.md"), "# Terms\n\nBody.\n");
+  const repository = new Repository(root, {
+    scratchDir: "./backlog/",
+    adrDir: "decisions",
+    contextFile: "glossary/TERMS.md",
+  });
+
+  const ids = (await repository.list({ labels: {} })).map((item) => `${item.kind}:${item.id}`);
+
+  assert.deepEqual(ids.sort(), [
+    "adr:decisions/0001-server.md",
+    "context:glossary/TERMS.md",
+    "issue:backlog/roster/issues/01-derive.md",
+    "spec:backlog/roster/spec.md",
+  ]);
+});

@@ -29,6 +29,17 @@ export interface Effort {
   statusCounts: Record<string, number>;
 }
 
+export interface RepositoryConfig {
+  scratchDir: string;
+  adrDir: string;
+  contextFile: string;
+}
+
+export function repoRootPrefixes(config: RepositoryConfig | undefined): string[] {
+  if (!config) return [];
+  return [...new Set([config.scratchDir, config.adrDir].map((path) => path.split("/")[0]))];
+}
+
 export type LabelIndex = Record<string, Record<string, number>>;
 
 export interface ItemUpdate {
