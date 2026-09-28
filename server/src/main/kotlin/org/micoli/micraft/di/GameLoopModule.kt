@@ -66,6 +66,7 @@ import org.micoli.micraft.game.rpg.ExperienceConfig
 import org.micoli.micraft.game.rpg.ExperienceConfigData
 import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.session.NetworkStats
+import org.micoli.micraft.game.social.FactionManager
 import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.trade.TradeConfigLoader
@@ -426,6 +427,40 @@ class GameLoopModule {
     ): CharacterStats =
         CharacterStats(equipmentCatalog, combatConfigData.maxRage, playerPersister::save)
 
+    /**
+     * The single production `FactionManager`. `GameLoop` reads it (via `factionManager` in
+     * [org.micoli.micraft.Application]) for `/faction` commands and chat, and [combatProcessor]
+     * reads it here so same-Faction attacks follow the friendly-fire setting. `GameLoop`'s init
+     * block applies the Faction config to whichever instance it receives, so this factory leaves
+     * config application to it rather than applying it here too.
+     */
+    @Suppress("LongParameterList")
+    @Single
+    fun factionManager(
+        sessionRegistry: SessionRegistry,
+        playerPersister: PlayerPersister,
+        chatService: ChatService,
+        chatChannelManager: ChatChannelManager,
+        i18nConfig: I18nConfig,
+        optionalWorldPersistence: OptionalWorldPersistence,
+        worldState: WorldState,
+    ): FactionManager =
+        FactionManager(
+            getSessions = sessionRegistry::all,
+            savePlayer = playerPersister::save,
+            chatService = chatService,
+            channelManager = chatChannelManager,
+            i18n = i18nConfig,
+            persistence = optionalWorldPersistence.value,
+            zoneLevelAt = { x, z -> worldState.zoneLevelAt(x, z) },
+            lowLevelSpawnSlots = { count, radius ->
+                worldState.distinctLowLevelSpawns(count, radius)
+            },
+        )
+
+    // Every param is a distinct already-registered singleton this processor needs directly (or a
+    // FactionManager for friendly fire) — no lower-arity way to wire them.
+    @Suppress("LongParameterList")
     @Single
     fun combatProcessor(
         combatConfigData: CombatConfigData,
@@ -441,6 +476,7 @@ class GameLoopModule {
         playerPersister: PlayerPersister,
         experienceProcessor: ExperienceProcessor,
         experienceConfigData: ExperienceConfigData,
+        factionManager: FactionManager,
     ): CombatProcessor =
         CombatProcessor(
             config = combatConfigData,
@@ -467,6 +503,7 @@ class GameLoopModule {
                 val xpAmount = experienceConfigData.sources.commonPerLevel * charData.level
                 experienceProcessor.grantXpToNpc(predator, xpAmount)
             },
+            factionManager = factionManager,
             characterStats = characterStats,
         )
 
@@ -659,6 +696,9 @@ class GameLoopModule {
             actionBlockRegistry = actionBlockRegistry,
         )
 
+    // Every param is a distinct already-registered singleton this breaker needs directly — no
+    // lower-arity way to wire them.
+    @Suppress("LongParameterList")
     @Single
     fun blockBreaker(
         worldState: WorldState,
@@ -670,8 +710,7 @@ class GameLoopModule {
         claimRegistry: ClaimRegistry,
         railNetworkRegistry: RailNetworkRegistry,
         actionBlockRegistry: ActionBlockRegistry,
-        weaponRegistry: Map<String, WeaponDefinition>,
-        toolRegistry: Map<String, ToolDefinition>,
+        equipmentCatalog: EquipmentCatalog,
     ): BlockBreaker =
         BlockBreaker(
             worldState,
@@ -683,8 +722,8 @@ class GameLoopModule {
             claimRegistry = claimRegistry,
             railNetworkRegistry = railNetworkRegistry,
             actionBlockRegistry = actionBlockRegistry,
-            weaponRegistry = { weaponRegistry },
-            toolRegistry = { toolRegistry },
+            weaponRegistry = { equipmentCatalog.weapons },
+            toolRegistry = { equipmentCatalog.tools },
         )
 
     @Single

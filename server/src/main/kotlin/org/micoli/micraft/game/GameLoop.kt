@@ -245,6 +245,9 @@ fun validatePluginSystemIds(commands: Map<String, CommandHandler>, plugins: List
 /** Guards against sending a disproportionate prompt to Ollama. */
 private const val MAX_NPC_CHAT_TEXT_LENGTH = 500
 
+// Every param is a distinct subsystem `Application.kt` wires from Koin, with a test-only default
+// for each — no lower-arity way to construct this (pre-existing shape, baseline-suppressed before).
+@Suppress("LongParameterList")
 class GameLoop(
     private val world: WorldState,
     private val persistence: WorldPersistence? = null,
@@ -511,6 +514,21 @@ class GameLoop(
             combatConfig = combatConfig,
         ),
     private val questManager: QuestManager? = null,
+    /**
+     * The single production `MailManager`, wired through the Koin `OptionalMailManager` provider
+     * (which has a `QuestManager`) so client mail and `AuctionManager` share one instance over the
+     * same players directory. The default here (used by tests) builds its own, unwired instance.
+     */
+    private val mailManager: MailManager? =
+        persistence?.worldDir?.resolve("players")?.let { playersDir ->
+            MailManager(
+                persistence = MailPersistence(playersDir),
+                sessionRegistry = sessionRegistry,
+                i18n = i18n,
+                savePlayer = playerPersister::save,
+                questManager = questManager,
+            )
+        },
     private val questRegistryLoader: QuestRegistryLoader? = null,
     private val e2eEnabled: Boolean = System.getenv("MICRAFT_E2E")?.isNotBlank() == true,
     private val shared: SharedGameServices = SharedGameServices.default(),
@@ -529,16 +547,6 @@ class GameLoop(
         if (newExperience != null) experienceProcessor.reload(newExperience)
         if (newSkills != null) blockPlacer.reload(newSkills.attacks)
     }
-
-    private val mailManager: MailManager? =
-        persistence?.worldDir?.resolve("players")?.let { playersDir ->
-            MailManager(
-                persistence = MailPersistence(playersDir),
-                sessionRegistry = sessionRegistry,
-                i18n = i18n,
-                savePlayer = playerPersister::save,
-            )
-        }
 
     private val guildRegistry: GuildRegistry = GuildRegistry(persistence)
 

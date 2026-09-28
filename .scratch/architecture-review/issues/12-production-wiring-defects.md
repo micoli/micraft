@@ -1,6 +1,6 @@
 # Production World wiring drops four hooks that tests assume
 
-Status: ready-for-agent
+Status: done
 Category: bug
 Strength: Strong
 
@@ -49,13 +49,27 @@ defaults, so they pass while production behaves differently:
 - `BlockBreaker`'s weapon/tool registry lambdas should read `EquipmentCatalog`, not an erased `Map` bean
 
 **Acceptance criteria:**
-- [ ] A test built from the production Koin graph (not the `GameLoop` defaults) shows a same-Faction attack blocked
+- [x] A test built from the production Koin graph (not the `GameLoop` defaults) shows a same-Faction attack blocked
       when friendly fire is disabled
-- [ ] A test through the production graph shows `/rest` clears regen accumulators
-- [ ] A test shows claiming a mail attachment credits an item-collection quest objective, and that the auction's
+- [x] A test through the production graph shows `/rest` clears regen accumulators
+- [x] A test shows claiming a mail attachment credits an item-collection quest objective, and that the auction's
       mail and the player's mailbox are the same instance
-- [ ] A test shows block breaking picks up a reloaded tool definition
-- [ ] `make dc CMD="./gradlew :server:test"` green; `make dev-restart-server` boots without ERROR
+- [x] A test shows block breaking picks up a reloaded tool definition
+- [x] `make dc CMD="./gradlew :server:test"` green; `make dev-restart-server` not exercised (no running dev server
+      in this session — run it before/at next deploy to confirm boot)
+
+## Resolution (2026-09-28)
+
+Fixed in `GameLoopModule.kt` (new `factionManager` Koin provider, `combatProcessor`/`blockBreaker` updated),
+`CommandContextModule.kt` (`clearAccumulators` wired to `RegenProcessor`), `GameLoop.kt` (`mailManager` promoted to
+a real constructor param) and `Application.kt` (feeds the Koin `FactionManager`/`OptionalMailManager` in). Tests:
+`GameLoopModuleTest`, `MailWiringTest`, `CommandContextModuleTest`, all built from the real Koin graph
+(`koinApplication { modules(AppModule().module) }`), not `GameLoop` defaults.
+
+Known follow-up, left out of scope (see [13](13-buildgameworld-matches-production.md)):
+`GameWorldFactory`-built worlds (E2E/instanced) still read `SharedGameServices.weaponRegistry`/`toolRegistry`,
+frozen at startup, not the live `EquipmentCatalog` — so `/reload` only reaches the main production world's
+`BlockBreaker`, not factory-built worlds.
 
 **Out of scope:**
 - Removing the Koin providers or unifying wiring sites, see [13](13-buildgameworld-matches-production.md)–

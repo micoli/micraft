@@ -42,6 +42,7 @@ import org.micoli.micraft.config.validateYamlConfig
 import org.micoli.micraft.di.AppModule
 import org.micoli.micraft.di.OptionalAuctionManager
 import org.micoli.micraft.di.OptionalAuthProvider
+import org.micoli.micraft.di.OptionalMailManager
 import org.micoli.micraft.di.OptionalTokenStore
 import org.micoli.micraft.di.OptionalWorldPersistence
 import org.micoli.micraft.di.PlayerPersister
@@ -89,6 +90,7 @@ import org.micoli.micraft.game.rpg.ExperienceConfig
 import org.micoli.micraft.game.rpg.ExperienceConfigData
 import org.micoli.micraft.game.rpg.ExperienceProcessor
 import org.micoli.micraft.game.session.NetworkStats
+import org.micoli.micraft.game.social.FactionManager
 import org.micoli.micraft.game.tick.ChunkStreamer
 import org.micoli.micraft.game.tick.MovementProcessor
 import org.micoli.micraft.game.trade.TradeConfigLoader
@@ -258,6 +260,7 @@ fun Application.module() {
             reloadRegistries = reloadRegistries,
             reloadGameConfig = reloadGameConfigLambda,
             factionsSection = serverConfig.factions,
+            factionManager = get<FactionManager>(),
             reloadFactionsConfig = { loadServerConfig().factions },
             i18n = get<I18nConfig>(),
             tokenStore = tokenStore,
@@ -309,6 +312,7 @@ fun Application.module() {
             tradeConfigLoader = get<TradeConfigLoader>(),
             tradeManager = get<TradeManager>(),
             auctionManager = get<OptionalAuctionManager>().value,
+            mailManager = get<OptionalMailManager>().value,
             blockBreaker = get<BlockBreaker>(),
             blockPlacer = get<BlockPlacer>(),
             movementProcessor = get<MovementProcessor>(),

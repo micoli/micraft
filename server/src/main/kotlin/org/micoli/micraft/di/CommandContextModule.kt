@@ -12,6 +12,7 @@ import org.micoli.micraft.config.ConfigRegistry
 import org.micoli.micraft.game.armor.ArmorDefinition
 import org.micoli.micraft.game.chat.ChatChannelManager
 import org.micoli.micraft.game.chat.ChatService
+import org.micoli.micraft.game.combat.RegenProcessor
 import org.micoli.micraft.game.equipment.EquipmentCatalog
 import org.micoli.micraft.game.equipment.ToolCategoryDefinition
 import org.micoli.micraft.game.equipment.ToolDefinition
@@ -109,6 +110,7 @@ class CommandContextModule {
         siegeWeaponManager: SiegeWeaponManager,
         characterStats: CharacterStats,
         equipmentCatalog: EquipmentCatalog,
+        regenProcessor: RegenProcessor,
     ): CommandContext {
         val generator = worldState.generator as? ProceduralChunkGenerator
         val cavernPoints = generator?.namedCavernPoints() ?: emptyMap()
@@ -163,6 +165,7 @@ class CommandContextModule {
             tradeManager = tradeManager,
             auctionManager = optionalAuctionManager.value,
             questManager = questManager,
+            clearAccumulators = regenProcessor::clearAccumulators,
             namedPoints = { cavernPoints + staircasePoints + instanceNamedPoints() },
             applyBuff = closures.applyBuff,
             vehicleManager = vehicleManager,
