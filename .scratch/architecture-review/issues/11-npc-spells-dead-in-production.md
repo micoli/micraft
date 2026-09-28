@@ -1,6 +1,6 @@
 # Boss NPCs never cast their spells in the production world
 
-Status: ready-for-agent
+Status: resolved
 Strength: Strong
 
 Split out of [04](04-gameworld-self-assembly.md) on 2026-09-28: found while verifying that ticket's premise, and it
@@ -61,3 +61,14 @@ lives. The omission stops being expressible: a world cannot be built without one
 - The wiring duplication that allowed this — that is [04](04-gameworld-self-assembly.md).
 - Any change to NPC spell balance, cooldowns or selection.
 - The `AbilityGate` work in [03](03-ability-gate.md); the NPC cast path stays as it is.
+
+## Answer
+
+Fixed on 2026-09-28. `GameWorld.spellProcessor` lost its `? = null`, so the compiler now rejects a world built
+without one, and `GameLoop` passes the processor it already held. `GameLoopTest.defaultWorld_isWiredWithASpellProcessor`
+guards the wiring should the parameter ever go back to nullable. The detekt baseline entry for the `GameWorld`
+constructor was re-recorded with the new signature — the rule it suppresses (`LongParameterList`) is what
+[04](04-gameworld-self-assembly.md) exists to remove.
+
+`NpcTickPipeline.tick` and `NpcManager.tickAggro` keep their nullable `spellProcessor` parameter: tests call them
+directly without one, and they are no longer the path where the omission could originate.

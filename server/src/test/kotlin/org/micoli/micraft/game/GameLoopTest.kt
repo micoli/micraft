@@ -8,6 +8,7 @@ import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -533,5 +534,11 @@ class GameLoopTest {
         val gameLoop = GameLoop(testWorld())
         val result = gameLoop.autocomplete(UUID.randomUUID().toString(), 0, "", "Alice")
         assertTrue(result.isEmpty())
+    }
+
+    /** Dropping it leaves `tryNpcCast` behind a safe call, so no NPC ever casts in production. */
+    @Test
+    fun defaultWorld_isWiredWithASpellProcessor() {
+        assertNotNull(GameLoop(testWorld()).defaultWorld.spellProcessor)
     }
 }

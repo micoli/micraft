@@ -125,7 +125,7 @@ class GameWorld(
     val instanceRegistry: InstanceRegistry,
     val worldItems: WorldItemManager,
     val combatProcessor: CombatProcessor,
-    val spellProcessor: SpellProcessor? = null,
+    val spellProcessor: SpellProcessor,
     private val statusEffectProcessor: StatusEffectProcessor,
     val regenProcessor: RegenProcessor,
     val weatherManager: WeatherManager,
