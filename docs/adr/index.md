@@ -22,3 +22,4 @@ editing its decision. Domain vocabulary comes from `CONTEXT.md` at the repo root
 | [0010](0010-wild-npc-population-per-region-roster.md) | Wild NPCs spawn from a derived per-Region Roster and budget; Quests follow the Roster |
 | [0011](0011-llm-is-read-only-npc-voice.md) | The LLM only voices NPC chat; Disposition and Barks never depend on it |
 | [0012](0012-one-builder-per-world.md) | Every World is assembled by one builder; Koin holds only process-level services |
+| [0013](0013-dodge-and-magic-resistance-for-every-character.md) | Dodge and Magic resistance apply to every Character, not only under a Protection |
