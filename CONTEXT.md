@@ -142,6 +142,18 @@ so reconnecting never shortens it.
 **Status effect**:
 A timed modifier on a combatant (damage over time, boost, slow…).
 
+**Protection**:
+The self-cast Spell every Class owns from Level 1 that grants a timed Status effect raising one or two defenses (Armor class, Dodge, Magic resistance, max HP). Its Rank rises with Level like any Ability; a low Rank is outpaced by higher Danger tiers, not weakened.
+_Avoid_: shield, ward (as generic names), buff (in prose)
+
+**Dodge**:
+The chance for a Character to avoid entirely a non-magical Ability that would have hit it.
+_Avoid_: evasion
+
+**Magic resistance**:
+The chance that a magical Ability that would have hit a Character fails entirely: no damage, no Status effect. A magical Ability deals magic, fire, lightning or necrotic damage; Dodge covers the others.
+_Avoid_: spell failure rate, spell resist
+
 **Target**:
 The entity a Character has currently selected (NPC, Action block, Placeable).
 
