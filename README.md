@@ -93,6 +93,7 @@ make test                     # all test suites
 | `/panel` | `/panel <edit\|set <url>\|clear>` | Edit the targeted interactive panel. | dynamic |
 | `/pet` | `/pet <list\|spawn\|dismiss\|resurrect\|rename> [name] [newName]` | Manage your tamed pets (list, spawn, dismiss, resurrect, rename). | dynamic |
 | `/preferences` | `/preferences` | Opens the preferences panel. | — |
+| `/protect` | `/protect` | Cast your Class's Protection Spell. | — |
 | `/pump` | `/pump` | Remove all connected liquid blocks in sight. | — |
 | `/quest` | `/quest [list\|accept\|abandon\|turnin\|status] [id]` | Manage your quests. | dynamic |
 | `/refetch` | `/refetch` | Reloads all chunks around the player. | — |

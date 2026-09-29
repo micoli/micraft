@@ -32,6 +32,7 @@ Defined in `data/config/keybindings.yaml` (bundled defaults in `resources/config
 | `combat` | `siege_weapon_pitch` | Alt+KeyR |
 | `combat` | `siege_weapon_power` | Ctrl+KeyR |
 | `combat` | `siege_weapon_fire` | KeyX |
+| `combat` | `protect` |  |
 | `building` | `place_rotate` | KeyR |
 | `building` | `block_interact` | KeyX |
 | `building` | `actionblock_edit` | Alt+KeyB |
