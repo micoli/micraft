@@ -612,3 +612,11 @@ protections:
   client:
     iron_skin_name: "Iron Skin"
     iron_skin_description: "Raises your Armor class for a time."
+    shadowstep_name: "Shadowstep"
+    shadowstep_description: "Raises your Dodge for a time."
+    arcane_ward_name: "Arcane Ward"
+    arcane_ward_description: "Raises your Magic resistance and a little Armor class for a time."
+    natures_veil_name: "Nature's Veil"
+    natures_veil_description: "Raises both your Magic resistance and Dodge for a time."
+    fortitude_name: "Fortitude"
+    fortitude_description: "Raises your max HP and HP regeneration for a time."

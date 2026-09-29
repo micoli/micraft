@@ -112,6 +112,16 @@ classes:
             rank: 1
           - spell: sparkBolt
             rank: 1
+          - spell: arcane_ward
+            rank: 1
+          - spell: arcane_ward
+            rank: 2
+          - spell: arcane_ward
+            rank: 3
+          - spell: arcane_ward
+            rank: 4
+          - spell: arcane_ward
+            rank: 5
       2:
         attacks:
           - attack: pyre
@@ -212,6 +222,16 @@ classes:
         spells:
           - spell: huntersShot
             rank: 1
+          - spell: natures_veil
+            rank: 1
+          - spell: natures_veil
+            rank: 2
+          - spell: natures_veil
+            rank: 3
+          - spell: natures_veil
+            rank: 4
+          - spell: natures_veil
+            rank: 5
       2:
         attacks:
           - attack: poison_bite
@@ -288,6 +308,16 @@ classes:
         spells:
           - spell: swiftStab
             rank: 1
+          - spell: shadowstep
+            rank: 1
+          - spell: shadowstep
+            rank: 2
+          - spell: shadowstep
+            rank: 3
+          - spell: shadowstep
+            rank: 4
+          - spell: shadowstep
+            rank: 5
       2:
         attacks:
           - attack: slash
@@ -368,6 +398,16 @@ classes:
             rank: 1
           - spell: smite
             rank: 1
+          - spell: fortitude
+            rank: 1
+          - spell: fortitude
+            rank: 2
+          - spell: fortitude
+            rank: 3
+          - spell: fortitude
+            rank: 4
+          - spell: fortitude
+            rank: 5
       3:
         attacks:
           - attack: fireball

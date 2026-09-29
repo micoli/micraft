@@ -62,6 +62,7 @@ class CombatProcessorTest {
             level = level,
         )
 
+    @Suppress("LongParameterList")
     private fun buildProcessor(
         sessions: () -> Collection<PlayerSession>,
         attackRegistry: Map<String, AttackDefinition> =
@@ -71,6 +72,7 @@ class CombatProcessorTest {
         subscribed: MutableList<Pair<PlayerSession, String>> = mutableListOf(),
         onPlayerDownedByNpc: suspend (PlayerSession, String) -> Unit = { _, _ -> },
         rollSource: kotlin.random.Random = kotlin.random.Random.Default,
+        protectionSpells: Map<String, org.micoli.micraft.game.combat.SpellDefinition> = emptyMap(),
     ) =
         CombatProcessor(
             config = config,
@@ -84,6 +86,9 @@ class CombatProcessorTest {
             savePlayer = {},
             onPlayerDownedByNpc = onPlayerDownedByNpc,
             rollSource = rollSource,
+            characterStats =
+                org.micoli.micraft.game.rpg.CharacterStats(
+                    maxRage = config.maxRage, protectionSpells = protectionSpells),
         )
 
     private fun fakeNpc(id: String = "npc-1", level: Int = 1): NpcInstance {
@@ -612,6 +617,71 @@ class CombatProcessorTest {
 
         assertEquals(20, target.characterData!!.currentHp)
         assertTrue(target.combatState.activeEffects.isEmpty())
+        assertTrue(combatLog.single().contains("resisted"))
+    }
+
+    @Test
+    fun `handleNpcAttack physical hit is dodged thanks to an active Shadowstep`() = runBlocking {
+        val shadowstepSpell =
+            SpellDefinition(
+                type = SpellType.PROTECTION,
+                ranks = mapOf(1 to SpellRankDefinition(dodgeBonusPct = 30f)))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
+        // dex=8 → base dodgePct=0; only Shadowstep's +30 makes the roll below matter. hp=9 is this
+        // Character's real maxHp (con=8, level=1) — casting the Protection resyncs/clamps HP, so
+        // starting above maxHp would mask the dodge assertion behind that unrelated clamp.
+        target.characterData = testChar("b", "Bob", hp = 9, dex = 8)
+
+        val combatLog = mutableListOf<String>()
+        val proc =
+            buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry =
+                    mapOf(
+                        "basic_attack" to
+                            guaranteedHitDef(DamageType.PHYSICAL, StatusEffect.Poisoned)),
+                combatLog = combatLog,
+                // to-hit roll (irrelevant, power=100), then avoidance roll (10 ≤ 30 → dodged)
+                rollSource = ScriptedRoll(1, 10),
+                protectionSpells = mapOf("shadowstep" to shadowstepSpell),
+            )
+        proc.applyStatusEffectTo(
+            target, StatusEffect.Protected, 60f, System.currentTimeMillis(), "shadowstep", 1)
+
+        proc.handleNpcAttack(fakeNpc(), target)
+
+        assertEquals(9, target.characterData!!.currentHp)
+        assertTrue(combatLog.single().contains("dodged"))
+    }
+
+    @Test
+    fun `handleNpcAttack magical hit is resisted thanks to an active Arcane Ward`() = runBlocking {
+        val arcaneWardSpell =
+            SpellDefinition(
+                type = SpellType.PROTECTION,
+                ranks = mapOf(1 to SpellRankDefinition(magicResistBonusPct = 30f)))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
+        // wis=8 → base magicResistPct=0; only Arcane Ward's +30 makes the roll below matter. hp=9
+        // is this Character's real maxHp (con=8, level=1) — see the Shadowstep test above for why.
+        target.characterData = testChar("b", "Bob", hp = 9)
+
+        val combatLog = mutableListOf<String>()
+        val proc =
+            buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry =
+                    mapOf(
+                        "basic_attack" to guaranteedHitDef(DamageType.FIRE, StatusEffect.Burning)),
+                combatLog = combatLog,
+                rollSource = ScriptedRoll(1, 10),
+                protectionSpells = mapOf("arcane_ward" to arcaneWardSpell),
+            )
+        proc.applyStatusEffectTo(
+            target, StatusEffect.Protected, 60f, System.currentTimeMillis(), "arcane_ward", 1)
+
+        proc.handleNpcAttack(fakeNpc(), target)
+
+        assertEquals(9, target.characterData!!.currentHp)
         assertTrue(combatLog.single().contains("resisted"))
     }
 

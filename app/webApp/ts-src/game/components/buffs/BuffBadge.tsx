@@ -15,6 +15,24 @@ const BUFF_COLORS: Record<string, string> = {
   ManaRegenBoost: "#4090c0",
 };
 
+// Every Class's Protection shares the wire name "Protected" (StatusEffect.Protected) — the
+// per-Protection icon and color are keyed by `protectionId` instead (`ActiveEffect.protectionId`).
+const PROTECTION_LABELS: Record<string, string> = {
+  iron_skin: "🛡️",
+  shadowstep: "👤",
+  arcane_ward: "🔮",
+  natures_veil: "🍃",
+  fortitude: "✨",
+};
+
+const PROTECTION_COLORS: Record<string, string> = {
+  iron_skin: "#a0a0a0",
+  shadowstep: "#606060",
+  arcane_ward: "#8040c0",
+  natures_veil: "#40a060",
+  fortitude: "#e0c040",
+};
+
 export function BuffBadge({ effect }: { effect: ActiveEffect }) {
   const [remaining, setRemaining] = useState(0);
 
@@ -28,8 +46,12 @@ export function BuffBadge({ effect }: { effect: ActiveEffect }) {
     return () => clearInterval(id);
   }, [effect.expiresAtMs]);
 
-  const label = BUFF_LABELS[effect.name] ?? effect.name;
-  const color = BUFF_COLORS[effect.name] ?? "#888";
+  const label = effect.protectionId
+    ? `${PROTECTION_LABELS[effect.protectionId] ?? "🛡️"}${effect.rank ?? ""}`
+    : (BUFF_LABELS[effect.name] ?? effect.name);
+  const color = effect.protectionId
+    ? (PROTECTION_COLORS[effect.protectionId] ?? "#888")
+    : (BUFF_COLORS[effect.name] ?? "#888");
 
   return (
     <div

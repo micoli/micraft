@@ -1,0 +1,38 @@
+type: PROTECTION
+enabled: true
+ranks:
+  1:
+    durationSec: 60.0
+    cooldownMs: 90000
+    manaCost: 10
+    rageCost: 0
+    magicResistBonusPct: 30.0
+    acBonus: 2
+  2:
+    durationSec: 60.0
+    cooldownMs: 90000
+    manaCost: 15
+    rageCost: 0
+    magicResistBonusPct: 33.0
+    acBonus: 2
+  3:
+    durationSec: 60.0
+    cooldownMs: 90000
+    manaCost: 20
+    rageCost: 0
+    magicResistBonusPct: 36.0
+    acBonus: 3
+  4:
+    durationSec: 60.0
+    cooldownMs: 90000
+    manaCost: 25
+    rageCost: 0
+    magicResistBonusPct: 40.0
+    acBonus: 3
+  5:
+    durationSec: 60.0
+    cooldownMs: 90000
+    manaCost: 30
+    rageCost: 0
+    magicResistBonusPct: 45.0
+    acBonus: 4

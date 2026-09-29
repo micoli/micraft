@@ -1,0 +1,33 @@
+type: PROTECTION
+enabled: true
+ranks:
+  1:
+    durationSec: 60.0
+    cooldownMs: 90000
+    manaCost: 10
+    rageCost: 0
+    dodgeBonusPct: 30.0
+  2:
+    durationSec: 60.0
+    cooldownMs: 90000
+    manaCost: 15
+    rageCost: 0
+    dodgeBonusPct: 33.0
+  3:
+    durationSec: 60.0
+    cooldownMs: 90000
+    manaCost: 20
+    rageCost: 0
+    dodgeBonusPct: 36.0
+  4:
+    durationSec: 60.0
+    cooldownMs: 90000
+    manaCost: 25
+    rageCost: 0
+    dodgeBonusPct: 40.0
+  5:
+    durationSec: 60.0
+    cooldownMs: 90000
+    manaCost: 30
+    rageCost: 0
+    dodgeBonusPct: 45.0

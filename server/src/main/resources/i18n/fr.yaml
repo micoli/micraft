@@ -612,3 +612,11 @@ protections:
   client:
     iron_skin_name: "Peau de fer"
     iron_skin_description: "Augmente votre classe d'armure pendant un temps."
+    shadowstep_name: "Pas de l'ombre"
+    shadowstep_description: "Augmente votre esquive pendant un temps."
+    arcane_ward_name: "Voile arcanique"
+    arcane_ward_description: "Augmente votre résistance magique et un peu votre classe d'armure pendant un temps."
+    natures_veil_name: "Voile de la nature"
+    natures_veil_description: "Augmente à la fois votre résistance magique et votre esquive pendant un temps."
+    fortitude_name: "Force vitale"
+    fortitude_description: "Augmente vos PV max et votre régénération de PV pendant un temps."

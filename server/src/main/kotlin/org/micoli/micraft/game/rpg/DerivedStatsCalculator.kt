@@ -34,12 +34,14 @@ object DerivedStatsCalculator {
             spellDmg = floor((s.intel - 10) / 2.0).toInt(),
             critChancePct = 5f + s.dex * 0.2f,
             critDmgMult = 2f,
+            // Base Dodge/Magic resistance floor at 0 on their own (ADR-0013), *then* the
+            // Protection bonus is added, and only the total is capped at 60%.
             dodgePct =
-                ((s.dex - 10) * 1.5f + protectionBonus.dodgeBonusPct).coerceIn(
+                (((s.dex - 10) * 1.5f).coerceAtLeast(0f) + protectionBonus.dodgeBonusPct).coerceIn(
                     0f, CombatConstants.DODGE_CAP_PCT),
             magicResistPct =
-                ((s.wis - 10) * 2f + protectionBonus.magicResistBonusPct).coerceIn(
-                    0f, CombatConstants.MAGIC_RESIST_CAP_PCT),
+                (((s.wis - 10) * 2f).coerceAtLeast(0f) + protectionBonus.magicResistBonusPct)
+                    .coerceIn(0f, CombatConstants.MAGIC_RESIST_CAP_PCT),
             initiative = floor((s.dex - 10) / 2.0).toInt(),
             hpRegenPerSec =
                 s.con / 10f *

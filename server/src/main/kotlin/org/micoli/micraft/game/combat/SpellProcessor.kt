@@ -31,9 +31,12 @@ class SpellProcessor(
         val spell = spellRegistry.getValue(msg.spellId)
         val rankDef = spell.ranks.getValue(msg.spellRank)
 
-        if (spell.type == SpellType.DIRECT_DAMAGE && !castDirectDamage(session, rankDef)) return
-        if (spell.type == SpellType.PROTECTION)
-            applyProtection(session, msg.spellId, msg.spellRank, rankDef)
+        when (spell.type) {
+            SpellType.NECROTIC_AOE -> {}
+            SpellType.TOKEN_RAGE_CONSUME -> {}
+            SpellType.DIRECT_DAMAGE -> if (!castDirectDamage(session, rankDef)) return
+            SpellType.PROTECTION -> applyProtection(session, msg.spellId, msg.spellRank, rankDef)
+        }
         gate.commit(session, use)
         if (spell.type == SpellType.TOKEN_RAGE_CONSUME) grantRage(session, rankDef)
 
@@ -87,13 +90,13 @@ class SpellProcessor(
         rank: Int,
         rankDef: SpellRankDefinition,
     ) {
+        // Falls back to the marker's own duration (like CombatProcessor.applyStatusEffect does for
+        // attack-triggered effects) so a misconfigured Rank (durationSec unset/0) never grants a
+        // Protection that's already expired the moment it's cast.
+        val durationSec =
+            rankDef.durationSec.takeIf { it > 0f } ?: StatusEffect.Protected.durationSec
         combatProcessor.applyStatusEffectTo(
-            session,
-            StatusEffect.Protected,
-            rankDef.durationSec,
-            System.currentTimeMillis(),
-            spellId,
-            rank)
+            session, StatusEffect.Protected, durationSec, System.currentTimeMillis(), spellId, rank)
     }
 
     private fun grantRage(session: PlayerSession, rankDef: SpellRankDefinition) {
