@@ -8,6 +8,7 @@ import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.combat.AttackRankDefinition
 import org.micoli.micraft.combat.DamageType
 import org.micoli.micraft.combat.StatusEffect
+import org.micoli.micraft.combat.isMagical
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.npc.NpcManager
@@ -163,12 +164,12 @@ class CombatProcessor(
         val myDerived = characterStats.derived(session, charData)
         val theirDerived = characterStats.derived(target, targetChar)
 
-        val (hit, isCrit, damage) =
-            resolveAttack(attackDef, rankDef, myDerived, theirDerived.armorClass)
+        val result =
+            resolveAttack(attackDef, rankDef, myDerived, theirDerived.armorClass, theirDerived)
 
-        if (hit && !target.state.godMode) {
+        if (result.outcome == HitOutcome.HIT && !target.state.godMode) {
             var newTargetChar =
-                targetChar.copy(currentHp = (targetChar.currentHp - damage).coerceAtLeast(0))
+                targetChar.copy(currentHp = (targetChar.currentHp - result.damage).coerceAtLeast(0))
             if (targetChar.characterClass.classResource == ClassResource.RAGE) {
                 newTargetChar =
                     newTargetChar.copy(
@@ -183,7 +184,7 @@ class CombatProcessor(
         }
 
         broadcastCombatLog(
-            "[p:${charData.name}] → [p:${targetChar.name}] (${msg.attackId}): ${getHitMessage(hit, isCrit, damage)}")
+            "[p:${charData.name}] → [p:${targetChar.name}] (${msg.attackId}): ${getHitMessage(result)}")
 
         characterStats.sendStatus(session)
         session.send(buildTargetUpdate(session))
@@ -216,15 +217,15 @@ class CombatProcessor(
         val myDerived = characterStats.derived(session, charData)
 
         val npcAc = 10
-        val (hit, isCrit, damage) = resolveAttack(attackDef, rankDef, myDerived, npcAc)
+        val result = resolveAttack(attackDef, rankDef, myDerived, npcAc)
 
-        if (hit) {
-            npcManager.applyDamage(msg.targetId, damage, session.id)
+        if (result.outcome == HitOutcome.HIT) {
+            npcManager.applyDamage(msg.targetId, result.damage, session.id)
             npcManager.applyStatusEffect(msg.targetId, rankDef, now, session.id)
         }
 
         broadcastCombatLog(
-            "[p:${charData.name}] → [m:${npc.state.name}] (${msg.attackId}): ${getHitMessage(hit, isCrit, damage)}")
+            "[p:${charData.name}] → [m:${npc.state.name}] (${msg.attackId}): ${getHitMessage(result)}")
 
         characterStats.sendStatus(session)
         session.send(buildTargetUpdate(session))
@@ -267,9 +268,11 @@ class CombatProcessor(
         val roll = rollSource.nextInt(1, 21)
         val isCrit = roll == 20
         val hit = isCrit || (roll + npcModifier) >= theirDerived.armorClass
+        val damageType = attackRegistry[choice.attackId]?.damageType ?: DamageType.PHYSICAL
+        val avoided = hit && rollAvoided(rollSource, damageType, theirDerived)
 
         val damage: Int
-        if (hit && !target.state.godMode) {
+        if (hit && !avoided && !target.state.godMode) {
             val raw = rollDice(rankDef.weaponDice, rollSource) + rankDef.power
             // Condition multiplier, never below 1 damage on a hit: a starving predator hits weakly
             // but a landed blow that does nothing reads as a bug rather than as weakness.
@@ -295,8 +298,14 @@ class CombatProcessor(
             characterStats.sendStatus(target)
         }
 
+        val outcome =
+            when {
+                avoided -> if (damageType.isMagical) HitOutcome.RESISTED else HitOutcome.DODGED
+                hit -> HitOutcome.HIT
+                else -> HitOutcome.MISS
+            }
         broadcastCombatLog(
-            "[m:${npc.state.name}] → [p:${targetChar.name}] (${choice.attackId}): ${getHitMessage(hit, isCrit, damage)}")
+            "[m:${npc.state.name}] → [p:${targetChar.name}] (${choice.attackId}): ${getHitMessage(AttackResult(outcome, isCrit, damage))}")
     }
 
     // ── NPC vs NPC attack ─────────────────────────────────────────────────────
@@ -419,13 +428,26 @@ class CombatProcessor(
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private data class AttackResult(val hit: Boolean, val isCrit: Boolean, val damage: Int)
+    private enum class HitOutcome {
+        MISS,
+        HIT,
+        DODGED,
+        RESISTED
+    }
 
+    private data class AttackResult(val outcome: HitOutcome, val isCrit: Boolean, val damage: Int)
+
+    /**
+     * To-hit + damage roll. When [avoidanceDefender] is given (a Character target), a hit that
+     * lands rolls Dodge or Magic resistance next (ADR-0013): an avoided hit skips the damage roll
+     * entirely. NPC targets pass no [avoidanceDefender] and never avoid.
+     */
     private fun resolveAttack(
         attackDef: AttackDefinition,
         rankDef: AttackRankDefinition,
         myDerived: DerivedStats,
-        targetAc: Int
+        targetAc: Int,
+        avoidanceDefender: DerivedStats? = null,
     ): AttackResult {
         val modifier =
             when (attackDef.damageType) {
@@ -436,12 +458,16 @@ class CombatProcessor(
         val roll = rollSource.nextInt(1, 21)
         val isCrit = roll == 20
         val hit = isCrit || (roll + modifier) >= targetAc
-        val damage =
-            if (hit) {
-                val raw = rollDice(rankDef.weaponDice, rollSource) + rankDef.power + modifier
-                if (isCrit) raw * 2 else raw
-            } else 0
-        return AttackResult(hit, isCrit, damage)
+        if (!hit) return AttackResult(HitOutcome.MISS, false, 0)
+        if (avoidanceDefender != null &&
+            rollAvoided(rollSource, attackDef.damageType, avoidanceDefender)) {
+            val outcome =
+                if (attackDef.damageType.isMagical) HitOutcome.RESISTED else HitOutcome.DODGED
+            return AttackResult(outcome, isCrit, 0)
+        }
+        val raw = rollDice(rankDef.weaponDice, rollSource) + rankDef.power + modifier
+        val damage = if (isCrit) raw * 2 else raw
+        return AttackResult(HitOutcome.HIT, isCrit, damage)
     }
 
     private suspend fun applyStatusEffect(
@@ -520,7 +546,7 @@ class CombatProcessor(
         broadcastHealthUpdate(target.id, false, newTargetChar.currentHp, theirDerived.maxHp)
         subscribeToChannel(target, "combat")
         broadcastCombatLog(
-            "[$sourceLabel] → [p:${targetChar.name}]: ${getHitMessage(true, false, damage)}")
+            "[$sourceLabel] → [p:${targetChar.name}]: ${getHitMessage(AttackResult(HitOutcome.HIT, false, damage))}")
         if (newTargetChar.currentHp <= 0) handlePlayerDowned(target)
         characterStats.sendStatus(target)
     }
@@ -536,7 +562,7 @@ class CombatProcessor(
         if (npc.isDead) return
         npcManager.applyDamage(npcId, damage, attackerId)
         broadcastCombatLog(
-            "[$sourceLabel] → [m:${npc.state.name}]: ${getHitMessage(true, false, damage)}")
+            "[$sourceLabel] → [m:${npc.state.name}]: ${getHitMessage(AttackResult(HitOutcome.HIT, false, damage))}")
     }
 
     internal suspend fun broadcastHealthUpdate(
@@ -633,11 +659,16 @@ class CombatProcessor(
         }
     }
 
-    private fun getHitMessage(hit: Boolean, isCrit: Boolean, damage: Int): String =
-        if (hit) {
-            val string = if (isCrit) " [CRIT]" else ""
-            "hits for $damage$string"
-        } else "misses"
+    private fun getHitMessage(result: AttackResult): String =
+        when (result.outcome) {
+            HitOutcome.MISS -> "misses"
+            HitOutcome.DODGED -> "dodged"
+            HitOutcome.RESISTED -> "resisted"
+            HitOutcome.HIT -> {
+                val string = if (result.isCrit) " [CRIT]" else ""
+                "hits for ${result.damage}$string"
+            }
+        }
 
     fun reload(
         config: CombatConfigData,

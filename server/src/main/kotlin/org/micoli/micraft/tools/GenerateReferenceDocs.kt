@@ -8,6 +8,7 @@ import com.charleskorn.kaml.YamlNull
 import com.charleskorn.kaml.YamlScalar
 import java.io.File
 import kotlin.system.exitProcess
+import org.micoli.micraft.combat.CombatConstants
 import org.micoli.micraft.game.world.PlayerConstants
 import org.micoli.micraft.game.world.WorldConstants
 
@@ -137,7 +138,12 @@ private fun constantsPage(): String {
         md(
             "Player constants",
             "Stances and movement (`core`).",
-            table(listOf("Constant", "Default"), rows(PlayerConstants)))
+            table(listOf("Constant", "Default"), rows(PlayerConstants))) +
+        "\n" +
+        md(
+            "Combat constants",
+            "Dodge / Magic resistance caps and the magical damage-type set (`core`, ADR-0013).",
+            table(listOf("Constant", "Default"), rows(CombatConstants)))
 }
 
 private fun blocksPage(): String {

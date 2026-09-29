@@ -3,6 +3,7 @@ package org.micoli.micraft.game.combat
 import kotlin.math.sqrt
 import kotlin.random.Random
 import org.micoli.micraft.combat.ActiveStatusEffect
+import org.micoli.micraft.combat.DamageType
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.session.PlayerSession
@@ -159,16 +160,22 @@ class SpellProcessor(
         val hitPlayers = mutableListOf<String>()
         val hitNpcs = mutableListOf<String>()
 
-        for (target in getSessions()) {
-            if (target.characterData == null) continue
+        val charSessions = getSessions().mapNotNull { s -> s.characterData?.let { s to it } }
+        for ((target, targetChar) in charSessions) {
             val tp = target.state.pos
             val ex = msg.targetX - tp.x
             val ey = msg.targetY - tp.y
             val ez = msg.targetZ - tp.z
-            if (ex * ex + ey * ey + ez * ez <= radiusSq) {
-                combatProcessor.applyStatusEffectTo(target, effect, durationSec, now)
-                hitPlayers += target.state.name
-            }
+            val inRadius = ex * ex + ey * ey + ez * ez <= radiusSq
+            val avoided =
+                inRadius &&
+                    rollAvoided(
+                        rollSource,
+                        DamageType.NECROTIC,
+                        combatProcessor.characterStats.derived(target, targetChar))
+            if (!inRadius || avoided) continue
+            combatProcessor.applyStatusEffectTo(target, effect, durationSec, now)
+            hitPlayers += target.state.name
         }
 
         for (npc in getNpcs()) {
@@ -230,15 +237,21 @@ class SpellProcessor(
         val effect = resolveStatusEffect(rankDef.statusEffect)
         val durationSec = effect.durationSec
 
-        for (s in getSessions()) {
-            if (s.characterData == null) continue
+        val charSessions = getSessions().mapNotNull { s -> s.characterData?.let { s to it } }
+        for ((s, sChar) in charSessions) {
             val sp = s.state.pos
             val ex = targetPos.x - sp.x
             val ey = targetPos.y - sp.y
             val ez = targetPos.z - sp.z
-            if (ex * ex + ey * ey + ez * ez <= radiusSq) {
-                combatProcessor.applyStatusEffectTo(s, effect, durationSec, now)
-            }
+            val inRadius = ex * ex + ey * ey + ez * ez <= radiusSq
+            val avoided =
+                inRadius &&
+                    rollAvoided(
+                        rollSource,
+                        DamageType.NECROTIC,
+                        combatProcessor.characterStats.derived(s, sChar))
+            if (!inRadius || avoided) continue
+            combatProcessor.applyStatusEffectTo(s, effect, durationSec, now)
         }
         for (other in getNpcs()) {
             if (other.isDead || other.state.id == npc.state.id) continue

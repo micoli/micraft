@@ -1,5 +1,6 @@
 package org.micoli.micraft.game.combat
 
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -20,6 +21,7 @@ import org.micoli.micraft.player.rpg.CharacterClass
 import org.micoli.micraft.player.rpg.CharacterData
 import org.micoli.micraft.protocol.ClientMessage
 import org.micoli.micraft.protocol.ServerMessage
+import org.micoli.micraft.support.ScriptedRoll
 import org.micoli.micraft.support.testI18n
 import org.micoli.micraft.support.testSession
 
@@ -57,6 +59,7 @@ class SpellProcessorAoeTest {
         sessions: List<PlayerSession> = emptyList(),
         npcs: List<NpcInstance> = emptyList(),
         classRegistry: Map<String, ClassDefinitionEntry> = emptyMap(),
+        rollSource: Random = Random.Default,
     ) =
         SpellProcessor(
             spellRegistry = mapOf("miasme" to miasmeSpell),
@@ -65,14 +68,15 @@ class SpellProcessorAoeTest {
             combatProcessor = buildCombatProcessor { sessions },
             getSessions = { sessions },
             getNpcs = { npcs },
+            rollSource = rollSource,
         )
 
-    private fun testChar(name: String, hp: Int = 100, mana: Int = 100) =
+    private fun testChar(name: String, hp: Int = 100, mana: Int = 100, wis: Int = 8) =
         CharacterData(
             id = "test",
             name = name,
             characterClass = CharacterClass.MAGE,
-            baseStats = BaseStats(),
+            baseStats = BaseStats(wis = wis),
             currentHp = hp,
             currentMana = mana,
         )
@@ -198,6 +202,71 @@ class SpellProcessorAoeTest {
         assertTrue(target.combatState.activeEffects.any { it.effect is StatusEffect.Withering })
     }
 
+    // ── Magic resistance on AoE targets (ADR-0013) ──────────────────────────────
+
+    @Test
+    fun `miasme is resisted by a Character target when the avoidance roll succeeds`() =
+        runBlocking {
+            val caster = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+            caster.characterData = testChar("Alice")
+            // wis=25 → magicResistPct = (25-10)*2 = 30
+            val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+            target.characterData = testChar("Bob", wis = 25)
+
+            buildProcessor(
+                    sessions = listOf(caster, target),
+                    // avoidance roll (10 ≤ 30 → resisted)
+                    rollSource = ScriptedRoll(10),
+                )
+                .handleCastAoeSpell(
+                    caster,
+                    ClientMessage.CastAoeSpell(
+                        spellId = "miasme", targetX = 1f, targetY = 0f, targetZ = 0f))
+
+            assertFalse(
+                target.combatState.activeEffects.any { it.effect is StatusEffect.Withering })
+        }
+
+    @Test
+    fun `miasme lands on a Character target when the avoidance roll fails`() = runBlocking {
+        val caster = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+        caster.characterData = testChar("Alice")
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+        target.characterData = testChar("Bob", wis = 25)
+
+        buildProcessor(
+                sessions = listOf(caster, target),
+                // avoidance roll (99 > 30 → not resisted)
+                rollSource = ScriptedRoll(99),
+            )
+            .handleCastAoeSpell(
+                caster,
+                ClientMessage.CastAoeSpell(
+                    spellId = "miasme", targetX = 1f, targetY = 0f, targetZ = 0f))
+
+        assertTrue(target.combatState.activeEffects.any { it.effect is StatusEffect.Withering })
+    }
+
+    @Test
+    fun `miasme rolls no avoidance for NPC targets`() = runBlocking {
+        val caster = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+        caster.characterData = testChar("Alice")
+        val npc = fakeNpc(Vec3(2f, 0f, 0f))
+
+        buildProcessor(
+                sessions = listOf(caster),
+                npcs = listOf(npc),
+                // would resist a Character target — NPCs never roll avoidance
+                rollSource = ScriptedRoll(1),
+            )
+            .handleCastAoeSpell(
+                caster,
+                ClientMessage.CastAoeSpell(
+                    spellId = "miasme", targetX = 2f, targetY = 0f, targetZ = 0f))
+
+        assertTrue(npc.activeEffects.any { it.effect is StatusEffect.Withering })
+    }
+
     @Test
     fun `miasme respects cooldown on second cast`() = runBlocking {
         val caster = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
@@ -276,6 +345,42 @@ class SpellProcessorAoeTest {
 
         assertTrue(cast)
         assertTrue(target.combatState.activeEffects.any { it.effect is StatusEffect.Frozen })
+    }
+
+    @Test
+    fun `npc cast is resisted by the target's magic resistance`() = runBlocking {
+        val frostSpell =
+            SpellDefinition(
+                type = SpellType.NECROTIC_AOE,
+                ranks =
+                    mapOf(
+                        1 to
+                            SpellRankDefinition(
+                                aoeRadius = 4f,
+                                maxRange = 15f,
+                                cooldownMs = 5000L,
+                                statusEffect = "Frozen",
+                            )),
+            )
+        val boss = fakeBoss(listOf("frost_breath"))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(2f, 0f, 0f))
+        target.characterData = testChar("Bob", wis = 25) // magicResistPct = 30
+
+        val proc =
+            SpellProcessor(
+                spellRegistry = mapOf("frost_breath" to frostSpell),
+                classRegistry = emptyMap(),
+                combatConfig = CombatConfigData(),
+                combatProcessor = buildCombatProcessor { listOf(target) },
+                getSessions = { listOf(target) },
+                getNpcs = { emptyList() },
+                rollSource = ScriptedRoll(10), // 10 ≤ 30 → resisted
+            )
+
+        val cast = proc.tryNpcCast(boss, target)
+
+        assertTrue(cast)
+        assertFalse(target.combatState.activeEffects.any { it.effect is StatusEffect.Frozen })
     }
 
     @Test

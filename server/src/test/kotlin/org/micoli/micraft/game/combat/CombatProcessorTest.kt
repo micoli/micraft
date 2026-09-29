@@ -300,7 +300,8 @@ class CombatProcessorTest {
         buildProcessor(
                 sessions = { listOf(attacker, target) },
                 combatLog = combatLog,
-                rollSource = ScriptedRoll(20, 3), // d20 roll, then the 1d4 damage roll
+                // d20 roll, then the avoidance roll (100 → not dodged), then the 1d4 damage roll
+                rollSource = ScriptedRoll(20, 100, 3),
             )
             .handleAttack(
                 attacker,
@@ -547,6 +548,124 @@ class CombatProcessorTest {
 
         assertEquals(0, combatLog.size)
         assertEquals(20, target.characterData!!.currentHp)
+    }
+
+    // ── Dodge / Magic resistance (ADR-0013) ─────────────────────────────────────
+
+    // power=100 → to-hit always succeeds regardless of the roll, isolating the avoidance roll.
+    private fun guaranteedHitDef(damageType: DamageType, statusEffect: StatusEffect? = null) =
+        AttackDefinition(
+            damageType = damageType,
+            ranks =
+                mapOf(
+                    1 to
+                        AttackRankDefinition(
+                            power = 100,
+                            weaponDice = "1d4",
+                            cooldownMs = 1000,
+                            statusEffect = statusEffect)))
+
+    @Test
+    fun `handleNpcAttack physical hit is dodged when the avoidance roll succeeds`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
+        // dex=30 → dodgePct = (30-10)*1.5 = 30
+        target.characterData = testChar("b", "Bob", hp = 20, dex = 30)
+
+        val combatLog = mutableListOf<String>()
+        val proc =
+            buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry =
+                    mapOf(
+                        "basic_attack" to
+                            guaranteedHitDef(DamageType.PHYSICAL, StatusEffect.Poisoned)),
+                combatLog = combatLog,
+                // to-hit roll (irrelevant, power=100), then avoidance roll (10 ≤ 30 → dodged)
+                rollSource = ScriptedRoll(1, 10),
+            )
+
+        proc.handleNpcAttack(fakeNpc(), target)
+
+        assertEquals(20, target.characterData!!.currentHp)
+        assertTrue(target.combatState.activeEffects.isEmpty())
+        assertTrue(combatLog.single().contains("dodged"))
+    }
+
+    @Test
+    fun `handleNpcAttack magical hit is resisted when the avoidance roll succeeds`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
+        // wis=25 → magicResistPct = (25-10)*2 = 30
+        target.characterData = testChar("b", "Bob", hp = 20).copy(baseStats = BaseStats(wis = 25))
+
+        val combatLog = mutableListOf<String>()
+        val proc =
+            buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry =
+                    mapOf(
+                        "basic_attack" to guaranteedHitDef(DamageType.FIRE, StatusEffect.Burning)),
+                combatLog = combatLog,
+                rollSource = ScriptedRoll(1, 10),
+            )
+
+        proc.handleNpcAttack(fakeNpc(), target)
+
+        assertEquals(20, target.characterData!!.currentHp)
+        assertTrue(target.combatState.activeEffects.isEmpty())
+        assertTrue(combatLog.single().contains("resisted"))
+    }
+
+    @Test
+    fun `handleNpcAttack lands when the avoidance roll fails`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(0f, 0f, 0f))
+        // dex=30 → dodgePct = 30
+        target.characterData = testChar("b", "Bob", hp = 20, dex = 30)
+
+        val combatLog = mutableListOf<String>()
+        val proc =
+            buildProcessor(
+                sessions = { listOf(target) },
+                attackRegistry =
+                    mapOf(
+                        "basic_attack" to
+                            guaranteedHitDef(DamageType.PHYSICAL, StatusEffect.Poisoned)),
+                combatLog = combatLog,
+                // avoidance roll (99 > 30 → not dodged), then the 1d4 damage roll
+                rollSource = ScriptedRoll(1, 99, 3),
+            )
+
+        proc.handleNpcAttack(fakeNpc(), target)
+
+        assertTrue(target.characterData!!.currentHp < 20)
+        assertTrue(target.combatState.activeEffects.any { it.effect == StatusEffect.Poisoned })
+        assertTrue(combatLog.single().contains("hits for"))
+    }
+
+    @Test
+    fun `attackPlayer PvP hit is dodged when the avoidance roll succeeds`() = runBlocking {
+        val attacker = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+        val target = testSession(id = "b", name = "Bob", pos = Vec3(1f, 0f, 0f))
+        attacker.characterData = testChar("a", "Alice", str = 30)
+        // dex=30 → dodgePct = 30
+        target.characterData = testChar("b", "Bob", hp = 20, dex = 30)
+
+        val combatLog = mutableListOf<String>()
+        val processor =
+            buildProcessor(
+                sessions = { listOf(attacker, target) },
+                combatLog = combatLog,
+                // to-hit roll (irrelevant, str=30 → meleeDmg=10 easily clears AC), avoidance (10 ≤
+                // 30 → dodged)
+                rollSource = ScriptedRoll(15, 10),
+            )
+
+        processor.handleAttack(
+            attacker,
+            ClientMessage.AttackTarget(
+                attackId = "basic_attack", targetId = "b", isNpc = false, attackRank = 1))
+
+        assertEquals(20, target.characterData!!.currentHp)
+        assertTrue(combatLog.single().contains("dodged"))
     }
 
     // ── NPC Ability Rank from Level ───────────────────────────────────────────

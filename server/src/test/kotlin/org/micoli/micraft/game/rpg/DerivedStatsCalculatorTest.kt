@@ -53,9 +53,28 @@ class DerivedStatsCalculatorTest {
     }
 
     @Test
-    fun compute_dodgePct_isCappedAt75() {
+    fun compute_dodgePct_isCappedAt60() {
         val derived = compute(BaseStats(dex = 100))
-        assertEquals(75f, derived.dodgePct)
+        assertEquals(60f, derived.dodgePct)
+    }
+
+    @Test
+    fun compute_dodgePct_neverNegative() {
+        val derived = compute(BaseStats(dex = 1))
+        assertEquals(0f, derived.dodgePct)
+    }
+
+    @Test
+    fun compute_dodgePct_followsAdr0013Formula() {
+        // (DEX - 10) * 1.5
+        val derived = compute(BaseStats(dex = 14))
+        assertEquals(6f, derived.dodgePct)
+    }
+
+    @Test
+    fun compute_magicResistPct_isCappedAt60() {
+        val derived = compute(BaseStats(wis = 100))
+        assertEquals(60f, derived.magicResistPct)
     }
 
     @Test
