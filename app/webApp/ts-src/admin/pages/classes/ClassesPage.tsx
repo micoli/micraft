@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { getApiAdminClasses, getApiAdminSkills } from "../../../generated/api/requests";
-import { ClassDefinitionEntry } from "../../apiTypes";
+import { getApiAdminClasses, getApiAdminProtections, getApiAdminSkills } from "../../../generated/api/requests";
+import { ClassDefinitionEntry, ClassProtectionDto } from "../../apiTypes";
 import { useT, type TranslationKey } from "../../i18n";
 import { ProgressionCell } from "./ProgressionCell";
+import { ProtectionsSection } from "./ProtectionsSection";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -79,13 +80,19 @@ export function ClassesPage() {
   const t = useT();
   const [classes, setClasses] = useState<Record<string, ClassDefinitionEntry> | null>(null);
   const [allSkills, setAllSkills] = useState<{ attacks: string[]; spells: string[] } | null>(null);
+  const [protections, setProtections] = useState<Record<string, ClassProtectionDto> | null>(null);
   const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
 
   useEffect(() => {
-    Promise.all([getApiAdminClasses({ throwOnError: true }), getApiAdminSkills({ throwOnError: true })])
-      .then(([c, s]) => {
+    Promise.all([
+      getApiAdminClasses({ throwOnError: true }),
+      getApiAdminSkills({ throwOnError: true }),
+      getApiAdminProtections({ throwOnError: true }),
+    ])
+      .then(([c, s, p]) => {
         setClasses(c.data);
         setAllSkills(s.data);
+        setProtections(p.data);
       })
       .catch(() => setErrorKey("classes.failedToLoad"));
   }, []);
@@ -94,7 +101,7 @@ export function ClassesPage() {
     return <p className="text-red-400 text-sm">{t(errorKey)}</p>;
   }
 
-  if (!classes || !allSkills) {
+  if (!classes || !allSkills || !protections) {
     return (
       <div className="flex items-center justify-center h-40 text-[#8A99AF] text-sm animate-pulse">
         {t("common.loading")}
@@ -200,6 +207,8 @@ export function ClassesPage() {
             <span className="text-emerald-400">sk</span> {t("classes.legendSkill")}
           </p>
         </div>
+
+        <ProtectionsSection protections={protections} classNames={classNames} />
       </div>
     </div>
   );

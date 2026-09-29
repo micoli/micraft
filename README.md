@@ -200,6 +200,7 @@ never hand-edit either.
 | PUT | `/api/admin/players/{name}/preferences` | Partially update a player's preferences (only given fields change) |
 | POST | `/api/admin/players/{name}/rename` | Rename a player |
 | PUT | `/api/admin/players/{name}/rpg` | Partially update a player's RPG class/base stats |
+| GET | `/api/admin/protections` | Each Class's Protection Spell and per-Rank values, keyed by class name (null spellId when a Class has none configured) |
 | POST | `/api/admin/reload` | Reload configuration files without restarting the server — same behavior as the in-game /reload command |
 | POST | `/api/admin/restart` | Trigger a pitchfork server restart |
 | GET | `/api/admin/scenes` | All scenes (bounded off-world block-structure buffers) |

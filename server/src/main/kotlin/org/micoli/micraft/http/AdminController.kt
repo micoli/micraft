@@ -66,6 +66,7 @@ import org.micoli.micraft.config.ConfigPaths
 import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
+import org.micoli.micraft.game.combat.protectionSpellGrants
 import org.micoli.micraft.game.equipment.GrantResult
 import org.micoli.micraft.game.equipment.Loadout
 import org.micoli.micraft.game.npc.ChatTurn
@@ -425,6 +426,27 @@ private data class UpdatePlayerEquipmentRequest(
 
 @Serializable
 private data class SkillsResponse(val attacks: List<String>, val spells: List<String>)
+
+@Serializable
+data class ProtectionRankDto(
+    val rank: Int,
+    val durationSec: Float,
+    val cooldownMs: Long,
+    val manaCost: Int,
+    val rageCost: Int,
+    val acBonus: Int,
+    val dodgeBonusPct: Float,
+    val magicResistBonusPct: Float,
+    val maxHpBonus: Int,
+    val hpRegenMultBonus: Float,
+)
+
+/** [spellId] and [ranks] are null/empty when this Class has no Protection Spell configured. */
+@Serializable
+data class ClassProtectionDto(
+    val spellId: String? = null,
+    val ranks: List<ProtectionRankDto> = emptyList()
+)
 
 @Serializable
 data class WorldStatsDto(
@@ -2133,6 +2155,52 @@ class AdminController(
                                     })
                             })
                     call.respondText(payload, ContentType.Application.Json)
+                }
+
+            get(
+                "/api/admin/protections",
+                {
+                    description =
+                        "Each Class's Protection Spell and per-Rank values, keyed by class name " +
+                            "(null spellId when a Class has none configured)"
+                    response { code(HttpStatusCode.OK) { body<Map<String, ClassProtectionDto>>() } }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    val protections =
+                        gameLoop.classRegistry.mapValues { (_, classDef) ->
+                            val spellId =
+                                classDef
+                                    .protectionSpellGrants(gameLoop.spellRegistry)
+                                    .firstOrNull()
+                                    ?.second
+                            val ranks =
+                                spellId
+                                    ?.let { gameLoop.spellRegistry[it] }
+                                    ?.ranks
+                                    ?.map { (rank, r) ->
+                                        ProtectionRankDto(
+                                            rank = rank,
+                                            durationSec = r.durationSec,
+                                            cooldownMs = r.cooldownMs,
+                                            manaCost = r.manaCost,
+                                            rageCost = r.rageCost,
+                                            acBonus = r.acBonus,
+                                            dodgeBonusPct = r.dodgeBonusPct,
+                                            magicResistBonusPct = r.magicResistBonusPct,
+                                            maxHpBonus = r.maxHpBonus,
+                                            hpRegenMultBonus = r.hpRegenMultBonus,
+                                        )
+                                    }
+                                    ?.sortedBy { it.rank } ?: emptyList()
+                            ClassProtectionDto(spellId, ranks)
+                        }
+                    call.respondText(
+                        adminJson.encodeToString(
+                            MapSerializer(String.serializer(), ClassProtectionDto.serializer()),
+                            protections,
+                        ),
+                        ContentType.Application.Json)
                 }
 
             // ── NPCs ─────────────────────────────────────────────────────────

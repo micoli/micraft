@@ -2,6 +2,7 @@ package org.micoli.micraft.game.combat
 
 import kotlinx.serialization.Serializable
 import org.micoli.micraft.combat.StatusEffect
+import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.world.AbilityRank
 import org.micoli.micraft.schema.JsonSchemaRoot
 
@@ -24,6 +25,22 @@ data class SpellDefinition(
     /** The Rank a caster of [level] uses, null when this Spell only defines higher Ranks. */
     fun usableRank(level: Int): Int? = AbilityRank.usable(ranks.keys, level)
 }
+
+/**
+ * This Class's [SpellType.PROTECTION] Spell grant(s), as (level granted, spellId) pairs sorted by
+ * level ascending, deduplicated by spellId. Shared by [SpellProcessor] (which additionally filters
+ * by the caster's Level) and the admin `/api/admin/protections` route (which wants the Class's
+ * configured Protection regardless of Level) — kept in one place so the two never resolve different
+ * spellIds for the same Class.
+ */
+fun ClassDefinitionEntry.protectionSpellGrants(
+    spellRegistry: Map<String, SpellDefinition>
+): List<Pair<Int, String>> =
+    levels.entries
+        .sortedBy { it.key }
+        .flatMap { (level, entry) -> entry.spells.map { level to it.spell } }
+        .filter { (_, spellId) -> spellRegistry[spellId]?.type == SpellType.PROTECTION }
+        .distinctBy { it.second }
 
 fun resolveStatusEffect(name: String?): StatusEffect =
     when (name) {

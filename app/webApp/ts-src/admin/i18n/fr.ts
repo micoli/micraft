@@ -313,6 +313,11 @@ export const fr: Record<TranslationKey, string> = {
   "classes.unassigned": "non attribuée",
   "classes.legendLevel": "= niveau joueur de déblocage",
   "classes.legendSkill": "= niveau de compétence accordé",
+  "classes.protections": "Protections",
+  "classes.protectionSpell": "Sort de Protection",
+  "classes.protectionRank": "Rang",
+  "classes.protectionCooldown": "Recharge",
+  "classes.noProtection": "aucune Protection",
 
   // ── Config editor ───────────────────────────────────────────────────────────
   "config.files": "Fichiers de configEditor",

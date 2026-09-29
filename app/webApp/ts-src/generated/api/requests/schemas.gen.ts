@@ -3212,6 +3212,15 @@ export const org_micoli_micraft_player_rpg_CharacterDataSchema = {
         combatant: {
             $ref: '#/components/schemas/org.micoli.micraft.player.rpg.CombatantData'
         },
+        cooldownsUntilMs: {
+            type: 'object',
+            additionalProperties: {
+                type: 'integer',
+                format: 'int64',
+                title: 'Long'
+            },
+            title: 'Map<String,Long>'
+        },
         currentHp: {
             type: 'integer',
             format: 'int32',
@@ -3262,6 +3271,7 @@ export const org_micoli_micraft_player_rpg_CharacterDataSchema = {
         'baseStats',
         'characterClass',
         'combatant',
+        'cooldownsUntilMs',
         'currentHp',
         'currentMana',
         'currentRage',
@@ -3341,6 +3351,15 @@ export const org_micoli_micraft_player_rpg_CombatantDataSchema = {
         characterClass: {
             $ref: '#/components/schemas/org.micoli.micraft.player.rpg.CharacterClass'
         },
+        cooldownsUntilMs: {
+            type: 'object',
+            additionalProperties: {
+                type: 'integer',
+                format: 'int64',
+                title: 'Long'
+            },
+            title: 'Map<String,Long>'
+        },
         currentHp: {
             type: 'integer',
             format: 'int32',
@@ -3375,6 +3394,7 @@ export const org_micoli_micraft_player_rpg_CombatantDataSchema = {
     required: [
         'baseStats',
         'characterClass',
+        'cooldownsUntilMs',
         'currentHp',
         'currentMana',
         'currentRage',
@@ -4226,6 +4246,99 @@ export const org_micoli_micraft_http_SkillsResponseSchema = {
         'spells'
     ],
     title: 'SkillsResponse'
+} as const;
+
+export const org_micoli_micraft_http_ClassProtectionDtoSchema = {
+    type: 'object',
+    properties: {
+        ranks: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.http.ProtectionRankDto'
+            },
+            title: 'List<ProtectionRankDto>'
+        },
+        spellId: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        }
+    },
+    required: [
+        'ranks'
+    ],
+    title: 'ClassProtectionDto'
+} as const;
+
+export const org_micoli_micraft_http_ProtectionRankDtoSchema = {
+    type: 'object',
+    properties: {
+        acBonus: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        cooldownMs: {
+            type: 'integer',
+            format: 'int64',
+            title: 'Long'
+        },
+        dodgeBonusPct: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        durationSec: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        hpRegenMultBonus: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        magicResistBonusPct: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        manaCost: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        maxHpBonus: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        rageCost: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        rank: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        }
+    },
+    required: [
+        'acBonus',
+        'cooldownMs',
+        'dodgeBonusPct',
+        'durationSec',
+        'hpRegenMultBonus',
+        'magicResistBonusPct',
+        'manaCost',
+        'maxHpBonus',
+        'rageCost',
+        'rank'
+    ],
+    title: 'ProtectionRankDto'
 } as const;
 
 export const org_micoli_micraft_http_NpcAdminDtoSchema = {

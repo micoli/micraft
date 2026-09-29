@@ -67,20 +67,17 @@ class SpellProcessor(
         combatProcessor.characterStats.sendStatus(session)
     }
 
-    /** The Class's granted Spell of type [SpellType.PROTECTION], if any, and its definition. */
+    /** The Class's granted Spell of type [SpellType.PROTECTION] unlocked at [level], if any. */
     private fun ownProtectionSpell(
         className: String,
         level: Int,
     ): Pair<String?, SpellDefinition?> {
         val classDef = classRegistry[className] ?: return null to null
         val spellId =
-            classDef.levels
-                .filterKeys { it <= level }
-                .values
-                .flatMap { it.spells }
-                .map { it.spell }
-                .distinct()
-                .firstOrNull { spellRegistry[it]?.type == SpellType.PROTECTION }
+            classDef
+                .protectionSpellGrants(spellRegistry)
+                .firstOrNull { (grantedAt, _) -> grantedAt <= level }
+                ?.second
         return spellId to spellId?.let { spellRegistry[it] }
     }
 

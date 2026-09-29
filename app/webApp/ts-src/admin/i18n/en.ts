@@ -317,6 +317,11 @@ export const en = {
   "classes.unassigned": "unassigned",
   "classes.legendLevel": "= player level unlock",
   "classes.legendSkill": "= skill level granted",
+  "classes.protections": "Protections",
+  "classes.protectionSpell": "Protection Spell",
+  "classes.protectionRank": "Rank",
+  "classes.protectionCooldown": "CD",
+  "classes.noProtection": "no Protection",
 
   // ── Config editor ───────────────────────────────────────────────────────────
   "config.files": "Config Files",

@@ -2525,6 +2525,29 @@ paths:
           description: Missing admin permission
           headers: {}
       deprecated: false
+  /api/admin/protections:
+    get:
+      tags: []
+      description: "Each Class's Protection Spell and per-Rank values, keyed by class\
+        \ name (null spellId when a Class has none configured)"
+      parameters: []
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: "#/components/schemas/org.micoli.micraft.http.ClassProtectionDto"
+                title: "Map<String,ClassProtectionDto>"
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/admin/npcs:
     get:
       tags: []
@@ -7437,6 +7460,77 @@ components:
       - attacks
       - spells
       title: SkillsResponse
+    org.micoli.micraft.http.ClassProtectionDto:
+      type: object
+      properties:
+        ranks:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.http.ProtectionRankDto"
+          title: List<ProtectionRankDto>
+        spellId:
+          type:
+          - "null"
+          - string
+          title: String
+      required:
+      - ranks
+      title: ClassProtectionDto
+    org.micoli.micraft.http.ProtectionRankDto:
+      type: object
+      properties:
+        acBonus:
+          type: integer
+          format: int32
+          title: Int
+        cooldownMs:
+          type: integer
+          format: int64
+          title: Long
+        dodgeBonusPct:
+          type: number
+          format: float
+          title: Float
+        durationSec:
+          type: number
+          format: float
+          title: Float
+        hpRegenMultBonus:
+          type: number
+          format: float
+          title: Float
+        magicResistBonusPct:
+          type: number
+          format: float
+          title: Float
+        manaCost:
+          type: integer
+          format: int32
+          title: Int
+        maxHpBonus:
+          type: integer
+          format: int32
+          title: Int
+        rageCost:
+          type: integer
+          format: int32
+          title: Int
+        rank:
+          type: integer
+          format: int32
+          title: Int
+      required:
+      - acBonus
+      - cooldownMs
+      - dodgeBonusPct
+      - durationSec
+      - hpRegenMultBonus
+      - magicResistBonusPct
+      - manaCost
+      - maxHpBonus
+      - rageCost
+      - rank
+      title: ProtectionRankDto
     org.micoli.micraft.http.NpcAdminDto:
       type: object
       properties:

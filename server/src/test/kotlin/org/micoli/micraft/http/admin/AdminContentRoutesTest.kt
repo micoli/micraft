@@ -187,4 +187,42 @@ class AdminContentRoutesTest {
             }
         assertEquals(HttpStatusCode.BadRequest, r.status)
     }
+
+    @Test
+    fun `api_admin_protections_returns_every_Class's_real_Protection_config`() = testApplication {
+        application { routing { controller().register(this) } }
+        val r = client.get("/api/admin/protections")
+        assertEquals(HttpStatusCode.OK, r.status)
+        val body = r.bodyAsText()
+
+        // WARRIOR's real config: iron_skin, Rank 1 = +4 Armor class.
+        assertTrue(body.contains("\"WARRIOR\""), "Expected WARRIOR entry, got: $body")
+        assertTrue(body.contains("\"spellId\":\"iron_skin\""))
+        assertTrue(body.contains("\"acBonus\":4"))
+    }
+
+    @Test
+    fun `api_admin_protections_requires_auth_when_token_store_enabled`() = testApplication {
+        val store = TokenStore(scope)
+        application { routing { controller(store).register(this) } }
+        val r = client.get("/api/admin/protections")
+        assertEquals(HttpStatusCode.Unauthorized, r.status)
+    }
+
+    @Test
+    fun `api_admin_protections_with_admin_token_returns_200`() = testApplication {
+        val store = TokenStore(scope)
+        val token =
+            store.issue(
+                AuthResult(
+                    playerId = "p1",
+                    displayName = "Admin",
+                    permissions = setOf(Permission("admin"))))
+        application { routing { controller(store).register(this) } }
+        val r =
+            client.get("/api/admin/protections") {
+                headers.append(HttpHeaders.Authorization, "Bearer $token")
+            }
+        assertEquals(HttpStatusCode.OK, r.status)
+    }
 }

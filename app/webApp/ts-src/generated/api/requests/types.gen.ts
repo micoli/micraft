@@ -2051,6 +2051,12 @@ export type OrgMicoliMicraftPlayerRpgCharacterData = {
     characterClass: OrgMicoliMicraftPlayerRpgCharacterClass;
     combatant: OrgMicoliMicraftPlayerRpgCombatantData;
     /**
+     * Map<String,Long>
+     */
+    cooldownsUntilMs: {
+        [key: string]: number;
+    };
+    /**
      * Int
      */
     currentHp: number;
@@ -2129,6 +2135,12 @@ export type OrgMicoliMicraftPlayerRpgCharacterClass = 'WARRIOR' | 'MAGE' | 'RANG
 export type OrgMicoliMicraftPlayerRpgCombatantData = {
     baseStats: OrgMicoliMicraftPlayerRpgBaseStats;
     characterClass: OrgMicoliMicraftPlayerRpgCharacterClass;
+    /**
+     * Map<String,Long>
+     */
+    cooldownsUntilMs: {
+        [key: string]: number;
+    };
     /**
      * Int
      */
@@ -2668,6 +2680,66 @@ export type OrgMicoliMicraftHttpSkillsResponse = {
      * List<String>
      */
     spells: Array<string>;
+};
+
+/**
+ * ClassProtectionDto
+ */
+export type OrgMicoliMicraftHttpClassProtectionDto = {
+    /**
+     * List<ProtectionRankDto>
+     */
+    ranks: Array<OrgMicoliMicraftHttpProtectionRankDto>;
+    /**
+     * String
+     */
+    spellId?: null | string;
+};
+
+/**
+ * ProtectionRankDto
+ */
+export type OrgMicoliMicraftHttpProtectionRankDto = {
+    /**
+     * Int
+     */
+    acBonus: number;
+    /**
+     * Long
+     */
+    cooldownMs: number;
+    /**
+     * Float
+     */
+    dodgeBonusPct: number;
+    /**
+     * Float
+     */
+    durationSec: number;
+    /**
+     * Float
+     */
+    hpRegenMultBonus: number;
+    /**
+     * Float
+     */
+    magicResistBonusPct: number;
+    /**
+     * Int
+     */
+    manaCost: number;
+    /**
+     * Int
+     */
+    maxHpBonus: number;
+    /**
+     * Int
+     */
+    rageCost: number;
+    /**
+     * Int
+     */
+    rank: number;
 };
 
 /**
@@ -6519,6 +6591,35 @@ export type GetApiAdminSkillsResponses = {
 };
 
 export type GetApiAdminSkillsResponse = GetApiAdminSkillsResponses[keyof GetApiAdminSkillsResponses];
+
+export type GetApiAdminProtectionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/protections';
+};
+
+export type GetApiAdminProtectionsErrors = {
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminProtectionsResponses = {
+    /**
+     * Map<String,ClassProtectionDto>
+     */
+    200: {
+        [key: string]: OrgMicoliMicraftHttpClassProtectionDto;
+    };
+};
+
+export type GetApiAdminProtectionsResponse = GetApiAdminProtectionsResponses[keyof GetApiAdminProtectionsResponses];
 
 export type GetApiAdminNpcsData = {
     body?: never;
