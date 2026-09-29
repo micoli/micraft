@@ -3,6 +3,7 @@ import { getApiAdminClasses, getApiAdminProtections, getApiAdminSkills } from ".
 import { ClassDefinitionEntry, ClassProtectionDto } from "../../apiTypes";
 import { useT, type TranslationKey } from "../../i18n";
 import { ProgressionCell } from "./ProgressionCell";
+import { ProtectionSimulator } from "./ProtectionSimulator";
 import { ProtectionsSection } from "./ProtectionsSection";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -209,6 +210,7 @@ export function ClassesPage() {
         </div>
 
         <ProtectionsSection protections={protections} classNames={classNames} />
+        <ProtectionSimulator />
       </div>
     </div>
   );

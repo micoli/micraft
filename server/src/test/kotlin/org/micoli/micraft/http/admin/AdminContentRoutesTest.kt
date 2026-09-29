@@ -225,4 +225,40 @@ class AdminContentRoutesTest {
             }
         assertEquals(HttpStatusCode.OK, r.status)
     }
+
+    @Test
+    fun `api_admin_protections_simulate_returns_a_report_for_every_Class`() = testApplication {
+        application { routing { controller().register(this) } }
+        val r = client.get("/api/admin/protections/simulate?level=1&dangerTier=1")
+        assertEquals(HttpStatusCode.OK, r.status)
+        val body = r.bodyAsText()
+
+        assertTrue(body.contains("\"WARRIOR\""), "Expected WARRIOR entry, got: $body")
+        assertTrue(body.contains("\"abilityCount\""))
+        assertTrue(body.contains("\"physicalSharePct\""))
+        assertTrue(body.contains("\"hitChanceWithoutPct\""))
+    }
+
+    @Test
+    fun `api_admin_protections_simulate_rejects_a_level_outside_1_30`() = testApplication {
+        application { routing { controller().register(this) } }
+        val r = client.get("/api/admin/protections/simulate?level=31&dangerTier=1")
+        assertEquals(HttpStatusCode.BadRequest, r.status)
+    }
+
+    @Test
+    fun `api_admin_protections_simulate_rejects_a_danger_tier_outside_1_5`() = testApplication {
+        application { routing { controller().register(this) } }
+        val r = client.get("/api/admin/protections/simulate?level=1&dangerTier=6")
+        assertEquals(HttpStatusCode.BadRequest, r.status)
+    }
+
+    @Test
+    fun `api_admin_protections_simulate_requires_auth_when_token_store_enabled`() =
+        testApplication {
+            val store = TokenStore(scope)
+            application { routing { controller(store).register(this) } }
+            val r = client.get("/api/admin/protections/simulate?level=1&dangerTier=1")
+            assertEquals(HttpStatusCode.Unauthorized, r.status)
+        }
 }

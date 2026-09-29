@@ -1,8 +1,7 @@
 # Protection Spells — one per Class, from Level 1
 
-Status: ready-for-agent
+Status: resolved
 Type: spec
-
 Decisions: grilling session 2026-09-28. Glossary: `CONTEXT.md` (Protection, Dodge, Magic resistance). ADR-0013.
 
 ## Problem Statement

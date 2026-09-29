@@ -4341,6 +4341,110 @@ export const org_micoli_micraft_http_ProtectionRankDtoSchema = {
     title: 'ProtectionRankDto'
 } as const;
 
+export const org_micoli_micraft_http_ClassSurvivalDtoSchema = {
+    type: 'object',
+    properties: {
+        className: {
+            type: 'string',
+            title: 'String'
+        },
+        hitChanceWithPct: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        hitChanceWithoutPct: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        meanAttacksSurvivedWith: {
+            type: [
+                'null',
+                'number'
+            ],
+            format: 'float',
+            title: 'Float'
+        },
+        meanAttacksSurvivedWithout: {
+            type: [
+                'null',
+                'number'
+            ],
+            format: 'float',
+            title: 'Float'
+        },
+        meanDamageWithPerAttack: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        meanDamageWithoutPerAttack: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        protectionRank: {
+            type: [
+                'null',
+                'integer'
+            ],
+            format: 'int32',
+            title: 'Int'
+        },
+        protectionSpellId: {
+            type: [
+                'null',
+                'string'
+            ],
+            title: 'String'
+        }
+    },
+    required: [
+        'className',
+        'hitChanceWithPct',
+        'hitChanceWithoutPct',
+        'meanDamageWithPerAttack',
+        'meanDamageWithoutPerAttack'
+    ],
+    title: 'ClassSurvivalDto'
+} as const;
+
+export const org_micoli_micraft_http_ProtectionSimulationDtoSchema = {
+    type: 'object',
+    properties: {
+        abilityCount: {
+            type: 'integer',
+            format: 'int32',
+            title: 'Int'
+        },
+        classes: {
+            type: 'array',
+            items: {
+                $ref: '#/components/schemas/org.micoli.micraft.http.ClassSurvivalDto'
+            },
+            title: 'List<ClassSurvivalDto>'
+        },
+        magicalSharePct: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        },
+        physicalSharePct: {
+            type: 'number',
+            format: 'float',
+            title: 'Float'
+        }
+    },
+    required: [
+        'abilityCount',
+        'classes',
+        'magicalSharePct',
+        'physicalSharePct'
+    ],
+    title: 'ProtectionSimulationDto'
+} as const;
+
 export const org_micoli_micraft_http_NpcAdminDtoSchema = {
     type: 'object',
     properties: {

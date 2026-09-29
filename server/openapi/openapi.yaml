@@ -2548,6 +2548,113 @@ paths:
           description: Missing admin permission
           headers: {}
       deprecated: false
+  /api/admin/protections/simulate:
+    get:
+      tags: []
+      description: "Per-Class survival report at a Level and Danger tier: active Protection\
+        \ Rank, hit chance and mean damage/attacks-survived with and without it, against\
+        \ that tier's real NPC Abilities. Analytic, no Monte-Carlo."
+      parameters:
+      - name: level
+        in: query
+        description: 1-30
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: dangerTier
+        in: query
+        description: 1-5
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: str
+        in: query
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: dex
+        in: query
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: intel
+        in: query
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: wis
+        in: query
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: con
+        in: query
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: cha
+        in: query
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      - name: equipmentAcBonus
+        in: query
+        required: false
+        deprecated: false
+        explode: false
+        schema:
+          type: integer
+          format: int32
+          title: Int
+      responses:
+        "200":
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/org.micoli.micraft.http.ProtectionSimulationDto"
+        "400":
+          description: level outside 1-30 or dangerTier outside 1-5
+          headers: {}
+        "401":
+          description: Missing or invalid token
+          headers: {}
+        "403":
+          description: Missing admin permission
+          headers: {}
+      deprecated: false
   /api/admin/npcs:
     get:
       tags: []
@@ -7531,6 +7638,84 @@ components:
       - rageCost
       - rank
       title: ProtectionRankDto
+    org.micoli.micraft.http.ClassSurvivalDto:
+      type: object
+      properties:
+        className:
+          type: string
+          title: String
+        hitChanceWithPct:
+          type: number
+          format: float
+          title: Float
+        hitChanceWithoutPct:
+          type: number
+          format: float
+          title: Float
+        meanAttacksSurvivedWith:
+          type:
+          - "null"
+          - number
+          format: float
+          title: Float
+        meanAttacksSurvivedWithout:
+          type:
+          - "null"
+          - number
+          format: float
+          title: Float
+        meanDamageWithPerAttack:
+          type: number
+          format: float
+          title: Float
+        meanDamageWithoutPerAttack:
+          type: number
+          format: float
+          title: Float
+        protectionRank:
+          type:
+          - "null"
+          - integer
+          format: int32
+          title: Int
+        protectionSpellId:
+          type:
+          - "null"
+          - string
+          title: String
+      required:
+      - className
+      - hitChanceWithPct
+      - hitChanceWithoutPct
+      - meanDamageWithPerAttack
+      - meanDamageWithoutPerAttack
+      title: ClassSurvivalDto
+    org.micoli.micraft.http.ProtectionSimulationDto:
+      type: object
+      properties:
+        abilityCount:
+          type: integer
+          format: int32
+          title: Int
+        classes:
+          type: array
+          items:
+            $ref: "#/components/schemas/org.micoli.micraft.http.ClassSurvivalDto"
+          title: List<ClassSurvivalDto>
+        magicalSharePct:
+          type: number
+          format: float
+          title: Float
+        physicalSharePct:
+          type: number
+          format: float
+          title: Float
+      required:
+      - abilityCount
+      - classes
+      - magicalSharePct
+      - physicalSharePct
+      title: ProtectionSimulationDto
     org.micoli.micraft.http.NpcAdminDto:
       type: object
       properties:

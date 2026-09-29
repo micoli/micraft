@@ -33,6 +33,8 @@ export type {
   OrgMicoliMicraftGameWorldClaimClaim as ClaimDto,
   OrgMicoliMicraftHttpClassProtectionDto as ClassProtectionDto,
   OrgMicoliMicraftHttpProtectionRankDto as ProtectionRankDto,
+  OrgMicoliMicraftHttpClassSurvivalDto as ClassSurvivalDto,
+  OrgMicoliMicraftHttpProtectionSimulationDto as ProtectionSimulationDto,
 } from "../generated/api/requests/types.gen";
 
 // /api/map/terrain is documented as an opaque JSON string in the OpenAPI spec (it returns a

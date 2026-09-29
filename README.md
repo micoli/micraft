@@ -201,6 +201,7 @@ never hand-edit either.
 | POST | `/api/admin/players/{name}/rename` | Rename a player |
 | PUT | `/api/admin/players/{name}/rpg` | Partially update a player's RPG class/base stats |
 | GET | `/api/admin/protections` | Each Class's Protection Spell and per-Rank values, keyed by class name (null spellId when a Class has none configured) |
+| GET | `/api/admin/protections/simulate` | Per-Class survival report at a Level and Danger tier: active Protection Rank, hit chance and mean damage/attacks-survived with and without it, against that tier's real NPC Abilities. Analytic, no Monte-Carlo. |
 | POST | `/api/admin/reload` | Reload configuration files without restarting the server — same behavior as the in-game /reload command |
 | POST | `/api/admin/restart` | Trigger a pitchfork server restart |
 | GET | `/api/admin/scenes` | All scenes (bounded off-world block-structure buffers) |

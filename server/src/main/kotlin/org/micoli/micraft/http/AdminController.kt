@@ -67,6 +67,8 @@ import org.micoli.micraft.game.GameLoop
 import org.micoli.micraft.game.TICKS_PER_DAY
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.combat.protectionSpellGrants
+import org.micoli.micraft.game.combat.simulator.ProtectionSimulationInput
+import org.micoli.micraft.game.combat.simulator.ProtectionSimulator
 import org.micoli.micraft.game.equipment.GrantResult
 import org.micoli.micraft.game.equipment.Loadout
 import org.micoli.micraft.game.npc.ChatTurn
@@ -446,6 +448,31 @@ data class ProtectionRankDto(
 data class ClassProtectionDto(
     val spellId: String? = null,
     val ranks: List<ProtectionRankDto> = emptyList()
+)
+
+/**
+ * [protectionSpellId] and [protectionRank] are null when this Class has no Protection unlocked at
+ * the simulated Level.
+ */
+@Serializable
+data class ClassSurvivalDto(
+    val className: String,
+    val protectionSpellId: String? = null,
+    val protectionRank: Int? = null,
+    val hitChanceWithoutPct: Float,
+    val hitChanceWithPct: Float,
+    val meanDamageWithoutPerAttack: Float,
+    val meanDamageWithPerAttack: Float,
+    val meanAttacksSurvivedWithout: Float? = null,
+    val meanAttacksSurvivedWith: Float? = null,
+)
+
+@Serializable
+data class ProtectionSimulationDto(
+    val abilityCount: Int,
+    val physicalSharePct: Float,
+    val magicalSharePct: Float,
+    val classes: List<ClassSurvivalDto>,
 )
 
 @Serializable
@@ -2200,6 +2227,88 @@ class AdminController(
                             MapSerializer(String.serializer(), ClassProtectionDto.serializer()),
                             protections,
                         ),
+                        ContentType.Application.Json)
+                }
+
+            get(
+                "/api/admin/protections/simulate",
+                {
+                    description =
+                        "Per-Class survival report at a Level and Danger tier: active Protection " +
+                            "Rank, hit chance and mean damage/attacks-survived with and without " +
+                            "it, against that tier's real NPC Abilities. Analytic, no Monte-Carlo."
+                    request {
+                        queryParameter<Int>("level") { description = "1-30" }
+                        queryParameter<Int>("dangerTier") { description = "1-5" }
+                        queryParameter<Int>("str") { required = false }
+                        queryParameter<Int>("dex") { required = false }
+                        queryParameter<Int>("intel") { required = false }
+                        queryParameter<Int>("wis") { required = false }
+                        queryParameter<Int>("con") { required = false }
+                        queryParameter<Int>("cha") { required = false }
+                        queryParameter<Int>("equipmentAcBonus") { required = false }
+                    }
+                    response {
+                        code(HttpStatusCode.OK) { body<ProtectionSimulationDto>() }
+                        code(HttpStatusCode.BadRequest) {
+                            description = "level outside 1-30 or dangerTier outside 1-5"
+                        }
+                    }
+                    requireAdminDocs()
+                }) {
+                    if (!requireAdmin()) return@get
+                    val q = call.request.queryParameters
+                    val level = q["level"]?.toIntOrNull()
+                    val dangerTier = q["dangerTier"]?.toIntOrNull()
+                    if (level == null || level !in 1..30)
+                        return@get call.respond(HttpStatusCode.BadRequest)
+                    if (dangerTier == null || dangerTier !in 1..5)
+                        return@get call.respond(HttpStatusCode.BadRequest)
+                    val input =
+                        ProtectionSimulationInput(
+                            level = level,
+                            dangerTier = dangerTier,
+                            baseStats =
+                                BaseStats(
+                                    str = q["str"]?.toIntOrNull() ?: 10,
+                                    dex = q["dex"]?.toIntOrNull() ?: 10,
+                                    intel = q["intel"]?.toIntOrNull() ?: 10,
+                                    wis = q["wis"]?.toIntOrNull() ?: 10,
+                                    con = q["con"]?.toIntOrNull() ?: 10,
+                                    cha = q["cha"]?.toIntOrNull() ?: 10,
+                                ),
+                            equipmentAcBonus = q["equipmentAcBonus"]?.toIntOrNull() ?: 0,
+                        )
+                    val report =
+                        ProtectionSimulator.simulate(
+                            input,
+                            gameLoop.classRegistry,
+                            gameLoop.spellRegistry,
+                            gameLoop.attackRegistry,
+                            adminWorld().npcManager.getDefinitions(),
+                        )
+                    val dto =
+                        ProtectionSimulationDto(
+                            abilityCount = report.abilityCount,
+                            physicalSharePct = report.physicalSharePct,
+                            magicalSharePct = report.magicalSharePct,
+                            classes =
+                                report.classes.map {
+                                    ClassSurvivalDto(
+                                        className = it.className,
+                                        protectionSpellId = it.protectionSpellId,
+                                        protectionRank = it.protectionRank,
+                                        hitChanceWithoutPct = it.hitChanceWithoutPct,
+                                        hitChanceWithPct = it.hitChanceWithPct,
+                                        meanDamageWithoutPerAttack = it.meanDamageWithoutPerAttack,
+                                        meanDamageWithPerAttack = it.meanDamageWithPerAttack,
+                                        meanAttacksSurvivedWithout = it.meanAttacksSurvivedWithout,
+                                        meanAttacksSurvivedWith = it.meanAttacksSurvivedWith,
+                                    )
+                                },
+                        )
+                    call.respondText(
+                        adminJson.encodeToString(ProtectionSimulationDto.serializer(), dto),
                         ContentType.Application.Json)
                 }
 

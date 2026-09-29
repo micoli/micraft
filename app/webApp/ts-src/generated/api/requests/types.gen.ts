@@ -2743,6 +2743,70 @@ export type OrgMicoliMicraftHttpProtectionRankDto = {
 };
 
 /**
+ * ClassSurvivalDto
+ */
+export type OrgMicoliMicraftHttpClassSurvivalDto = {
+    /**
+     * String
+     */
+    className: string;
+    /**
+     * Float
+     */
+    hitChanceWithPct: number;
+    /**
+     * Float
+     */
+    hitChanceWithoutPct: number;
+    /**
+     * Float
+     */
+    meanAttacksSurvivedWith?: null | number;
+    /**
+     * Float
+     */
+    meanAttacksSurvivedWithout?: null | number;
+    /**
+     * Float
+     */
+    meanDamageWithPerAttack: number;
+    /**
+     * Float
+     */
+    meanDamageWithoutPerAttack: number;
+    /**
+     * Int
+     */
+    protectionRank?: null | number;
+    /**
+     * String
+     */
+    protectionSpellId?: null | string;
+};
+
+/**
+ * ProtectionSimulationDto
+ */
+export type OrgMicoliMicraftHttpProtectionSimulationDto = {
+    /**
+     * Int
+     */
+    abilityCount: number;
+    /**
+     * List<ClassSurvivalDto>
+     */
+    classes: Array<OrgMicoliMicraftHttpClassSurvivalDto>;
+    /**
+     * Float
+     */
+    magicalSharePct: number;
+    /**
+     * Float
+     */
+    physicalSharePct: number;
+};
+
+/**
  * NpcAdminDto
  */
 export type OrgMicoliMicraftHttpNpcAdminDto = {
@@ -6620,6 +6684,75 @@ export type GetApiAdminProtectionsResponses = {
 };
 
 export type GetApiAdminProtectionsResponse = GetApiAdminProtectionsResponses[keyof GetApiAdminProtectionsResponses];
+
+export type GetApiAdminProtectionsSimulateData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Int
+         *
+         * 1-30
+         */
+        level?: number;
+        /**
+         * Int
+         *
+         * 1-5
+         */
+        dangerTier?: number;
+        /**
+         * Int
+         */
+        str?: number;
+        /**
+         * Int
+         */
+        dex?: number;
+        /**
+         * Int
+         */
+        intel?: number;
+        /**
+         * Int
+         */
+        wis?: number;
+        /**
+         * Int
+         */
+        con?: number;
+        /**
+         * Int
+         */
+        cha?: number;
+        /**
+         * Int
+         */
+        equipmentAcBonus?: number;
+    };
+    url: '/api/admin/protections/simulate';
+};
+
+export type GetApiAdminProtectionsSimulateErrors = {
+    /**
+     * level outside 1-30 or dangerTier outside 1-5
+     */
+    400: unknown;
+    /**
+     * Missing or invalid token
+     */
+    401: unknown;
+    /**
+     * Missing admin permission
+     */
+    403: unknown;
+};
+
+export type GetApiAdminProtectionsSimulateResponses = {
+    200: OrgMicoliMicraftHttpProtectionSimulationDto;
+};
+
+export type GetApiAdminProtectionsSimulateResponse = GetApiAdminProtectionsSimulateResponses[keyof GetApiAdminProtectionsSimulateResponses];
 
 export type GetApiAdminNpcsData = {
     body?: never;

@@ -7,6 +7,7 @@ import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.AttackDefinition
 import org.micoli.micraft.combat.AttackRankDefinition
 import org.micoli.micraft.combat.DamageType
+import org.micoli.micraft.combat.DiceSpec
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.combat.isMagical
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
@@ -27,11 +28,9 @@ import org.slf4j.LoggerFactory
 private val log = LoggerFactory.getLogger(CombatProcessor::class.java)
 
 private fun rollDice(spec: String, rollSource: Random): Int {
-    val parts = spec.lowercase().split("d")
-    if (parts.size != 2) return 1
-    val count = parts[0].toIntOrNull() ?: 1
-    val sides = parts[1].toIntOrNull() ?: 4
-    return (1..count).sumOf { rollSource.nextInt(1, sides + 1) }
+    val dice = DiceSpec.parse(spec)
+    if (!dice.isValid) return 1
+    return (1..dice.count).sumOf { rollSource.nextInt(1, dice.sides + 1) }
 }
 
 /**
