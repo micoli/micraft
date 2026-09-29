@@ -61,7 +61,7 @@ plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
         resolution("webpack", "5.104.1")
         resolution("socket.io-parser", "4.2.7")
         resolution("js-yaml", "4.3.2")
-        resolution("fast-uri", "3.1.6")
+        resolution("fast-uri", "3.1.7")
         resolution("body-parser", "1.20.6")
         resolution("brace-expansion", "2.1.4")
         resolution("qs", "6.16.0")
