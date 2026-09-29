@@ -102,6 +102,18 @@ sealed class StatusEffect {
         override val damage = 0f
         override val damageEffectName = null
     }
+
+    /**
+     * A Class's Protection Spell (Iron Skin, Shadowstep, ...). Every Protection shares this one
+     * marker — [ActiveStatusEffect.protectionId] and [ActiveStatusEffect.rank] carry which
+     * Protection and Rank actually granted it, resolved against the live Spell config at
+     * Derived-stats computation time (spec: Protection Spells).
+     */
+    data object Protected : StatusEffect() {
+        override val durationSec = 60f
+        override val damage = 0f
+        override val damageEffectName = null
+    }
 }
 
 object StatusEffectSerializer : KSerializer<StatusEffect> {
@@ -124,6 +136,7 @@ object StatusEffectSerializer : KSerializer<StatusEffect> {
                 StatusEffect.ManaBoost,
                 StatusEffect.HpRegenBoost,
                 StatusEffect.ManaRegenBoost,
+                StatusEffect.Protected,
             )
             .associateBy { it::class.simpleName!! }
 
@@ -141,4 +154,7 @@ object StatusEffectSerializer : KSerializer<StatusEffect> {
 data class ActiveStatusEffect(
     val effect: StatusEffect,
     val expiresAtMs: Long,
+    /** Set only for [StatusEffect.Protected] — which Protection Spell and Rank granted it. */
+    val protectionId: String? = null,
+    val rank: Int? = null,
 )

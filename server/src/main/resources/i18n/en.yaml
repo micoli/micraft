@@ -605,4 +605,10 @@ combat:
     out_of_range: "Target out of range"
     out_of_range_max: "Target out of range (max {0} m)"
     no_target: "No target selected"
+    no_protection: "Your class has no Protection Spell."
     stabilized: "You have stabilized!"
+
+protections:
+  client:
+    iron_skin_name: "Iron Skin"
+    iron_skin_description: "Raises your Armor class for a time."

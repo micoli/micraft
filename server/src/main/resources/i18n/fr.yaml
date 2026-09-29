@@ -605,4 +605,10 @@ combat:
     out_of_range: "Cible hors de portée"
     out_of_range_max: "Cible hors de portée (max {0} m)"
     no_target: "Aucune cible sélectionnée"
+    no_protection: "Votre classe n'a pas de sort de Protection."
     stabilized: "Vous êtes stabilisé !"
+
+protections:
+  client:
+    iron_skin_name: "Peau de fer"
+    iron_skin_description: "Augmente votre classe d'armure pendant un temps."

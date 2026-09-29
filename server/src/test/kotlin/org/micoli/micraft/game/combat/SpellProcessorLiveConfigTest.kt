@@ -81,4 +81,56 @@ class SpellProcessorLiveConfigTest {
 
         assertEquals(26, npc.currentHp, "sparkBolt should deal its configured power as damage")
     }
+
+    @Test
+    fun `a Level 1 Warrior's protect command grants Iron Skin Rank 1`() = runBlocking {
+        val skills = SkillsConfig()
+        val classes = ClassesConfig()
+
+        val combatProcessor =
+            CombatProcessor(
+                config = CombatConfigData(),
+                attackRegistry = emptyMap(),
+                classRegistry = classes.data.classes,
+                npcManager = NpcManager(broadcast = {}),
+                getSessions = { emptyList() },
+                broadcastCombatLog = {},
+                subscribeToChannel = { _, _ -> },
+                i18n = testI18n(),
+                savePlayer = {},
+                characterStats =
+                    org.micoli.micraft.game.rpg.CharacterStats(
+                        protectionSpells = skills.data.spells),
+            )
+        val spellProcessor =
+            SpellProcessor(
+                spellRegistry = skills.data.spells,
+                classRegistry = classes.data.classes,
+                combatConfig = CombatConfigData(),
+                combatProcessor = combatProcessor,
+                getSessions = { emptyList() },
+            )
+
+        val caster = testSession(id = "a", name = "Alice", pos = Vec3(0f, 0f, 0f))
+        val baseChar =
+            CharacterData(
+                id = "a",
+                name = "Alice",
+                characterClass = CharacterClass.WARRIOR,
+                baseStats = BaseStats(),
+                currentHp = 20,
+                currentMana = 100,
+                level = 1,
+            )
+        caster.characterData = baseChar
+        val baselineAc = combatProcessor.characterStats.derived(caster, baseChar).armorClass
+
+        spellProcessor.castOwnProtection(caster)
+
+        val active = caster.combatState.activeEffects.single()
+        assertEquals("iron_skin", active.protectionId)
+        assertEquals(1, active.rank)
+        val derived = combatProcessor.characterStats.derived(caster, caster.characterData!!)
+        assertEquals(baselineAc + 4, derived.armorClass)
+    }
 }

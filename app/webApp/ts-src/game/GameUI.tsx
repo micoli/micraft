@@ -54,7 +54,7 @@ import {
   confirmScenePlacement,
   cancelScenePlacement,
 } from "./lib/creativeMode";
-import type { E2eActions } from "./lib/e2eBridge";
+import { mapActiveEffects, type E2eActions } from "./lib/e2eBridge";
 
 const initial: UiState = {
   hud: null,
@@ -1021,7 +1021,16 @@ export function GameUI() {
       dispatch("player_status_update", { data });
     };
     window.mc.updateNpcProximity = (json: string) => dispatch("npc_proximity_update", { data: JSON.parse(json) });
-    window.mc.statusEffectUpdate = (json: string) => dispatch("status_effect_update", { data: JSON.parse(json) });
+    window.mc.statusEffectUpdate = (json: string) => {
+      const data = JSON.parse(json);
+      if (window.__mcE2E) {
+        window.mcE2E = {
+          ...(window.mcE2E ?? {}),
+          activeEffects: mapActiveEffects(data?.effects ?? []),
+        };
+      }
+      dispatch("status_effect_update", { data });
+    };
     window.mc.breathUpdate = (json: string) => {
       const data = JSON.parse(json);
       if (window.__mcE2E) {

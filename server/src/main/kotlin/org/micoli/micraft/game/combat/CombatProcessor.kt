@@ -404,6 +404,14 @@ class CombatProcessor(
 
     private suspend fun triggerDeath(session: PlayerSession) {
         val charData = session.characterData ?: return
+        session.combatState = session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
+        // A respawn starts clean — a Protection's uptime is a per-fight tactical choice, not a
+        // permanent buff to carry into the next one. Cleared *before* computing derived stats
+        // below, so a respawn's new HP/mana max never includes a Protection bonus that is about
+        // to be removed.
+        session.combatState.activeEffects.clear()
+        session.send(ServerMessage.StatusEffectUpdate(session.id, emptyList()))
+
         val derived = characterStats.derived(session, charData)
         val newHp = (derived.maxHp / 2).coerceAtLeast(1)
         val newMana = (derived.maxMana / 2).coerceAtLeast(0)
@@ -416,7 +424,6 @@ class CombatProcessor(
                 currentMana = newMana,
                 xp = (charData.xp - xpLoss).coerceAtLeast(0),
             )
-        session.combatState = session.combatState.copy(downingSuccesses = 0, downingFailures = 0)
         getSessions().forEach {
             it.send(ServerMessage.PlayerRespawned(session.id, respawnPos, newHp, newMana))
         }
@@ -485,12 +492,15 @@ class CombatProcessor(
         effect: StatusEffect,
         durationSec: Float,
         now: Long,
+        protectionId: String? = null,
+        rank: Int? = null,
     ) {
         val expiry = now + (durationSec * 1000).toLong()
+        val active = ActiveStatusEffect(effect, expiry, protectionId, rank)
         val idx =
             target.combatState.activeEffects.indexOfFirst { it.effect::class == effect::class }
-        if (idx >= 0) target.combatState.activeEffects[idx] = ActiveStatusEffect(effect, expiry)
-        else target.combatState.activeEffects.add(ActiveStatusEffect(effect, expiry))
+        if (idx >= 0) target.combatState.activeEffects[idx] = active
+        else target.combatState.activeEffects.add(active)
         target.send(
             ServerMessage.StatusEffectUpdate(target.id, target.combatState.activeEffects.toList()))
 
@@ -674,9 +684,10 @@ class CombatProcessor(
         config: CombatConfigData,
         attackRegistry: Map<String, AttackDefinition>,
         classRegistry: Map<String, ClassDefinitionEntry>,
+        spellRegistry: Map<String, SpellDefinition> = emptyMap(),
     ) {
         this.config = config
-        characterStats.reload(maxRage = config.maxRage)
+        characterStats.reload(maxRage = config.maxRage, protectionSpells = spellRegistry)
         this.attackRegistry = attackRegistry
         abilityGate.reload(classRegistry, config.globalCooldownMs)
     }

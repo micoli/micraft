@@ -31,10 +31,14 @@ import {
   TradeData,
 } from "./types";
 import { Tab } from "./hooks/usePreferences";
+import { mapActiveEffects } from "./lib/e2eBridge";
 
 export interface ActiveEffect {
   name: string;
   expiresAtMs: number;
+  /** Set only for a Protection (`name === "Protected"`) — which one and Rank granted it. */
+  protectionId?: string | null;
+  rank?: number | null;
 }
 
 export interface UiState {
@@ -394,10 +398,12 @@ const gameRegistry = {
   }),
   status_effect_update: (
     state: UiState,
-    payload: { data: { effects: Array<{ effect: string; expiresAtMs: number }> } },
+    payload: {
+      data: { effects: Array<{ effect: string; expiresAtMs: number; protectionId?: string; rank?: number }> };
+    },
   ) => ({
     ...state,
-    activeEffects: payload.data.effects.map((e) => ({ name: e.effect, expiresAtMs: e.expiresAtMs })),
+    activeEffects: mapActiveEffects(payload.data.effects),
   }),
   player_downed: (state: UiState, _payload: { playerId: string }) => ({ ...state, playerDowned: true }),
   player_respawned: (state: UiState, payload: { data: { currentHp: number; currentMana: number } }) => {

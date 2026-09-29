@@ -1,7 +1,9 @@
 package org.micoli.micraft.game.rpg
 
+import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.combat.CombatConfigData
+import org.micoli.micraft.game.combat.SpellDefinition
 import org.micoli.micraft.game.equipment.EquipmentCatalog
 import org.micoli.micraft.game.session.PlayerSession
 import org.micoli.micraft.player.PlayerState
@@ -18,9 +20,14 @@ class CharacterStats(
     private val catalog: EquipmentCatalog = EquipmentCatalog(),
     @Volatile private var maxRage: Int = CombatConfigData().maxRage,
     private val savePlayer: suspend (PlayerSession) -> Unit = {},
+    @Volatile private var protectionSpells: Map<String, SpellDefinition> = emptyMap(),
 ) {
-    fun reload(maxRage: Int) {
+    fun reload(
+        maxRage: Int,
+        protectionSpells: Map<String, SpellDefinition> = this.protectionSpells
+    ) {
         this.maxRage = maxRage
+        this.protectionSpells = protectionSpells
     }
 
     fun affectsStats(effect: StatusEffect): Boolean = effect in DerivedStatsCalculator.STAT_EFFECTS
@@ -29,17 +36,38 @@ class CharacterStats(
         character: CharacterData,
         state: PlayerState,
         effects: Collection<StatusEffect> = emptyList(),
+        protectionBonus: ProtectionBonus = ProtectionBonus(),
     ): StatSheet {
         val bonuses = state.equipmentBonuses(catalog.armors, catalog.weapons, catalog.tools)
         val effective = DerivedStatsCalculator.effectiveBaseStats(character.baseStats, bonuses)
         val derived =
             DerivedStatsCalculator.compute(
-                effective, character.level, bonuses.sumOf { it.acBonus }, effects)
+                effective, character.level, bonuses.sumOf { it.acBonus }, effects, protectionBonus)
         return StatSheet(effective, derived)
     }
 
+    /** Resolves the active Protection's bonuses from the live Spell config, if any is active. */
+    private fun protectionBonusOf(activeEffects: Collection<ActiveStatusEffect>): ProtectionBonus {
+        val active =
+            activeEffects.firstOrNull { it.effect is StatusEffect.Protected }
+                ?: return ProtectionBonus()
+        val spell = protectionSpells[active.protectionId] ?: return ProtectionBonus()
+        val rankDef = active.rank?.let { spell.ranks[it] } ?: return ProtectionBonus()
+        return ProtectionBonus(
+            acBonus = rankDef.acBonus,
+            dodgeBonusPct = rankDef.dodgeBonusPct,
+            magicResistBonusPct = rankDef.magicResistBonusPct,
+            maxHpBonus = rankDef.maxHpBonus,
+            hpRegenMultBonus = rankDef.hpRegenMultBonus,
+        )
+    }
+
     private fun of(session: PlayerSession, character: CharacterData): StatSheet =
-        of(character, session.state, session.combatState.activeEffects.map { it.effect })
+        of(
+            character,
+            session.state,
+            session.combatState.activeEffects.map { it.effect },
+            protectionBonusOf(session.combatState.activeEffects))
 
     fun derived(session: PlayerSession, character: CharacterData): DerivedStats =
         of(session, character).derived

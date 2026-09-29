@@ -368,7 +368,8 @@ class GameLoop(
     private val classesConfigLoader: ClassesConfig? = null,
     private val experienceConfigLoader: ExperienceConfig? = null,
     private val characterStats: CharacterStats =
-        CharacterStats(equipmentCatalog, combatConfig.maxRage, playerPersister::save),
+        CharacterStats(
+            equipmentCatalog, combatConfig.maxRage, playerPersister::save, spellRegistry),
     private val combatProcessor: CombatProcessor =
         CombatProcessor(
             config = combatConfig,
@@ -541,7 +542,11 @@ class GameLoop(
         val newSkills = skillsConfigLoader?.reload()
         val newClasses = classesConfigLoader?.reload() ?: classesData
         val newExperience = experienceConfigLoader?.reload()
-        combatProcessor.reload(newCombat, newSkills?.attacks ?: attackRegistry, newClasses.classes)
+        combatProcessor.reload(
+            newCombat,
+            newSkills?.attacks ?: attackRegistry,
+            newClasses.classes,
+            newSkills?.spells ?: spellRegistry)
         regenProcessor.reload(newClasses, newCombat.maxRage)
         spellProcessor.reload(newSkills?.spells ?: spellRegistry, newClasses.classes, newCombat)
         if (newExperience != null) experienceProcessor.reload(newExperience)
@@ -771,6 +776,7 @@ class GameLoop(
                 combatProcessor.applyStatusEffectTo(
                     session, effect, durationSec, System.currentTimeMillis())
             },
+            castProtection = { session -> spellProcessor.castOwnProtection(session) },
             groupManager = groupManager,
             miniGameManager = miniGameManager,
             miniGameRegistry = shared.miniGameRegistry,
@@ -830,6 +836,7 @@ class GameLoop(
             questManager = questManager,
             clearAccumulators = regenProcessor::clearAccumulators,
             applyBuff = closures.applyBuff,
+            castProtection = closures.castProtection,
             equipmentCatalog = equipmentCatalog,
             characterStats = characterStats,
         )
@@ -896,6 +903,7 @@ class GameLoop(
                     gw.combatProcessor.applyStatusEffectTo(
                         session, effect, durationSec, System.currentTimeMillis())
                 },
+                castProtection = { session -> gw.spellProcessor.castOwnProtection(session) },
                 characterStats = gw.combatProcessor.characterStats,
                 flushWorld = { gw.world.flushDirty() },
                 sessions = gw.sessions::all,

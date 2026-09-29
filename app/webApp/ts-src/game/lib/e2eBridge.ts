@@ -1,3 +1,27 @@
+/** Wire shape of one entry in `ServerMessage.StatusEffectUpdate.effects`. */
+export interface WireActiveEffect {
+  effect: string;
+  expiresAtMs: number;
+  protectionId?: string;
+  rank?: number;
+}
+
+/**
+ * Maps `StatusEffectUpdate.effects` (server wire shape) to the client-side shape both the
+ * `status_effect_update` reducer (UIStateRegistry.ts) and `window.mcE2E.activeEffects`
+ * (GameUI.tsx) use — kept in one place so the two never drift apart.
+ */
+export function mapActiveEffects(
+  effects: WireActiveEffect[],
+): { name: string; expiresAtMs: number; protectionId: string | null; rank: number | null }[] {
+  return effects.map((e) => ({
+    name: e.effect,
+    expiresAtMs: e.expiresAtMs,
+    protectionId: e.protectionId ?? null,
+    rank: e.rank ?? null,
+  }));
+}
+
 export interface E2eActions {
   moveForward(ms: number): void;
   moveBack(ms: number): void;
@@ -110,6 +134,8 @@ export interface E2eSnapshot {
   } | null;
   /** Latest broadcast MiniGameAction for the current room, mirrored from MiniGameAction. */
   miniGameLastAction: { roomId: string; fromPlayerId: string; payload: string } | null;
+  /** Active Status effects (Protections included), mirrored from StatusEffectUpdate. */
+  activeEffects: { name: string; expiresAtMs: number; protectionId: string | null; rank: number | null }[];
 }
 
 /**

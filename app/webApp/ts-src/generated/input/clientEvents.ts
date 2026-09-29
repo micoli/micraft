@@ -30,6 +30,7 @@ export const ClientAction = {
   TAME: "tame",
   PET_DISMISS: "pet_dismiss",
   TOGGLE_COMPASS: "toggle_compass",
+  PROTECT: "protect",
   SIEGE_WEAPON_ROTATE: "siege_weapon_rotate",
   SIEGE_WEAPON_PITCH: "siege_weapon_pitch",
   SIEGE_WEAPON_POWER: "siege_weapon_power",

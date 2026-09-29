@@ -12,32 +12,42 @@ object DerivedStatsCalculator {
             StatusEffect.HpBoost,
             StatusEffect.ManaBoost,
             StatusEffect.HpRegenBoost,
-            StatusEffect.ManaRegenBoost)
+            StatusEffect.ManaRegenBoost,
+            StatusEffect.Protected)
 
     fun compute(
         baseStats: BaseStats,
         level: Int,
         acBonus: Int = 0,
         effects: Collection<StatusEffect> = emptyList(),
+        protectionBonus: ProtectionBonus = ProtectionBonus(),
     ): DerivedStats {
         val s = baseStats
         return DerivedStats(
             maxHp =
                 (floor((s.con - 10) / 2.0) * level + 10).toInt().coerceAtLeast(1) +
-                    if (StatusEffect.HpBoost in effects) 20 else 0,
+                    (if (StatusEffect.HpBoost in effects) 20 else 0) +
+                    protectionBonus.maxHpBonus,
             maxMana = s.wis * 5 + if (StatusEffect.ManaBoost in effects) 20 else 0,
             meleeDmg = floor((s.str - 10) / 2.0).toInt(),
             rangedDmg = floor((s.dex - 10) / 2.0).toInt(),
             spellDmg = floor((s.intel - 10) / 2.0).toInt(),
             critChancePct = 5f + s.dex * 0.2f,
             critDmgMult = 2f,
-            dodgePct = ((s.dex - 10) * 1.5f).coerceIn(0f, CombatConstants.DODGE_CAP_PCT),
-            magicResistPct = ((s.wis - 10) * 2f).coerceIn(0f, CombatConstants.MAGIC_RESIST_CAP_PCT),
+            dodgePct =
+                ((s.dex - 10) * 1.5f + protectionBonus.dodgeBonusPct).coerceIn(
+                    0f, CombatConstants.DODGE_CAP_PCT),
+            magicResistPct =
+                ((s.wis - 10) * 2f + protectionBonus.magicResistBonusPct).coerceIn(
+                    0f, CombatConstants.MAGIC_RESIST_CAP_PCT),
             initiative = floor((s.dex - 10) / 2.0).toInt(),
-            hpRegenPerSec = s.con / 10f * if (StatusEffect.HpRegenBoost in effects) 1.1f else 1f,
+            hpRegenPerSec =
+                s.con / 10f *
+                    (if (StatusEffect.HpRegenBoost in effects) 1.1f else 1f) *
+                    (1f + protectionBonus.hpRegenMultBonus),
             manaRegenPerSec =
                 s.wis / 20f * if (StatusEffect.ManaRegenBoost in effects) 1.1f else 1f,
-            armorClass = 10 + acBonus + floor((s.dex - 10) / 2.0).toInt(),
+            armorClass = 10 + acBonus + protectionBonus.acBonus + floor((s.dex - 10) / 2.0).toInt(),
             maxTokens = level / 4 + 1,
         )
     }

@@ -427,8 +427,9 @@ class GameLoopModule {
         equipmentCatalog: EquipmentCatalog,
         combatConfigData: CombatConfigData,
         playerPersister: PlayerPersister,
+        @Named("spells") spells: Map<String, SpellDefinition>,
     ): CharacterStats =
-        CharacterStats(equipmentCatalog, combatConfigData.maxRage, playerPersister::save)
+        CharacterStats(equipmentCatalog, combatConfigData.maxRage, playerPersister::save, spells)
 
     /**
      * The single production `FactionManager`. `GameLoop` reads it (via `factionManager` in

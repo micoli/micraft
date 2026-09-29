@@ -8,7 +8,8 @@
       "enum": [
         "TOKEN_RAGE_CONSUME",
         "NECROTIC_AOE",
-        "DIRECT_DAMAGE"
+        "DIRECT_DAMAGE",
+        "PROTECTION"
       ]
     },
     "enabled": {
@@ -49,6 +50,24 @@
               "string",
               "null"
             ]
+          },
+          "durationSec": {
+            "type": "number"
+          },
+          "acBonus": {
+            "type": "integer"
+          },
+          "dodgeBonusPct": {
+            "type": "number"
+          },
+          "magicResistBonusPct": {
+            "type": "number"
+          },
+          "maxHpBonus": {
+            "type": "integer"
+          },
+          "hpRegenMultBonus": {
+            "type": "number"
           }
         }
       }

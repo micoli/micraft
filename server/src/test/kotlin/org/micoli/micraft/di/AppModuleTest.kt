@@ -47,6 +47,7 @@ class AppModuleTest {
                         weaponCategories = { emptyMap() },
                         toolCategories = { emptyMap() },
                         applyBuff = { _, _, _ -> },
+                        castProtection = { _ -> },
                         groupManager = GroupManager({ emptyList() }, chat, cm, i18n),
                         miniGameManager = MiniGameManager({ emptyList() }, miniGameReg, i18n),
                         miniGameRegistry = miniGameReg,

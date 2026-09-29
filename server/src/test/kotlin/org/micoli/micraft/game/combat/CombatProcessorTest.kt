@@ -794,6 +794,28 @@ class CombatProcessorTest {
     }
 
     @Test
+    fun `death clears active Protections`() = runBlocking {
+        val target = testSession(id = "b", name = "Bob")
+        target.characterData = testChar("b", "Bob", hp = 0)
+        target.combatState = target.combatState.copy(downingSuccesses = 0, downingFailures = 2)
+        val proc = buildProcessor(sessions = { listOf(target) })
+        proc.applyStatusEffectTo(
+            target, StatusEffect.Protected, 60f, System.currentTimeMillis(), "iron_skin", 1)
+        assertTrue(target.combatState.activeEffects.isNotEmpty())
+
+        var attempts = 0
+        while (target.isDowned && attempts < 1000) {
+            proc.tickDowningRolls(target)
+            if (target.isDowned)
+                target.combatState =
+                    target.combatState.copy(downingSuccesses = 0, downingFailures = 2)
+            attempts++
+        }
+
+        assertTrue(target.combatState.activeEffects.isEmpty())
+    }
+
+    @Test
     fun `death and respawn sends PlayerStatusUpdate matching new HP`() = runBlocking {
         val target = testSession(id = "b", name = "Bob")
         target.characterData = testChar("b", "Bob", hp = 0)

@@ -134,7 +134,11 @@ fun buildGameWorld(
 
     val equipmentCatalog = shared.equipmentCatalog
     val characterStats =
-        CharacterStats(equipmentCatalog, shared.combatConfigData.maxRage, playerPersister::save)
+        CharacterStats(
+            equipmentCatalog,
+            shared.combatConfigData.maxRage,
+            playerPersister::save,
+            shared.spellRegistry)
     val experienceProcessor =
         ExperienceProcessor(
             opts.experienceConfigData ?: shared.experienceConfigData,

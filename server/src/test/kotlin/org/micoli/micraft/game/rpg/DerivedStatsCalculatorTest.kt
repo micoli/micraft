@@ -96,4 +96,45 @@ class DerivedStatsCalculatorTest {
         val derived = compute(BaseStats(dex = 10), acBonus = 5)
         assertEquals(15, derived.armorClass)
     }
+
+    @Test
+    fun compute_protectionBonus_ironSkinRaisesArmorClass() {
+        val derived =
+            DerivedStatsCalculator.compute(
+                BaseStats(dex = 10), level = 1, protectionBonus = ProtectionBonus(acBonus = 4))
+        assertEquals(14, derived.armorClass)
+    }
+
+    @Test
+    fun compute_protectionBonus_addsToDodgeAndMagicResistWithinCap() {
+        val derived =
+            DerivedStatsCalculator.compute(
+                BaseStats(dex = 10, wis = 10),
+                level = 1,
+                protectionBonus = ProtectionBonus(dodgeBonusPct = 30f, magicResistBonusPct = 20f))
+        assertEquals(30f, derived.dodgePct)
+        assertEquals(20f, derived.magicResistPct)
+    }
+
+    @Test
+    fun compute_protectionBonus_isCappedAt60() {
+        val derived =
+            DerivedStatsCalculator.compute(
+                BaseStats(dex = 40, wis = 40),
+                level = 1,
+                protectionBonus = ProtectionBonus(dodgeBonusPct = 45f, magicResistBonusPct = 45f))
+        assertEquals(60f, derived.dodgePct)
+        assertEquals(60f, derived.magicResistPct)
+    }
+
+    @Test
+    fun compute_protectionBonus_addsFlatMaxHpAndHpRegenMultiplier() {
+        val derived =
+            DerivedStatsCalculator.compute(
+                BaseStats(con = 10),
+                level = 1,
+                protectionBonus = ProtectionBonus(maxHpBonus = 10, hpRegenMultBonus = 0.5f))
+        assertEquals(20, derived.maxHp) // (10-10)/2*1 + 10 = 10, + 10 bonus
+        assertEquals(1.5f, derived.hpRegenPerSec) // con/10 = 1, * 1.5
+    }
 }

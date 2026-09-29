@@ -29,6 +29,7 @@ combat:
   siege_weapon_pitch: ["Alt+KeyR"]
   siege_weapon_power: ["Ctrl+KeyR"]
   siege_weapon_fire: ["KeyX"]
+  protect: []
 
 building:
   place_rotate: ["KeyR"]

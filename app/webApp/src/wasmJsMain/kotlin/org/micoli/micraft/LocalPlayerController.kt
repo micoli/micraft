@@ -1042,6 +1042,7 @@ class LocalPlayerController(
                 outMessages.trySend(ClientMessage.Command("/pet dismiss"))
             ClientInputAction.TOGGLE_COMPASS ->
                 outMessages.trySend(ClientMessage.Command("/compass toggle"))
+            ClientInputAction.PROTECT -> outMessages.trySend(ClientMessage.Command("/protect"))
             ClientInputAction.SIEGE_WEAPON_ROTATE -> {
                 val targetId = currentCombatTargetId ?: return
                 if (isPlaceableTarget(targetId))

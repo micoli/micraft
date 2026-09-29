@@ -93,6 +93,7 @@ data class CommandContext(
     val namedPoints: () -> Map<String, Vec3> = { emptyMap() },
     val questManager: QuestManager? = null,
     val applyBuff: (suspend (PlayerSession, StatusEffect, Float) -> Unit)? = null, // null in tests
+    val castProtection: (suspend (PlayerSession) -> Unit)? = null, // null in tests
     val scenes: SceneRegistry? = null,
     val claimRegistry: ClaimRegistry? = null,
     val claimManager: ClaimManager? = null,

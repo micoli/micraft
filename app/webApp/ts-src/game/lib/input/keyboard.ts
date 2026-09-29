@@ -261,6 +261,7 @@ export function registerKeyboard(): Pick<
         if (matched.has("quest_journal")) window.mc?.openQuestJournal?.();
         if (matched.has("quest_tracking")) window.mc?.toggleQuestTracker?.();
         if (matched.has(ClientAction.TOGGLE_COMPASS)) window.mcState.events.push(ClientAction.TOGGLE_COMPASS);
+        if (matched.has(ClientAction.PROTECT)) window.mcState.events.push(ClientAction.PROTECT);
         const pageActionMatched = Array.from({ length: 12 }, (_, i) =>
           i < 10
             ? `${ClientEventPrefix.SHORTCUT_PAGE_}${i + 1}`

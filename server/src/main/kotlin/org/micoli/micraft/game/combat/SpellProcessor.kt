@@ -4,6 +4,7 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 import org.micoli.micraft.combat.ActiveStatusEffect
 import org.micoli.micraft.combat.DamageType
+import org.micoli.micraft.combat.StatusEffect
 import org.micoli.micraft.game.classes.ClassDefinitionEntry
 import org.micoli.micraft.game.npc.NpcInstance
 import org.micoli.micraft.game.session.PlayerSession
@@ -15,7 +16,7 @@ private val log = LoggerFactory.getLogger(SpellProcessor::class.java)
 
 class SpellProcessor(
     @Volatile private var spellRegistry: Map<String, SpellDefinition>,
-    classRegistry: Map<String, ClassDefinitionEntry>,
+    @Volatile private var classRegistry: Map<String, ClassDefinitionEntry>,
     @Volatile private var combatConfig: CombatConfigData,
     private val combatProcessor: CombatProcessor,
     private val getSessions: () -> Collection<PlayerSession> = { emptyList() },
@@ -31,10 +32,68 @@ class SpellProcessor(
         val rankDef = spell.ranks.getValue(msg.spellRank)
 
         if (spell.type == SpellType.DIRECT_DAMAGE && !castDirectDamage(session, rankDef)) return
+        if (spell.type == SpellType.PROTECTION)
+            applyProtection(session, msg.spellId, msg.spellRank, rankDef)
         gate.commit(session, use)
         if (spell.type == SpellType.TOKEN_RAGE_CONSUME) grantRage(session, rankDef)
 
         combatProcessor.characterStats.sendStatus(session)
+    }
+
+    /**
+     * `/protect` (no argument): resolves the caller's Class's Protection Spell and the Rank their
+     * current Level unlocks, then casts it through the same [AbilityGate] path as every other Spell
+     * (Global cooldown, Cooldown, resource cost).
+     */
+    suspend fun castOwnProtection(session: PlayerSession) {
+        val character = session.characterData
+        if (character == null) {
+            notify(session, "combat:server:no_character")
+            return
+        }
+        val (spellId, spell) = ownProtectionSpell(character.characterClass.name, character.level)
+        val rank = spellId?.let { spell?.usableRank(character.level) }
+        if (spellId == null || spell == null || rank == null) {
+            notify(session, "combat:server:no_protection")
+            return
+        }
+        val use = clear(session, spellId, rank) ?: return
+        val rankDef = spell.ranks.getValue(rank)
+        applyProtection(session, spellId, rank, rankDef)
+        gate.commit(session, use)
+        combatProcessor.characterStats.sendStatus(session)
+    }
+
+    /** The Class's granted Spell of type [SpellType.PROTECTION], if any, and its definition. */
+    private fun ownProtectionSpell(
+        className: String,
+        level: Int,
+    ): Pair<String?, SpellDefinition?> {
+        val classDef = classRegistry[className] ?: return null to null
+        val spellId =
+            classDef.levels
+                .filterKeys { it <= level }
+                .values
+                .flatMap { it.spells }
+                .map { it.spell }
+                .distinct()
+                .firstOrNull { spellRegistry[it]?.type == SpellType.PROTECTION }
+        return spellId to spellId?.let { spellRegistry[it] }
+    }
+
+    private suspend fun applyProtection(
+        session: PlayerSession,
+        spellId: String,
+        rank: Int,
+        rankDef: SpellRankDefinition,
+    ) {
+        combatProcessor.applyStatusEffectTo(
+            session,
+            StatusEffect.Protected,
+            rankDef.durationSec,
+            System.currentTimeMillis(),
+            spellId,
+            rank)
     }
 
     private fun grantRage(session: PlayerSession, rankDef: SpellRankDefinition) {
@@ -125,9 +184,9 @@ class SpellProcessor(
         val rankDef = spell.ranks.getValue(msg.spellRank)
         val now = System.currentTimeMillis()
 
-        // DIRECT_DAMAGE ignores the AoE point entirely — castDirectDamage range-checks the
-        // caster's actual locked target instead.
-        if (spell.type != SpellType.DIRECT_DAMAGE) {
+        // DIRECT_DAMAGE and PROTECTION ignore the AoE point entirely — DIRECT_DAMAGE
+        // range-checks the caster's locked target instead, PROTECTION is self-targeted.
+        if (spell.type != SpellType.DIRECT_DAMAGE && spell.type != SpellType.PROTECTION) {
             val pos = session.state.pos
             val dx = msg.targetX - pos.x
             val dy = msg.targetY - pos.y
@@ -143,6 +202,7 @@ class SpellProcessor(
             SpellType.NECROTIC_AOE -> castNecroticAoe(msg, rankDef, now)
             SpellType.TOKEN_RAGE_CONSUME -> {}
             SpellType.DIRECT_DAMAGE -> if (!castDirectDamage(session, rankDef)) return
+            SpellType.PROTECTION -> applyProtection(session, msg.spellId, msg.spellRank, rankDef)
         }
 
         gate.commit(session, use)
@@ -279,6 +339,7 @@ class SpellProcessor(
         combatConfig: CombatConfigData,
     ) {
         this.spellRegistry = spellRegistry
+        this.classRegistry = classRegistry
         this.combatConfig = combatConfig
         gate.reload(classRegistry, combatConfig.globalCooldownMs)
     }

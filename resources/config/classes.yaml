@@ -28,6 +28,16 @@ classes:
             rank: 1
           - spell: quickStrike
             rank: 1
+          - spell: iron_skin
+            rank: 1
+          - spell: iron_skin
+            rank: 2
+          - spell: iron_skin
+            rank: 3
+          - spell: iron_skin
+            rank: 4
+          - spell: iron_skin
+            rank: 5
       3:
         attacks:
           - attack: heavy_slash
